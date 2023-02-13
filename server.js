@@ -5,7 +5,9 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(express.static("public"));
-app.use(bodyParser.urlencoded({ extended: true }));
+// parse application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: false }));
+// parse application/json
 app.use(bodyParser.json());
 
 app.post("/api/helloworld", async (req, res) => {
@@ -16,7 +18,7 @@ app.post("/api/helloworld", async (req, res) => {
       year: req.body.year || "2000",
     };
     movie = JSON.stringify(result);
-    res.send(movie);
+    res.json(movie);
   } catch (err) {
     console.log(err);
     res.status(500).send({ message: "Internal Server Error" });

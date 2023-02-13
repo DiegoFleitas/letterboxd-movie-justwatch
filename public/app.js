@@ -5,10 +5,19 @@ form.addEventListener("submit", (event) => {
 
   const formData = new FormData(event.target);
 
+  const data = {
+    title: formData.get("title"),
+    year: formData.get("year") || "2000",
+  };
+  console.log(data);
+
   // Perform the fetch request
   fetch("/api/helloworld", {
     method: "POST",
-    body: formData,
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
   })
     .then((response) => response.json())
     .then((data) => console.log(data))
