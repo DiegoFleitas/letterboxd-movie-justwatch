@@ -13,11 +13,10 @@ app.use(bodyParser.json());
 app.post("/api/helloworld", async (req, res) => {
   try {
     console.log("got here api/helloworld");
-    const result = {
+    const movie = {
       title: req.body.title || "Yi Yi",
       year: req.body.year || "2000",
     };
-    movie = JSON.stringify(result);
     res.json(movie);
   } catch (err) {
     console.log(err);
