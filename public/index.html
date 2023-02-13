@@ -7,9 +7,27 @@
   <body>
     <form id="movie-form">
       <label for="title">Title:</label>
-      <input type="text" id="title" name="title" />
+      <input type="text" id="title" name="title" placeholder="Elvis" />
       <label for="year">Year:</label>
-      <input type="text" id="year" name="year" />
+      <input type="text" id="year" name="year" placeholder="2022" />
+      <label for="country">Select a country:</label>
+      <select id="country" name="country">
+        <option value="de_DE">Germany</option>
+        <option value="en_US">USA</option>
+        <option value="en_CA">Canada</option>
+        <option value="en_GB">United Kingdom</option>
+        <option value="es_MX">Mexico</option>
+        <option value="de_AT">Austria</option>
+        <option value="fr_FR">France</option>
+        <option value="es_ES">Spain</option>
+        <option value="de_CH">Switzerland</option>
+        <option value="ja_JP">Japan</option>
+        <option value="pt_BR">Brazil</option>
+        <option value="es_AR">Argentina</option>
+        <option value="en_AU">Australia</option>
+        <option value="it_IT">Italy</option>
+        <option value="es_UY" selected>Uruguay</option>
+      </select>
       <button type="submit">Search</button>
     </form>
     <div id="result"></div>

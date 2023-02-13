@@ -14,32 +14,31 @@ app.post("/api/helloworld", async (req, res) => {
   try {
     console.log("got here api/helloworld");
     const movie = {
-      title: req.body.title || "Yi Yi",
-      year: req.body.year || "2000",
+      title: req.body.title,
+      year: req.body.year,
     };
     res.json(movie);
   } catch (err) {
     console.log(err);
-    res.status(500).send({ message: "Internal Server Error" });
+    res.status(500).json({ message: "Internal Server Error" });
   }
 });
 
-app.get("/api/search-movie", async (req, res) => {
+app.post("/api/search-movie", async (req, res) => {
   try {
     console.log("got here api/search-movie");
-    console.log(JSON.stringify(req, null, 2));
-    console.log(JSON.stringify(res, null, 2));
-    const movieTitle = req.query.title || "Yi Yi";
-    const movieYear = req.query.year || "2000";
+    const movieTitle = req.body.title;
+    const movieYear = req.body.year;
+    const countryCode = req.body.country || "en_US";
 
     if (!movieTitle) {
       console.log("No movie title");
-      res.status(404).send({ message: "Movie not found" });
+      res.status(404).json({ message: "Movie not found" });
       return;
     }
 
     const movieDbAPIKey = "825f79451255ce112042331fc0cb7c03";
-    const PROXY = "https://stark-woodland-93683.fly.dev/";
+    const PROXY = "";
 
     // Search for movie on MovieDB API
     const movieDbResponse = await axios.get(
@@ -50,7 +49,7 @@ app.get("/api/search-movie", async (req, res) => {
     const movieDbData = movieDbResponse.data.results[0];
 
     if (!movieDbData) {
-      res.status(404).send({ message: "Movie not found" });
+      res.status(404).json({ message: "Movie not found" });
       return;
     }
 
@@ -71,7 +70,7 @@ app.get("/api/search-movie", async (req, res) => {
     });
 
     if (!movieData) {
-      res.status(404).send({ message: "Movie not found" });
+      res.status(404).json({ message: "Movie not found" });
       return;
     }
 
@@ -90,13 +89,13 @@ app.get("/api/search-movie", async (req, res) => {
         return provider ? provider.clear_name : null;
       })
       .filter((name) => name !== null);
-    res.status(200).send({
+    res.status(200).json({
       message: "Movie found",
       streamingServices: [...new Set(clearNames)],
     });
   } catch (err) {
     console.log(err);
-    res.status(500).send({ message: "Internal Server Error" });
+    res.status(500).json({ message: "Internal Server Error" });
   }
 });
 
