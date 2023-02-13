@@ -20,7 +20,7 @@ app.post("/api/helloworld", async (req, res) => {
     res.json(movie);
   } catch (err) {
     console.log(err);
-    res.status(500).json({ message: "Internal Server Error" });
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
@@ -95,7 +95,7 @@ app.post("/api/search-movie", async (req, res) => {
     });
   } catch (err) {
     console.log(err);
-    res.status(500).json({ message: "Internal Server Error" });
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
