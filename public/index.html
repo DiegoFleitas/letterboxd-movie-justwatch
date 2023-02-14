@@ -3,6 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <title>Movie Search</title>
+    <style>
+      .poster {
+        max-width: 81px !important;
+      }
+    </style>
   </head>
   <body>
     <form id="movie-form">
@@ -30,6 +35,34 @@
       </select>
       <button type="submit">Search</button>
     </form>
+    <hr />
+    <span>
+      <a href="https://letterboxd.com/data/export/">Export letterboxd data</a>
+    </span>
+    <form id="letterboxd-watchlist-form" enctype="multipart/form-data">
+      <div>
+        <label for="watchlist">Upload letterboxd watchlist:</label>
+        <input
+          type="file"
+          id="watchlist"
+          name="watchlist"
+          accept=".zip"
+          required
+        />
+      </div>
+      <button type="submit">Submit</button>
+    </form>
+    <table>
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Year</th>
+          <th>Poster</th>
+          <th>Streaming Services</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
     <div id="error-message"></div>
     <div id="result-message"></div>
     <script src="/app.js"></script>
