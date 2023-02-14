@@ -1,6 +1,11 @@
 const express = require("express");
 const axios = require("axios");
 const bodyParser = require("body-parser");
+const multer = require("multer");
+const AdmZip = require("adm-zip");
+const csv = require("csv-parser");
+const { Readable } = require("stream");
+
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -29,7 +34,7 @@ app.post("/api/search-movie", async (req, res) => {
     console.log("got here api/search-movie");
     const movieTitle = req.body.title;
     const movieYear = req.body.year;
-    const countryCode = req.body.country || "en_US";
+    const countryCode = req.body.country || "es_UY";
 
     if (!movieTitle) {
       console.log("No movie title");
@@ -98,5 +103,90 @@ app.post("/api/search-movie", async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
+app.post("/api/poster", async (req, res) => {
+  const API_KEY = "dacba5fa";
+  const movieTitle = req.body.title;
+  const movieYear = req.body.year;
+  try {
+    if (!movieTitle) {
+      console.log("No movie title");
+      res.status(404).json({ message: "Movie not found" });
+      return;
+    }
+    const response = await axios.get(
+      `http://www.omdbapi.com/?t=${movieTitle}&y=${movieYear}&apikey=${API_KEY}`
+    );
+    const { Poster } = response.data;
+    res.status(200).json({
+      message: "Poster found",
+      poster: Poster,
+    });
+  } catch (error) {
+    console.log(err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// Set up Multer storage and file filter
+const storage = multer.memoryStorage();
+const upload = multer({
+  storage: storage,
+  fileFilter: (req, file, cb) => {
+    const allowedMimeTypes = [
+      "application/zip",
+      "application/x-zip-compressed",
+    ];
+    if (!allowedMimeTypes.includes(file.mimetype)) {
+      console.log(file.mimetype);
+      return cb(new Error("Only zip files are allowed"));
+    }
+    cb(null, true);
+  },
+});
+
+// Endpoint to handle watchlist file upload
+app.post(
+  "/api/letterboxd-watchlist",
+  upload.single("watchlist"),
+  async (req, res) => {
+    try {
+      const file = req.file;
+
+      // Load the zip file
+      const zip = new AdmZip(file.buffer);
+
+      // Search for the "watchlist.csv" file
+      const zipEntries = zip.getEntries();
+      const watchlistEntry = zipEntries.find(
+        (entry) => entry.entryName === "watchlist.csv"
+      );
+
+      // If the file is found, parse it to JSON and send the data back in the response
+      if (watchlistEntry) {
+        const watchlistJson = [];
+        zip.readAsTextAsync(watchlistEntry, (csvData) => {
+          const stream = Readable.from(csvData);
+          stream
+            .pipe(csv())
+            .on("data", (row) => {
+              watchlistJson.push(row);
+            })
+            .on("end", () => {
+              console.log(watchlistJson);
+              res.json(watchlistJson);
+            });
+        });
+      } else {
+        // If the file is not found, send an error response
+        res.status(400).json({ error: "Watchlist file not found" });
+      }
+    } catch (err) {
+      // If there is an error, send an error response
+      console.log(err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+);
 
 app.listen(port, () => console.log(`HelloNode app listening on port ${port}!`));
