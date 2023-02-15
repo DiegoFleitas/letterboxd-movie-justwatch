@@ -4,17 +4,96 @@
     <meta charset="UTF-8" />
     <title>Movie Search</title>
     <style>
+      /* Apply some basic styles to the form */
+      form {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        margin: 20px 0;
+        padding: 20px;
+      }
+
+      form > * {
+        padding: 10px;
+      }
+
+      form label {
+        margin-right: 10px;
+      }
+
+      form input[type="text"] {
+        padding: 5px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+
+      form button {
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-size: 16px;
+        cursor: pointer;
+        margin-left: 10px;
+        padding: 10px;
+      }
+
+      form button:hover {
+        background-color: #3e8e41;
+      }
+
+      /* Style the table */
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 20px 0;
+      }
+
+      table th,
+      table td {
+        text-align: left;
+        padding: 8px;
+        border: 1px solid #ddd;
+      }
+
+      table th {
+        background-color: #f2f2f2;
+      }
+
+      /* Style the poster image */
       .poster {
         max-width: 81px !important;
+      }
+
+      /* Style the error and result messages */
+      #error-message,
+      #result-message {
+        margin: 20px 0;
+        padding: 10px;
+        font-size: 16px;
+      }
+
+      #error-message {
+        background-color: #f44336;
+        color: white;
+      }
+
+      #result-message {
+        background-color: #4caf50;
+        color: white;
       }
     </style>
   </head>
   <body>
+    <div id="error-message" style="display: none"></div>
+    <div id="result-message" style="display: none"></div>
     <form id="movie-form">
       <label for="title">Title:</label>
-      <input type="text" id="title" name="title" placeholder="Elvis" />
+      <input type="text" id="title" name="title" placeholder="Elvis" required />
       <label for="year">Year:</label>
-      <input type="text" id="year" name="year" placeholder="2022" />
+      <input type="text" id="year" name="year" placeholder="2022" required />
       <label for="country">Select a country:</label>
       <select id="country" name="country">
         <option value="de_DE">Germany</option>
@@ -36,12 +115,14 @@
       <button type="submit">Search</button>
     </form>
     <hr />
-    <span>
-      <a href="https://letterboxd.com/data/export/">Export letterboxd data</a>
-    </span>
     <form id="letterboxd-watchlist-form" enctype="multipart/form-data">
+      <span>
+        <a href="https://letterboxd.com/data/export/"
+          >Export letterboxd data ⮫</a
+        >
+      </span>
       <div>
-        <label for="watchlist">Upload letterboxd watchlist:</label>
+        <label for="watchlist">Upload letterboxd data:</label>
         <input
           type="file"
           id="watchlist"
@@ -63,8 +144,6 @@
       </thead>
       <tbody></tbody>
     </table>
-    <div id="error-message"></div>
-    <div id="result-message"></div>
     <script src="/app.js"></script>
   </body>
 </html>

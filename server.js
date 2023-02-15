@@ -5,6 +5,7 @@ const multer = require("multer");
 const AdmZip = require("adm-zip");
 const csv = require("csv-parser");
 const { Readable } = require("stream");
+require("dotenv").config();
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -14,20 +15,6 @@ app.use(express.static("public"));
 app.use(bodyParser.urlencoded({ extended: false }));
 // parse application/json
 app.use(bodyParser.json());
-
-app.post("/api/helloworld", async (req, res) => {
-  try {
-    console.log("got here api/helloworld");
-    const movie = {
-      title: req.body.title,
-      year: req.body.year,
-    };
-    res.json(movie);
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
 
 app.post("/api/search-movie", async (req, res) => {
   try {
@@ -42,7 +29,7 @@ app.post("/api/search-movie", async (req, res) => {
       return;
     }
 
-    const movieDbAPIKey = "825f79451255ce112042331fc0cb7c03";
+    const movieDbAPIKey = process.env.MOVIE_DB_API_KEY;
     const PROXY = "";
 
     // Search for movie on MovieDB API
@@ -79,6 +66,7 @@ app.post("/api/search-movie", async (req, res) => {
       return;
     }
 
+    // FIXME: TypeError: Cannot read property 'map' of undefined
     const streamingServices = movieData.offers.map(
       (offer) => offer.provider_id
     );
@@ -105,7 +93,7 @@ app.post("/api/search-movie", async (req, res) => {
 });
 
 app.post("/api/poster", async (req, res) => {
-  const API_KEY = "dacba5fa";
+  const omdbApiKey = process.env.OMDB_API_KEY;
   const movieTitle = req.body.title;
   const movieYear = req.body.year;
   try {
@@ -115,7 +103,7 @@ app.post("/api/poster", async (req, res) => {
       return;
     }
     const response = await axios.get(
-      `http://www.omdbapi.com/?t=${movieTitle}&y=${movieYear}&apikey=${API_KEY}`
+      `http://www.omdbapi.com/?t=${movieTitle}&y=${movieYear}&apikey=${omdbApiKey}`
     );
     const { Poster } = response.data;
     res.status(200).json({
@@ -189,4 +177,8 @@ app.post(
   }
 );
 
-app.listen(port, () => console.log(`HelloNode app listening on port ${port}!`));
+app.listen(port, () =>
+  console.log(
+    `justwatch-done-right app listening on port http://localhost:${port}`
+  )
+);
