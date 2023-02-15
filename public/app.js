@@ -9,7 +9,6 @@ form.addEventListener("submit", (event) => {
   const data = Object.fromEntries(formData.entries());
   console.log(data);
 
-  // const url = "/api/helloworld";
   const url = "/api/search-movie";
 
   // Perform the fetch request
@@ -21,16 +20,20 @@ form.addEventListener("submit", (event) => {
     body: JSON.stringify(data),
   })
     .then((response) => response.json())
-    .then((data) => {
-      console.log(data);
+    .then((response) => {
+      console.log(response);
       const errorMessage = document.getElementById("error-message");
       const resultMessage = document.getElementById("result-message");
-      if (data.error) {
-        errorMessage.innerHTML = data.error;
-        resultMessage.innerHTML = "";
+      if (response.error) {
+        errorMessage.innerHTML = response.error;
+        errorMessage.style.display = "";
+        resultMessage.style.display = "none";
       } else {
-        errorMessage.innerHTML = "";
-        resultMessage.innerHTML = data.message;
+        resultMessage.innerHTML = `${response.message} ${JSON.stringify(
+          response
+        )}`;
+        resultMessage.style.display = "";
+        errorMessage.style.display = "none";
       }
     })
     .catch((error) => console.error(error));
@@ -69,16 +72,21 @@ letterboxdWatchlistForm.addEventListener("submit", (event) => {
           body: JSON.stringify(element),
         })
           .then((response) => response.json())
-          .then((data) => {
-            console.log(data);
+          .then((response) => {
+            console.log(response);
             const errorMessage = document.getElementById("error-message");
             const resultMessage = document.getElementById("result-message");
-            if (data.error) {
-              errorMessage.innerHTML += data.error;
-              resultMessage.innerHTML = "";
+            if (response.error) {
+              errorMessage.innerHTML = response.error;
+              errorMessage.style.display = "";
+              resultMessage.style.display = "none";
             } else {
-              resultMessage.innerHTML += JSON.stringify(element) + data.message;
-              rebuildTable(element.title, element.year, data);
+              resultMessage.innerHTML = `${response.message} ${JSON.stringify(
+                response
+              )}`;
+              resultMessage.style.display = "";
+              errorMessage.style.display = "none";
+              rebuildTable(element.title, element.year, response);
             }
           })
           .catch((error) => console.error(error));
@@ -91,16 +99,21 @@ letterboxdWatchlistForm.addEventListener("submit", (event) => {
           body: JSON.stringify(element),
         })
           .then((response) => response.json())
-          .then((data) => {
-            console.log(data);
+          .then((response) => {
+            console.log(response);
             const errorMessage = document.getElementById("error-message");
             const resultMessage = document.getElementById("result-message");
-            if (data.error) {
-              errorMessage.innerHTML += data.error;
-              resultMessage.innerHTML = "";
+            if (response.error) {
+              errorMessage.innerHTML = response.error;
+              errorMessage.style.display = "";
+              resultMessage.style.display = "none";
             } else {
-              resultMessage.innerHTML += JSON.stringify(element) + data.message;
-              rebuildTable(element.title, element.year, data);
+              resultMessage.innerHTML = `${response.message} ${JSON.stringify(
+                response
+              )}`;
+              resultMessage.style.display = "";
+              errorMessage.style.display = "none";
+              rebuildTable(element.title, element.year, response);
             }
           })
           .catch((error) => console.error(error));

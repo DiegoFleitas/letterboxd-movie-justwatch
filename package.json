@@ -1,5 +1,5 @@
 {
-  "name": "hellonode",
+  "name": "justwatch-done-right",
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
@@ -11,19 +11,20 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/fly-examples/hellonode.git"
+    "url": "git+https://github.com/fly-examples/justwatch-done-right.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/fly-examples/hellonode/issues"
+    "url": "https://github.com/fly-examples/justwatch-done-right/issues"
   },
-  "homepage": "https://github.com/fly-examples/hellonode#readme",
+  "homepage": "https://github.com/fly-examples/justwatch-done-right#readme",
   "dependencies": {
     "adm-zip": "^0.5.10",
     "axios": "^1.3.2",
     "body-parser": "^1.20.1",
     "csv-parser": "^3.0.0",
+    "dotenv": "^16.0.3",
     "express": "^4.17.1",
     "multer": "^1.4.5-lts.1"
   }
