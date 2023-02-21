@@ -122,6 +122,51 @@ letterboxdWatchlistForm.addEventListener("submit", (event) => {
     .catch((error) => console.error(error));
 });
 
+function wink(event) {
+  event.preventDefault(); // Prevent the form from submitting normally
+  // Get the title and year from the clicked row
+  const parentElement = event.currentTarget.parentNode.parentNode;
+  const isRow = parentElement.nodeName === "TR";
+  let title, year;
+  if (isRow) {
+    title = row.cells[0].textContent;
+    year = row.cells[1].textContent;
+  } else {
+    res = Object.fromEntries(new FormData(event.target.form).entries());
+    title = res.title;
+    year = res.year;
+  }
+
+  // Make a fetch request to the /wink endpoint
+  fetch("/api/wink", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ title, year }),
+  })
+    .then((response) => response.json())
+    .then((response) => {
+      console.log(response);
+      const errorMessage = document.getElementById("error-message");
+      const resultMessage = document.getElementById("result-message");
+      if (response.error) {
+        errorMessage.innerHTML = response.error;
+        errorMessage.style.display = "";
+        resultMessage.style.display = "none";
+      } else {
+        resultMessage.innerHTML = `${response.message} ${JSON.stringify(
+          response
+        )}`;
+        resultMessage.style.display = "";
+        errorMessage.style.display = "none";
+      }
+    })
+    .catch((error) => {
+      console.log("Error:", error);
+    });
+}
+
 function rebuildTable(title, year, data) {
   const id = `${title.toLowerCase().replace(/ /g, "-")}-${year}`;
   const row =
@@ -129,11 +174,12 @@ function rebuildTable(title, year, data) {
     document.createElement("tr");
   row.setAttribute("data-id", id);
 
-  let [tdTitle, tdYear, tdImg, tdStreaming] = [...row.children];
+  let [tdTitle, tdYear, tdImg, tdStreaming, tdWink] = [...row.children];
   if (!tdTitle) tdTitle = document.createElement("td");
   if (!tdYear) tdYear = document.createElement("td");
   if (!tdImg) tdImg = document.createElement("td");
   if (!tdStreaming) tdStreaming = document.createElement("td");
+  if (!tdWink) tdWink = document.createElement("td");
 
   tdTitle.textContent = title;
   tdYear.textContent = year;
@@ -144,10 +190,14 @@ function rebuildTable(title, year, data) {
     ? data.streamingServices.join(", ")
     : "";
 
+  tdWink.innerHTML = `<button onclick="wink(event)">😉</button>`;
+
   if (!row.parentNode) document.querySelector("tbody").appendChild(row);
   if (!row.parentNode && !tdStreaming.textContent) return;
   row.innerHTML = "";
-  [tdTitle, tdYear, tdImg, tdStreaming].forEach((td) => row.appendChild(td));
+  [tdTitle, tdYear, tdImg, tdStreaming, tdWink].forEach((td) =>
+    row.appendChild(td)
+  );
 
   if (data.streamingServices) {
     rebuildTableFilter();
