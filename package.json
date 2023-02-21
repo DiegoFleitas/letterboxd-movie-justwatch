@@ -6,8 +6,12 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
+    "app": "npx cross-var echo $npm_package_name",
     "fly:deploy": "flyctl deploy",
-    "fly:logs": "flyctl logs -a justwatch-done-right"
+    "fly:logs": "npx cross-var flyctl logs -a $npm_package_name",
+    "fly:stop": "npx cross-var flyctl scale count 0 -a $npm_package_name",
+    "fly:start": "npx cross-var flyctl scale count 1 -a $npm_package_name",
+    "fly:ssh": "npx cross-var flyctl ssh console -a $npm_package_name"
   },
   "repository": {
     "type": "git",
@@ -26,6 +30,10 @@
     "csv-parser": "^3.0.0",
     "dotenv": "^16.0.3",
     "express": "^4.17.1",
-    "multer": "^1.4.5-lts.1"
+    "multer": "^1.4.5-lts.1",
+    "redis": "^4.6.4"
+  },
+  "devDependencies": {
+    "cross-var": "^1.1.0"
   }
 }

@@ -5,12 +5,23 @@ const multer = require("multer");
 const AdmZip = require("adm-zip");
 const csv = require("csv-parser");
 const { Readable } = require("stream");
+const morgan = require("morgan");
 require("dotenv").config();
+const { getCacheValue, setCacheValue } = require("./redis");
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(express.static("public"));
+
+// Define a custom morgan format that logs request IP and request payload
+morgan.token("payload", (req, res) => {
+  return JSON.stringify(req.body);
+});
+const logFormat = `remote-addr\tresponse-time(ms)\tmethod\turl\tstatus\tpayload\treq[content-type]\treq[user-agent]
+:remote-addr\t:response-time ms\t:method\t:url\t:status\t:payload\t:req[content-type]\t:req[user-agent]`;
+app.use(morgan(logFormat)); // logs
+
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }));
 // parse application/json
@@ -19,11 +30,10 @@ app.use(bodyParser.json());
 app.post("/api/search-movie", async (req, res) => {
   try {
     console.log("got here api/search-movie");
-    const movieTitle = req.body.title;
-    const movieYear = req.body.year;
+    const { title, year } = req.body;
     const countryCode = req.body.country || "es_UY";
 
-    if (!movieTitle) {
+    if (!title) {
       console.log("No movie title");
       res.status(404).json({ message: "Movie not found" });
       return;
@@ -34,8 +44,8 @@ app.post("/api/search-movie", async (req, res) => {
 
     // Search for movie on MovieDB API
     const movieDbResponse = await axios.get(
-      `${PROXY}https://api.themoviedb.org/3/search/movie?query=${movieTitle}${
-        movieYear ? `&year=${movieYear}` : ""
+      `${PROXY}https://api.themoviedb.org/3/search/movie?query=${title}${
+        year ? `&year=${year}` : ""
       }&api_key=${movieDbAPIKey}`
     );
     const movieDbData = movieDbResponse.data.results[0];
@@ -52,7 +62,7 @@ app.post("/api/search-movie", async (req, res) => {
 
     // Search for movie on JustWatch API using title and year
     const justWatchResponse = await axios.get(
-      `${PROXY}https://api.justwatch.com/content/titles/${countryCode}/popular?body={"query": "${movieTitle} ${movieYear}"}`
+      `${PROXY}https://api.justwatch.com/content/titles/${countryCode}/popular?body={"query": "${title} ${year}"}`
     );
     const movieData = justWatchResponse.data.items.find((item) => {
       const tmdbId = item.scoring.find(
@@ -94,18 +104,29 @@ app.post("/api/search-movie", async (req, res) => {
 
 app.post("/api/poster", async (req, res) => {
   const omdbApiKey = process.env.OMDB_API_KEY;
-  const movieTitle = req.body.title;
-  const movieYear = req.body.year;
+  const { title, year } = req.body;
+  const cacheKey = `poster:${title}:${year}`;
   try {
-    if (!movieTitle) {
+    const cachedPoster = await getCacheValue(cacheKey);
+    if (cachedPoster) {
+      console.log("Poster found (cached)");
+      res.status(200).json({
+        message: "Poster found",
+        poster: cachedPoster,
+      });
+      return;
+    }
+
+    if (!title) {
       console.log("No movie title");
       res.status(404).json({ message: "Movie not found" });
       return;
     }
     const response = await axios.get(
-      `http://www.omdbapi.com/?t=${movieTitle}&y=${movieYear}&apikey=${omdbApiKey}`
+      `http://www.omdbapi.com/?t=${title}&y=${year}&apikey=${omdbApiKey}`
     );
     const { Poster } = response.data;
+    await setCacheValue(cacheKey, Poster, cacheTtl);
     res.status(200).json({
       message: "Poster found",
       poster: Poster,
