@@ -11,6 +11,7 @@ const { getCacheValue, setCacheValue } = require("./redis");
 
 const app = express();
 const port = process.env.PORT || 3000;
+const cacheTtl = process.env.CACHE_TTL || 60; // seconds
 
 app.use(express.static("public"));
 
