@@ -129,8 +129,8 @@ function wink(event) {
   const isRow = parentElement.nodeName === "TR";
   let title, year;
   if (isRow) {
-    title = row.cells[0].textContent;
-    year = row.cells[1].textContent;
+    title = parentElement.cells[0].textContent;
+    year = parentElement.cells[1].textContent;
   } else {
     res = Object.fromEntries(new FormData(event.target.form).entries());
     title = res.title;
