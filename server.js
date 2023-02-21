@@ -132,7 +132,7 @@ app.post("/api/poster", async (req, res) => {
       poster: Poster,
     });
   } catch (error) {
-    console.log(err);
+    console.log(error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
