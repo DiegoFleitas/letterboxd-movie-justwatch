@@ -1,8 +1,12 @@
 /* Global styles */
+/* Import Roboto font from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+/* Set Roboto as the default font for the page */
 body {
   background-color: #060d17;
   color: #d9e8ed;
-  font-family: Arial, sans-serif;
+  font-family: 'Roboto', sans-serif;
 }
 /* Form styles */
 form {
@@ -38,8 +42,10 @@ button[type="submit"], button.wink {
   font-size: 16px;
   border-radius: 5px;
   border: none;
-  background-color: #4c5a67;
+  background-color: #fbc500;
+  font-weight: bold;
   color: #10161d;
+  font-family: 'Roboto', sans-serif;
   cursor: pointer;
 }
 .wink {
@@ -48,7 +54,14 @@ button[type="submit"], button.wink {
   background-color: black !important;
 }
 button[type="submit"]:hover, button.wink:hover {
-  background-color: #4c5a67;
+  font-weight: bold;
+  color: #10161d;
+  font-family: 'Roboto', sans-serif;
+  background-color: #fbc500;
+}
+a {
+  color: #78a6b8;
+  outline: 0 !important;
 }
 /* Table styles */
 table {
@@ -131,7 +144,7 @@ label {
   display: none;
   width: 100%;
 }
-input[type=file] {
+#letterboxd-watchlist-form {
   border: none;
   padding: 10px;
   background-color: #10161d;
