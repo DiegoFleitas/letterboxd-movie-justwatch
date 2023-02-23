@@ -77,7 +77,7 @@ app.post("/api/search-movie", async (req, res) => {
       return;
     }
 
-    if (!movieData.offers) {
+    if (!movieData.offers || !movieData.offers.length) {
       res.status(404).json({
         message: "No streaming services offering this movie (JustWatch)",
       });
