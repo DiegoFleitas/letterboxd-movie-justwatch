@@ -32,9 +32,7 @@ form.addEventListener("submit", (event) => {
         errorMessage.style.display = "";
         resultMessage.style.display = "none";
       } else {
-        resultMessage.innerHTML = `${response.message} ${JSON.stringify(
-          response
-        )}`;
+        resultMessage.innerHTML = `${response.message}`;
         resultMessage.style.display = "";
         errorMessage.style.display = "none";
       }
@@ -84,9 +82,7 @@ letterboxdWatchlistForm.addEventListener("submit", (event) => {
               errorMessage.style.display = "";
               resultMessage.style.display = "none";
             } else {
-              resultMessage.innerHTML = `${response.message} ${JSON.stringify(
-                response
-              )}`;
+              resultMessage.innerHTML = `${response.message}`;
               resultMessage.style.display = "";
               errorMessage.style.display = "none";
               rebuildTable(element.title, element.year, response);
@@ -116,9 +112,7 @@ letterboxdWatchlistForm.addEventListener("submit", (event) => {
               errorMessage.style.display = "";
               resultMessage.style.display = "none";
             } else {
-              resultMessage.innerHTML = `${response.message} ${JSON.stringify(
-                response
-              )}`;
+              resultMessage.innerHTML = `${response.message}`;
               resultMessage.style.display = "";
               errorMessage.style.display = "none";
               rebuildTable(element.title, element.year, response);

@@ -1,112 +1,165 @@
-/* Apply some basic styles to the form */
+/* Global styles */
+body {
+  background-color: #060d17;
+  color: #d9e8ed;
+  font-family: Arial, sans-serif;
+}
+/* Form styles */
 form {
   display: flex;
-  flex-direction: row;
+  flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  margin: 20px 0;
-  padding: 20px;
+  margin: 20px auto;
+  max-width: 800px;
 }
-
-form > * {
-  padding: 10px;
-}
-
-form label {
+label {
   margin-right: 10px;
 }
-
-form input[type="text"] {
-  padding: 5px;
-  font-size: 16px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-form button {
-  background-color: #4caf50;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-size: 16px;
-  cursor: pointer;
-  margin-left: 10px;
-  padding: 10px;
-}
-
-form button:hover {
-  background-color: #3e8e41;
-}
-
-/* Style the table */
-table {
-  border-collapse: collapse;
+input[type="text"], select {
   width: 100%;
-  margin: 20px 0;
-}
-
-table th,
-table td {
-  text-align: left;
-  padding: 8px;
-  border: 1px solid #ddd;
-}
-
-table th {
-  background-color: #f2f2f2;
-}
-
-/* Style the poster image */
-.poster {
-  max-width: 81px !important;
-}
-
-/* Style the error and result messages */
-#error-message,
-#result-message {
-  margin: 20px 0;
+  margin: 10px 0;
   padding: 10px;
   font-size: 16px;
+  border-radius: 5px;
+  border: none;
+  color: #888b8e;
+  background-color: #10161d;
 }
-
-#error-message {
-  background-color: #f44336;
-  color: white;
+input[type="text"]:focus, select:focus {
+  outline: none;
+  background-color: #10161d;
+  color: #888b8e;
+  box-shadow: 0px 0px 5px #10161d;
 }
-
-#result-message {
-  background-color: #4caf50;
-  color: white;
-}
-
-#service-picker {
-  float: right;
-  padding: 8px;
+button[type="submit"], button.wink {
+  margin: 10px 0;
+  padding: 10px 20px;
   font-size: 16px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  width: 200px;
-  background-image: linear-gradient(to bottom, #ffffff, #f1f1f1);
-  background-repeat: repeat-x;
-  background-position: 0 100%;
-  background-size: 100% 1px;
-  -webkit-box-shadow: none;
-  box-shadow: none;
-  color: #555;
+  border-radius: 5px;
+  border: none;
+  background-color: #4c5a67;
+  color: #10161d;
+  cursor: pointer;
 }
-
-#service-picker option {
-  padding: 8px;
-  font-size: 16px;
-  background-color: white;
-  color: #555;
-}
-
-/* Style the 😉 elements */
 .wink {
   visibility: hidden;
+  box-shadow: 0px 0px 5px #bbb;
+  background-color: black !important;
+}
+button[type="submit"]:hover, button.wink:hover {
+  background-color: #4c5a67;
+}
+/* Table styles */
+table {
+  margin: 20px auto;
+  border-collapse: collapse;
+  width: 100%;
+  max-width: 1000px;
+  background-color: #10161d;
+  box-shadow: 0px 0px 5px #bbb;
+}
+th, td {
+  text-align: center;
+  padding: 10px;
+}
+th {
+  background-color: #222c38;
+  color: #10161d;
+}
+tr:nth-child(even) {
+  background-color: #10161d;
+}
+tr:hover {
+  background-color: #ddd;
+}
+.wink {
+  font-size: 20px;
+}
+/* Message styles */
+#error-message, #result-message {
+  margin: 20px auto;
+  max-width: 800px;
+  padding: 10px;
+  border-radius: 5px;
+  text-align: center;
+}
+#error-message {
+  background-color: #fccf41;
+  color: #10161d;
+}
+#result-message {
+  background-color: #fccf41;
+  color: #10161d;
+}
+label {
+  display: block;
+  margin-bottom: 5px;
+}
+#year {
+  margin-top: 10px;
+}
+label[for="year"] {
+  display: block;
+  margin-top: 10px;
+}
+.tt-suggestion {
+  background-color: #10161d;
+  color: #333;
+  cursor: pointer;
+  padding: 5px 10px;
+  border-radius: 5px;
+}
+.tt-suggestion:hover {
+  background-color: #10161d;
+}
+label {
+  display: block;
+  margin-bottom: 5px;
+}
+.twitter-typeahead {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+.tt-input {
+  width: 100%;
+  box-sizing: border-box;
+}
+.tt-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 100;
+  display: none;
+  width: 100%;
+}
+input[type=file] {
+  border: none;
+  padding: 10px;
+  background-color: #10161d;
+  color: #555;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 5px;
+  width: 100%;
+  margin-bottom: 10px;
 }
 
-button.wink {
-  background-color: black;
+img.logo {
+  top: 0;
+  right: 0;
+  padding: 30px;
+}
+
+.diagonal-text-container {
+  content: "Better";
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: rotate(-45deg);
+  font-size: 2em;
+  font-weight: bold;
+  color: #a11818;
+  z-index: 1;
 }
