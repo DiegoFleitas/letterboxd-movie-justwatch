@@ -165,6 +165,7 @@ function alternativeSearchWink(event) {
         resultMessage.appendChild(link);
         resultMessage.style.display = "";
         errorMessage.style.display = "none";
+        scrollToTop();
       }
     })
     .catch((error) => {
@@ -306,3 +307,10 @@ $(document).ready(() => {
       $("#title").val(suggestion.Title);
     });
 });
+
+function scrollToTop() {
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth",
+  });
+}

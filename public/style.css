@@ -70,9 +70,6 @@ th {
 tr:nth-child(even) {
   background-color: #10161d;
 }
-tr:hover {
-  background-color: #ddd;
-}
 .wink {
   font-size: 20px;
 }
