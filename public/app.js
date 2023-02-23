@@ -9,17 +9,20 @@ form.addEventListener("submit", (event) => {
   const data = Object.fromEntries(formData.entries());
   console.log(data);
 
-  const url = "/api/search-movie";
-
   // Perform the fetch request
-  fetch(url, {
+  fetch("/api/search-movie", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(data),
   })
-    .then((response) => response.json())
+    .then((response) => {
+      if (response.status === 404) {
+        showWinkElements();
+      }
+      return response.json();
+    })
     .then((response) => {
       console.log(response);
       const errorMessage = document.getElementById("error-message");
@@ -98,7 +101,12 @@ letterboxdWatchlistForm.addEventListener("submit", (event) => {
           },
           body: JSON.stringify(element),
         })
-          .then((response) => response.json())
+          .then((response) => {
+            if (response.status === 404) {
+              showWinkElements();
+            }
+            return response.json();
+          })
           .then((response) => {
             console.log(response);
             const errorMessage = document.getElementById("error-message");
@@ -122,7 +130,7 @@ letterboxdWatchlistForm.addEventListener("submit", (event) => {
     .catch((error) => console.error(error));
 });
 
-function wink(event) {
+function alternativeSearchWink(event) {
   event.preventDefault(); // Prevent the form from submitting normally
   // Get the title and year from the clicked row
   const parentElement = event.currentTarget.parentNode.parentNode;
@@ -155,9 +163,12 @@ function wink(event) {
         errorMessage.style.display = "";
         resultMessage.style.display = "none";
       } else {
-        resultMessage.innerHTML = `${response.message} ${JSON.stringify(
-          response
-        )}`;
+        resultMessage.innerHTML = "😉";
+        const link = document.createElement("a");
+        link.setAttribute("href", response.url);
+        link.setAttribute("target", "_blank");
+        link.innerHTML = response.text;
+        resultMessage.appendChild(link);
         resultMessage.style.display = "";
         errorMessage.style.display = "none";
       }
@@ -190,7 +201,7 @@ function rebuildTable(title, year, data) {
     ? data.streamingServices.join(", ")
     : "";
 
-  tdWink.innerHTML = `<button onclick="wink(event)">😉</button>`;
+  tdWink.innerHTML = `<button onclick="alternativeSearchWink(event)" class="wink">😉</button>`;
 
   if (!row.parentNode) document.querySelector("tbody").appendChild(row);
   if (!row.parentNode && !tdStreaming.textContent) return;
@@ -248,4 +259,9 @@ function rebuildTableFilter() {
     option.textContent = service;
     select.appendChild(option);
   });
+}
+
+function showWinkElements() {
+  const winkElements = document.querySelectorAll(".wink");
+  winkElements.forEach((element) => (element.style.visibility = "visible"));
 }

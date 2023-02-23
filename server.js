@@ -77,7 +77,13 @@ app.post("/api/search-movie", async (req, res) => {
       return;
     }
 
-    // FIXME: TypeError: Cannot read property 'map' of undefined
+    if (!movieData.offers) {
+      res.status(404).json({
+        message: "No streaming services offering this movie (JustWatch)",
+      });
+      return;
+    }
+
     const streamingServices = movieData.offers.map(
       (offer) => offer.provider_id
     );
@@ -228,7 +234,8 @@ app.post("/api/wink", async (req, res) => {
       console.log(bestResult);
       res.status(200).json({
         message: "😉",
-        wink: `[${bestResult.Tracker}] ${bestResult.Title} - ${bestResult.Details}`,
+        text: `[${bestResult.Tracker}] ${bestResult.Title} - ${bestResult.Details}`,
+        url: bestResult.Details,
       });
     } else {
       res.status(404).json({ message: "No results found." });
