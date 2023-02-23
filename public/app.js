@@ -265,3 +265,50 @@ function showWinkElements() {
   const winkElements = document.querySelectorAll(".wink");
   winkElements.forEach((element) => (element.style.visibility = "visible"));
 }
+
+/** Automagically search movies */
+$(document).ready(() => {
+  const movies = new Bloodhound({
+    datumTokenizer: Bloodhound.tokenizers.whitespace,
+    queryTokenizer: Bloodhound.tokenizers.whitespace,
+    identify: (obj) => {
+      return obj.imdbID;
+    },
+    remote: {
+      url: "https://www.omdbapi.com/?s=%QUERY&apikey=dacba5fa",
+      wildcard: "%QUERY",
+      transform: (response) => {
+        return response.Search || [];
+      },
+      ajax: {
+        beforeSend: (xhr) => {
+          xhr.overrideMimeType("text/plain; charset=x-user-defined");
+        },
+      },
+    },
+  });
+
+  $("#movie-input")
+    .typeahead(
+      {
+        hint: true,
+        highlight: true,
+        minLength: 3,
+      },
+      {
+        name: "movies",
+        display: "Title",
+        source: movies,
+        templates: {
+          suggestion: (movie) => {
+            return "<div>" + movie.Title + " (" + movie.Year + ")</div>";
+          },
+        },
+      }
+    )
+    .on("typeahead:selected", (event, suggestion, dataset) => {
+      const year = suggestion.Year.match(/\d+/);
+      $("#year").val(year);
+      $("#title").val(suggestion.Title);
+    });
+});
