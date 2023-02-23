@@ -32,7 +32,9 @@ form.addEventListener("submit", (event) => {
         errorMessage.style.display = "";
         resultMessage.style.display = "none";
       } else {
-        resultMessage.innerHTML = `${response.message}`;
+        resultMessage.innerHTML = `${
+          response.message
+        }: ${response.streamingServices.join(", ")}`;
         resultMessage.style.display = "";
         errorMessage.style.display = "none";
       }
@@ -258,7 +260,7 @@ function rebuildTableFilter() {
 
 function showWinkElements() {
   const winkElements = document.querySelectorAll(".wink");
-  winkElements.forEach((element) => (element.style.visibility = "visible"));
+  winkElements.forEach((element) => (element.style.display = "block"));
 }
 
 /** Automagically search movies */
