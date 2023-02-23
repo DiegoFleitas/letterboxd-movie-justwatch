@@ -4,13 +4,27 @@
     <meta charset="UTF-8" />
     <title>Movie Search</title>
     <link href="/style.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- debug -->
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/corejs-typeahead/1.3.1/bloodhound.js"></script> -->
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/corejs-typeahead/1.3.1/typeahead.jquery.js"></script> -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/corejs-typeahead/1.3.1/bloodhound.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/corejs-typeahead/1.3.1/typeahead.jquery.min.js"></script>
   </head>
   <body>
     <div id="error-message" style="display: none"></div>
     <div id="result-message" style="display: none"></div>
     <form id="movie-form">
       <label for="title">English Movie Title:</label>
-      <input type="text" id="title" name="title" placeholder="Elvis" required />
+      <input type="text" id="movie-input" list="movie-suggestions" />
+      <input
+        type="text"
+        id="title"
+        name="title"
+        placeholder="Elvis"
+        required
+        hidden
+      />
       <label for="year">Year:</label>
       <input type="text" id="year" name="year" placeholder="2022" required />
       <label for="country">Country:</label>
