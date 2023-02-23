@@ -106,3 +106,7 @@ table th {
 .wink {
   visibility: hidden;
 }
+
+button.wink {
+  color: black;
+}
