@@ -1,0 +1,108 @@
+/* Apply some basic styles to the form */
+form {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  margin: 20px 0;
+  padding: 20px;
+}
+
+form > * {
+  padding: 10px;
+}
+
+form label {
+  margin-right: 10px;
+}
+
+form input[type="text"] {
+  padding: 5px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+form button {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-left: 10px;
+  padding: 10px;
+}
+
+form button:hover {
+  background-color: #3e8e41;
+}
+
+/* Style the table */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 20px 0;
+}
+
+table th,
+table td {
+  text-align: left;
+  padding: 8px;
+  border: 1px solid #ddd;
+}
+
+table th {
+  background-color: #f2f2f2;
+}
+
+/* Style the poster image */
+.poster {
+  max-width: 81px !important;
+}
+
+/* Style the error and result messages */
+#error-message,
+#result-message {
+  margin: 20px 0;
+  padding: 10px;
+  font-size: 16px;
+}
+
+#error-message {
+  background-color: #f44336;
+  color: white;
+}
+
+#result-message {
+  background-color: #4caf50;
+  color: white;
+}
+
+#service-picker {
+  float: right;
+  padding: 8px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 200px;
+  background-image: linear-gradient(to bottom, #ffffff, #f1f1f1);
+  background-repeat: repeat-x;
+  background-position: 0 100%;
+  background-size: 100% 1px;
+  -webkit-box-shadow: none;
+  box-shadow: none;
+  color: #555;
+}
+
+#service-picker option {
+  padding: 8px;
+  font-size: 16px;
+  background-color: white;
+  color: #555;
+}
+
+/* Style the 😉 elements */
+.wink {
+  visibility: hidden;
+}
