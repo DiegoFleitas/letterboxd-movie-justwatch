@@ -1,4 +1,5 @@
 const redis = require("redis");
+const crypto = require("crypto");
 
 require("dotenv").config();
 
@@ -31,14 +32,16 @@ const getRedisClient = async () => {
 
 // get a value from Redis cache
 const getCacheValue = async (key) => {
-  key += process.env.FLY_APP_NAME; // since upstash is shared, we need to namespace the keys
   const client = await getRedisClient();
   if (!client) {
     return null;
   }
   try {
-    const value = await client.get(key);
-    console.log(`[${new Date().toISOString()}] Get cache value for key ${key}`);
+    const hashedKey = getCacheKey(key);
+    const value = await client.get(hashedKey);
+    console.log(
+      `[${new Date().toISOString()}] Get cache value for key ${hashedKey} (${key})`
+    );
     try {
       return JSON.parse(value);
     } catch (error) {
@@ -46,7 +49,7 @@ const getCacheValue = async (key) => {
     }
   } catch (error) {
     console.log(
-      `[${new Date().toISOString()}] Error getting cache value for key ${key}`
+      `[${new Date().toISOString()}] Error getting cache value for key ${hashedKey} (${key})`
     );
     console.log(error);
     return null;
@@ -55,24 +58,31 @@ const getCacheValue = async (key) => {
 
 // set a value in Redis cache with a TTL (time-to-live) in seconds
 const setCacheValue = async (key, value, ttl = 60) => {
-  key += process.env.FLY_APP_NAME; // since upstash is shared, we need to namespace the keys
   const client = await getRedisClient();
   if (!client) {
     return null;
   }
   try {
     const serializedValue = JSON.stringify(value);
-    const result = await client.set(key, serializedValue, "EX", ttl);
+    const hashedKey = getCacheKey(key);
+    const result = await client.set(hashedKey, serializedValue, "EX", ttl);
     console.log(
-      `[${new Date().toISOString()}] Set cache value for key ${key} with TTL ${ttl} s`
+      `[${new Date().toISOString()}] Set cache value for key ${hashedKey} (${key}) with TTL ${ttl} s`
     );
     return result === "OK";
   } catch (error) {
     console.log(
-      `[${new Date().toISOString()}] Error setting cache value for key ${key} with TTL ${ttl} s`
+      `[${new Date().toISOString()}] Error setting cache value for key ${hashedKey} (${key}) with TTL ${ttl} s`
     );
     console.log(error);
   }
+};
+
+const getCacheKey = (str) => {
+  const hash = crypto.createHash("sha256");
+  hash.update(str);
+  // since upstash is shared, we need to namespace the keys
+  return `${process.env.FLY_APP_NAME}:${hash.digest("hex")}`;
 };
 
 module.exports = { getCacheValue, setCacheValue };
