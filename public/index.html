@@ -12,85 +12,109 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/corejs-typeahead/1.3.1/typeahead.jquery.min.js"></script>
   </head>
   <body>
-    <div class="image-container">
-      <img class="logo" src="/logo.png" alt="logo" />
-      <div class="diagonal-text-container">
-        <p>Better</p>
+    <div class="wrapper">
+      <div class="top-section">
+        <!-- content for the top section goes here -->
+        <div class="image-container">
+          <img class="logo" src="/logo.png" alt="logo" />
+          <div class="diagonal-text-container">
+            <p>Better</p>
+          </div>
+        </div>
+        <div id="error-message" style="display: none"></div>
+        <div id="result-message" style="display: none"></div>
+        <form id="movie-form">
+          <label for="title">English Movie Title:</label>
+          <input type="text" id="movie-input" list="movie-suggestions" />
+          <input
+            type="text"
+            id="title"
+            name="title"
+            placeholder="Elvis"
+            required
+            style="display: none"
+          />
+          <label for="year">Year:</label>
+          <input
+            type="text"
+            id="year"
+            name="year"
+            placeholder="2022"
+            required
+          />
+          <label for="country">Country:</label>
+          <select id="country" name="country">
+            <option value="de_DE">Germany</option>
+            <option value="en_US">USA</option>
+            <option value="en_CA">Canada</option>
+            <option value="en_GB">United Kingdom</option>
+            <option value="es_MX">Mexico</option>
+            <option value="de_AT">Austria</option>
+            <option value="fr_FR">France</option>
+            <option value="es_ES">Spain</option>
+            <option value="de_CH">Switzerland</option>
+            <option value="ja_JP">Japan</option>
+            <option value="pt_BR">Brazil</option>
+            <option value="es_AR">Argentina</option>
+            <option value="en_AU">Australia</option>
+            <option value="it_IT">Italy</option>
+            <option value="es_UY" selected>Uruguay</option>
+          </select>
+          <button type="submit">Search</button>
+          <button onclick="alternativeSearchWink(event)" class="wink">
+            😉
+          </button>
+        </form>
       </div>
-    </div>
-    <div id="error-message" style="display: none"></div>
-    <div id="result-message" style="display: none"></div>
-    <form id="movie-form">
-      <label for="title">English Movie Title:</label>
-      <input type="text" id="movie-input" list="movie-suggestions" />
-      <input
-        type="text"
-        id="title"
-        name="title"
-        placeholder="Elvis"
-        required
-        style="display: none"
-      />
-      <label for="year">Year:</label>
-      <input type="text" id="year" name="year" placeholder="2022" required />
-      <label for="country">Country:</label>
-      <select id="country" name="country">
-        <option value="de_DE">Germany</option>
-        <option value="en_US">USA</option>
-        <option value="en_CA">Canada</option>
-        <option value="en_GB">United Kingdom</option>
-        <option value="es_MX">Mexico</option>
-        <option value="de_AT">Austria</option>
-        <option value="fr_FR">France</option>
-        <option value="es_ES">Spain</option>
-        <option value="de_CH">Switzerland</option>
-        <option value="ja_JP">Japan</option>
-        <option value="pt_BR">Brazil</option>
-        <option value="es_AR">Argentina</option>
-        <option value="en_AU">Australia</option>
-        <option value="it_IT">Italy</option>
-        <option value="es_UY" selected>Uruguay</option>
-      </select>
-      <button type="submit">Search</button>
-      <button onclick="alternativeSearchWink(event)" class="wink">😉</button>
-    </form>
-    <hr />
-    <div style="display: flex; justify-content: center">
-      <a href="https://letterboxd.com/data/export/">Export letterboxd data ⮫</a>
-    </div>
-    <form id="letterboxd-watchlist-form" enctype="multipart/form-data">
-      <div style="display: block ruby">
-        <label for="watchlist">Upload letterboxd data:</label>
-        <input
-          type="file"
-          id="watchlist"
-          name="watchlist"
-          accept=".zip"
-          required
-        />
-        <button type="submit">Submit</button>
+      <hr />
+
+      <div class="bottom-section">
+        <!-- content for the bottom section goes here -->
+        <div style="display: flex; justify-content: center">
+          <a href="https://letterboxd.com/data/export/"
+            >Export letterboxd data ⮫</a
+          >
+        </div>
+        <form id="letterboxd-watchlist-form" enctype="multipart/form-data">
+          <div style="display: block ruby">
+            <label for="watchlist">Upload letterboxd data:</label>
+            <input
+              type="file"
+              id="watchlist"
+              name="watchlist"
+              accept=".zip"
+              required
+            />
+            <button type="submit">Submit</button>
+          </div>
+        </form>
+        <table>
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Year</th>
+              <th>Poster</th>
+              <th>Streaming Services</th>
+              <th class="wink">😉</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
       </div>
-    </form>
-    <table>
-      <thead>
-        <tr>
-          <th>Title</th>
-          <th>Year</th>
-          <th>Poster</th>
-          <th>Streaming Services</th>
-          <th class="wink">😉</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-    <hr />
-    <p class="foot-notes">
-      This site helps you find where to watch movies, not TV shows. It checks
-      everything with JustWatch API and themoviedb to make sure it's accurate.
-      If it can't find the movie you want, it won't suggest random stuff. Oh,
-      and don't download from torrent sites because it's not cool with copyright
-      laws or something like that. 😉😉😉
-    </p>
+      <hr />
+
+      <footer>
+        <!-- content for the footer goes here -->
+        <p class="foot-notes">
+          This site helps you find where to watch movies, not TV shows. It
+          checks everything with JustWatch API and themoviedb to make sure it's
+          accurate. If it can't find the movie you want, it won't suggest random
+          stuff. Oh, and don't download from torrent sites because it's not cool
+          with copyright laws or something like that. 😉😉😉
+        </p>
+      </footer>
+    </div>
+
     <script src="/app.js"></script>
   </body>
 </html>

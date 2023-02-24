@@ -1,13 +1,14 @@
-/* Global styles */
 /* Import Roboto font from Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
 
-/* Set Roboto as the default font for the page */
+
+/* Global styles */
 body {
   background-color: #060d17;
   color: #d9e8ed;
   font-family: 'Roboto', sans-serif;
 }
+
 /* Form styles */
 form {
   display: flex;
@@ -17,9 +18,13 @@ form {
   margin: 20px auto;
   max-width: 800px;
 }
+
 label {
   margin-right: 10px;
+  display: block;
+  margin-bottom: 5px;
 }
+
 input[type="text"], select {
   width: 97%;
   margin: 10px 0;
@@ -30,12 +35,14 @@ input[type="text"], select {
   color: #888b8e;
   background-color: #10161d;
 }
+
 input[type="text"]:focus, select:focus {
   outline: none;
   background-color: #10161d;
   color: #888b8e;
   box-shadow: 0px 0px 5px #10161d;
 }
+
 button[type="submit"], button.wink {
   margin: 10px;
   padding: 10px 20px;
@@ -48,21 +55,27 @@ button[type="submit"], button.wink {
   font-family: 'Roboto', sans-serif;
   cursor: pointer;
 }
-.wink {
+
+button.wink {
   display: none;
   box-shadow: 0px 0px 5px #bbb;
   background-color: black !important;
+  font-size: 20px;
 }
+
 button[type="submit"]:hover, button.wink:hover {
   font-weight: bold;
   color: #10161d;
   font-family: 'Roboto', sans-serif;
   background-color: #fbc500;
 }
-a {
-  color: #78a6b8;
-  outline: 0 !important;
+
+.wink {
+  display: none;
+  box-shadow: 0px 0px 5px #bbb;
+  background-color: black !important;
 }
+
 /* Table styles */
 table {
   margin: 20px auto;
@@ -72,20 +85,16 @@ table {
   background-color: #10161d;
   box-shadow: 0px 0px 5px #bbb;
 }
-th, td {
-  text-align: center;
-  padding: 10px;
-}
+
 th {
   background-color: #222c38;
   color: #10161d;
 }
+
 tr:nth-child(even) {
   background-color: #10161d;
 }
-.wink {
-  font-size: 20px;
-}
+
 /* Message styles */
 #error-message, #result-message {
   margin: 20px auto;
@@ -94,25 +103,31 @@ tr:nth-child(even) {
   border-radius: 5px;
   text-align: center;
 }
+
 #error-message {
   background-color: #fccf41;
   color: #10161d;
 }
+
 #result-message {
   background-color: #fccf41;
   color: #10161d;
 }
+
 label {
   display: block;
   margin-bottom: 5px;
 }
+
 #year {
   margin-top: 10px;
 }
+
 label[for="year"] {
   display: block;
   margin-top: 10px;
 }
+
 .tt-suggestion {
   background-color: #10161d;
   color: #333;
@@ -120,22 +135,27 @@ label[for="year"] {
   padding: 5px 10px;
   border-radius: 5px;
 }
+
 .tt-suggestion:hover {
   background-color: #10161d;
 }
+
 label {
   display: block;
   margin-bottom: 5px;
 }
+
 .twitter-typeahead {
   position: relative;
   display: inline-block;
   width: 100%;
 }
+
 .tt-input {
   width: 100%;
   box-sizing: border-box;
 }
+
 .tt-menu {
   position: absolute;
   top: 100%;
@@ -144,6 +164,7 @@ label {
   display: none;
   width: 100%;
 }
+
 #letterboxd-watchlist-form {
   border: none;
   padding: 10px;
@@ -173,8 +194,44 @@ img.logo {
   color: #a11818;
   z-index: 1;
 }
+
 .foot-notes {
   text-align: center;
   font-size: 12px;
   color: #78a6b8;
+}
+
+a {
+  color: #78a6b8;
+  outline: 0 !important;
+}
+
+.wrapper {
+  display: grid;
+  grid-template-rows: 4fr 0fr 4fr 0fr;
+  /* set the height of the top and bottom sections to 4fr and 0fr respectively */
+  height: 100vh;
+  /* set the height of the wrapper to 100% of the viewport height */
+}
+
+.bottom-section {
+  display: flex;
+  /* use flexbox to center the content of the bottom section */
+  flex-direction: column;
+  /* align the content vertically */
+  justify-content: center;
+  /* center the content vertically */
+  align-items: center;
+  /* center the content horizontally */
+}
+
+hr {
+  border: none;
+  /* remove the default border */
+  height: 1px;
+  /* set the height of the line */
+  background-color: #ccc;
+  /* set the color of the line */
+  margin: 0;
+  /* remove any margin */
 }
