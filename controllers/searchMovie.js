@@ -35,6 +35,9 @@ const searchMovie = async (req, res) => {
     const justWatchResponse = await axios.get(
       `${PROXY}https://api.justwatch.com/content/titles/${countryCode}/popular?body={"query": "${title} ${year}"}`
     );
+
+    // Search for movie data in the JustWatch response based on the movie ID from MovieDB API
+    // This is done to filter out movies JustWatch "suggests" but are not necessarily the same movie
     const movieData = justWatchResponse.data.items.find((item) => {
       const tmdbId = item.scoring.find(
         (score) => score.provider_type === "tmdb:id"
@@ -54,7 +57,14 @@ const searchMovie = async (req, res) => {
       return;
     }
 
-    let streamingServices = movieData.offers.map((offer) => offer.provider_id);
+    let streamingServices = movieData.offers
+      .filter(
+        (offer) =>
+          offer.monetization_type === "flatrate" ||
+          offer.monetization_type === "free" ||
+          offer.monetization_type === "ads"
+      )
+      .map((offer) => offer.provider_id);
     streamingServices = [...new Set(streamingServices)];
 
     // Get clear names for streaming services
