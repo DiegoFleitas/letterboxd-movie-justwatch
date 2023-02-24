@@ -12,3 +12,4 @@
 
 # misc
 *.log
+/scripts
