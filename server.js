@@ -52,7 +52,7 @@ app.post("/api/search-movie", async (req, res) => {
     const movieDbData = movieDbResponse.data.results[0];
 
     if (!movieDbData) {
-      res.status(404).json({ message: "Movie not found" });
+      res.status(404).json({ error: "Movie not found" });
       return;
     }
 
@@ -73,20 +73,19 @@ app.post("/api/search-movie", async (req, res) => {
     });
 
     if (!movieData) {
-      res.status(404).json({ message: "Movie not found" });
+      res.status(404).json({ error: "Movie not found" });
       return;
     }
 
     if (!movieData.offers || !movieData.offers.length) {
       res.status(404).json({
-        message: "No streaming services offering this movie (JustWatch)",
+        error: "No streaming services offering this movie (JustWatch)",
       });
       return;
     }
 
-    const streamingServices = movieData.offers.map(
-      (offer) => offer.provider_id
-    );
+    let streamingServices = movieData.offers.map((offer) => offer.provider_id);
+    streamingServices = [...new Set(streamingServices)];
 
     // Get clear names for streaming services
     const providerResponse = await axios.get(
@@ -99,9 +98,19 @@ app.post("/api/search-movie", async (req, res) => {
         return provider ? provider.clear_name : null;
       })
       .filter((name) => name !== null);
+
+    if (!clearNames || !clearNames.length) {
+      res.status(404).json({
+        error: `Unable to identify providers offering media. Provider id(s): ${streamingServices.join(
+          ", "
+        )} (JustWatch)`,
+      });
+      return;
+    }
+
     res.status(200).json({
       message: "Movie found",
-      streamingServices: [...new Set(clearNames)],
+      streamingServices: clearNames,
     });
   } catch (err) {
     console.log(err);
@@ -126,7 +135,7 @@ app.post("/api/poster", async (req, res) => {
 
     if (!title) {
       console.log("No movie title");
-      res.status(404).json({ message: "Movie not found" });
+      res.status(404).json({ error: "Movie not found" });
       return;
     }
     const response = await axios.get(
@@ -238,7 +247,7 @@ app.post("/api/wink", async (req, res) => {
         url: bestResult.Details,
       });
     } else {
-      res.status(404).json({ message: "No results found." });
+      res.status(404).json({ error: "No results found." });
     }
   } catch (error) {
     // If there is an error, send an error response
