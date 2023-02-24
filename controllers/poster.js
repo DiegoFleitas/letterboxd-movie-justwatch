@@ -1,5 +1,6 @@
 const axios = require("../helpers/axios");
 const { getCacheValue, setCacheValue } = require("../helpers/redis");
+const cacheTtl = process.env.CACHE_TTL || 60; // seconds
 
 const poster = async (req, res) => {
   const omdbApiKey = process.env.OMDB_API_KEY;
