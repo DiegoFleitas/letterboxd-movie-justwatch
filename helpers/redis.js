@@ -49,7 +49,7 @@ const getCacheValue = async (key) => {
     }
   } catch (error) {
     console.log(
-      `[${new Date().toISOString()}] Error getting cache value for key ${hashedKey} (${key})`
+      `[${new Date().toISOString()}] Error getting cache value for key (${key})`
     );
     console.log(error);
     return null;
@@ -72,7 +72,7 @@ const setCacheValue = async (key, value, ttl = 60) => {
     return result === "OK";
   } catch (error) {
     console.log(
-      `[${new Date().toISOString()}] Error setting cache value for key ${hashedKey} (${key}) with TTL ${ttl} s`
+      `[${new Date().toISOString()}] Error setting cache value for key (${key}) with TTL ${ttl} s`
     );
     console.log(error);
   }

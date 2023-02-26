@@ -14,8 +14,9 @@ const wink = async (req, res) => {
     const cacheKey = `jackett:${searchQuery}:`;
     const cachedResponse = await getCacheValue(cacheKey);
     if (cachedResponse) {
+      const status = cachedResponse.error ? 404 : 200;
       console.log("Response found (cached)");
-      res.status(200).json(cachedResponse);
+      res.status(status).json(cachedResponse);
       return;
     }
 

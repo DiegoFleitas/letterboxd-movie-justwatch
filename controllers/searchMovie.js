@@ -1,14 +1,24 @@
 const axios = require("../helpers/axios");
+const { getCacheValue, setCacheValue } = require("../helpers/redis");
+const cacheTtl = process.env.CACHE_TTL || 3600; // 1h (seconds)
 
 const searchMovie = async (req, res) => {
   try {
-    console.log("got here api/search-movie");
     const { title, year } = req.body;
     const countryCode = req.body.country || "es_UY";
 
     if (!title) {
       console.log("No movie title");
       res.status(404).json({ message: "Movie not found" });
+      return;
+    }
+
+    const cacheKey = `search-movie:${title}:${year}:${countryCode}`;
+    const cachedResponse = await getCacheValue(cacheKey);
+    if (cachedResponse) {
+      const status = cachedResponse.error ? 404 : 200;
+      console.log("Response found (cached)");
+      res.status(status).json(cachedResponse);
       return;
     }
 
@@ -24,7 +34,9 @@ const searchMovie = async (req, res) => {
     const movieDbData = movieDbResponse.data.results[0];
 
     if (!movieDbData) {
-      res.status(404).json({ error: "Movie not found" });
+      const response = { error: "Movie not found" };
+      await setCacheValue(cacheKey, response, cacheTtl);
+      res.status(404).json(response);
       return;
     }
 
@@ -46,14 +58,18 @@ const searchMovie = async (req, res) => {
     });
 
     if (!movieData) {
-      res.status(404).json({ error: "Movie not found" });
+      const response = { error: "Movie not found" };
+      await setCacheValue(cacheKey, response, cacheTtl);
+      res.status(404).json(response);
       return;
     }
 
     if (!movieData.offers || !movieData.offers.length) {
-      res.status(404).json({
+      const response = {
         error: "No streaming services offering this movie (JustWatch)",
-      });
+      };
+      await setCacheValue(cacheKey, response, cacheTtl);
+      res.status(404).json(response);
       return;
     }
 
@@ -80,18 +96,21 @@ const searchMovie = async (req, res) => {
       .filter((name) => name !== null);
 
     if (!clearNames || !clearNames.length) {
-      res.status(404).json({
-        error: `Unable to identify providers offering media. Provider id(s): ${streamingServices.join(
-          ", "
-        )} (JustWatch)`,
-      });
+      const services = streamingServices.join(", ");
+      const response = {
+        error: `Unable to identify providers offering media. Provider id(s): ${services} (JustWatch)`,
+      };
+      await setCacheValue(cacheKey, response, cacheTtl);
+      res.status(404).json(response);
       return;
     }
 
-    res.status(200).json({
+    const response = {
       message: "Movie found",
       streamingServices: clearNames,
-    });
+    };
+    await setCacheValue(cacheKey, response, cacheTtl);
+    res.status(200).json(response);
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: "Internal Server Error" });
