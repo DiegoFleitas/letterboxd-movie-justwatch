@@ -243,6 +243,7 @@ hr {
 
 img.poster {
   padding: 10px;
+  max-width: 320px;
 }
 
 a.link {

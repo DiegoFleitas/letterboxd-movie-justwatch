@@ -88,9 +88,11 @@ letterboxdWatchlistForm.addEventListener("submit", (event) => {
               resultMessage.innerHTML = `${response.message}`;
               resultMessage.style.display = "";
               errorMessage.style.display = "none";
-              response.link = element.link;
-              rebuildTable(element.title, element.year, response);
             }
+            response.link = element.link;
+            if (!response.poster || response.poster == "N/A")
+              response.poster = "/movie_placeholder.svg";
+            rebuildTable(element.title, element.year, response);
           })
           .catch((error) => console.error(error));
         // Perform the fetch request

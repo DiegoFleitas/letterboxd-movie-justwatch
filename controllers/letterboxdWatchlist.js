@@ -2,6 +2,7 @@ const AdmZip = require("adm-zip");
 const csv = require("csv-parser");
 const { Readable } = require("stream");
 
+// Note: letterboxd Watchlist might have empty year for unreleased movies
 const letterboxdWatchlist = async (req, res) => {
   try {
     const file = req.file;
