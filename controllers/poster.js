@@ -25,7 +25,7 @@ const poster = async (req, res) => {
     const response = await axios.get(
       `http://www.omdbapi.com/?t=${title}&y=${year}&apikey=${omdbApiKey}`
     );
-    const { poster } = response.data;
+    const { Poster: poster } = response.data;
     await setCacheValue(cacheKey, poster, cacheTtl);
     res.status(200).json({
       message: "Poster found",
