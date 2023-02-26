@@ -67,7 +67,5 @@ app.post("/api/wink", async (req, res) => {
 });
 
 app.listen(port, () =>
-  console.log(
-    `justwatch-done-right app listening on port http://localhost:${port}`
-  )
+  console.log(`app listening on port http://localhost:${port}`)
 );
