@@ -26,7 +26,7 @@ const poster = async (req, res) => {
     const response = await axios.get(
       `http://www.omdbapi.com/?t=${encodedTitle}&y=${year}&apikey=${omdbApiKey}`
     );
-    if (!response || response.Error) {
+    if (!response.data || response.data.Error) {
       console.log("Movie not found", response?.Error);
       res.status(404).json({ error: "Movie not found" });
       return;
