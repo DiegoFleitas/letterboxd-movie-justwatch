@@ -61,6 +61,7 @@ letterboxdWatchlistForm.addEventListener("submit", (event) => {
       const transformedData = data.map((item) => ({
         title: item.Name,
         year: item.Year,
+        link: item["Letterboxd URI"],
       }));
       console.log(transformedData);
       for (let index = 0; index < transformedData.length; index++) {
@@ -72,7 +73,7 @@ letterboxdWatchlistForm.addEventListener("submit", (event) => {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(element),
+          body: JSON.stringify({ title: element.title, year: element.year }),
         })
           .then((response) => response.json())
           .then((response) => {
@@ -87,6 +88,7 @@ letterboxdWatchlistForm.addEventListener("submit", (event) => {
               resultMessage.innerHTML = `${response.message}`;
               resultMessage.style.display = "";
               errorMessage.style.display = "none";
+              response.link = element.link;
               rebuildTable(element.title, element.year, response);
             }
           })
@@ -192,7 +194,9 @@ function rebuildTable(title, year, data) {
   tdTitle.textContent = title;
   tdYear.textContent = year;
   if (data.poster)
-    tdImg.innerHTML = `<img class="poster" src="${data.poster}" />`;
+    tdImg.innerHTML = `<a href="${data.link}" target="_blank">
+    <img class="poster" src="${data.poster}" />
+    </a>`;
 
   tdStreaming.textContent = data.streamingServices
     ? data.streamingServices.join(", ")
