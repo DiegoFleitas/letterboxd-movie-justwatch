@@ -9,8 +9,7 @@ const searchMovie = async (req, res) => {
 
     if (!title) {
       console.log("No movie title");
-      res.status(404).json({ message: "Movie not found" });
-      return;
+      return res.status(404).json({ message: "Movie not found" });
     }
 
     const cacheKey = `search-movie:${title}:${year}:${countryCode}`;
@@ -18,8 +17,7 @@ const searchMovie = async (req, res) => {
     if (cachedResponse) {
       const status = cachedResponse.error ? 404 : 200;
       console.log("Response found (cached)");
-      res.status(status).json(cachedResponse);
-      return;
+      return res.status(status).json(cachedResponse);
     }
 
     const movieDbAPIKey = process.env.MOVIE_DB_API_KEY;
@@ -37,8 +35,7 @@ const searchMovie = async (req, res) => {
     if (!movieDbData) {
       const response = { error: "Movie not found" };
       await setCacheValue(cacheKey, response, cacheTtl);
-      res.status(404).json(response);
-      return;
+      return res.status(404).json(response);
     }
 
     // Get title and year from MovieDB API
@@ -61,8 +58,7 @@ const searchMovie = async (req, res) => {
     if (!movieData) {
       const response = { error: "Movie not found" };
       await setCacheValue(cacheKey, response, cacheTtl);
-      res.status(404).json(response);
-      return;
+      return res.status(404).json(response);
     }
 
     if (!movieData.offers || !movieData.offers.length) {
@@ -70,8 +66,7 @@ const searchMovie = async (req, res) => {
         error: "No streaming services offering this movie (JustWatch)",
       };
       await setCacheValue(cacheKey, response, cacheTtl);
-      res.status(404).json(response);
-      return;
+      return res.status(404).json(response);
     }
 
     let streamingServices = movieData.offers
@@ -102,8 +97,7 @@ const searchMovie = async (req, res) => {
         error: `Unable to identify providers offering media. Provider id(s): ${services} (JustWatch)`,
       };
       await setCacheValue(cacheKey, response, cacheTtl);
-      res.status(404).json(response);
-      return;
+      return res.status(404).json(response);
     }
 
     const response = {
