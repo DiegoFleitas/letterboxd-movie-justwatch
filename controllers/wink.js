@@ -1,4 +1,6 @@
 const axios = require("../helpers/axios");
+const { getCacheValue, setCacheValue } = require("../helpers/redis");
+const cacheTtl = process.env.CACHE_TTL || 3600; // 1h (seconds)
 
 const wink = async (req, res) => {
   const { title, year } = req.body;
@@ -9,6 +11,14 @@ const wink = async (req, res) => {
   const searchQuery = `${title} ${year}`.replace(" ", "+");
 
   try {
+    const cacheKey = `jackett:${searchQuery}:`;
+    const cachedResponse = await getCacheValue(cacheKey);
+    if (cachedResponse) {
+      console.log("Response found (cached)");
+      res.status(200).json(cachedResponse);
+      return;
+    }
+
     const { data } = await axios.get(
       `https://j4cke77-4hd43d19pe6d5bt7.fly.dev/api/v2.0/indexers/all/results?Query=${searchQuery}&Category=2000&apikey=${jackettApiKey}`
     );
@@ -27,13 +37,17 @@ const wink = async (req, res) => {
 
     if (bestResult) {
       console.log(bestResult);
-      res.status(200).json({
+      const response = {
         message: "😉",
         text: `[${bestResult.Tracker}] ${bestResult.Title} - ${bestResult.Details}`,
         url: bestResult.Details,
-      });
+      };
+      await setCacheValue(cacheKey, response, cacheTtl);
+      res.status(200).json(response);
     } else {
-      res.status(404).json({ error: "No results found." });
+      const response = { error: "No results found." };
+      await setCacheValue(cacheKey, response, cacheTtl);
+      res.status(404).json(response);
     }
   } catch (error) {
     // If there is an error, send an error response
