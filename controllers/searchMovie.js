@@ -26,8 +26,9 @@ const searchMovie = async (req, res) => {
     const PROXY = "";
 
     // Search for movie on MovieDB API
+    let encodedTitle = encodeURIComponent(title);
     const movieDbResponse = await axios.get(
-      `${PROXY}https://api.themoviedb.org/3/search/movie?query=${title}${
+      `${PROXY}https://api.themoviedb.org/3/search/movie?query=${encodedTitle}${
         year ? `&year=${year}` : ""
       }&api_key=${movieDbAPIKey}`
     );
@@ -45,7 +46,7 @@ const searchMovie = async (req, res) => {
 
     // Search for movie on JustWatch API using title and year
     const justWatchResponse = await axios.get(
-      `${PROXY}https://api.justwatch.com/content/titles/${countryCode}/popular?body={"query": "${title} ${year}"}`
+      `${PROXY}https://api.justwatch.com/content/titles/${countryCode}/popular?body={"query": "${encodedTitle} ${year}"}`
     );
 
     // Search for movie data in the JustWatch response based on the movie ID from MovieDB API

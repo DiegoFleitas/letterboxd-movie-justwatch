@@ -22,8 +22,9 @@ const poster = async (req, res) => {
       res.status(404).json({ error: "Movie not found" });
       return;
     }
+    let encodedTitle = encodeURIComponent(title);
     const response = await axios.get(
-      `http://www.omdbapi.com/?t=${title}&y=${year}&apikey=${omdbApiKey}`
+      `http://www.omdbapi.com/?t=${encodedTitle}&y=${year}&apikey=${omdbApiKey}`
     );
     const { Poster: poster } = response.data;
     await setCacheValue(cacheKey, poster, cacheTtl);
