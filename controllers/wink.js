@@ -16,8 +16,7 @@ const wink = async (req, res) => {
     if (cachedResponse) {
       const status = cachedResponse.error ? 404 : 200;
       console.log("Response found (cached)");
-      res.status(status).json(cachedResponse);
-      return;
+      return res.status(status).json(cachedResponse);
     }
 
     const { data } = await axios.get(
