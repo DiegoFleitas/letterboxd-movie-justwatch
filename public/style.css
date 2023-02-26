@@ -26,7 +26,8 @@ label {
 }
 
 input[type="text"], select {
-  width: 97%;
+  width: -moz-available;
+  width: -webkit-fill-available;
   margin: 10px 0;
   padding: 10px;
   font-size: 16px;
@@ -93,6 +94,10 @@ th {
 
 tr:nth-child(even) {
   background-color: #10161d;
+}
+
+tr {
+  text-align: center;
 }
 
 /* Message styles */
@@ -234,4 +239,12 @@ hr {
   /* set the color of the line */
   margin: 0;
   /* remove any margin */
+}
+
+img.poster {
+  padding: 10px;
+}
+
+a.link {
+  padding: 10px;
 }
