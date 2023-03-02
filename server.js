@@ -28,6 +28,11 @@ app.use(bodyParser.urlencoded({ extended: false }));
 // parse application/json
 app.use(bodyParser.json());
 
+// healthcheck endpoint
+app.get("/healthcheck", (req, res) => {
+  res.status(200).send("OK");
+});
+
 app.post("/api/search-movie", async (req, res) => {
   return searchMovie(req, res);
 });
