@@ -5,6 +5,20 @@ require("dotenv").config();
 
 let redisClient = null;
 
+const isHealthy = async () => {
+  const client = await getRedisClient();
+  if (!client) {
+    return false;
+  }
+  try {
+    const result = await client.ping();
+    return result === "PONG";
+  } catch (error) {
+    console.log(error);
+    return false;
+  }
+};
+
 // create a Redis client instance if it doesn't exist, or return the existing one
 const getRedisClient = async () => {
   if (!redisClient) {
@@ -13,18 +27,17 @@ const getRedisClient = async () => {
         url: process.env.FLYIO_REDIS_URL,
       };
       console.log(options);
-      redisClient = redis.createClient(options);
+      redisClient = redis
+        .createClient(options)
+        .on("error", (err) => {
+          console.log("Redis connection error", err);
+        })
+        .on("connect", () => {
+          console.log("Connected to Redis");
+        });
       await redisClient.connect();
     } catch (error) {
       console.log(error);
-      throw error;
-    }
-  } else {
-    try {
-      await redisClient.ping();
-    } catch (error) {
-      redisClient = null;
-      console.log("Redis connection lost", error);
     }
   }
   return redisClient;
@@ -85,4 +98,4 @@ const getCacheKey = (str) => {
   return `${process.env.FLY_APP_NAME}:${hash.digest("hex")}`;
 };
 
-module.exports = { getCacheValue, setCacheValue };
+module.exports = { getCacheValue, setCacheValue, isHealthy };

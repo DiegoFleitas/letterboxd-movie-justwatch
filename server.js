@@ -9,6 +9,7 @@ const {
   letterboxdWatchlist,
   wink,
 } = require("./controllers");
+const { isHealthy } = require("./helpers/redis");
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -31,6 +32,15 @@ app.use(bodyParser.json());
 // healthcheck endpoint
 app.get("/healthcheck", (req, res) => {
   res.status(200).send("OK");
+});
+
+// redis healthcheck endpoint
+app.get("/redis-healthcheck", async (req, res) => {
+  if (await isHealthy()) {
+    res.status(200).send("OK");
+  } else {
+    res.status(500).send("Redis is not healthy");
+  }
 });
 
 app.post("/api/search-movie", async (req, res) => {
