@@ -8,6 +8,11 @@ processes = []
 [env]
   PORT = "8080"
 
+[healthchecks]
+  interval = "10s"
+  timeout = "2s"
+  http = "http://localhost:$PORT/healthcheck"
+
 [experimental]
   auto_rollback = true
 
