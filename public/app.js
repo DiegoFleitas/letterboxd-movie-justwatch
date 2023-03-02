@@ -18,6 +18,9 @@ form.addEventListener("submit", (event) => {
     body: JSON.stringify(data),
   })
     .then((response) => {
+      if (response.status === 502) {
+        console.error(response);
+      }
       if (response.status === 404) {
         showWinkElements();
       }
@@ -104,6 +107,9 @@ letterboxdWatchlistForm.addEventListener("submit", (event) => {
           body: JSON.stringify(element),
         })
           .then((response) => {
+            if (response.status === 502) {
+              console.error(response);
+            }
             if (response.status === 404) {
               showWinkElements();
             }
