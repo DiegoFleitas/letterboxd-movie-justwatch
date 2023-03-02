@@ -8,16 +8,10 @@ processes = []
 [env]
   PORT = "8080"
 
-[healthchecks]
-  interval = "10s"
-  timeout = "2s"
-  http = "http://localhost:$PORT/healthcheck"
-
 [experimental]
   auto_rollback = true
 
 [[services]]
-  http_checks = []
   internal_port = 8080
   processes = ["app"]
   protocol = "tcp"
@@ -41,3 +35,14 @@ processes = []
     interval = "15s"
     restart_limit = 10 # after 10 consecutive failures, the vm will be restarted
     timeout = "2s"
+
+  [[services.http_checks]]
+    interval = 10000
+    grace_period = "1s"
+    method = "get"
+    path = "/healthcheck"
+    protocol = "http"
+    restart_limit = 10
+    timeout = 2000
+    tls_skip_verify = false
+    [services.http_checks.headers]
