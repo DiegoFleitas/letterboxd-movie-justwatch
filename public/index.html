@@ -2,6 +2,7 @@
 <html>
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Movie Search</title>
     <link href="/style.css" rel="stylesheet" />
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -70,13 +71,13 @@
 
       <div class="bottom-section">
         <!-- content for the bottom section goes here -->
-        <div style="display: flex; justify-content: center">
+        <div class="bottom-section-content">
           <a class="link" href="https://letterboxd.com/data/export/"
             >Export letterboxd data ⮫</a
           >
         </div>
         <form id="letterboxd-watchlist-form" enctype="multipart/form-data">
-          <div style="display: block ruby">
+          <div>
             <label for="watchlist">Upload letterboxd data:</label>
             <input
               type="file"

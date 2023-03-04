@@ -251,7 +251,7 @@ function rebuildTableFilter() {
       Array.from(table.querySelectorAll("td:nth-of-type(4)")).forEach((td) => {
         const streamingServices = td.textContent;
         if (streamingServices.includes(selectedService)) {
-          td.parentElement.style.display = "table-row";
+          td.parentElement.style.display = "";
         } else {
           td.parentElement.style.display = "none";
         }

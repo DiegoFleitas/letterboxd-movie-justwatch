@@ -2,11 +2,66 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
 
 
+/* Adjust layout for screens less than 768px wide */
+@media screen and (max-width: 767px) {
+  body {
+    font-size: 18px !important;
+    line-height: 1.5 !important;
+  }
+
+  .wrapper {
+    display: flex !important;
+    flex-direction: column !important;
+    height: auto !important;
+  }
+
+  .top-section {
+    flex: 1 !important;
+  }
+
+  form {
+    flex-direction: column !important;
+  }
+
+  label {
+    margin-right: 0 !important;
+    margin-bottom: 0.5em !important;
+  }
+
+  input[type="text"], select {
+    margin: 10px 0 20px !important;
+  }
+
+  button[type="submit"], button.wink {
+    margin: 10px 0 !important;
+  }
+
+  table th,
+  table td {
+    padding: 5px;
+    font-size: 14px;
+  }
+
+  #service-picker {
+    width: 100%;
+    box-sizing: border-box;
+    margin: 10px 0;
+    font-size: 14px;
+  }
+
+  img.poster {
+    width: 100%;
+    height: auto;
+  }
+}
+
 /* Global styles */
 body {
   background-color: #060d17;
   color: #d9e8ed;
   font-family: 'Roboto', sans-serif;
+  font-size: 18px;
+  line-height: 1.5;
 }
 
 /* Form styles */
@@ -15,14 +70,15 @@ form {
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  margin: 20px auto;
-  max-width: 800px;
+  margin: 10px 0;
+  padding: 1em;
 }
 
 label {
   margin-right: 10px;
   display: block;
   margin-bottom: 5px;
+  font-size: 18px;
 }
 
 input[type="text"], select {
@@ -30,7 +86,7 @@ input[type="text"], select {
   width: -webkit-fill-available;
   margin: 10px 0;
   padding: 10px;
-  font-size: 16px;
+  font-size: 20px;
   border-radius: 5px;
   border: none;
   color: #888b8e;
@@ -47,7 +103,7 @@ input[type="text"]:focus, select:focus {
 button[type="submit"], button.wink {
   margin: 10px;
   padding: 10px 20px;
-  font-size: 16px;
+  font-size: 20px;
   border-radius: 5px;
   border: none;
   background-color: #fbc500;
@@ -81,32 +137,37 @@ button[type="submit"]:hover, button.wink:hover {
 table {
   margin: 20px auto;
   border-collapse: collapse;
-  width: 100%;
-  max-width: 1000px;
+  width: 100% auto;
+  max-width: 100%;
   background-color: #10161d;
   box-shadow: 0px 0px 5px #bbb;
 }
 
-th {
+table th,
+table td {
+  padding: 10px;
+  text-align: left;
+  vertical-align: top;
   background-color: #222c38;
-  color: #10161d;
+  color: #bbb;
 }
 
-tr:nth-child(even) {
+table tr:nth-child(even) {
   background-color: #10161d;
 }
 
-tr {
+table tr {
   text-align: center;
 }
 
 /* Message styles */
 #error-message, #result-message {
-  margin: 20px auto;
-  max-width: 800px;
-  padding: 10px;
+  margin: 10px auto;
+  max-width: 100%;
+  padding: 1em;
   border-radius: 5px;
   text-align: center;
+  font-size: 18px;
 }
 
 #error-message {
@@ -139,6 +200,7 @@ label[for="year"] {
   cursor: pointer;
   padding: 5px 10px;
   border-radius: 5px;
+  font-size: 18px;
 }
 
 .tt-suggestion:hover {
@@ -158,6 +220,7 @@ label {
 
 .tt-input {
   width: 100%;
+  padding: 1em;
   box-sizing: border-box;
 }
 
@@ -172,20 +235,21 @@ label {
 
 #letterboxd-watchlist-form {
   border: none;
-  padding: 10px;
   background-color: #10161d;
   color: #555;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: bold;
   border-radius: 5px;
+  padding: 1em;
   width: 100%;
-  margin-bottom: 10px;
+  margin-bottom: 1em;
+  text-align: center;
 }
 
 img.logo {
   top: 0;
   right: 0;
-  padding: 30px;
+  padding: 2em;
 }
 
 .diagonal-text-container {
@@ -202,7 +266,7 @@ img.logo {
 
 .foot-notes {
   text-align: center;
-  font-size: 12px;
+  font-size: 14px;
   color: #78a6b8;
 }
 
@@ -228,6 +292,11 @@ a {
   /* center the content vertically */
   align-items: center;
   /* center the content horizontally */
+}
+
+.bottom-section-content {
+ display: flex;
+ justify-content: center;
 }
 
 hr {
