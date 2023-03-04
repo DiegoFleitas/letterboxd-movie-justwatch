@@ -22,8 +22,8 @@
               <p>Better</p>
             </div>
           </div>
-          <div id="error-message" style="display: none"></div>
-          <div id="result-message" style="display: none"></div>
+          <div id="error-message" role="alert" style="display: none"></div>
+          <div id="result-message" role="status" style="display: none"></div>
         </header>
 
         <article>
@@ -45,9 +45,14 @@
               name="year"
               placeholder="2022"
               required
+              aria-label="Movie release year input"
             />
             <label for="country">Country:</label>
-            <select id="country" name="country">
+            <select
+              id="country"
+              name="country"
+              aria-label="User country selection"
+            >
               <option value="de_DE">Germany</option>
               <option value="en_US">USA</option>
               <option value="en_CA">Canada</option>
@@ -65,7 +70,11 @@
               <option value="es_UY" selected>Uruguay</option>
             </select>
             <button type="submit">Search</button>
-            <button onclick="alternativeSearchWink(event)" class="wink">
+            <button
+              onclick="alternativeSearchWink(event)"
+              class="wink"
+              aria-label="Alternative search button"
+            >
               😉
             </button>
           </form>
@@ -75,7 +84,10 @@
 
       <main class="bottom-section">
         <div class="bottom-section-content">
-          <a class="link" href="https://letterboxd.com/data/export/"
+          <a
+            class="link"
+            href="https://letterboxd.com/data/export/"
+            aria-label="Export Letterboxd data link"
             >Export letterboxd data ⮫</a
           >
         </div>
@@ -88,6 +100,7 @@
               name="watchlist"
               accept=".zip"
               required
+              aria-label="Upload Letterboxd data input"
             />
             <button type="submit">Submit</button>
           </div>
