@@ -5,7 +5,7 @@
 /* Adjust layout for screens less than 768px wide */
 @media screen and (max-width: 767px) {
   body {
-    font-size: 18px !important;
+    font-size: 1.125rem !important;
     line-height: 1.5 !important;
   }
 
@@ -29,24 +29,24 @@
   }
 
   input[type="text"], select {
-    margin: 10px 0 20px !important;
+    margin: 0.625rem 0 1.25rem !important;
   }
 
   button[type="submit"], button.wink {
-    margin: 10px 0 !important;
+    margin: 0.625rem 0 !important;
   }
 
   table th,
   table td {
-    padding: 5px;
-    font-size: 14px;
+    padding: 0.313rem;
+    font-size: 0.875rem;
   }
 
   #service-picker {
     width: 100%;
     box-sizing: border-box;
-    margin: 10px 0;
-    font-size: 14px;
+    margin: 0.625rem 0;
+    font-size: 0.875rem;
   }
 
   img.poster {
@@ -60,7 +60,7 @@ body {
   background-color: #060d17;
   color: #d9e8ed;
   font-family: 'Roboto', sans-serif;
-  font-size: 18px;
+  font-size: 1.125rem;
   line-height: 1.5;
 }
 
@@ -70,24 +70,24 @@ form {
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  margin: 10px 0;
+  margin: 0.625rem 0;
   padding: 1em;
 }
 
 label {
-  margin-right: 10px;
+  margin-right: 0.625rem;
   display: block;
-  margin-bottom: 5px;
-  font-size: 18px;
+  margin-bottom: 0.313rem;
+  font-size: 1.125rem;
 }
 
 input[type="text"], select {
   width: -moz-available;
   width: -webkit-fill-available;
-  margin: 10px 0;
-  padding: 10px;
-  font-size: 20px;
-  border-radius: 5px;
+  margin: 0.625rem 0;
+  padding: 0.625rem;
+  font-size: 1.25rem;
+  border-radius: 0.313rem;
   border: none;
   color: #888b8e;
   background-color: #10161d;
@@ -97,14 +97,14 @@ input[type="text"]:focus, select:focus {
   outline: none;
   background-color: #10161d;
   color: #888b8e;
-  box-shadow: 0px 0px 5px #10161d;
+  box-shadow: 0 0 0.313rem #10161d;
 }
 
 button[type="submit"], button.wink {
-  margin: 10px;
-  padding: 10px 20px;
-  font-size: 20px;
-  border-radius: 5px;
+  margin: 0.625rem;
+  padding: 0.625rem 1.25rem;
+  font-size: 1.25rem;
+  border-radius: 0.313rem;
   border: none;
   background-color: #fbc500;
   font-weight: bold;
@@ -115,9 +115,9 @@ button[type="submit"], button.wink {
 
 button.wink {
   display: none;
-  box-shadow: 0px 0px 5px #bbb;
+  box-shadow: 0 0 0.313rem #bbb;
   background-color: black !important;
-  font-size: 20px;
+  font-size: 1.25rem;
 }
 
 button[type="submit"]:hover, button.wink:hover {
@@ -129,23 +129,23 @@ button[type="submit"]:hover, button.wink:hover {
 
 .wink {
   display: none;
-  box-shadow: 0px 0px 5px #bbb;
+  box-shadow: 0 0 0.313rem #bbb;
   background-color: black !important;
 }
 
 /* Table styles */
 table {
-  margin: 20px auto;
+  margin: 1.25rem auto;
   border-collapse: collapse;
   width: 100% auto;
   max-width: 100%;
   background-color: #10161d;
-  box-shadow: 0px 0px 5px #bbb;
+  box-shadow: 0 0 0.313rem #bbb;
 }
 
 table th,
 table td {
-  padding: 10px;
+  padding: 0.625rem;
   text-align: left;
   vertical-align: top;
   background-color: #222c38;
@@ -162,12 +162,12 @@ table tr {
 
 /* Message styles */
 #error-message, #result-message {
-  margin: 10px auto;
+  margin: 0.625rem auto;
   max-width: 100%;
   padding: 1em;
-  border-radius: 5px;
+  border-radius: 0.313rem;
   text-align: center;
-  font-size: 18px;
+  font-size: 1.125rem;
 }
 
 #error-message {
@@ -182,25 +182,25 @@ table tr {
 
 label {
   display: block;
-  margin-bottom: 5px;
+  margin-bottom: 0.313rem;
 }
 
 #year {
-  margin-top: 10px;
+  margin-top: 0.625rem;
 }
 
 label[for="year"] {
   display: block;
-  margin-top: 10px;
+  margin-top: 0.625rem;
 }
 
 .tt-suggestion {
   background-color: #10161d;
   color: #333;
   cursor: pointer;
-  padding: 5px 10px;
-  border-radius: 5px;
-  font-size: 18px;
+  padding: 0.313rem 0.625rem;
+  border-radius: 0.313rem;
+  font-size: 1.125rem;
 }
 
 .tt-suggestion:hover {
@@ -209,7 +209,7 @@ label[for="year"] {
 
 label {
   display: block;
-  margin-bottom: 5px;
+  margin-bottom: 0.313rem;
 }
 
 .twitter-typeahead {
@@ -237,9 +237,9 @@ label {
   border: none;
   background-color: #10161d;
   color: #555;
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: bold;
-  border-radius: 5px;
+  border-radius: 0.313rem;
   padding: 1em;
   width: 100%;
   margin-bottom: 1em;
@@ -266,7 +266,7 @@ img.logo {
 
 .foot-notes {
   text-align: center;
-  font-size: 14px;
+  font-size: 0.875rem;
   color: #78a6b8;
 }
 
@@ -302,7 +302,7 @@ a {
 hr {
   border: none;
   /* remove the default border */
-  height: 1px;
+  height: 0.063rem;
   /* set the height of the line */
   background-color: #ccc;
   /* set the color of the line */
@@ -311,10 +311,10 @@ hr {
 }
 
 img.poster {
-  padding: 10px;
-  max-width: 320px;
+  padding: 0.625rem;
+  max-width: 31.25rem;
 }
 
 a.link {
-  padding: 10px;
+  padding: 0.625rem;
 }
