@@ -14,62 +14,67 @@
   </head>
   <body>
     <div class="wrapper">
-      <div class="top-section">
+      <section class="top-section">
         <!-- content for the top section goes here -->
-        <div class="image-container">
-          <img class="logo" src="/logo.png" alt="logo" />
-          <div class="diagonal-text-container">
-            <p>Better</p>
+        <header>
+          <div class="image-container">
+            <img class="logo" src="/logo.png" alt="logo" />
+            <div class="diagonal-text-container">
+              <p>Better</p>
+            </div>
           </div>
-        </div>
-        <div id="error-message" style="display: none"></div>
-        <div id="result-message" style="display: none"></div>
-        <form id="movie-form">
-          <label for="title">English Movie Title:</label>
-          <input type="text" id="movie-input" list="movie-suggestions" />
-          <input
-            type="text"
-            id="title"
-            name="title"
-            placeholder="Elvis"
-            required
-            style="display: none"
-          />
-          <label for="year">Year:</label>
-          <input
-            type="text"
-            id="year"
-            name="year"
-            placeholder="2022"
-            required
-          />
-          <label for="country">Country:</label>
-          <select id="country" name="country">
-            <option value="de_DE">Germany</option>
-            <option value="en_US">USA</option>
-            <option value="en_CA">Canada</option>
-            <option value="en_GB">United Kingdom</option>
-            <option value="es_MX">Mexico</option>
-            <option value="de_AT">Austria</option>
-            <option value="fr_FR">France</option>
-            <option value="es_ES">Spain</option>
-            <option value="de_CH">Switzerland</option>
-            <option value="ja_JP">Japan</option>
-            <option value="pt_BR">Brazil</option>
-            <option value="es_AR">Argentina</option>
-            <option value="en_AU">Australia</option>
-            <option value="it_IT">Italy</option>
-            <option value="es_UY" selected>Uruguay</option>
-          </select>
-          <button type="submit">Search</button>
-          <button onclick="alternativeSearchWink(event)" class="wink">
-            😉
-          </button>
-        </form>
-      </div>
+          <div id="error-message" style="display: none"></div>
+          <div id="result-message" style="display: none"></div>
+        </header>
+
+        <article>
+          <form id="movie-form">
+            <label for="title">English Movie Title:</label>
+            <input type="text" id="movie-input" list="movie-suggestions" />
+            <input
+              type="text"
+              id="title"
+              name="title"
+              placeholder="Elvis"
+              required
+              style="display: none"
+            />
+            <label for="year">Year:</label>
+            <input
+              type="text"
+              id="year"
+              name="year"
+              placeholder="2022"
+              required
+            />
+            <label for="country">Country:</label>
+            <select id="country" name="country">
+              <option value="de_DE">Germany</option>
+              <option value="en_US">USA</option>
+              <option value="en_CA">Canada</option>
+              <option value="en_GB">United Kingdom</option>
+              <option value="es_MX">Mexico</option>
+              <option value="de_AT">Austria</option>
+              <option value="fr_FR">France</option>
+              <option value="es_ES">Spain</option>
+              <option value="de_CH">Switzerland</option>
+              <option value="ja_JP">Japan</option>
+              <option value="pt_BR">Brazil</option>
+              <option value="es_AR">Argentina</option>
+              <option value="en_AU">Australia</option>
+              <option value="it_IT">Italy</option>
+              <option value="es_UY" selected>Uruguay</option>
+            </select>
+            <button type="submit">Search</button>
+            <button onclick="alternativeSearchWink(event)" class="wink">
+              😉
+            </button>
+          </form>
+        </article>
+      </section>
       <hr />
 
-      <div class="bottom-section">
+      <main class="bottom-section">
         <!-- content for the bottom section goes here -->
         <div class="bottom-section-content">
           <a class="link" href="https://letterboxd.com/data/export/"
@@ -101,7 +106,7 @@
           </thead>
           <tbody></tbody>
         </table>
-      </div>
+      </main>
       <hr />
 
       <footer>
