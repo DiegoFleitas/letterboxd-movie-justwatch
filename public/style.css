@@ -147,7 +147,6 @@ table th,
 table td {
   padding: 0.625rem;
   text-align: left;
-  vertical-align: top;
   background-color: #222c38;
   color: #bbb;
 }
