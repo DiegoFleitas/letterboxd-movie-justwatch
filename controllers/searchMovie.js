@@ -49,7 +49,8 @@ const searchMovie = async (req, res) => {
     // Search for movie data in the JustWatch response based on the movie ID from MovieDB API
     // This is done to filter out movies JustWatch "suggests" but are not necessarily the same movie
     const movieData = justWatchResponse.data.items.find((item) => {
-      const tmdbId = item.scoring.find(
+      // Unreleased movies might not have scoring
+      const tmdbId = item.scoring?.find(
         (score) => score.provider_type === "tmdb:id"
       );
       return tmdbId && tmdbId.value === movieId;
