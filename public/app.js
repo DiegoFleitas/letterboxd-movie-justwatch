@@ -210,7 +210,7 @@ function rebuildTable(title, year, data) {
     ? data.streamingServices.join(", ")
     : "";
 
-  tdWink.innerHTML = `<button onclick="alternativeSearchWink(event)" class="wink">😉</button>`;
+  tdWink.innerHTML = `<button onclick="alternativeSearchWink(event)" class="wink hide-wink">😉</button>`;
 
   if (!row.parentNode) document.querySelector("tbody").appendChild(row);
   if (!row.parentNode && !tdStreaming.textContent) return;
@@ -271,8 +271,8 @@ function rebuildTableFilter() {
 }
 
 function showWinkElements() {
-  const winkElements = document.querySelectorAll(".wink");
-  winkElements.forEach((element) => (element.style.display = "block"));
+  const winkElements = document.querySelectorAll(".hide-wink");
+  winkElements.forEach((element) => element.classList.toggle("hide-wink"));
 }
 
 /** Automagically search movies */
