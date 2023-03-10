@@ -78,7 +78,7 @@ app.post(
 );
 
 app.post("/api/alternative-search", async (req, res) => {
-  return alternative - search(req, res);
+  return alternativeSearch(req, res);
 });
 
 app.listen(port, () =>
