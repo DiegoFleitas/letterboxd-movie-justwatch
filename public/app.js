@@ -207,9 +207,9 @@ function rebuildTable(title, year, data) {
     <img class="poster" src="${data.poster}" />
     </a>`;
 
-  tdStreaming.textContent = data.streamingServices
-    ? data.streamingServices.join(", ")
-    : "";
+  if (data.streamingServices)
+    tdStreaming.textContent =
+      data.streamingServices ?? data.streamingServices.join(", ");
 
   tdWink.innerHTML = `<button onclick="alternativeSearchWink(event)" class="alternative-search hide-alternative-search">😉</button>`;
 
