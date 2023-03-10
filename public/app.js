@@ -187,6 +187,7 @@ function showMessage(data, isHTML = false) {
 }
 
 function rebuildTable(title, year, data) {
+  console.log(arguments);
   const id = `${title.toLowerCase().replace(/ /g, "-")}-${year}`;
   const row =
     document.querySelector(`tr[data-id="${id}"]`) ||
