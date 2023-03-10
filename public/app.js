@@ -109,7 +109,10 @@ letterboxdWatchlistForm.addEventListener("submit", (event) => {
             if (response.error) {
               showError(response.error);
             } else {
-              showMessage(response.message);
+              const msg = `${
+                response.message
+              }: ${response.streamingServices.join(", ")}`;
+              showMessage(msg);
               rebuildTable(element.title, element.year, response);
             }
           })
