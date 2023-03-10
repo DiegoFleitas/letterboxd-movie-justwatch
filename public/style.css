@@ -32,7 +32,11 @@
     margin: 0.625rem 0 1.25rem !important;
   }
 
-  button[type="submit"], button.wink {
+  /* button[type="submit"], button.wink {
+    margin: 0.625rem 0 !important;
+  } */
+
+  button[type="submit"] {
     margin: 0.625rem 0 !important;
   }
 
@@ -100,7 +104,7 @@ input[type="text"]:focus, select:focus {
   box-shadow: 0 0 0.313rem #10161d;
 }
 
-button[type="submit"], button.wink {
+button[type="submit"], button.wink  {
   margin: 0.625rem;
   padding: 0.625rem 1.25rem;
   font-size: 1.25rem;
@@ -110,25 +114,15 @@ button[type="submit"], button.wink {
   font-weight: bold;
   color: #10161d;
   font-family: 'Roboto', sans-serif;
-  cursor: pointer;
 }
 
-button.wink {
+.hide-wink {
   display: none;
-  box-shadow: 0 0 0.313rem #bbb;
-  background-color: black !important;
-  font-size: 1.25rem;
-}
-
-button[type="submit"]:hover, button.wink:hover {
-  font-weight: bold;
-  color: #10161d;
-  font-family: 'Roboto', sans-serif;
-  background-color: #fbc500;
 }
 
 .wink {
-  display: none;
+  text-align: center;
+  cursor: pointer;
   box-shadow: 0 0 0.313rem #bbb;
   background-color: black !important;
 }
