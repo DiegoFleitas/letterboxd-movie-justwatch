@@ -234,7 +234,7 @@ function rebuildTableFilter() {
     new Set(
       Array.from(table.querySelectorAll("td:nth-of-type(4)"))
         .map((td) => td.textContent.trim())
-        .map((text) => text.split(", "))
+        .map((text) => text.split(","))
         .flat()
     )
   );
