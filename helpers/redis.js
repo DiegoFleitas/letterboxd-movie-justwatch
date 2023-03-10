@@ -80,12 +80,12 @@ const setCacheValue = async (key, value, ttl = 60) => {
     const hashedKey = getCacheKey(key);
     const result = await client.set(hashedKey, serializedValue, { EX: ttl });
     console.log(
-      `[${new Date().toISOString()}] Set cache value for key ${hashedKey} (${key}) with TTL ${ttl} s`
+      `[${new Date().toISOString()}] Set cache value for key ${hashedKey} (${key}) with TTL ${ttl} min`
     );
     return result === "OK";
   } catch (error) {
     console.log(
-      `[${new Date().toISOString()}] Error setting cache value for key (${key}) with TTL ${ttl} s`
+      `[${new Date().toISOString()}] Error setting cache value for key (${key}) with TTL ${ttl} min`
     );
     console.log(error);
   }
