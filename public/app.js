@@ -28,18 +28,13 @@ form.addEventListener("submit", (event) => {
     })
     .then((response) => {
       console.log(response);
-      const errorMessage = document.getElementById("error-message");
-      const resultMessage = document.getElementById("result-message");
       if (response.error) {
-        errorMessage.innerHTML = response.error;
-        errorMessage.style.display = "";
-        resultMessage.style.display = "none";
+        showError(response.error);
       } else {
-        resultMessage.innerHTML = `${
-          response.message
-        }: ${response.streamingServices.join(", ")}`;
-        resultMessage.style.display = "";
-        errorMessage.style.display = "none";
+        const msg = `${response.message}: ${response.streamingServices.join(
+          ", "
+        )}`;
+        showMessage(msg);
       }
     })
     .catch((error) => console.error(error));
@@ -81,16 +76,10 @@ letterboxdWatchlistForm.addEventListener("submit", (event) => {
           .then((response) => response.json())
           .then((response) => {
             console.log(response);
-            const errorMessage = document.getElementById("error-message");
-            const resultMessage = document.getElementById("result-message");
             if (response.error) {
-              errorMessage.innerHTML = response.error;
-              errorMessage.style.display = "";
-              resultMessage.style.display = "none";
+              showError(response.error);
             } else {
-              resultMessage.innerHTML = `${response.message}`;
-              resultMessage.style.display = "";
-              errorMessage.style.display = "none";
+              showMessage(response.message);
             }
             response.link = element.link;
             if (!response.poster || response.poster == "N/A")
@@ -117,16 +106,10 @@ letterboxdWatchlistForm.addEventListener("submit", (event) => {
           })
           .then((response) => {
             console.log(response);
-            const errorMessage = document.getElementById("error-message");
-            const resultMessage = document.getElementById("result-message");
             if (response.error) {
-              errorMessage.innerHTML = response.error;
-              errorMessage.style.display = "";
-              resultMessage.style.display = "none";
+              showError(response.error);
             } else {
-              resultMessage.innerHTML = `${response.message}`;
-              resultMessage.style.display = "";
-              errorMessage.style.display = "none";
+              showMessage(response.message);
               rebuildTable(element.title, element.year, response);
             }
           })
@@ -153,8 +136,8 @@ function alternativeSearchWink(event) {
 
   if (!title) return;
 
-  // Make a fetch request to the /wink endpoint
-  fetch("/api/wink", {
+  // Make a fetch request to the /alternative-search endpoint
+  fetch("/api/alternative-search", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -164,27 +147,40 @@ function alternativeSearchWink(event) {
     .then((response) => response.json())
     .then((response) => {
       console.log(response);
-      const errorMessage = document.getElementById("error-message");
-      const resultMessage = document.getElementById("result-message");
       if (response.error) {
-        errorMessage.innerHTML = response.error;
-        errorMessage.style.display = "";
-        resultMessage.style.display = "none";
+        showError(response.error);
       } else {
-        resultMessage.innerHTML = "😉";
-        const link = document.createElement("a");
-        link.setAttribute("href", response.url);
-        link.setAttribute("target", "_blank");
-        link.innerHTML = response.text;
-        resultMessage.appendChild(link);
-        resultMessage.style.display = "";
-        errorMessage.style.display = "none";
+        showMessage(response.message, true);
         scrollToTop();
       }
     })
     .catch((error) => {
       console.log("Error:", error);
     });
+}
+
+function showError(error) {
+  const errorMessage = document.getElementById("error-message");
+  const resultMessage = document.getElementById("result-message");
+  errorMessage.innerHTML = error;
+  errorMessage.style.display = "";
+  resultMessage.style.display = "none";
+}
+
+function showMessage(msg, isHTML = false) {
+  const errorMessage = document.getElementById("error-message");
+  const resultMessage = document.getElementById("result-message");
+  resultMessage.innerHTML = msg;
+  if (isHTML) {
+    resultMessage.innerHTML = "😉";
+    const link = document.createElement("a");
+    link.setAttribute("href", msg.url);
+    link.setAttribute("target", "_blank");
+    link.innerHTML = msg.text;
+    resultMessage.appendChild(link);
+  }
+  resultMessage.style.display = "";
+  errorMessage.style.display = "none";
 }
 
 function rebuildTable(title, year, data) {
@@ -212,7 +208,7 @@ function rebuildTable(title, year, data) {
     ? data.streamingServices.join(", ")
     : "";
 
-  tdWink.innerHTML = `<button onclick="alternativeSearchWink(event)" class="wink hide-wink">😉</button>`;
+  tdWink.innerHTML = `<button onclick="alternativeSearchWink(event)" class="alternative-search hide-alternative-search">😉</button>`;
 
   if (!row.parentNode) document.querySelector("tbody").appendChild(row);
   if (!row.parentNode && !tdStreaming.textContent) return;
@@ -273,8 +269,10 @@ function rebuildTableFilter() {
 }
 
 function showWinkElements() {
-  const winkElements = document.querySelectorAll(".hide-wink");
-  winkElements.forEach((element) => element.classList.toggle("hide-wink"));
+  const winkElements = document.querySelectorAll(".hide-alternative-search");
+  winkElements.forEach((element) =>
+    element.classList.toggle("hide-alternative-search")
+  );
 }
 
 /** Automagically search movies */

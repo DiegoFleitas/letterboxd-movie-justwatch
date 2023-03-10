@@ -2,7 +2,7 @@ const axios = require("../helpers/axios");
 const { getCacheValue, setCacheValue } = require("../helpers/redis");
 const cacheTtl = process.env.CACHE_TTL || 3600; // 1h (seconds)
 
-const wink = async (req, res) => {
+const alternativeSearch = async (req, res) => {
   const { title, year } = req.body;
 
   jackettApiKey = process.env.JACKETT_API_KEY;
@@ -56,4 +56,4 @@ const wink = async (req, res) => {
   }
 };
 
-module.exports = { wink };
+module.exports = { alternativeSearch };
