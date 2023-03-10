@@ -69,7 +69,7 @@ const getCacheValue = async (key) => {
   }
 };
 
-// set a value in Redis cache with a TTL (time-to-live) in seconds
+// set a value in Redis cache with a TTL (time-to-live) in minutes
 const setCacheValue = async (key, value, ttl = 60) => {
   const client = await getRedisClient();
   if (!client) {
