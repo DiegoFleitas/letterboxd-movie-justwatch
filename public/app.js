@@ -287,7 +287,9 @@ $(document).ready(() => {
       url: "https://www.omdbapi.com/?s=%QUERY&apikey=dacba5fa",
       wildcard: "%QUERY",
       transform: (response) => {
-        return response.Search || [];
+        const movieResults =
+          response.Search?.filter((result) => result.Type === "movie") || [];
+        return movieResults;
       },
       ajax: {
         beforeSend: (xhr) => {
