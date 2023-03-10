@@ -78,7 +78,7 @@ const setCacheValue = async (key, value, ttl = 60) => {
   try {
     const serializedValue = JSON.stringify(value);
     const hashedKey = getCacheKey(key);
-    const result = await client.set(hashedKey, serializedValue, "EX", ttl);
+    const result = await client.set(hashedKey, serializedValue, { EX: ttl });
     console.log(
       `[${new Date().toISOString()}] Set cache value for key ${hashedKey} (${key}) with TTL ${ttl} s`
     );
