@@ -114,6 +114,7 @@ button[type="submit"], button.alternative-search  {
   font-weight: bold;
   color: #10161d;
   font-family: 'Roboto', sans-serif;
+  cursor: pointer;
 }
 
 .hide-alternative-search {
