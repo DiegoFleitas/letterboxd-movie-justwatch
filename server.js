@@ -7,7 +7,7 @@ const {
   searchMovie,
   poster,
   letterboxdWatchlist,
-  wink,
+  alternativeSearch,
 } = require("./controllers");
 const { isHealthy } = require("./helpers/redis");
 
@@ -77,8 +77,8 @@ app.post(
   }
 );
 
-app.post("/api/wink", async (req, res) => {
-  return wink(req, res);
+app.post("/api/alternative-search", async (req, res) => {
+  return alternative - search(req, res);
 });
 
 app.listen(port, () =>

@@ -32,7 +32,7 @@
     margin: 0.625rem 0 1.25rem !important;
   }
 
-  /* button[type="submit"], button.wink {
+  /* button[type="submit"], button.alternative-search {
     margin: 0.625rem 0 !important;
   } */
 
@@ -104,7 +104,7 @@ input[type="text"]:focus, select:focus {
   box-shadow: 0 0 0.313rem #10161d;
 }
 
-button[type="submit"], button.wink  {
+button[type="submit"], button.alternative-search  {
   margin: 0.625rem;
   padding: 0.625rem 1.25rem;
   font-size: 1.25rem;
@@ -116,11 +116,15 @@ button[type="submit"], button.wink  {
   font-family: 'Roboto', sans-serif;
 }
 
-.hide-wink {
+.hide-alternative-search {
   display: none;
 }
 
-.wink {
+.table-alternative-search {
+  font-size: xx-large;
+}
+
+.alternative-search {
   text-align: center;
   cursor: pointer;
   box-shadow: 0 0 0.313rem #bbb;
