@@ -150,7 +150,7 @@ function alternativeSearchWink(event) {
       if (response.error) {
         showError(response.error);
       } else {
-        showMessage(response.message, true);
+        showMessage(response, true);
         scrollToTop();
       }
     })
@@ -167,16 +167,16 @@ function showError(error) {
   resultMessage.style.display = "none";
 }
 
-function showMessage(msg, isHTML = false) {
+function showMessage(data, isHTML = false) {
   const errorMessage = document.getElementById("error-message");
   const resultMessage = document.getElementById("result-message");
-  resultMessage.innerHTML = msg;
+  resultMessage.innerHTML = data;
   if (isHTML) {
-    resultMessage.innerHTML = "😉";
+    resultMessage.innerHTML = data.message;
     const link = document.createElement("a");
-    link.setAttribute("href", msg.url);
+    link.setAttribute("href", data.url);
     link.setAttribute("target", "_blank");
-    link.innerHTML = msg.text;
+    link.innerHTML = data.text;
     resultMessage.appendChild(link);
   }
   resultMessage.style.display = "";
