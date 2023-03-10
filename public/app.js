@@ -151,6 +151,8 @@ function alternativeSearchWink(event) {
     year = res.year;
   }
 
+  if (!title) return;
+
   // Make a fetch request to the /wink endpoint
   fetch("/api/wink", {
     method: "POST",
