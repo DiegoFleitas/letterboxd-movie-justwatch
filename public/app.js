@@ -28,10 +28,11 @@ form.addEventListener("submit", (event) => {
     })
     .then((response) => {
       console.log(response);
-      if (response.error) {
-        showError(response.error);
+      const { error, title, year, message, streamingServices } = response;
+      if (error) {
+        showError(`[${title} (${year})] ${error}`);
       } else {
-        const msg = `${response.message}: ${response.streamingServices.join(
+        const msg = `[${title} (${year})] ${message}: ${streamingServices.join(
           ", "
         )}`;
         showMessage(msg);
@@ -79,7 +80,7 @@ letterboxdWatchlistForm.addEventListener("submit", (event) => {
             if (response.error) {
               showError(response.error);
             } else {
-              showMessage(response.message);
+              // showMessage(response.message);
             }
             response.link = element.link;
             if (!response.poster || response.poster == "N/A")
@@ -106,12 +107,13 @@ letterboxdWatchlistForm.addEventListener("submit", (event) => {
           })
           .then((response) => {
             console.log(response);
-            if (response.error) {
-              showError(response.error);
+            const { error, title, year, message, streamingServices } = response;
+            if (error) {
+              showError(`[${title} (${year})] ${error}`);
             } else {
-              const msg = `${
-                response.message
-              }: ${response.streamingServices.join(", ")}`;
+              const msg = `[${title} (${year})] ${message}: ${streamingServices.join(
+                ", "
+              )}`;
               showMessage(msg);
               rebuildTable(element.title, element.year, response);
             }
@@ -164,6 +166,14 @@ function alternativeSearchWink(event) {
 
 function showError(error) {
   console.log(error);
+  // Check visible toast count before showing another toast
+  toastCount = document.querySelectorAll(".iziToast-capsule")?.length || 0;
+  if (toastCount >= 7) {
+    console.log(
+      `There are already ${toastCount} visible toasts on the page, error skipped. Message: ${error}`
+    );
+    return;
+  }
   iziToast.show({
     title: "Error",
     message: error,
@@ -183,6 +193,14 @@ function showError(error) {
 
 function showMessage(data, isHTML = false) {
   console.log(data, isHTML);
+  // Check visible toast count before showing another toast
+  toastCount = document.querySelectorAll(".iziToast-capsule")?.length || 0;
+  if (toastCount >= 3) {
+    console.log(
+      `There are already ${toastCount} visible toasts on the page, message skipped. Message: ${data}`
+    );
+    return;
+  }
   if (isHTML) {
     iziToast.show({
       message: `
@@ -204,6 +222,7 @@ function showMessage(data, isHTML = false) {
       layout: 1,
       progressBar: false,
       timeout: 3000,
+      // timeout: false,
       position: "topRight",
       backgroundColor: "#fbc500",
     });

@@ -9,7 +9,9 @@ const searchMovie = async (req, res) => {
 
     if (!title) {
       console.log("No movie title");
-      return res.status(404).json({ message: "Movie not found" });
+      return res
+        .status(404)
+        .json({ message: "Movie not found", title: title, year: year });
     }
 
     const cacheKey = `search-movie:${title}:${year}:${countryCode}`;
@@ -33,7 +35,7 @@ const searchMovie = async (req, res) => {
     const movieDbData = movieDbResponse.data.results[0];
 
     if (!movieDbData) {
-      const response = { error: "Movie not found" };
+      const response = { error: "Movie not found", title: title, year: year };
       await setCacheValue(cacheKey, response, cacheTtl);
       return res.status(404).json(response);
     }
@@ -57,7 +59,7 @@ const searchMovie = async (req, res) => {
     });
 
     if (!movieData) {
-      const response = { error: "Movie not found" };
+      const response = { error: "Movie not found", title: title, year: year };
       await setCacheValue(cacheKey, response, cacheTtl);
       return res.status(404).json(response);
     }
@@ -65,6 +67,8 @@ const searchMovie = async (req, res) => {
     if (!movieData.offers || !movieData.offers.length) {
       const response = {
         error: "No streaming services offering this movie (JustWatch)",
+        title: title,
+        year: year,
       };
       await setCacheValue(cacheKey, response, cacheTtl);
       return res.status(404).json(response);
@@ -96,6 +100,8 @@ const searchMovie = async (req, res) => {
       const services = streamingServices.join(", ");
       const response = {
         error: `Unable to identify providers offering media. Provider id(s): ${services} (JustWatch)`,
+        title: title,
+        year: year,
       };
       await setCacheValue(cacheKey, response, cacheTtl);
       return res.status(404).json(response);
@@ -104,6 +110,8 @@ const searchMovie = async (req, res) => {
     const response = {
       message: "Movie found",
       streamingServices: clearNames,
+      title: title,
+      year: year,
     };
     await setCacheValue(cacheKey, response, cacheTtl);
     res.status(200).json(response);
