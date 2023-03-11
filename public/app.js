@@ -163,27 +163,51 @@ function alternativeSearchWink(event) {
 }
 
 function showError(error) {
-  const errorMessage = document.getElementById("error-message");
-  const resultMessage = document.getElementById("result-message");
-  errorMessage.innerHTML = error;
-  errorMessage.style.display = "";
-  resultMessage.style.display = "none";
+  console.log(error);
+  iziToast.show({
+    title: "Error",
+    message: error,
+    color: "red",
+    position: "topCenter",
+    progressBarColor: "red",
+    progressBarEasing: "linear",
+    progressBar: true,
+    timeout: 3000,
+    resetOnHover: true,
+    overlay: true,
+    overlayClose: true,
+    position: "topRight",
+    backgroundColor: "#fbc500",
+  });
 }
 
 function showMessage(data, isHTML = false) {
-  const errorMessage = document.getElementById("error-message");
-  const resultMessage = document.getElementById("result-message");
-  resultMessage.innerHTML = data;
+  console.log(data, isHTML);
   if (isHTML) {
-    resultMessage.innerHTML = data.message;
-    const link = document.createElement("a");
-    link.setAttribute("href", data.url);
-    link.setAttribute("target", "_blank");
-    link.innerHTML = data.text;
-    resultMessage.appendChild(link);
+    iziToast.show({
+      message: `
+        <a href="${data.url}" target="_blank">
+          ${data.text}
+        </a>
+        `,
+      theme: "light",
+      layout: 1,
+      progressBar: false,
+      timeout: false,
+      position: "topRight",
+      backgroundColor: "#fbc500",
+    });
+  } else {
+    iziToast.show({
+      message: data,
+      theme: "light",
+      layout: 1,
+      progressBar: false,
+      timeout: 3000,
+      position: "topRight",
+      backgroundColor: "#fbc500",
+    });
   }
-  resultMessage.style.display = "";
-  errorMessage.style.display = "none";
 }
 
 function rebuildTable(title, year, data) {
