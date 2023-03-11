@@ -20,7 +20,9 @@
   }
 
   form {
+    width: 100% !important;
     flex-direction: column !important;
+    padding: 0 !important;
   }
 
   label {
@@ -31,10 +33,6 @@
   input[type="text"], select {
     margin: 0.625rem 0 1.25rem !important;
   }
-
-  /* button[type="submit"], button.alternative-search {
-    margin: 0.625rem 0 !important;
-  } */
 
   button[type="submit"] {
     margin: 0.625rem 0 !important;
@@ -72,6 +70,7 @@ body {
 form {
   display: flex;
   flex-wrap: wrap;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   margin: 0.625rem 0;
@@ -86,8 +85,8 @@ label {
 }
 
 input[type="text"], select {
-  width: -moz-available;
-  width: -webkit-fill-available;
+  text-align: center;
+  justify-content: center;
   margin: 0.625rem 0;
   padding: 0.625rem;
   font-size: 1.25rem;
@@ -95,6 +94,19 @@ input[type="text"], select {
   border: none;
   color: #888b8e;
   background-color: #10161d;
+}
+
+#movie-form {
+  width: 33.33%;
+  margin: 0 auto;
+}
+
+#movie-form input[type="text"],
+#movie-form select,
+#movie-form span,
+#movie-form button.alternative-search {
+  box-sizing: border-box;
+  width: 100%;
 }
 
 input[type="text"]:focus, select:focus {
@@ -158,33 +170,9 @@ table tr {
   text-align: center;
 }
 
-/* Message styles */
-#error-message, #result-message {
-  margin: 0.625rem auto;
-  max-width: 100%;
-  padding: 1em;
-  border-radius: 0.313rem;
-  text-align: center;
-  font-size: 1.125rem;
-}
-
-#error-message {
-  background-color: #fccf41;
-  color: #10161d;
-}
-
-#result-message {
-  background-color: #fccf41;
-  color: #10161d;
-}
-
 label {
   display: block;
   margin-bottom: 0.313rem;
-}
-
-#year {
-  margin-top: 0.625rem;
 }
 
 label[for="year"] {
@@ -208,12 +196,6 @@ label[for="year"] {
 label {
   display: block;
   margin-bottom: 0.313rem;
-}
-
-.twitter-typeahead {
-  position: relative;
-  display: inline-block;
-  width: 100%;
 }
 
 .tt-input {
