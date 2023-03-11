@@ -117,7 +117,9 @@ const searchMovie = async (req, res) => {
     res.status(200).json(response);
   } catch (err) {
     console.log(err);
-    res.status(500).json({ error: "Internal Server Error" });
+    res
+      .status(500)
+      .json({ error: "Internal Server Error", title: title, year: year });
   }
 };
 
