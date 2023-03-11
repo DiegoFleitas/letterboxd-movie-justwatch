@@ -316,3 +316,23 @@ img.poster {
 a.link {
   padding: 0.625rem;
 }
+
+.list-group-item {
+  border: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+}
+
+.list-group-item:hover {
+  background-color: #242a30;
+  color: #999;
+}
+
+.list-group-item img {
+  margin-right: 10px;
+}
+
+.list-group-item div {
+  flex: 1;
+}
