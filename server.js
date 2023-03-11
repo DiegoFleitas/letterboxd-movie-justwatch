@@ -8,6 +8,7 @@ const {
   poster,
   letterboxdWatchlist,
   alternativeSearch,
+  proxy,
 } = require("./controllers");
 const { isHealthy } = require("./helpers/redis");
 
@@ -79,6 +80,10 @@ app.post(
 
 app.post("/api/alternative-search", async (req, res) => {
   return alternativeSearch(req, res);
+});
+
+app.all("/proxy/:url(*)", async (req, res) => {
+  return proxy(req, res);
 });
 
 app.listen(port, () =>

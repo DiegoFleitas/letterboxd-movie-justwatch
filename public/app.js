@@ -288,7 +288,7 @@ $(document).ready(() => {
       return obj.imdbID;
     },
     remote: {
-      url: "https://www.omdbapi.com/?s=%QUERY&apikey=dacba5fa",
+      url: "proxy/https://www.omdbapi.com/?s=%QUERY",
       wildcard: "%QUERY",
       transform: (response) => {
         const movieResults =
@@ -316,7 +316,17 @@ $(document).ready(() => {
         source: movies,
         templates: {
           suggestion: (movie) => {
-            return "<div>" + movie.Title + " (" + movie.Year + ")</div>";
+            console.log(movie);
+            const poster =
+              movie.Poster && movie.Poster !== "N/A"
+                ? `<img src="${movie.Poster}" class="mr-3" alt="${movie.Title}" width="50">`
+                : "";
+            return `
+              <li class="list-group-item d-flex align-items-center">
+                ${poster}
+                <div><strong>${movie.Title}</strong> (${movie.Year}) </div>
+              </li>
+            `;
           },
         },
       }
