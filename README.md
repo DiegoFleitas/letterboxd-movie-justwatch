@@ -1,6 +1,6 @@
 # justwatch-done-right
 
-A Justwatch powered clone aimed at movie search - without the annoyance of irrelevant movie recommendations.
+A streaming movie search platform, powered by Justwatch and integrated with Letterboxd, designed to avoid the frustration of irrelevant recommendations.
 
 ## Run locally / debugging
 
