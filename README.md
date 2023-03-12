@@ -7,7 +7,7 @@ A web which allows to search for movie streaming providers powered by JustWatch 
 PRE: You need to have docker to run the image at /redis folder
 
 - Rename .env.example to .env & update the values
-- Run `npm run start`
+- Run `npm run dev`
 
 ## Troubleshotting
 
