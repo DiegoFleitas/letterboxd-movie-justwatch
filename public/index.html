@@ -28,12 +28,16 @@
         <article>
           <form id="movie-form">
             <label for="title">English Movie Title:</label>
-            <input type="text" id="movie-input" list="movie-suggestions" />
+            <input
+              type="text"
+              id="movie-input"
+              list="movie-suggestions"
+              placeholder="The Big Lebowski"
+            />
             <input
               type="text"
               id="title"
               name="title"
-              placeholder="Elvis"
               required
               style="display: none"
             />
@@ -42,7 +46,7 @@
               type="text"
               id="year"
               name="year"
-              placeholder="2022"
+              placeholder="1998"
               required
               aria-label="Movie release year input"
             />
