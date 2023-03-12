@@ -290,7 +290,7 @@ function rebuildTable(title, year, data) {
     if (text) tdStreaming.textContent = text;
   }
 
-  tdAltSearch.innerHTML = `<button onclick="alternativeSearch(event)" class="alternative-search">😉</button>`;
+  tdAltSearch.innerHTML = `<button onclick="alternativeSearch(event)" class="alternative-search btn-grad">🏴‍☠️</button>`;
 
   if (!row.parentNode) document.querySelector("tbody").appendChild(row);
   if (!row.parentNode && !tdStreaming.textContent) return;
