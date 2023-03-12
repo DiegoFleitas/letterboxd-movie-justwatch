@@ -1,6 +1,6 @@
 # justwatch-done-right
 
-A streaming movie search platform, powered by Justwatch and integrated with Letterboxd, designed to avoid the frustration of irrelevant recommendations (By ditching the movie recommendation feature altogether lol)
+A movie stream search powered by Justwatch that integrates with Letterboxd, minus the headache of sifting through annoying, irrelevant recommendations - meaning no movie suggestions whatsoever.
 
 ## Run locally / debugging
 
