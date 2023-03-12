@@ -182,6 +182,10 @@ label[for="year"] {
   margin-top: 0.625rem;
 }
 
+#year:focus::placeholder {
+  color: transparent;
+}
+
 .tt-suggestion {
   background-color: #10161d;
   color: #333;
@@ -213,6 +217,10 @@ label {
   z-index: 100;
   display: none;
   width: 100%;
+}
+
+.tt-input:focus::placeholder {
+  color: transparent;
 }
 
 #letterboxd-watchlist-form {
