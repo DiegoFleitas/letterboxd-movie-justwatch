@@ -1,6 +1,6 @@
 # justwatch-done-right
 
-A justwatch clone aimed at movie search - without having to deal with stupid movie suggestions
+A Justwatch clone aimed at movie search - without having to deal with stupid movie suggestions
 
 ## Run locally / debugging
 
