@@ -222,7 +222,7 @@ function showMessage(messageData, isHTML = false) {
   };
 
   if (isHTML) {
-    toastOptions.onClose = () => {
+    toastOptions.onClosed = () => {
       if (queuedMessages.length > 0) {
         showMessage(queuedMessages.shift(), true);
       }
