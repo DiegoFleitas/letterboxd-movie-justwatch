@@ -70,7 +70,7 @@
             </select>
             <button type="submit">Search</button>
             <button
-              onclick="alternativeSearchWink(event)"
+              onclick="alternativeSearch(event)"
               class="alternative-search hide-alternative-search"
               aria-label="Alternative search button"
             >
@@ -101,21 +101,22 @@
               required
               aria-label="Upload Letterboxd data input"
             />
-            <button type="submit">Submit</button>
+            <button
+              type="submit"
+              onclick="document.getElementById('movies-table').style.display = ''"
+            >
+              Submit
+            </button>
           </div>
         </form>
-        <table>
+        <table id="movies-table" style="display: none">
           <thead>
             <tr>
               <th>Title</th>
-              <th>Year</th>
+              <th></th>
               <th>Poster</th>
               <th>Streaming Services</th>
-              <th
-                class="alternative-search hide-alternative-search table-alternative-search"
-              >
-                😉
-              </th>
+              <th>Alternative Search</th>
             </tr>
           </thead>
           <tbody></tbody>
