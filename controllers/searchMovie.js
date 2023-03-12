@@ -110,6 +110,7 @@ const searchMovie = async (req, res) => {
         title: title,
         year: year,
       };
+      console.log(response);
       await setCacheValue(cacheKey, response, cacheTtl);
       return res.status(404).json(response);
     }
