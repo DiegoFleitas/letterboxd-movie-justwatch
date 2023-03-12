@@ -38,7 +38,7 @@ const alternativeSearch = async (req, res) => {
     if (bestResult) {
       console.log(bestResult);
       const response = {
-        message: "😉",
+        message: "🏴‍☠️",
         text: `[${bestResult.Tracker}] ${bestResult.Title} - ${bestResult.Details}`,
         url: bestResult.Details,
       };

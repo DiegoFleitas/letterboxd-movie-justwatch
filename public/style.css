@@ -115,8 +115,7 @@ input[type="text"], select {
 
 #movie-form input[type="text"],
 #movie-form select,
-#movie-form span,
-#movie-form button.alternative-search {
+#movie-form span {
   box-sizing: border-box;
   width: 100%;
 }
@@ -125,7 +124,6 @@ input[type="text"]:focus, select:focus {
   outline: none;
   background-color: #10161d;
   color: #888b8e;
-  box-shadow: 0 0 0.313rem #10161d;
 }
 
 button[type="submit"], button.alternative-search  {
@@ -148,7 +146,6 @@ button[type="submit"], button.alternative-search  {
 .alternative-search {
   text-align: center;
   cursor: pointer;
-  box-shadow: 0 0 0.313rem #bbb;
   background-color: black !important;
 }
 
@@ -159,7 +156,6 @@ table {
   width: 100%;
   max-width: 100%;
   background-color: #10161d;
-  box-shadow: 0 0 0.313rem #bbb;
 }
 
 table th {
@@ -339,4 +335,25 @@ a.link {
 
 .list-group-item div {
   flex: 1;
+}
+
+         
+.btn-grad {
+  background-image: linear-gradient(to right, #000000 0%, #434343  51%, #000000  100%);
+  margin: 10px;
+  padding: 15px 45px;
+  text-align: center;
+  text-transform: uppercase;
+  transition: 0.5s;
+  background-size: 200% auto;
+  color: white;            
+  box-shadow: 0 0 5px #eee;
+  border-radius: 10px;
+  /* display: block; */
+}
+
+.btn-grad:hover {
+  background-position: right center; /* change the direction of the change here */
+  color: #fff;
+  text-decoration: none;
 }
