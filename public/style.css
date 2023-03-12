@@ -55,6 +55,12 @@
     width: 100%;
     height: auto;
   }
+
+  /* prevent from overflowing on small screens */
+  .iziToast-body * {
+    word-wrap: break-word; /* For older browsers */
+    overflow-wrap: break-word; /* For newer browsers */
+  }
 }
 
 /* Global styles */
@@ -142,9 +148,9 @@ button[type="submit"], button.alternative-search  {
 
 /* Table styles */
 table {
-  margin: 1.25rem auto;
+  margin: 1.25rem;
   border-collapse: collapse;
-  width: 100% auto;
+  width: 100%;
   max-width: 100%;
   background-color: #10161d;
   box-shadow: 0 0 0.313rem #bbb;
