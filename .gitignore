@@ -13,4 +13,3 @@
 # misc
 *.log
 /scripts
-/redis
