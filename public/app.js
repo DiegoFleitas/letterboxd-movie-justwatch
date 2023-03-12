@@ -232,19 +232,24 @@ function showMessage(data, isHTML = false) {
 function toggleNotice(msg) {
   const notice = document.querySelectorAll("#notice")?.[0];
   if (notice) {
-    notice.remove();
+    // remove iziToast-capsule to avoid stacking
+    notice.parentElement.remove();
     return;
   }
 
-  iziToast.show({
-    id: "notice",
-    title: "Please wait...",
-    message: msg,
-    theme: "dark",
-    progressBarColor: "#5DA5DA",
-    progressBarEasing: "linear",
-    timeout: 10000, // 10s
-  });
+  try {
+    iziToast.show({
+      id: "notice",
+      title: "Please wait...",
+      message: msg,
+      theme: "dark",
+      progressBarColor: "#5DA5DA",
+      progressBarEasing: "linear",
+      timeout: 10000, // 10s
+    });
+  } catch (error) {
+    // normal to get an error here, but it's ok
+  }
 }
 
 function hideNotice() {
