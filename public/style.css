@@ -133,10 +133,6 @@ button[type="submit"], button.alternative-search  {
   display: none;
 }
 
-.table-alternative-search {
-  font-size: xx-large;
-}
-
 .alternative-search {
   text-align: center;
   cursor: pointer;
@@ -154,7 +150,13 @@ table {
   box-shadow: 0 0 0.313rem #bbb;
 }
 
-table th,
+table th {
+  padding: 0.625rem;
+  text-align: center;
+  background-color: #222c38;
+  color: #bbb;
+}
+
 table td {
   padding: 0.625rem;
   text-align: left;

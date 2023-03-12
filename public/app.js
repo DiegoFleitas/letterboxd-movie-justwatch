@@ -18,11 +18,9 @@ form.addEventListener("submit", (event) => {
     body: JSON.stringify(data),
   })
     .then((response) => {
+      showAlternativeSearch();
       if (response.status === 502) {
         console.error(response);
-      }
-      if (response.status === 404) {
-        showWinkElements();
       }
       return response.json();
     })
@@ -97,11 +95,9 @@ letterboxdWatchlistForm.addEventListener("submit", (event) => {
           body: JSON.stringify(element),
         })
           .then((response) => {
+            showAlternativeSearch(true);
             if (response.status === 502) {
               console.error(response);
-            }
-            if (response.status === 404) {
-              showWinkElements();
             }
             return response.json();
           })
@@ -124,7 +120,7 @@ letterboxdWatchlistForm.addEventListener("submit", (event) => {
     .catch((error) => console.error(error));
 });
 
-function alternativeSearchWink(event) {
+function alternativeSearch(event) {
   event.preventDefault(); // Prevent the form from submitting normally
   // Get the title and year from the clicked row
   const parentElement = event.currentTarget.parentNode.parentNode;
@@ -156,7 +152,6 @@ function alternativeSearchWink(event) {
         showError(response.error);
       } else {
         showMessage(response, true);
-        scrollToTop();
       }
     })
     .catch((error) => {
@@ -237,15 +232,15 @@ function rebuildTable(title, year, data) {
     document.createElement("tr");
   row.setAttribute("data-id", id);
 
-  let [tdTitle, tdYear, tdImg, tdStreaming, tdWink] = [...row.children];
+  let [tdTitle, tdYear, tdImg, tdStreaming, tdAltSearch] = [...row.children];
   if (!tdTitle) tdTitle = document.createElement("td");
   if (!tdYear) tdYear = document.createElement("td");
   if (!tdImg) tdImg = document.createElement("td");
   if (!tdStreaming) tdStreaming = document.createElement("td");
-  if (!tdWink) tdWink = document.createElement("td");
+  if (!tdAltSearch) tdAltSearch = document.createElement("td");
 
   tdTitle.textContent = title;
-  tdYear.textContent = year;
+  tdYear.textContent = `(${year})`;
   if (data.poster)
     tdImg.innerHTML = `<a href="${data.link}" target="_blank">
     <img class="poster" src="${data.poster}" />
@@ -255,12 +250,12 @@ function rebuildTable(title, year, data) {
     tdStreaming.textContent =
       data.streamingServices ?? data.streamingServices.join(", ");
 
-  tdWink.innerHTML = `<button onclick="alternativeSearchWink(event)" class="alternative-search hide-alternative-search">😉</button>`;
+  tdAltSearch.innerHTML = `<button onclick="alternativeSearch(event)" class="alternative-search">😉</button>`;
 
   if (!row.parentNode) document.querySelector("tbody").appendChild(row);
   if (!row.parentNode && !tdStreaming.textContent) return;
   row.innerHTML = "";
-  [tdTitle, tdYear, tdImg, tdStreaming, tdWink].forEach((td) =>
+  [tdTitle, tdYear, tdImg, tdStreaming, tdAltSearch].forEach((td) =>
     row.appendChild(td)
   );
 
@@ -315,9 +310,11 @@ function rebuildTableFilter() {
   });
 }
 
-function showWinkElements() {
-  const winkElements = document.querySelectorAll(".hide-alternative-search");
-  winkElements.forEach((element) =>
+function showAlternativeSearch(isTableSearch = false) {
+  const elements = document.querySelectorAll(
+    `${isTableSearch ? "td" : ""} .hide-alternative-search`
+  );
+  elements.forEach((element) =>
     element.classList.toggle("hide-alternative-search")
   );
 }
@@ -380,10 +377,3 @@ $(document).ready(() => {
       $("#title").val(suggestion.Title);
     });
 });
-
-function scrollToTop() {
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth",
-  });
-}
