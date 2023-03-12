@@ -64,14 +64,15 @@ const searchMovie = async (req, res) => {
       return res.status(404).json(response);
     }
 
+    const noStreamingServicesResponse = {
+      error: "No streaming services offering this movie (JustWatch)",
+      title,
+      year,
+    };
+
     if (!movieData.offers || !movieData.offers.length) {
-      const response = {
-        error: "No streaming services offering this movie (JustWatch)",
-        title: title,
-        year: year,
-      };
-      await setCacheValue(cacheKey, response, cacheTtl);
-      return res.status(404).json(response);
+      await setCacheValue(cacheKey, noStreamingServicesResponse, cacheTtl);
+      return res.status(404).json(noStreamingServicesResponse);
     }
 
     let streamingServices = movieData.offers
@@ -83,6 +84,11 @@ const searchMovie = async (req, res) => {
       )
       .map((offer) => offer.provider_id);
     streamingServices = [...new Set(streamingServices)];
+
+    if (!streamingServices?.length) {
+      await setCacheValue(cacheKey, noStreamingServicesResponse, cacheTtl);
+      return res.status(404).json(noStreamingServicesResponse);
+    }
 
     // Get clear names for streaming services
     const providerResponse = await axios.get(
