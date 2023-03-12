@@ -9,7 +9,7 @@ PRE: You need to have docker to run the image at /redis folder
 - Rename .env.example to .env & update the values
 - Run `npm run dev`
 
-## Troubleshotting
+## Troubleshooting
 
 - Read `redis/README.md`
 
