@@ -44,6 +44,12 @@
     font-size: 0.875rem;
   }
 
+  /* prevent from overflowing on small screens */
+  table * {
+    word-wrap: break-word; /* For older browsers */
+    overflow-wrap: break-word; /* For newer browsers */
+  }
+
   #service-picker {
     width: 100%;
     box-sizing: border-box;

@@ -285,9 +285,10 @@ function rebuildTable(title, year, data) {
     <img class="poster" src="${data.poster}" />
     </a>`;
 
-  if (data.streamingServices)
-    tdStreaming.textContent =
-      data.streamingServices ?? data.streamingServices.join(", ");
+  if (data.streamingServices) {
+    const text = data.streamingServices.join(", ");
+    if (text) tdStreaming.textContent = text;
+  }
 
   tdAltSearch.innerHTML = `<button onclick="alternativeSearch(event)" class="alternative-search">😉</button>`;
 
