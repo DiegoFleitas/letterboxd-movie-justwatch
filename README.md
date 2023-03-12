@@ -56,3 +56,11 @@ Upstash Redis created with `flyctl redis create`
 
 - `flyctl redis list` & copy redis name
 - `flyctl redis status <redis-name>` & then copy the Private URL & set the proper env variable at the .env file
+
+## Other
+
+Currently hosted free of charge on Fly.io
+
+- https://fly.io/blog/shipping-logs/
+- https://fly.io/docs/reference/redis/
+
