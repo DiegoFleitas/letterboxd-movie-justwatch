@@ -65,7 +65,8 @@ const searchMovie = async (req, res) => {
     }
 
     const noStreamingServicesResponse = {
-      error: "No streaming services offering this movie (JustWatch)",
+      error:
+        "No streaming services offering this movie on your country (JustWatch)",
       title,
       year,
     };
