@@ -125,10 +125,13 @@ function alternativeSearch(event) {
   // Get the title and year from the clicked row
   const parentElement = event.currentTarget.parentNode.parentNode;
   const isRow = parentElement.nodeName === "TR";
-  let title, year;
+  let title,
+    year = "";
   if (isRow) {
     title = parentElement.cells[0].textContent;
-    year = parentElement.cells[1].textContent;
+    year = parentElement.cells[1].textContent
+      ?.replaceAll("(", "")
+      ?.replaceAll(")", "");
   } else {
     res = Object.fromEntries(new FormData(event.target.form).entries());
     title = res.title;
