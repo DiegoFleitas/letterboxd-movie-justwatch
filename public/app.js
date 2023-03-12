@@ -415,5 +415,8 @@ $(document).ready(() => {
       const year = suggestion.Year.match(/\d+/);
       $("#year").val(year);
       $("#title").val(suggestion.Title);
+    })
+    .on("change", (event) => {
+      $("#title").val(event.target.value);
     });
 });
