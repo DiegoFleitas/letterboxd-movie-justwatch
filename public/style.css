@@ -251,7 +251,7 @@ img.logo {
 }
 
 .diagonal-text-container {
-  content: "Better";
+  content: "Movie";
   position: absolute;
   top: 0;
   left: 0;
@@ -356,4 +356,13 @@ a.link {
   background-position: right center; /* change the direction of the change here */
   color: #fff;
   text-decoration: none;
+}
+
+.spoiler {
+  color: black; 
+  background-color:black;
+}
+
+.spoiler:hover { 
+  background-color:white; 
 }
