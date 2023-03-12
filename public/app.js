@@ -191,42 +191,45 @@ function showError(error) {
   });
 }
 
-function showMessage(data, isHTML = false) {
-  console.log(data, isHTML);
-  // Check visible toast count before showing another toast
-  toastCount = document.querySelectorAll(".iziToast-capsule")?.length || 0;
-  if (toastCount >= 3) {
+const queuedMessages = [];
+
+function showMessage(messageData, isHTML = false) {
+  console.log(messageData, isHTML);
+
+  const visibleToastsCount =
+    document.querySelectorAll(".iziToast-capsule")?.length || 0;
+
+  // don't show more than 3 toasts at a time
+  if (visibleToastsCount >= 3) {
+    // if the message is HTML, queue it up to show after the current toasts are closed
+    if (isHTML) queuedMessages.push(messageData);
     console.log(
-      `There are already ${toastCount} visible toasts on the page, message skipped. Message: ${data}`
+      `There are already ${visibleToastsCount} visible toasts on the page, message queued. Message: ${messageData}`
     );
     return;
   }
+
+  const toastOptions = {
+    message: isHTML
+      ? `<a href="${messageData.url}" target="_blank">${messageData.text}</a>`
+      : messageData,
+    theme: "light",
+    layout: 1,
+    progressBar: false,
+    timeout: isHTML ? false : 3000,
+    position: "topRight",
+    backgroundColor: "#fbc500",
+  };
+
   if (isHTML) {
-    iziToast.show({
-      message: `
-        <a href="${data.url}" target="_blank">
-          ${data.text}
-        </a>
-        `,
-      theme: "light",
-      layout: 1,
-      progressBar: false,
-      timeout: false,
-      position: "topRight",
-      backgroundColor: "#fbc500",
-    });
-  } else {
-    iziToast.show({
-      message: data,
-      theme: "light",
-      layout: 1,
-      progressBar: false,
-      timeout: 3000,
-      // timeout: false,
-      position: "topRight",
-      backgroundColor: "#fbc500",
-    });
+    toastOptions.onClose = () => {
+      if (queuedMessages.length > 0) {
+        showMessage(queuedMessages.shift(), true);
+      }
+    };
   }
+
+  iziToast.show(toastOptions);
 }
 
 function toggleNotice(msg) {
