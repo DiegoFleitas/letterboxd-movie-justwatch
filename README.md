@@ -4,8 +4,18 @@ A movie stream search powered by JustWatch that integrates with Letterboxd, minu
 
 ## Run locally / debugging
 
+PRE: You need to have docker to run the image at /redis folder
+
 - Rename .env.example to .env & update the values
 - Run `npm run start`
+
+## Troubleshotting
+
+- Read `redis/README.md`
+
+## Gotchas
+
+- When running `npm run fly:deploy` the contents of .env are used, meaning if you set up local redis the connection WILL fail when deployed
 
 ## First time deploying
 
