@@ -137,6 +137,8 @@ function alternativeSearch(event) {
 
   if (!title) return;
 
+  toggleNotice(`Searching for ${title} (${year})...`);
+
   // Make a fetch request to the /alternative-search endpoint
   fetch("/api/alternative-search", {
     method: "POST",
@@ -148,6 +150,9 @@ function alternativeSearch(event) {
     .then((response) => response.json())
     .then((response) => {
       console.log(response);
+      setTimeout(() => {
+        toggleNotice();
+      }, 1000);
       if (response.error) {
         showError(response.error);
       } else {
@@ -222,6 +227,29 @@ function showMessage(data, isHTML = false) {
       backgroundColor: "#fbc500",
     });
   }
+}
+
+function toggleNotice(msg) {
+  const notice = document.querySelectorAll("#notice")?.[0];
+  if (notice) {
+    notice.remove();
+    return;
+  }
+
+  iziToast.show({
+    id: "notice",
+    title: "Please wait...",
+    message: msg,
+    theme: "dark",
+    progressBarColor: "#5DA5DA",
+    progressBarEasing: "linear",
+    timeout: 10000, // 10s
+  });
+}
+
+function hideNotice() {
+  const notice = document.querySelector(".iziToast-capsule")?.[0];
+  if (notice) notice.remove();
 }
 
 function rebuildTable(title, year, data) {
