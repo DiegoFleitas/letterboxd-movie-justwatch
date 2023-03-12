@@ -26,12 +26,9 @@ PRE: You need to have docker to run the image at /redis folder
 - When prompted for a builder, select builtin Nodejs.
 - Run `npm run fly:deploy` (for future deployments only this command will be needed)
 
-## Stopping app (without deleting)
+## Stopping / Starting app
 
 - `npm run fly:stop`
-
-## Starting back again
-
 - `npm run fly:start`
 
 ## Read secrets
