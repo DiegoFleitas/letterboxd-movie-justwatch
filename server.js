@@ -17,13 +17,26 @@ const port = process.env.PORT || 3000;
 
 app.use(express.static("public"));
 
-// Define a custom morgan format that logs request IP and request payload
-morgan.token("payload", (req, res) => {
-  return JSON.stringify(req.body);
+// Define a custom morgan format to log JSON to the client
+morgan.format("json", function (tokens, req, res) {
+  const logLevel = res.statusCode >= 400 ? "error" : "info";
+  return `[${logLevel}] ${JSON.stringify(
+    {
+      ip: tokens["remote-addr"](req, res),
+      userAgent: req.headers["user-agent"],
+      method: tokens.method(req, res),
+      url: tokens.url(req, res),
+      status: tokens.status(req, res),
+      payload: JSON.stringify(req.body),
+      contentType: req.headers["content-type"],
+      responseTime: tokens["response-time"](req, res),
+    },
+    null,
+    2
+  )}`;
 });
-const logFormat = `remote-addr\tresponse-time(ms)\tmethod\turl\tstatus\tpayload\treq[content-type]\treq[user-agent]
-:remote-addr\t:response-time ms\t:method\t:url\t:status\t:payload\t:req[content-type]\t:req[user-agent]`;
-app.use(morgan(logFormat)); // logs
+
+app.use(morgan("json")); // logs
 
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }));
