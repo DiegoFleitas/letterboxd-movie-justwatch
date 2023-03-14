@@ -304,9 +304,9 @@ function rebuildTable(title, year, data) {
   }
 }
 
+let slimSelect = null;
 function rebuildTableFilter() {
   const table = document.querySelector("table");
-  let select = document.querySelector("#service-picker");
 
   // Create an array of all the unique streaming services in the table
   const services = Array.from(
@@ -318,36 +318,56 @@ function rebuildTableFilter() {
     )
   );
 
-  // Add the select element to the page if it doesn't already exist
-  if (!select) {
+  // Add the SlimSelect element to the page if it doesn't already exist
+  if (!slimSelect) {
     select = document.createElement("select");
     select.setAttribute("id", "service-picker");
-    const header = table.querySelector("thead");
-    header.insertBefore(select, header.firstChild);
+    select.setAttribute("multiple", "");
+    const container = document.querySelector("#providers-selector");
+    container.insertBefore(select, null);
 
-    // Add an event listener to the select element to filter the table when an option is selected
-    select.addEventListener("change", () => {
-      const selectedService = select.value;
-      Array.from(table.querySelectorAll("td:nth-of-type(4)")).forEach((td) => {
-        const streamingServices = td.textContent;
-        if (streamingServices.includes(selectedService)) {
-          td.parentElement.style.display = "";
-        } else {
-          td.parentElement.style.display = "none";
-        }
-      });
+    // Initialize SlimSelect and add an event listener to filter the table when an option is selected
+    slimSelect = new SlimSelect({
+      select,
+      multiple: true,
+      settings: {
+        showSearch: false,
+        searchHighlight: false,
+        placeholderText: "Select streaming services...",
+      },
+      options: services.map((service) => ({ text: service, value: service })),
+      events: {
+        afterChange: (evt) => {
+          if (!evt.length) {
+            Array.from(table.querySelectorAll("tr")).forEach(
+              (tr) => (tr.style.display = "")
+            );
+            return;
+          }
+          const selectedServices = evt.map((elem) => elem.value);
+          console.log(selectedServices);
+          Array.from(table.querySelectorAll("td:nth-of-type(4)")).forEach(
+            (td) => {
+              const streamingServices = td.textContent;
+              const includedServices = selectedServices.filter((service) =>
+                streamingServices.includes(service)
+              );
+              if (includedServices.length > 0) {
+                td.parentElement.style.display = "";
+              } else {
+                td.parentElement.style.display = "none";
+              }
+            }
+          );
+        },
+      },
     });
   } else {
-    // Clear any existing options from the select element
-    select.innerHTML = "";
+    // Update SlimSelect with new options
+    slimSelect.setData(
+      services.map((service) => ({ text: service, value: service }))
+    );
   }
-
-  // Populate the select element with options for each streaming service
-  services.forEach((service) => {
-    const option = document.createElement("option");
-    option.textContent = service;
-    select.appendChild(option);
-  });
 }
 
 function showAlternativeSearch(isTableSearch = false) {
