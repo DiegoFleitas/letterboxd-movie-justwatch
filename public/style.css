@@ -156,6 +156,23 @@ table {
   width: 100%;
   max-width: 100%;
   background-color: #10161d;
+  border-radius: 0.313rem;
+}
+
+table th:first-child {
+  border-radius: 0.313rem 0 0 0;
+}
+
+table th:last-child {
+  border-radius: 0 0.313rem 0 0;
+}
+
+table tr:last-child td:first-child {
+  border-radius: 0 0 0 0.313rem;
+}
+
+table tr:last-child td:last-child {
+  border-radius: 0 0 0.313rem 0;
 }
 
 table th {
@@ -363,6 +380,7 @@ a.link {
   background-color:black;
 }
 
-.spoiler:hover { 
-  background-color:white; 
+:root { 
+  --ss-primary-color: #10161d !important;
+  --ss-border-color: #222c38 !important;
 }
