@@ -38,28 +38,11 @@
     margin: 0.625rem 0 !important;
   }
 
-  table th,
-  table td {
-    padding: 0.313rem;
-    font-size: 0.875rem;
-  }
-
-  /* prevent from overflowing on small screens */
-  table * {
-    word-wrap: break-word; /* For older browsers */
-    overflow-wrap: break-word; /* For newer browsers */
-  }
-
   #service-picker {
     width: 100%;
     box-sizing: border-box;
     margin: 0.625rem 0;
     font-size: 0.875rem;
-  }
-
-  img.poster {
-    width: 100%;
-    height: auto;
   }
 
   /* prevent from overflowing on small screens */
@@ -147,54 +130,6 @@ button[type="submit"], button.alternative-search  {
   text-align: center;
   cursor: pointer;
   background-color: black !important;
-}
-
-/* Table styles */
-table {
-  margin: 1.25rem;
-  border-collapse: collapse;
-  width: 100%;
-  max-width: 100%;
-  background-color: #10161d;
-  border-radius: 0.313rem;
-}
-
-table th:first-child {
-  border-radius: 0.313rem 0 0 0;
-}
-
-table th:last-child {
-  border-radius: 0 0.313rem 0 0;
-}
-
-table tr:last-child td:first-child {
-  border-radius: 0 0 0 0.313rem;
-}
-
-table tr:last-child td:last-child {
-  border-radius: 0 0 0.313rem 0;
-}
-
-table th {
-  padding: 0.625rem;
-  text-align: center;
-  background-color: #222c38;
-  color: #bbb;
-}
-
-table td {
-  padding: 0.625rem;
-  text-align: left;
-  background-color: #222c38;
-  color: #bbb;
-}
-
-table tr:nth-child(even) {
-  background-color: #10161d;
-}
-
-table tr {
-  text-align: center;
 }
 
 label {
@@ -325,10 +260,10 @@ hr {
   /* remove any margin */
 }
 
-img.poster {
+/* img.poster {
   padding: 0.625rem;
   max-width: 18.75rem;
-}
+} */
 
 a.link {
   padding: 0.625rem;
@@ -383,4 +318,67 @@ a.link {
 :root { 
   --ss-primary-color: #10161d !important;
   --ss-border-color: #222c38 !important;
+}
+
+.poster-showcase {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-gap: 20px;
+}
+
+
+/* Styles for mobile screens */
+@media only screen and (max-width: 767px) {
+  .poster-showcase {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Styles for desktop screens */
+@media only screen and (min-width: 768px) {
+  .poster-showcase {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    max-width: 1200px; /* or any other value you prefer */
+  }
+}
+
+.poster {
+  position: relative;
+}
+
+.poster img {
+  width: 100%;
+  height: auto;
+  border-radius: 5px;
+}
+
+.poster-info {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 10px;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  font-size: 14px;
+}
+
+.poster-title {
+  margin: 0;
+  font-size: 18px;
+}
+
+.poster-release-date,
+.streaming-services {
+  margin: 5px 0;
+}
+
+.alternative-search {
+  margin: 10px 0 0;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+#providers-selector {
+  padding: 0.313rem;
 }

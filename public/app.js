@@ -83,7 +83,7 @@ letterboxdWatchlistForm.addEventListener("submit", (event) => {
             response.link = element.link;
             if (!response.poster || response.poster == "N/A")
               response.poster = "/movie_placeholder.svg";
-            rebuildTable(element.title, element.year, response);
+            rebuildMovieMosaic(element.title, element.year, response);
           })
           .catch((error) => console.error(error));
         // Perform the fetch request
@@ -95,7 +95,6 @@ letterboxdWatchlistForm.addEventListener("submit", (event) => {
           body: JSON.stringify(element),
         })
           .then((response) => {
-            showAlternativeSearch(true);
             if (response.status === 502) {
               console.error(response);
             }
@@ -111,7 +110,7 @@ letterboxdWatchlistForm.addEventListener("submit", (event) => {
                 ", "
               )}`;
               showMessage(msg);
-              rebuildTable(element.title, element.year, response);
+              rebuildMovieMosaic(element.title, element.year, response);
             }
           })
           .catch((error) => console.error(error));
@@ -123,15 +122,18 @@ letterboxdWatchlistForm.addEventListener("submit", (event) => {
 function alternativeSearch(event) {
   event.preventDefault(); // Prevent the form from submitting normally
   // Get the title and year from the clicked row
-  const parentElement = event.currentTarget.parentNode.parentNode;
-  const isRow = parentElement.nodeName === "TR";
+  const parentElement = event.currentTarget.parentNode;
+  console.log(parentElement);
+  const isTile = parentElement.classList.contains("poster-info");
   let title,
     year = "";
-  if (isRow) {
-    title = parentElement.cells[0].textContent;
-    year = parentElement.cells[1].textContent
-      ?.replaceAll("(", "")
-      ?.replaceAll(")", "");
+  if (isTile) {
+    const tileId = parentElement.parentElement.getAttribute("data-id");
+    const tile = movieTiles[tileId];
+    console.log(tile);
+    if (!tile) return;
+    title = tile.title;
+    year = tile.year;
   } else {
     res = Object.fromEntries(new FormData(event.target.form).entries());
     title = res.title;
@@ -263,60 +265,85 @@ function hideNotice() {
   if (notice) notice.remove();
 }
 
-function rebuildTable(title, year, data) {
-  console.log(arguments);
-  const id = `${title.toLowerCase().replace(/ /g, "-")}-${year}`;
-  const row =
-    document.querySelector(`tr[data-id="${id}"]`) ||
-    document.createElement("tr");
-  row.setAttribute("data-id", id);
+const movieTiles = {};
+const updatedTiles = {};
 
-  let [tdTitle, tdYear, tdImg, tdStreaming, tdAltSearch] = [...row.children];
-  if (!tdTitle) tdTitle = document.createElement("td");
-  if (!tdYear) tdYear = document.createElement("td");
-  if (!tdImg) tdImg = document.createElement("td");
-  if (!tdStreaming) tdStreaming = document.createElement("td");
-  if (!tdAltSearch) tdAltSearch = document.createElement("td");
+function rebuildMovieMosaic(title, year, data) {
+  const id = `${year}-${title
+    .toUpperCase()
+    .replace(/ /g, "-")
+    .replace(/[^A-Z0-9]/g, "")}`;
 
-  tdTitle.textContent = title;
-  tdYear.textContent = `(${year})`;
-  if (data.poster)
-    tdImg.innerHTML = `<a href="${data.link}" target="_blank">
-    <img class="poster" src="${data.poster}" />
-    </a>`;
+  const existingTile = document.querySelector(`div[data-id="${id}"]`);
 
-  if (data.streamingServices) {
-    const text = data.streamingServices.join(", ");
-    if (text) tdStreaming.textContent = text;
+  if (existingTile) {
+    const tileData = movieTiles[id];
+    if (!tileData.streamingServices || !tileData.streamingServices.length)
+      tileData.streamingServices = data.streamingServices;
+    if (!tileData.poster) tileData.poster = data.poster;
+    if (!tileData.link) tileData.link = data.link;
+    updateTile(existingTile, tileData);
+    updatedTiles[id] = true; // Mark the tile as updated
+  } else {
+    const tile = document.createElement("div");
+    tile.setAttribute("data-id", id);
+    tile.classList.add("poster");
+
+    const streamingServices = data?.streamingServices || [];
+    const link = data?.link || "";
+    const poster = data?.poster || "";
+
+    const tileData = {
+      link,
+      streamingServices,
+      poster,
+      title,
+      year,
+      id,
+    };
+
+    movieTiles[id] = tileData; // Store the tile data
+    updateTile(tile, tileData);
+    updatedTiles[id] = true; // Mark the tile as updated
+
+    var moviesContainer = document.querySelector(".poster-showcase");
+    moviesContainer.appendChild(tile);
   }
 
-  tdAltSearch.innerHTML = `<button onclick="alternativeSearch(event)" class="alternative-search btn-grad">🏴‍☠️</button>`;
-
-  if (!row.parentNode) document.querySelector("tbody").appendChild(row);
-  if (!row.parentNode && !tdStreaming.textContent) return;
-  row.innerHTML = "";
-  [tdTitle, tdYear, tdImg, tdStreaming, tdAltSearch].forEach((td) =>
-    row.appendChild(td)
-  );
-
-  if (data.streamingServices) {
-    rebuildTableFilter();
+  if (data.streamingServices && data.streamingServices.length) {
+    updateSelector(movieTiles);
   }
 }
 
-let slimSelect = null;
-function rebuildTableFilter() {
-  const table = document.querySelector("table");
+function updateTile(tile, data) {
+  const streamingServices = data?.streamingServices || [];
+  const link = data?.link || "";
+  const poster = data?.poster || "";
+  tile.innerHTML = `
+    <a href="${link}" target="_blank">
+      <img src="${poster}" alt="${data.title} Poster">
+    </a>
+    <div class="poster-info">
+      <h2 class="poster-title">${data.title}</h2>
+      <p class="poster-release-date">Release Date: ${data.year}</p>
+      <p class="streaming-services">${streamingServices.join(" ")}</p>
+      <p class="alternative-search" onclick="alternativeSearch(event)">🏴‍☠️</p>
+    </div>
+  `;
+}
 
-  // Create an array of all the unique streaming services in the table
-  const services = Array.from(
-    new Set(
-      Array.from(table.querySelectorAll("td:nth-of-type(4)"))
-        .map((td) => td.textContent.replaceAll(/\s/g, " ").trim())
-        .map((text) => text.split(", "))
-        .flat()
-    )
-  );
+let slimSelect = null;
+function updateSelector(movieTiles) {
+  // Create an array of all the unique streaming services
+  let services = new Set();
+  for (const movieKey in movieTiles) {
+    const movieData = movieTiles[movieKey];
+    for (const streamingService of movieData.streamingServices) {
+      services.add(streamingService);
+    }
+  }
+  services = Array.from(services);
+  console.log(services);
 
   // Add the SlimSelect element to the page if it doesn't already exist
   if (!slimSelect) {
@@ -326,7 +353,7 @@ function rebuildTableFilter() {
     const container = document.querySelector("#providers-selector");
     container.insertBefore(select, null);
 
-    // Initialize SlimSelect and add an event listener to filter the table when an option is selected
+    // Initialize SlimSelect and add an event listener to filter the mosaic when an option is selected
     slimSelect = new SlimSelect({
       select,
       multiple: true,
@@ -339,26 +366,25 @@ function rebuildTableFilter() {
       events: {
         afterChange: (evt) => {
           if (!evt.length) {
-            Array.from(table.querySelectorAll("tr")).forEach(
-              (tr) => (tr.style.display = "")
-            );
+            // display all tiles
+            document.querySelectorAll(".poster").forEach((tile) => {
+              tile.style.display = "";
+            });
             return;
           }
-          const selectedServices = evt.map((elem) => elem.value);
-          console.log(selectedServices);
-          Array.from(table.querySelectorAll("td:nth-of-type(4)")).forEach(
-            (td) => {
-              const streamingServices = td.textContent;
-              const includedServices = selectedServices.filter((service) =>
-                streamingServices.includes(service)
-              );
-              if (includedServices.length > 0) {
-                td.parentElement.style.display = "";
-              } else {
-                td.parentElement.style.display = "none";
-              }
+          const selectedServices = evt.map((service) => service.value);
+          Object.values(movieTiles).forEach((data) => {
+            const streamingServices = data.streamingServices;
+            const includedServices = selectedServices.filter((service) =>
+              streamingServices.includes(service)
+            );
+            const tile = document.querySelector(`div[data-id="${data.id}"]`);
+            if (includedServices.length > 0) {
+              tile.style.display = "";
+            } else {
+              tile.style.display = "none";
             }
-          );
+          });
         },
       },
     });
@@ -370,13 +396,10 @@ function rebuildTableFilter() {
   }
 }
 
-function showAlternativeSearch(isTableSearch = false) {
-  const elements = document.querySelectorAll(
-    `${isTableSearch ? "td" : ""} .hide-alternative-search`
-  );
-  elements.forEach((element) =>
-    element.classList.toggle("hide-alternative-search")
-  );
+function showAlternativeSearch() {
+  document
+    .querySelector(".alternative-search")
+    .classList.remove("hide-alternative-search");
 }
 
 /** Automagically search movies */
