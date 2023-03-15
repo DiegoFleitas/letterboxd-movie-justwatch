@@ -327,14 +327,14 @@ function updateTile(tile, data) {
       <h2 class="poster-title">${data.title}</h2>
       <p class="poster-release-date">Release Date: ${data.year}</p>
       <p class="streaming-services">${streamingServices.join(" ")}</p>
-      <p class="alternative-search" onclick="alternativeSearch(event)">🏴‍☠️</p>
+      <p class="alternative-search">🏴‍☠️</p>
     </div>
   `;
 }
 
 let slimSelect = null;
 function updateSelector(movieTiles) {
-  // Create an array of all the unique streaming services
+  // Create an array of all the unique streaming services in the table
   let services = new Set();
   for (const movieKey in movieTiles) {
     const movieData = movieTiles[movieKey];
