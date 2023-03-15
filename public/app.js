@@ -95,7 +95,6 @@ letterboxdWatchlistForm.addEventListener("submit", (event) => {
           body: JSON.stringify(element),
         })
           .then((response) => {
-            showAlternativeSearch(true);
             if (response.status === 502) {
               console.error(response);
             }
@@ -123,15 +122,18 @@ letterboxdWatchlistForm.addEventListener("submit", (event) => {
 function alternativeSearch(event) {
   event.preventDefault(); // Prevent the form from submitting normally
   // Get the title and year from the clicked row
-  const parentElement = event.currentTarget.parentNode.parentNode;
-  const isRow = parentElement.nodeName === "TR";
+  const parentElement = event.currentTarget.parentNode;
+  console.log(parentElement);
+  const isTile = parentElement.classList.contains("poster-info");
   let title,
     year = "";
-  if (isRow) {
-    title = parentElement.cells[0].textContent;
-    year = parentElement.cells[1].textContent
-      ?.replaceAll("(", "")
-      ?.replaceAll(")", "");
+  if (isTile) {
+    const tileId = parentElement.parentElement.getAttribute("data-id");
+    const tile = movieTiles[tileId];
+    console.log(tile);
+    if (!tile) return;
+    title = tile.title;
+    year = tile.year;
   } else {
     res = Object.fromEntries(new FormData(event.target.form).entries());
     title = res.title;
@@ -325,14 +327,14 @@ function updateTile(tile, data) {
       <h2 class="poster-title">${data.title}</h2>
       <p class="poster-release-date">Release Date: ${data.year}</p>
       <p class="streaming-services">${streamingServices.join(" ")}</p>
-      <p class="alternative-search">🏴‍☠️</p>
+      <p class="alternative-search" onclick="alternativeSearch(event)">🏴‍☠️</p>
     </div>
   `;
 }
 
 let slimSelect = null;
 function updateSelector(movieTiles) {
-  // Create an array of all the unique streaming services in the table
+  // Create an array of all the unique streaming services
   let services = new Set();
   for (const movieKey in movieTiles) {
     const movieData = movieTiles[movieKey];
@@ -351,7 +353,7 @@ function updateSelector(movieTiles) {
     const container = document.querySelector("#providers-selector");
     container.insertBefore(select, null);
 
-    // Initialize SlimSelect and add an event listener to filter the table when an option is selected
+    // Initialize SlimSelect and add an event listener to filter the mosaic when an option is selected
     slimSelect = new SlimSelect({
       select,
       multiple: true,
@@ -394,13 +396,10 @@ function updateSelector(movieTiles) {
   }
 }
 
-function showAlternativeSearch(isTableSearch = false) {
-  const elements = document.querySelectorAll(
-    `${isTableSearch ? "td" : ""} .hide-alternative-search`
-  );
-  elements.forEach((element) =>
-    element.classList.toggle("hide-alternative-search")
-  );
+function showAlternativeSearch() {
+  document
+    .querySelector(".alternative-search")
+    .classList.remove("hide-alternative-search");
 }
 
 /** Automagically search movies */
