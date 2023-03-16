@@ -103,6 +103,22 @@ const searchMovie = async (req, res) => {
       })
       .filter((name) => name !== null);
 
+    const iconsAndNames = streamingServices
+      .map((service) => {
+        const provider = providers.find((provider) => provider.id === service);
+        const name = provider ? provider.clear_name : null;
+        const icon = provider
+          ? provider.icon_url.replace("{profile}", "")
+          : null;
+        return {
+          name: name,
+          icon: icon
+            ? `https://www.justwatch.com/images${icon}s100/icon.webp`
+            : null,
+        };
+      })
+      .filter((name) => name !== null);
+
     if (!clearNames || !clearNames.length) {
       const services = streamingServices.join(", ");
       const response = {
@@ -118,6 +134,7 @@ const searchMovie = async (req, res) => {
     const response = {
       message: "Movie found",
       streamingServices: clearNames,
+      iconsAndNames: iconsAndNames,
       title: title,
       year: year,
     };
