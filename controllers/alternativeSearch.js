@@ -23,7 +23,7 @@ const alternativeSearch = async (req, res) => {
       `https://j4cke77-4hd43d19pe6d5bt7.fly.dev/api/v2.0/indexers/all/results?Query=${searchQuery}&Category=2000&apikey=${jackettApiKey}`
     );
     const results = data.Results;
-    console.log(results);
+    // console.log(results);
 
     // Find the result with the most seeders
     let maxSeeders = 0;
