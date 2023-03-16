@@ -2,6 +2,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const multer = require("multer");
 const morgan = require("morgan");
+const uaParser = require("ua-parser-js");
 require("dotenv").config();
 const {
   searchMovie,
@@ -17,9 +18,26 @@ const port = process.env.PORT || 3000;
 
 app.use(express.static("public"));
 
+morgan.token("browser", function (req) {
+  const userAgent = req.headers["user-agent"];
+  const ua = uaParser(userAgent);
+  return `${ua.browser.name} ${ua.browser.version}`;
+});
+
+morgan.token("os", function (req) {
+  const userAgent = req.headers["user-agent"];
+  const ua = uaParser(userAgent);
+  return `${ua.os.name} ${ua.os.version}`;
+});
+
+morgan.token("bot", function (req) {
+  const userAgent = req.headers["user-agent"];
+  const ua = uaParser(userAgent);
+  return ua.device.type === "bot" ? "yes" : "no";
+});
+
 // Define a custom morgan format to log JSON to the client
 morgan.format("json", function (tokens, req, res) {
-  // Check if user agent is "Consul Health Check"
   if (req.headers["user-agent"] === "Consul Health Check") {
     return;
   }
@@ -28,6 +46,9 @@ morgan.format("json", function (tokens, req, res) {
     {
       ip: tokens["remote-addr"](req, res),
       userAgent: req.headers["user-agent"],
+      browser: tokens.browser(req),
+      os: tokens.os(req),
+      isBot: tokens.bot(req),
       method: tokens.method(req, res),
       url: tokens.url(req, res),
       status: tokens.status(req, res),
