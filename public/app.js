@@ -267,6 +267,7 @@ function hideNotice() {
 
 const movieTiles = {};
 const updatedTiles = {};
+let streamingProviders = {};
 
 function rebuildMovieMosaic(title, year, data) {
   const id = `${year}-${title
@@ -310,8 +311,12 @@ function rebuildMovieMosaic(title, year, data) {
     moviesContainer.appendChild(tile);
   }
 
-  if (data.streamingServices && data.streamingServices.length) {
-    updateSelector(movieTiles);
+  if (data.iconsAndNames && data.iconsAndNames.length) {
+    data.iconsAndNames.forEach((provider) => {
+      if (streamingProviders[provider.name]) return;
+      streamingProviders[provider.name] = provider;
+    });
+    updateStreamingProviderIcons(Object.values(streamingProviders));
   }
 }
 
@@ -326,80 +331,76 @@ function updateTile(tile, data) {
     <div class="poster-info">
       <h2 class="poster-title">${data.title}</h2>
       <p class="poster-release-date">Release Date: ${data.year}</p>
-      <p class="streaming-services">${streamingServices.join(" ")}</p>
+      <p class="streaming-services">${streamingServices.join(" / ")}</p>
       <p class="alternative-search" onclick="alternativeSearch(event)">🏴‍☠️</p>
     </div>
   `;
-}
-
-let slimSelect = null;
-function updateSelector(movieTiles) {
-  // Create an array of all the unique streaming services
-  let services = new Set();
-  for (const movieKey in movieTiles) {
-    const movieData = movieTiles[movieKey];
-    for (const streamingService of movieData.streamingServices) {
-      services.add(streamingService);
-    }
-  }
-  services = Array.from(services);
-  console.log(services);
-
-  // Add the SlimSelect element to the page if it doesn't already exist
-  if (!slimSelect) {
-    select = document.createElement("select");
-    select.setAttribute("id", "service-picker");
-    select.setAttribute("multiple", "");
-    const container = document.querySelector("#providers-selector");
-    container.insertBefore(select, null);
-
-    // Initialize SlimSelect and add an event listener to filter the mosaic when an option is selected
-    slimSelect = new SlimSelect({
-      select,
-      multiple: true,
-      settings: {
-        showSearch: false,
-        searchHighlight: false,
-        placeholderText: "Select streaming services...",
-      },
-      options: services.map((service) => ({ text: service, value: service })),
-      events: {
-        afterChange: (evt) => {
-          if (!evt.length) {
-            // display all tiles
-            document.querySelectorAll(".poster").forEach((tile) => {
-              tile.style.display = "";
-            });
-            return;
-          }
-          const selectedServices = evt.map((service) => service.value);
-          Object.values(movieTiles).forEach((data) => {
-            const streamingServices = data.streamingServices;
-            const includedServices = selectedServices.filter((service) =>
-              streamingServices.includes(service)
-            );
-            const tile = document.querySelector(`div[data-id="${data.id}"]`);
-            if (includedServices.length > 0) {
-              tile.style.display = "";
-            } else {
-              tile.style.display = "none";
-            }
-          });
-        },
-      },
-    });
-  } else {
-    // Update SlimSelect with new options
-    slimSelect.setData(
-      services.map((service) => ({ text: service, value: service }))
-    );
-  }
 }
 
 function showAlternativeSearch() {
   document
     .querySelector(".alternative-search")
     .classList.remove("hide-alternative-search");
+}
+
+function filterTiles() {
+  const activeProviders = document.querySelectorAll("#icons-container .active");
+
+  if (!activeProviders || !activeProviders.length) {
+    // display all tiles
+    document.querySelectorAll(".poster").forEach((tile) => {
+      tile.style.display = "";
+    });
+    return;
+  }
+
+  const selectedServices = Array.from(activeProviders).map(
+    (elem) => elem.dataset.sp
+  );
+
+  Object.values(movieTiles).forEach((data) => {
+    const streamingServices = data.streamingServices;
+    const includedServices = selectedServices.filter((service) =>
+      streamingServices.includes(service)
+    );
+    const tile = document.querySelector(`div[data-id="${data.id}"]`);
+    if (includedServices.length > 0) {
+      tile.style.display = "";
+    } else {
+      tile.style.display = "none";
+    }
+  });
+}
+
+function updateStreamingProviderIcons(streamingProviders) {
+  // Select the container for the streaming provider icons
+  const spIconsContainer = document.querySelector("#icons-container");
+  spIconsContainer.innerHTML = "";
+
+  // Loop through each streaming provider
+  for (let i = 0; i < streamingProviders.length; i++) {
+    const provider = streamingProviders[i];
+
+    // Create a new streaming provider icon
+    const spIcon = document.createElement("div");
+    spIcon.classList.add("streaming-provider-icon");
+    spIcon.dataset.sp = provider.name;
+
+    // Create a new streaming provider icon image
+    const spIconImage = document.createElement("img");
+    spIconImage.src = provider.icon;
+    spIconImage.alt = provider.name;
+    spIconImage.addEventListener("click", (event) => {
+      event.target.parentElement.classList.toggle("active");
+      filterTiles();
+    });
+
+    // Add the streaming provider icon image to the streaming provider icon
+    spIcon.appendChild(spIconImage);
+
+    // Add the streaming provider icon to the container
+    spIconsContainer.appendChild(spIcon);
+  }
 }
 
 /** Automagically search movies */
