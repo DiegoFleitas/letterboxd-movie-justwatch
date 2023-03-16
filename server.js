@@ -19,6 +19,10 @@ app.use(express.static("public"));
 
 // Define a custom morgan format to log JSON to the client
 morgan.format("json", function (tokens, req, res) {
+  // Check if user agent is "Consul Health Check"
+  if (req.headers["user-agent"] === "Consul Health Check") {
+    return;
+  }
   const logLevel = res.statusCode >= 400 ? "error" : "info";
   return `[${logLevel}] ${JSON.stringify(
     {
