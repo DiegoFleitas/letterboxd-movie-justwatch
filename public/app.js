@@ -44,55 +44,42 @@ const letterboxdWatchlistForm = document.getElementById(
 );
 
 letterboxdWatchlistForm.addEventListener("submit", (event) => {
-  event.preventDefault();
+  event.preventDefault(); // Prevent the form from submitting normally
 
-  const formData = new FormData(letterboxdWatchlistForm);
+  console.log(event.target);
+  const formData = new FormData(event.target);
+
+  const data = Object.fromEntries(formData.entries());
+  console.log(data);
+
+  toggleNotice(`Scraping watchlist for ${data?.username}...`);
 
   fetch("/api/letterboxd-watchlist", {
     method: "POST",
-    body: formData,
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
   })
     .then((response) => response.json())
-    .then((data) => {
-      console.log(data);
-      const transformedData = data.map((item) => ({
-        title: item.Name,
-        year: item.Year,
-        link: item["Letterboxd URI"],
-      }));
-      console.log(transformedData);
-      for (let index = 0; index < transformedData.length; index++) {
-        // for (let index = 0; index < 5; index++) {
-        const element = transformedData[index];
-        console.log("poster");
-        fetch("/api/poster", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ title: element.title, year: element.year }),
-        })
-          .then((response) => response.json())
-          .then((response) => {
-            console.log(response);
-            if (response.error) {
-              showError(response.error);
-            } else {
-              // showMessage(response.message);
-            }
-            response.link = element.link;
-            if (!response.poster || response.poster == "N/A")
-              response.poster = "/movie_placeholder.svg";
-            rebuildMovieMosaic(element.title, element.year, response);
-          })
-          .catch((error) => console.error(error));
-        // Perform the fetch request
+    .then((response) => {
+      console.log(response);
+      setTimeout(() => {
+        toggleNotice();
+      }, 1000);
+      const { watchlist } = response;
+      for (let index = 0; index < watchlist.length; index++) {
+        const element = watchlist[index];
+        if (!element.poster || element.poster == "N/A")
+          element.poster = "/movie_placeholder.svg";
+        rebuildMovieMosaic(element.title, element.year, ({ link } = element));
+
         fetch("/api/search-movie", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(element),
+          body: JSON.stringify(({ title, year } = element)),
         })
           .then((response) => {
             if (response.status === 502) {
