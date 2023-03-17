@@ -96,6 +96,10 @@ const letterboxdWatchlist = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
+    if (error?.response?.status === 404) {
+      res.status(404).json({ error: "Watchlist not found" });
+      return;
+    }
     // console.log(response.data);
     res.status(500).json({ error: "Internal Server Error" });
   }
