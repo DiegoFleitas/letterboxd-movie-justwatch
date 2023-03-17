@@ -67,7 +67,11 @@ letterboxdWatchlistForm.addEventListener("submit", (event) => {
       setTimeout(() => {
         toggleNotice();
       }, 1000);
-      const { watchlist } = response;
+      const { error, watchlist } = response;
+      if (error) {
+        showError(error);
+        return;
+      }
       for (let index = 0; index < watchlist.length; index++) {
         const element = watchlist[index];
         if (!element.poster || element.poster == "N/A")
