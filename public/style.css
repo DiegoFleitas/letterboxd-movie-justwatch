@@ -91,6 +91,10 @@ input[type="text"], select {
   background-color: #10161d;
 }
 
+#username {
+  background-color: #ffffffd9;
+}
+
 #movie-form {
   width: 33.33%;
   margin: 0 auto;
