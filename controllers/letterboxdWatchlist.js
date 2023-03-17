@@ -1,43 +1,102 @@
-const AdmZip = require("adm-zip");
-const csv = require("csv-parser");
-const { Readable } = require("stream");
+const axios = require("axios");
+const cheerio = require("cheerio");
+const { getCacheValue, setCacheValue } = require("../helpers/redis");
+const cacheTtl = process.env.CACHE_TTL || 1; // minutes
 
-// Note: letterboxd Watchlist might have empty year for unreleased movies
 const letterboxdWatchlist = async (req, res) => {
   try {
-    const file = req.file;
+    let { username } = req.body;
+    if (!username)
+      return res.status(400).json({ error: "Watchlist file not found" });
 
-    // Load the zip file
-    const zip = new AdmZip(file.buffer);
-
-    // Search for the "watchlist.csv" file
-    const zipEntries = zip.getEntries();
-    const watchlistEntry = zipEntries.find(
-      (entry) => entry.entryName === "watchlist.csv"
-    );
-
-    // If the file is found, parse it to JSON and send the data back in the response
-    if (watchlistEntry) {
-      const watchlistJson = [];
-      zip.readAsTextAsync(watchlistEntry, (csvData) => {
-        const stream = Readable.from(csvData);
-        stream
-          .pipe(csv())
-          .on("data", (row) => {
-            watchlistJson.push(row);
-          })
-          .on("end", () => {
-            console.log(watchlistJson);
-            res.json(watchlistJson);
-          });
+    const cacheKey = `watchlist:${username}`;
+    const cachedWatchlist = await getCacheValue(cacheKey);
+    if (cachedWatchlist) {
+      console.log("Watchlist found (cached)");
+      return res.status(200).json({
+        message: "Watchlist found",
+        watchlist: cachedWatchlist,
       });
-    } else {
-      // If the file is not found, send an error response
-      res.status(400).json({ error: "Watchlist file not found" });
     }
-  } catch (err) {
-    // If there is an error, send an error response
-    console.log(err);
+
+    const proxy = "";
+    const baseUrl = `${proxy}https://letterboxd.com/${username}/watchlist/by/popular/`;
+    let currentPage = 1;
+    let films = [];
+
+    while (true) {
+      const url = `${baseUrl}/page/${currentPage}/`;
+      const response = await axios.get(url);
+      const $ = cheerio.load(response.data);
+      const pageFilms = $(".poster-container")
+        .map(async (i, el) => {
+          const film = $(el);
+          const cacheBustingKey = film
+            .find("div")
+            ?.attr("data-cache-busting-key");
+          let poster;
+          let title = film.find("img")?.attr("alt");
+          let titleSlug =
+            film.find("div")?.attr("data-target-link") ||
+            film.find("div")?.attr("data-film-slug");
+          let id = film.find("div")?.attr("data-film-id");
+          let year = film
+            .find("div")
+            ?.attr("data-film-slug")
+            ?.match(/\d{4}/)?.[0];
+
+          let link =
+            "https://letterboxd.com" +
+            film.find("div")?.attr("data-target-link");
+
+          // might have empty year for unreleased movies
+          const width = 230;
+          const height = 345;
+          if (cacheBustingKey) {
+            const url = `https://letterboxd.com/ajax/poster${titleSlug}std/125x187/?k=${cacheBustingKey}`;
+            const ajaxResponse = await axios.get(url);
+            const $$ = cheerio.load(ajaxResponse.data);
+            let filmAux = $$(".film-poster");
+            id = filmAux?.attr("data-film-id");
+            year = filmAux?.attr("data-film-release-year");
+            titleSlug = filmAux?.attr("data-film-link");
+            poster = filmAux
+              .find("img")
+              ?.attr("src")
+              ?.replace("125-0-187", `${width}-0-${height}`);
+          }
+
+          if (!poster)
+            poster = `https://a.ltrbxd.com/resized/film-poster/${id
+              ?.split("")
+              ?.join(
+                "/"
+              )}/${id}-${titleSlug}-0-${width}-0-${height}-crop.jpg?k=${cacheBustingKey}`;
+
+          return {
+            title: title,
+            year: year,
+            link: link,
+            poster: poster,
+          };
+        })
+        .get();
+      if (pageFilms.length === 0) {
+        // No films on this page, we're done scraping
+        break;
+      }
+      films = films.concat(pageFilms);
+      currentPage++;
+    }
+    const filmsArray = await Promise.all(films);
+    await setCacheValue(cacheKey, filmsArray, cacheTtl);
+    res.status(200).json({
+      message: "Watchlist found",
+      watchlist: filmsArray,
+    });
+  } catch (error) {
+    console.log(error);
+    // console.log(response.data);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };

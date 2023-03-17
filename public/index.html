@@ -143,24 +143,15 @@
       <hr />
 
       <main class="bottom-section">
-        <div class="bottom-section-content">
-          <a
-            class="link"
-            href="https://letterboxd.com/data/export/"
-            aria-label="Export Letterboxd data link"
-            >Export letterboxd data ⮫</a
-          >
-        </div>
         <form id="letterboxd-watchlist-form" enctype="multipart/form-data">
           <div>
-            <label for="watchlist">Upload letterboxd data:</label>
+            <label for="username">Letterboxd username</label>
             <input
-              type="file"
-              id="watchlist"
-              name="watchlist"
-              accept=".zip"
+              id="username"
+              name="username"
+              type="text"
               required
-              aria-label="Upload Letterboxd data input"
+              aria-label="Letterboxd username input"
             />
             <button type="submit">Submit</button>
           </div>
