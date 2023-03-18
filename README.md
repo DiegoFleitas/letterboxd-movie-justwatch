@@ -1,6 +1,8 @@
 # Movie JustWatch
 
-A web which allows to search for movie streaming providers powered by JustWatch that also integrates with Letterboxd, minus the headache of sifting through annoying, irrelevant recommendations - meaning no movie suggestions whatsoever... with a little plus 🏴‍☠️
+A web to scan Letterboxd watchlists & find which streaming providers currently offer those movies on the chosen country ...capable of alternative searching 🏴‍☠️
+
+Forget the headache of sifting through annoying, irrelevant movie recommendations while searching movies on JustWatch
 
 ## Run locally / debugging
 
