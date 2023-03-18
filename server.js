@@ -1,6 +1,5 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const multer = require("multer");
 require("dotenv").config();
 const { session } = require("./middleware/session");
 const { logging } = require("./middleware/logging");
@@ -29,7 +28,6 @@ app.use(bodyParser.urlencoded({ extended: false }));
 // parse application/json
 app.use(bodyParser.json());
 
-// healthcheck endpoint
 app.get("/healthcheck", (req, res) => {
   res.status(200).send("OK");
 });
@@ -51,31 +49,9 @@ app.post("/api/poster", async (req, res) => {
   return poster(req, res);
 });
 
-// Set up Multer storage and file filter
-const storage = multer.memoryStorage();
-const upload = multer({
-  storage: storage,
-  fileFilter: (req, file, cb) => {
-    const allowedMimeTypes = [
-      "application/zip",
-      "application/x-zip-compressed",
-    ];
-    if (!allowedMimeTypes.includes(file.mimetype)) {
-      console.log(file.mimetype);
-      return cb(new Error("Only zip files are allowed"));
-    }
-    cb(null, true);
-  },
+app.post("/api/letterboxd-watchlist", async (req, res) => {
+  return letterboxdWatchlist(req, res);
 });
-
-// Endpoint to handle watchlist file upload
-app.post(
-  "/api/letterboxd-watchlist",
-  upload.single("watchlist"),
-  async (req, res) => {
-    return letterboxdWatchlist(req, res);
-  }
-);
 
 app.post("/api/alternative-search", async (req, res) => {
   return alternativeSearch(req, res);
