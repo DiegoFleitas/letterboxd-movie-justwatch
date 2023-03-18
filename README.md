@@ -1,4 +1,4 @@
-# JustWatch Done Right
+# Movie JustWatch
 
 A web which allows to search for movie streaming providers powered by JustWatch that also integrates with Letterboxd, minus the headache of sifting through annoying, irrelevant recommendations - meaning no movie suggestions whatsoever... with a little plus 🏴‍☠️
 
