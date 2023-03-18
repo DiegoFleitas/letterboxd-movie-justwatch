@@ -38,8 +38,13 @@ morgan.format("json", function (tokens, req, res) {
       payload: JSON.stringify(req.body),
       contentType: req.headers["content-type"],
       responseTime: tokens["response-time"](req, res),
+      session_id: req.session.id, // Add session identifier to log
     },
     null,
     2
   )}`;
 });
+
+const logging = morgan("json");
+
+module.exports = { logging };
