@@ -1,4 +1,4 @@
-# fly.toml file generated for movie-justwatch on 2023-02-12T19:49:50-03:00
+# fly.toml file generated for movie-justwatch on 2023-03-18T15:33:45-03:00
 
 app = "movie-justwatch"
 kill_signal = "SIGINT"
@@ -17,9 +17,20 @@ processes = []
   protocol = "tcp"
   script_checks = []
   [services.concurrency]
-    soft_limit = 75
     hard_limit = 100
+    soft_limit = 75
     type = "connections"
+
+  [[services.http_checks]]
+    grace_period = "1s"
+    interval = 60000 # 1min
+    method = "get"
+    path = "/redis-healthcheck"
+    protocol = "http"
+    restart_limit = 0
+    timeout = 2000
+    tls_skip_verify = false
+    [services.http_checks.headers]
 
   [[services.ports]]
     force_https = true
@@ -35,14 +46,3 @@ processes = []
     interval = "15s"
     restart_limit = 10 # after 10 consecutive failures, the vm will be restarted
     timeout = "2s"
-
-  [[services.http_checks]]
-    interval = 60000 # 1min
-    grace_period = "1s"
-    method = "get"
-    path = "/redis-healthcheck"
-    protocol = "http"
-    restart_limit = 0
-    timeout = 2000
-    tls_skip_verify = false
-    [services.http_checks.headers]
