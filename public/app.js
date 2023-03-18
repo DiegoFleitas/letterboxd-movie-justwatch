@@ -50,7 +50,12 @@ letterboxdWatchlistForm.addEventListener("submit", (event) => {
   const formData = new FormData(event.target);
 
   const data = Object.fromEntries(formData.entries());
-  console.log(data);
+
+  data = { ...data, username: data.username.trim() };
+  if (data.username.length === 0) {
+    showError("Please enter valid a username");
+    return;
+  }
 
   toggleNotice(`Scraping watchlist for ${data?.username}...`);
 
