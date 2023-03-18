@@ -49,7 +49,7 @@ letterboxdWatchlistForm.addEventListener("submit", (event) => {
   console.log(event.target);
   const formData = new FormData(event.target);
 
-  const data = Object.fromEntries(formData.entries());
+  let data = Object.fromEntries(formData.entries());
 
   data = { ...data, username: data.username.trim() };
   if (data.username.length === 0) {
