@@ -1,9 +1,9 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const multer = require("multer");
-const morgan = require("morgan");
-require("./middleware/logging");
 require("dotenv").config();
+const { session } = require("./middleware/session");
+const { logging } = require("./middleware/logging");
 const {
   searchMovie,
   poster,
@@ -18,7 +18,11 @@ const port = process.env.PORT || 3000;
 
 app.use(express.static("public")); // serve static files
 
-app.use(morgan("json")); // logs
+// anonymous session
+app.use(session);
+
+// logging
+app.use(logging);
 
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }));

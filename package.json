@@ -33,10 +33,12 @@
     "csv-parser": "^3.0.0",
     "dotenv": "^16.0.3",
     "express": "^4.17.1",
+    "express-session": "^1.17.3",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
     "redis": "^4.6.4",
-    "ua-parser-js": "^1.0.34"
+    "ua-parser-js": "^1.0.34",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
     "cross-var": "^1.1.0"
