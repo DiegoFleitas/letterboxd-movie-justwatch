@@ -24,7 +24,7 @@ const getRedisClient = async () => {
   if (!redisClient) {
     try {
       const options = {
-        url: process.env.FLYIO_REDIS_URL,
+        url: process.env.FLYIO_REDIS_URL || "redis://localhost:6379",
       };
       console.log(options);
       redisClient = redis
