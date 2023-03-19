@@ -407,9 +407,22 @@ a.link {
 }
 
 .select2-container {
-  width: 3rem !important;
+  width: auto !important;
 }
 
-.select2-selection__arrow {
-  max-width: 1rem !important;
+.select2-selection__arrow * {
+  left: calc(100% - 10px) !important;
+}
+
+.select2-container--default .select2-results__option {
+  display: inline-block;
+  width: auto;
+  height: 60px;
+  margin: 4px;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: top;
+  padding: 8px;
 }

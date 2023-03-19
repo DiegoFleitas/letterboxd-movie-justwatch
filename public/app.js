@@ -465,30 +465,28 @@ $(document).ready(() => {
       $("#title").val(event.target.value);
     });
 
-  const countriesData = [
-    { id: "de_DE", text: "🇩🇪" },
-    { id: "en_US", text: "🇺🇸" },
-    { id: "en_CA", text: "🇨🇦" },
-    { id: "en_GB", text: "🇬🇧" },
-    { id: "es_MX", text: "🇲🇽" },
-    { id: "de_AT", text: "🇦🇹" },
-    { id: "fr_FR", text: "🇫🇷" },
-    { id: "es_ES", text: "🇪🇸" },
-    { id: "de_CH", text: "🇨🇭" },
-    { id: "ja_JP", text: "🇯🇵" },
-    { id: "pt_BR", text: "🇧🇷" },
-    { id: "es_AR", text: "🇦🇷" },
-    { id: "en_AU", text: "🇦🇺" },
-    { id: "it_IT", text: "🇮🇹" },
-    { id: "es_UY", text: "🇺🇾", selected: true },
-  ];
   $(".country")
     .select2({
-      minimumResultsForSearch: Infinity,
-      theme: "classic",
-      data: countriesData,
+      dropdownAutoWidth: true,
+      data: countriesData || [],
+      templateSelection: (data) => {
+        return `${data.flag}`;
+      },
+      templateResult: (data) => {
+        return `${data.flag}`;
+      },
+      matcher: (params, data) => {
+        if ($.trim(params.term) === "") {
+          return data;
+        }
+        if (data.text.toLowerCase().indexOf(params.term.toLowerCase()) > -1) {
+          return data;
+        }
+        return null;
+      },
     })
     .on("change", (evt) => {
+      // sync the two select2 dropdowns
       const selectedValue = $(evt.target).val();
       const id = $(evt.target).attr("id");
       if (id === "country1" && $("#country2").val() !== selectedValue) {
@@ -496,5 +494,13 @@ $(document).ready(() => {
       } else if (id === "country2" && $("#country1").val() !== selectedValue) {
         $("#country1").val(selectedValue).trigger("change");
       }
+    })
+    .on("select2:open", (evt) => {
+      // set the placeholder text
+      console.log(evt.target);
+      $(evt.target)
+        .data("select2")
+        .$dropdown.find(":input.select2-search__field")
+        .attr("placeholder", "🔍");
     });
 });
