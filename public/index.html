@@ -12,6 +12,15 @@
     <script src="https://unpkg.com/jquery@3.6.4/dist/jquery.min.js"></script>
     <script src="https://unpkg.com/corejs-typeahead@1.3.1/dist/typeahead.bundle.min.js"></script>
     <script src="https://unpkg.com/izitoast@1.4.0/dist/js/iziToast.js"></script>
+    <script src="https://unpkg.com/select2@4.1.0-rc.0/dist/js/select2.js"></script>
+    <link
+      href="https://unpkg.com/select2@4.1.0-rc.0/dist/css/select2.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/css/flag-icon.min.css"
+      rel="stylesheet"
+    />
   </head>
   <body>
     <a
@@ -107,29 +116,19 @@
               required
               aria-label="Movie release year input"
             />
-            <label for="country">Select your Country:</label>
-            <select
-              id="country"
-              name="country"
-              aria-label="User country selection"
-            >
-              <option value="de_DE">Germany</option>
-              <option value="en_US">USA</option>
-              <option value="en_CA">Canada</option>
-              <option value="en_GB">United Kingdom</option>
-              <option value="es_MX">Mexico</option>
-              <option value="de_AT">Austria</option>
-              <option value="fr_FR">France</option>
-              <option value="es_ES">Spain</option>
-              <option value="de_CH">Switzerland</option>
-              <option value="ja_JP">Japan</option>
-              <option value="pt_BR">Brazil</option>
-              <option value="es_AR">Argentina</option>
-              <option value="en_AU">Australia</option>
-              <option value="it_IT">Italy</option>
-              <option value="es_UY" selected>Uruguay</option>
-            </select>
-            <button type="submit">Search</button>
+            <div style="display: ruby">
+              <button type="submit">Search</button>
+              <div class="country-selector-container">
+                <div class="flex-item centered">
+                  <select
+                    id="country1"
+                    class="country"
+                    name="country"
+                    aria-label="User country selection"
+                  ></select>
+                </div>
+              </div>
+            </div>
             <button
               onclick="alternativeSearch(event)"
               class="alternative-search hide-alternative-search btn-grad"
@@ -154,7 +153,16 @@
               required
               aria-label="Letterboxd username input"
             />
-            <button type="submit">Submit</button>
+
+            <div>
+              <button type="submit">Submit</button>
+              <select
+                id="country2"
+                class="country"
+                name="country"
+                aria-label="User country selection"
+              ></select>
+            </div>
           </div>
         </form>
         <div id="icons-container"></div>
