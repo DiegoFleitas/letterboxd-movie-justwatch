@@ -399,9 +399,17 @@ a.link {
 }
 
 .streaming-provider-icon {
-  opacity: 0.5; /* Set the opacity to 50% for unselected icons */
+  opacity: 0.2; 
 }
 
 .streaming-provider-icon.active {
-  opacity: 1; /* Set the opacity to 100% for the selected icon */
+  opacity: 1;
+}
+
+.select2-container {
+  width: 3rem !important;
+}
+
+.select2-selection__arrow {
+  max-width: 1rem !important;
 }

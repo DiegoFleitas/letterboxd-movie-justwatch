@@ -9,6 +9,8 @@ form.addEventListener("submit", (event) => {
   const data = Object.fromEntries(formData.entries());
   console.log(data);
 
+  data.country = document.querySelector("#country1").value;
+
   // Perform the fetch request
   fetch("/api/search-movie", {
     method: "POST",
@@ -83,12 +85,15 @@ letterboxdWatchlistForm.addEventListener("submit", (event) => {
           element.poster = "/movie_placeholder.svg";
         rebuildMovieMosaic(element.title, element.year, ({ link } = element));
 
+        let data = ({ title, year } = element);
+        data.country = document.querySelector("#country2").value;
+
         fetch("/api/search-movie", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(({ title, year } = element)),
+          body: JSON.stringify(data),
         })
           .then((response) => {
             if (response.status === 502) {
@@ -458,5 +463,38 @@ $(document).ready(() => {
     })
     .on("change", (event) => {
       $("#title").val(event.target.value);
+    });
+
+  const countriesData = [
+    { id: "de_DE", text: "🇩🇪" },
+    { id: "en_US", text: "🇺🇸" },
+    { id: "en_CA", text: "🇨🇦" },
+    { id: "en_GB", text: "🇬🇧" },
+    { id: "es_MX", text: "🇲🇽" },
+    { id: "de_AT", text: "🇦🇹" },
+    { id: "fr_FR", text: "🇫🇷" },
+    { id: "es_ES", text: "🇪🇸" },
+    { id: "de_CH", text: "🇨🇭" },
+    { id: "ja_JP", text: "🇯🇵" },
+    { id: "pt_BR", text: "🇧🇷" },
+    { id: "es_AR", text: "🇦🇷" },
+    { id: "en_AU", text: "🇦🇺" },
+    { id: "it_IT", text: "🇮🇹" },
+    { id: "es_UY", text: "🇺🇾", selected: true },
+  ];
+  $(".country")
+    .select2({
+      minimumResultsForSearch: Infinity,
+      theme: "classic",
+      data: countriesData,
+    })
+    .on("change", (evt) => {
+      const selectedValue = $(evt.target).val();
+      const id = $(evt.target).attr("id");
+      if (id === "country1" && $("#country2").val() !== selectedValue) {
+        $("#country2").val(selectedValue).trigger("change");
+      } else if (id === "country2" && $("#country1").val() !== selectedValue) {
+        $("#country1").val(selectedValue).trigger("change");
+      }
     });
 });

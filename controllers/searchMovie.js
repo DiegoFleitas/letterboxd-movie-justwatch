@@ -4,8 +4,8 @@ const cacheTtl = process.env.CACHE_TTL || 3600; // 1h (seconds)
 
 const searchMovie = async (req, res) => {
   try {
-    const { title, year } = req.body;
-    const countryCode = req.body.country || "es_UY";
+    const { title, year, country } = req.body;
+    const countryCode = country || "es_UY";
 
     if (!title) {
       console.log("No movie title");
