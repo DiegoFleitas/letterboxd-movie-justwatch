@@ -72,12 +72,7 @@ form {
   padding: 1em;
 }
 
-label {
-  margin-right: 0.625rem;
-  display: block;
-  margin-bottom: 0.313rem;
-  font-size: 1.125rem;
-}
+
 
 input[type="text"], select {
   text-align: center;
@@ -87,12 +82,18 @@ input[type="text"], select {
   font-size: 1.25rem;
   border-radius: 0.313rem;
   border: none;
-  color: #888b8e;
+  color: white;
   background-color: #10161d;
 }
 
-#username {
-  background-color: #ffffffd9;
+input[type="text"]:focus, select:focus {
+  outline: none;
+  background-color: #10161d;
+  color: white;
+}
+
+#year:focus::placeholder {
+  color: transparent;
 }
 
 #movie-form {
@@ -105,12 +106,6 @@ input[type="text"], select {
 #movie-form span {
   box-sizing: border-box;
   width: 100%;
-}
-
-input[type="text"]:focus, select:focus {
-  outline: none;
-  background-color: #10161d;
-  color: #888b8e;
 }
 
 button[type="submit"], button.alternative-search  {
@@ -137,17 +132,12 @@ button[type="submit"], button.alternative-search  {
 }
 
 label {
+  margin-right: 0.625rem;
   display: block;
   margin-bottom: 0.313rem;
-}
-
-label[for="year"] {
-  display: block;
-  margin-top: 0.625rem;
-}
-
-#year:focus::placeholder {
-  color: transparent;
+  font-size: 1.125rem;
+  font-weight: bold;
+  color: white;
 }
 
 .tt-suggestion {
@@ -163,15 +153,11 @@ label[for="year"] {
   background-color: #10161d;
 }
 
-label {
-  display: block;
-  margin-bottom: 0.313rem;
-}
-
 .tt-input {
   width: 100%;
   padding: 1em;
   box-sizing: border-box;
+  z-index: 1000;
 }
 
 .tt-menu {
@@ -183,16 +169,11 @@ label {
   width: 100%;
 }
 
-.tt-input:focus::placeholder {
-  color: transparent;
-}
-
 #letterboxd-watchlist-form {
   border: none;
-  background-color: #10161d;
+  background-color: #060d17;
   color: #555;
   font-size: 1.125rem;
-  font-weight: bold;
   border-radius: 0.313rem;
   padding: 1em;
   width: 100%;

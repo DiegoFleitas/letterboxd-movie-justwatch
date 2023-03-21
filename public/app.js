@@ -431,7 +431,7 @@ $(document).ready(() => {
   $("#movie-input")
     .typeahead(
       {
-        hint: true,
+        hint: false,
         highlight: true,
         minLength: 3,
       },
