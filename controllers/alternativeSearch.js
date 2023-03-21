@@ -5,10 +5,10 @@ const cacheTtl = process.env.CACHE_TTL || 3600; // 1h (seconds)
 const alternativeSearch = async (req, res) => {
   const { title, year } = req.body;
 
-  jackettApiKey = process.env.JACKETT_API_KEY;
-  // Make a request to the Jackett API to get search results
+  jackettKey = process.env.JACKETT_API_KEY;
+  jackettEndpoint = process.env.JACKETT_API_ENDPOINT;
   // replace spaces in searchQuery with +
-  const searchQuery = `${title} ${year}`.replace(" ", "+");
+  let searchQuery = `${title} ${year}`.replace(" ", "+");
 
   try {
     const cacheKey = `jackett:${searchQuery}:`;
@@ -19,11 +19,25 @@ const alternativeSearch = async (req, res) => {
       return res.status(status).json(cachedResponse);
     }
 
-    const { data } = await axios.get(
-      `https://j4cke77-4hd43d19pe6d5bt7.fly.dev/api/v2.0/indexers/all/results?Query=${searchQuery}&Category=2000&apikey=${jackettApiKey}`
+    const categories = {
+      film: 2000,
+      // tv: 5000,
+    };
+
+    const baseUrl = `${jackettEndpoint}/api/v2.0/indexers/all/results?apikey=${jackettKey}&Category=${categories.film}`;
+    let { data } = await axios.get(
+      `${baseUrl}&Query=${searchQuery}`
     );
-    const results = data.Results;
-    // console.log(results);
+    let results = data.Results;
+    if (results.length === 0) {
+      console.log(`No results found, trying again without year (${title} ${year})`)
+      // not all valid results for a film can be found when including the year in the search query
+      searchQueryWithoutYear = `${title}`.replace(" ", "+");
+      let { data } = await axios.get(
+        `${baseUrl}&Query=${searchQueryWithoutYear}`
+      );
+      results = data.Results;
+    }
 
     // Find the result with the most seeders
     let maxSeeders = 0;
