@@ -7,10 +7,11 @@ const alternativeSearch = async (req, res) => {
 
   jackettKey = process.env.JACKETT_API_KEY;
   jackettEndpoint = process.env.JACKETT_API_ENDPOINT;
-  // replace spaces in searchQuery with +
-  let searchQuery = `${title} ${year}`.replaceAll(" ", "+");
 
   try {
+    // replace spaces in searchQuery with +
+    let searchQuery = `${title} ${year}`.replace(/ /g, "+");
+
     const cacheKey = `jackett:${searchQuery}:`;
     const cachedResponse = await getCacheValue(cacheKey);
     if (cachedResponse) {
@@ -32,7 +33,7 @@ const alternativeSearch = async (req, res) => {
         `No results found, trying again without year (${title} ${year})`
       );
       // not all valid results for a film can be found when including the year in the search query
-      searchQueryWithoutYear = `${title}`.replaceAll(" ", "+");
+      searchQueryWithoutYear = `${title}`.replace(/ /g, "+");
       let { data } = await axios.get(
         `${baseUrl}&Query=${searchQueryWithoutYear}`
       );
