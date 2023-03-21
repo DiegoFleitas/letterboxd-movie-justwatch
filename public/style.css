@@ -422,3 +422,8 @@ a.link {
 .submit-container * {
   display: flex;
 }
+
+/* chrome flag emojis are terrible */
+.select2-results__option {
+  color: black
+}
