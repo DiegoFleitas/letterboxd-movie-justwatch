@@ -50,6 +50,10 @@
     word-wrap: break-word; /* For older browsers */
     overflow-wrap: break-word; /* For newer browsers */
   }
+  
+  .country-selector-container {
+    padding: 0.5rem;
+  }
 }
 
 /* Global styles */
@@ -406,4 +410,15 @@ a.link {
   white-space: nowrap;
   vertical-align: top;
   padding: 8px;
+}
+
+.submit-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 20px 0;
+}
+
+.submit-container * {
+  display: flex;
 }
