@@ -8,7 +8,7 @@ const alternativeSearch = async (req, res) => {
   jackettKey = process.env.JACKETT_API_KEY;
   jackettEndpoint = process.env.JACKETT_API_ENDPOINT;
   // replace spaces in searchQuery with +
-  let searchQuery = `${title} ${year}`.replace(" ", "+");
+  let searchQuery = `${title} ${year}`.replaceAll(" ", "+");
 
   try {
     const cacheKey = `jackett:${searchQuery}:`;
@@ -25,14 +25,14 @@ const alternativeSearch = async (req, res) => {
     };
 
     const baseUrl = `${jackettEndpoint}/api/v2.0/indexers/all/results?apikey=${jackettKey}&Category=${categories.film}`;
-    let { data } = await axios.get(
-      `${baseUrl}&Query=${searchQuery}`
-    );
+    let { data } = await axios.get(`${baseUrl}&Query=${searchQuery}`);
     let results = data.Results;
     if (results.length === 0) {
-      console.log(`No results found, trying again without year (${title} ${year})`)
+      console.log(
+        `No results found, trying again without year (${title} ${year})`
+      );
       // not all valid results for a film can be found when including the year in the search query
-      searchQueryWithoutYear = `${title}`.replace(" ", "+");
+      searchQueryWithoutYear = `${title}`.replaceAll(" ", "+");
       let { data } = await axios.get(
         `${baseUrl}&Query=${searchQueryWithoutYear}`
       );
@@ -64,6 +64,12 @@ const alternativeSearch = async (req, res) => {
       res.status(404).json(response);
     }
   } catch (error) {
+    if (error?.response?.status === 401) {
+      return res
+        .status(401)
+        .json({ error: "Alternative search temporarily disabled" });
+    }
+
     // If there is an error, send an error response
     console.log(error);
     res.status(500).json({ error: "Internal Server Error" });
