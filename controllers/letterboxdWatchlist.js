@@ -20,7 +20,7 @@ const letterboxdWatchlist = async (req, res) => {
     }
 
     const proxy = "";
-    const baseUrl = `${proxy}https://letterboxd.com/${username}/watchlist/by/popular/`;
+    const baseUrl = `${proxy}https://letterboxd.com/${username}/watchlist/by/popular`;
     let currentPage = 1;
     let films = [];
 
@@ -98,6 +98,10 @@ const letterboxdWatchlist = async (req, res) => {
     console.log(error);
     if (error?.response?.status === 404) {
       res.status(404).json({ error: "Watchlist not found" });
+      return;
+    }
+    if (error?.response?.status === 401) {
+      res.status(404).json({ error: "Watchlist is not public" });
       return;
     }
     // console.log(response.data);
