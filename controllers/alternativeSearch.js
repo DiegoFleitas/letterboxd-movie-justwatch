@@ -1,4 +1,4 @@
-const axios = require("../helpers/axios");
+const axios = require("../helpers/axios")();
 const { getCacheValue, setCacheValue } = require("../helpers/redis");
 const cacheTtl = process.env.CACHE_TTL || 3600; // 1h (seconds)
 
