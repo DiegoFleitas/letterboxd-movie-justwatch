@@ -190,7 +190,7 @@ function showError(error) {
     progressBar: true,
     timeout: 3000,
     resetOnHover: true,
-    overlay: true,
+    overlay: false,
     overlayClose: true,
     position: "topRight",
     backgroundColor: "#fbc500",
