@@ -1,6 +1,5 @@
 const crypto = require("crypto");
 const { poolPromise } = require("./redisPool");
-require("dotenv").config();
 
 const isHealthy = async () => {
   try {

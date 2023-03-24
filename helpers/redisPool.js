@@ -1,5 +1,4 @@
 const redisConnectionPoolFactory = require("redis-connection-pool").default;
-require("dotenv").config();
 
 const connectionPool = (() => {
   let instance;
