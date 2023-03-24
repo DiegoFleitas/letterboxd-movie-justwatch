@@ -86,7 +86,8 @@ const letterboxdWatchlist = async (req, res) => {
     let currentPage = 1;
     let films = [];
 
-    while (true) {
+    const maxPages = 80;
+    while (currentPage <= maxPages) {
       const url = `${baseUrl}/page/${currentPage}/`;
       const response = await axios.get(url);
       const $ = cheerio.load(response.data);
