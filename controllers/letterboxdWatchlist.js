@@ -3,6 +3,68 @@ const cheerio = require("cheerio");
 const { getCacheValue, setCacheValue } = require("../helpers/redis");
 const cacheTtl = process.env.CACHE_TTL || 1; // minutes
 
+const getFilmData = async (film) => {
+  const cacheBustingKey = film.find("div")?.attr("data-cache-busting-key");
+  const title = film.find("img")?.attr("alt");
+  const titleSlug =
+    film.find("div")?.attr("data-target-link") ||
+    film.find("div")?.attr("data-film-slug");
+  const id = film.find("div")?.attr("data-film-id");
+  const year = film.find("div")?.attr("data-film-slug")?.match(/\d{4}/)?.[0];
+  const link =
+    "https://letterboxd.com" + film.find("div")?.attr("data-target-link");
+
+  let poster;
+  if (cacheBustingKey) {
+    const url = `https://letterboxd.com/ajax/poster${titleSlug}std/125x187/?k=${cacheBustingKey}`;
+    const ajaxResponse = await axios.get(url);
+    const $$ = cheerio.load(ajaxResponse.data);
+    let filmAux = $$(".film-poster");
+    const width = 230;
+    const height = 345;
+
+    poster = filmAux
+      .find("img")
+      ?.attr("src")
+      ?.replace("125-0-187", `${width}-0-${height}`);
+  }
+
+  return { title, year, link, poster, id, titleSlug };
+};
+
+const getPageFilms = async (url) => {
+  const response = await axios.get(url);
+  const $ = cheerio.load(response.data);
+
+  const films = $(".poster-container")
+    .map(async (i, el) => {
+      const film = $(el);
+      const { title, year, link, poster, id, titleSlug } = await getFilmData(
+        film
+      );
+
+      if (!poster) {
+        const width = 230;
+        const height = 345;
+        poster = `https://a.ltrbxd.com/resized/film-poster/${id
+          ?.split("")
+          ?.join(
+            "/"
+          )}/${id}-${titleSlug}-0-${width}-0-${height}-crop.jpg?k=${cacheBustingKey}`;
+      }
+
+      return {
+        title,
+        year,
+        link,
+        poster,
+      };
+    })
+    .get();
+
+  return films;
+};
+
 const letterboxdWatchlist = async (req, res) => {
   try {
     let { username } = req.body;
@@ -28,59 +90,7 @@ const letterboxdWatchlist = async (req, res) => {
       const url = `${baseUrl}/page/${currentPage}/`;
       const response = await axios.get(url);
       const $ = cheerio.load(response.data);
-      const pageFilms = $(".poster-container")
-        .map(async (i, el) => {
-          const film = $(el);
-          const cacheBustingKey = film
-            .find("div")
-            ?.attr("data-cache-busting-key");
-          let poster;
-          let title = film.find("img")?.attr("alt");
-          let titleSlug =
-            film.find("div")?.attr("data-target-link") ||
-            film.find("div")?.attr("data-film-slug");
-          let id = film.find("div")?.attr("data-film-id");
-          let year = film
-            .find("div")
-            ?.attr("data-film-slug")
-            ?.match(/\d{4}/)?.[0];
-
-          let link =
-            "https://letterboxd.com" +
-            film.find("div")?.attr("data-target-link");
-
-          // might have empty year for unreleased movies
-          const width = 230;
-          const height = 345;
-          if (cacheBustingKey) {
-            const url = `https://letterboxd.com/ajax/poster${titleSlug}std/125x187/?k=${cacheBustingKey}`;
-            const ajaxResponse = await axios.get(url);
-            const $$ = cheerio.load(ajaxResponse.data);
-            let filmAux = $$(".film-poster");
-            id = filmAux?.attr("data-film-id");
-            year = filmAux?.attr("data-film-release-year");
-            titleSlug = filmAux?.attr("data-film-link");
-            poster = filmAux
-              .find("img")
-              ?.attr("src")
-              ?.replace("125-0-187", `${width}-0-${height}`);
-          }
-
-          if (!poster)
-            poster = `https://a.ltrbxd.com/resized/film-poster/${id
-              ?.split("")
-              ?.join(
-                "/"
-              )}/${id}-${titleSlug}-0-${width}-0-${height}-crop.jpg?k=${cacheBustingKey}`;
-
-          return {
-            title: title,
-            year: year,
-            link: link,
-            poster: poster,
-          };
-        })
-        .get();
+      const pageFilms = await getPageFilms(url);
       if (pageFilms.length === 0) {
         // No films on this page, we're done scraping
         break;
