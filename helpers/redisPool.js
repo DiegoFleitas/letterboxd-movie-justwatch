@@ -1,16 +1,31 @@
 const redisConnectionPoolFactory = require("redis-connection-pool").default;
 require("dotenv").config();
 
-const REDIS_POOL_NAME = "default";
+const connectionPool = (() => {
+  let instance;
 
-const redisConfig = {
-  url: process.env.FLYIO_REDIS_URL || "redis://localhost:6379",
-  max_clients: 25,
-  perform_checks: true,
-  database: 0,
-  acquireTimeoutMillis: 1000,
-};
+  function createInstance() {
+    const REDIS_POOL_NAME = "default";
 
-const pool = redisConnectionPoolFactory(REDIS_POOL_NAME, redisConfig);
+    const redisConfig = {
+      url: process.env.FLYIO_REDIS_URL || "redis://localhost:6379",
+      max_clients: 25,
+      perform_checks: true,
+      database: 0,
+      acquireTimeoutMillis: 1000,
+    };
 
-module.exports = pool;
+    return redisConnectionPoolFactory(REDIS_POOL_NAME, redisConfig);
+  }
+
+  return {
+    getInstance: () => {
+      if (!instance) {
+        instance = createInstance();
+      }
+      return instance;
+    },
+  };
+})();
+
+module.exports = { poolPromise: connectionPool.getInstance() };
