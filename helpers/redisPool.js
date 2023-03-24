@@ -8,6 +8,7 @@ const redisConfig = {
   max_clients: 25,
   perform_checks: true,
   database: 0,
+  acquireTimeoutMillis: 1000,
 };
 
 const pool = redisConnectionPoolFactory(REDIS_POOL_NAME, redisConfig);
