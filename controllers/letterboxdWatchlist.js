@@ -36,33 +36,33 @@ const getPageFilms = async (url) => {
   const response = await axios.get(url);
   const $ = cheerio.load(response.data);
 
-  const films = $(".poster-container")
+  const filmPromises = $(".poster-container")
     .map(async (i, el) => {
       const film = $(el);
-      const { title, year, link, poster, id, titleSlug } = await getFilmData(
-        film
-      );
-
-      if (!poster) {
-        const width = 230;
-        const height = 345;
-        poster = `https://a.ltrbxd.com/resized/film-poster/${id
-          ?.split("")
-          ?.join(
-            "/"
-          )}/${id}-${titleSlug}-0-${width}-0-${height}-crop.jpg?k=${cacheBustingKey}`;
-      }
-
-      return {
-        title,
-        year,
-        link,
-        poster,
-      };
+      return getFilmData(film);
     })
     .get();
 
-  return films;
+  const films = await Promise.all(filmPromises);
+
+  return films.map(({ title, year, link, poster, id, titleSlug }) => {
+    if (!poster) {
+      const width = 230;
+      const height = 345;
+      poster = `https://a.ltrbxd.com/resized/film-poster/${id
+        ?.split("")
+        ?.join(
+          "/"
+        )}/${id}-${titleSlug}-0-${width}-0-${height}-crop.jpg?k=${cacheBustingKey}`;
+    }
+
+    return {
+      title,
+      year,
+      link,
+      poster,
+    };
+  });
 };
 
 const letterboxdWatchlist = async (req, res) => {
