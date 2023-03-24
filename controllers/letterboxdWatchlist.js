@@ -3,6 +3,77 @@ const cheerio = require("cheerio");
 const { getCacheValue, setCacheValue } = require("../helpers/redis");
 const cacheTtl = process.env.CACHE_TTL || 1; // minutes
 
+const POSTER_WIDTH = 230;
+const POSTER_HEIGHT = 345;
+
+const getPosterUrl = (id, titleSlug, cacheBustingKey) => {
+  return `https://a.ltrbxd.com/resized/film-poster/${id
+    ?.split("")
+    ?.join(
+      "/"
+    )}/${id}-${titleSlug}-0-${POSTER_WIDTH}-0-${POSTER_HEIGHT}-crop.jpg?k=${cacheBustingKey}`;
+};
+
+const getFilmData = async (film) => {
+  const cacheBustingKey = film.find("div")?.attr("data-cache-busting-key");
+  const title = film.find("img")?.attr("alt");
+  let titleSlug =
+    film.find("div")?.attr("data-target-link") ||
+    film.find("div")?.attr("data-film-slug");
+  let id = film.find("div")?.attr("data-film-id");
+  let year = film.find("div")?.attr("data-film-slug")?.match(/\d{4}/)?.[0];
+  const link =
+    "https://letterboxd.com" + film.find("div")?.attr("data-target-link");
+
+  let poster;
+  if (cacheBustingKey) {
+    const url = `https://letterboxd.com/ajax/poster${titleSlug}std/125x187/?k=${cacheBustingKey}`;
+    const ajaxResponse = await axios.get(url);
+    const $$ = cheerio.load(ajaxResponse.data);
+    let filmAux = $$(".film-poster");
+
+    id = filmAux?.attr("data-film-id");
+    year = filmAux?.attr("data-film-release-year");
+    titleSlug = filmAux?.attr("data-film-link");
+    poster = filmAux
+      .find("img")
+      ?.attr("src")
+      ?.replace("125-0-187", `${POSTER_WIDTH}-0-${POSTER_HEIGHT}`);
+  }
+
+  return { title, year, link, poster, id, titleSlug };
+};
+
+const getPageFilms = async (url) => {
+  const response = await axios.get(url);
+  const $ = cheerio.load(response.data);
+
+  const filmPromises = $(".poster-container")
+    .map(async (i, el) => {
+      const film = $(el);
+      return getFilmData(film);
+    })
+    .get();
+
+  // prevent losing the entire watchlist if a single film fails to load
+  const films = await Promise.allSettled(filmPromises);
+
+  return films
+    .filter(({ status }) => status === "fulfilled")
+    .map(({ value: { title, year, link, poster, id, titleSlug } }) => {
+      if (!poster) {
+        poster = getPosterUrl(id, titleSlug, cacheBustingKey);
+      }
+
+      return {
+        title,
+        year,
+        link,
+        poster,
+      };
+    });
+};
+
 const letterboxdWatchlist = async (req, res) => {
   try {
     let { username } = req.body;
@@ -24,63 +95,12 @@ const letterboxdWatchlist = async (req, res) => {
     let currentPage = 1;
     let films = [];
 
-    while (true) {
+    const maxPages = 80;
+    while (currentPage <= maxPages) {
       const url = `${baseUrl}/page/${currentPage}/`;
       const response = await axios.get(url);
       const $ = cheerio.load(response.data);
-      const pageFilms = $(".poster-container")
-        .map(async (i, el) => {
-          const film = $(el);
-          const cacheBustingKey = film
-            .find("div")
-            ?.attr("data-cache-busting-key");
-          let poster;
-          let title = film.find("img")?.attr("alt");
-          let titleSlug =
-            film.find("div")?.attr("data-target-link") ||
-            film.find("div")?.attr("data-film-slug");
-          let id = film.find("div")?.attr("data-film-id");
-          let year = film
-            .find("div")
-            ?.attr("data-film-slug")
-            ?.match(/\d{4}/)?.[0];
-
-          let link =
-            "https://letterboxd.com" +
-            film.find("div")?.attr("data-target-link");
-
-          // might have empty year for unreleased movies
-          const width = 230;
-          const height = 345;
-          if (cacheBustingKey) {
-            const url = `https://letterboxd.com/ajax/poster${titleSlug}std/125x187/?k=${cacheBustingKey}`;
-            const ajaxResponse = await axios.get(url);
-            const $$ = cheerio.load(ajaxResponse.data);
-            let filmAux = $$(".film-poster");
-            id = filmAux?.attr("data-film-id");
-            year = filmAux?.attr("data-film-release-year");
-            titleSlug = filmAux?.attr("data-film-link");
-            poster = filmAux
-              .find("img")
-              ?.attr("src")
-              ?.replace("125-0-187", `${width}-0-${height}`);
-          }
-
-          if (!poster)
-            poster = `https://a.ltrbxd.com/resized/film-poster/${id
-              ?.split("")
-              ?.join(
-                "/"
-              )}/${id}-${titleSlug}-0-${width}-0-${height}-crop.jpg?k=${cacheBustingKey}`;
-
-          return {
-            title: title,
-            year: year,
-            link: link,
-            poster: poster,
-          };
-        })
-        .get();
+      const pageFilms = await getPageFilms(url);
       if (pageFilms.length === 0) {
         // No films on this page, we're done scraping
         break;
