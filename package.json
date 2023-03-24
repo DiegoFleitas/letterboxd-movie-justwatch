@@ -33,7 +33,7 @@
     "express": "^4.17.1",
     "express-session": "^1.17.3",
     "morgan": "^1.10.0",
-    "redis": "^4.6.4",
+    "redis-connection-pool": "^4.0.1",
     "ua-parser-js": "^1.0.34",
     "uuid": "^9.0.0"
   },
