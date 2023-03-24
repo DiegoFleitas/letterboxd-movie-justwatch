@@ -1,4 +1,4 @@
-# fly.toml file generated for movie-justwatch on 2023-03-18T15:33:45-03:00
+# fly.toml file generated for movie-justwatch on 2023-03-24T01:26:34-03:00
 
 app = "movie-justwatch"
 kill_signal = "SIGINT"
@@ -21,16 +21,17 @@ processes = []
     soft_limit = 75
     type = "connections"
 
-  [[services.http_checks]]
-    grace_period = "1s"
-    interval = 60000 # 1min
-    method = "get"
-    path = "/redis-healthcheck"
-    protocol = "http"
-    restart_limit = 0
-    timeout = 2000
-    tls_skip_verify = false
-    [services.http_checks.headers]
+  # redis request limit reached (RIP / 2020-03-24)
+  # [[services.http_checks]]
+  #   grace_period = "1s"
+  #   interval = 60000 # 1min
+  #   method = "get"
+  #   path = "/redis-healthcheck"
+  #   protocol = "http"
+  #   restart_limit = 0
+  #   timeout = 2000
+  #   tls_skip_verify = false
+  #   [services.http_checks.headers]
 
   [[services.ports]]
     force_https = true
