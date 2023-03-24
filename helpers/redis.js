@@ -1,9 +1,10 @@
 const crypto = require("crypto");
-const pool = require("./redisPool");
+const { poolPromise } = require("./redisPool");
 require("dotenv").config();
 
 const isHealthy = async () => {
   try {
+    const pool = await poolPromise;
     const result = await pool.sendCommand("PING");
     return result === "PONG";
   } catch (error) {
@@ -13,6 +14,7 @@ const isHealthy = async () => {
 
 const getCacheValue = async (key) => {
   try {
+    const pool = await poolPromise;
     const hashedKey = getCacheKey(key);
     const value = await pool.get(hashedKey);
 
@@ -28,6 +30,7 @@ const getCacheValue = async (key) => {
 
 const setCacheValue = async (key, value, ttl = 60) => {
   try {
+    const pool = await poolPromise;
     const serializedValue = JSON.stringify(value);
     const hashedKey = getCacheKey(key);
     const result = await pool.set(hashedKey, serializedValue, ttl);
