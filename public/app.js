@@ -1,3 +1,14 @@
+import { toggleNotice } from "./noticeFunctions.js";
+import { showMessage } from "./showMessage.js";
+import { showError } from "./showError.js";
+import {
+  alternativeSearch,
+  showAlternativeSearch,
+} from "./alternativeSearch.js";
+import { rebuildMovieMosaic } from "./movieTiles.js";
+
+window.alternativeSearch = alternativeSearch;
+
 const form = document.getElementById("movie-form");
 
 form.addEventListener("submit", (event) => {
@@ -81,11 +92,11 @@ letterboxdWatchlistForm.addEventListener("submit", (event) => {
       }
       for (let index = 0; index < watchlist.length; index++) {
         const element = watchlist[index];
-        if (!element.poster || element.poster == "N/A")
-          element.poster = "/movie_placeholder.svg";
-        rebuildMovieMosaic(element.title, element.year, ({ link } = element));
+        let { title, year, link, poster } = element;
+        if (poster == "N/A") poster = "/movie_placeholder.svg";
+        rebuildMovieMosaic(title, year, { poster, link });
 
-        let data = ({ title, year } = element);
+        let data = { title, year };
         data.country = document.querySelector("#country2").value;
 
         fetch("/api/search-movie", {
@@ -111,7 +122,7 @@ letterboxdWatchlistForm.addEventListener("submit", (event) => {
                 ", "
               )}`;
               showMessage(msg);
-              rebuildMovieMosaic(element.title, element.year, response);
+              rebuildMovieMosaic(title, year, response);
             }
           })
           .catch((error) => console.error(error));
@@ -119,290 +130,6 @@ letterboxdWatchlistForm.addEventListener("submit", (event) => {
     })
     .catch((error) => console.error(error));
 });
-
-function alternativeSearch(event) {
-  event.preventDefault(); // Prevent the form from submitting normally
-  // Get the title and year from the clicked row
-  const parentElement = event.currentTarget.parentNode;
-  console.log(parentElement);
-  const isTile = parentElement.classList.contains("poster-info");
-  let title,
-    year = "";
-  if (isTile) {
-    const tileId = parentElement.parentElement.getAttribute("data-id");
-    const tile = movieTiles[tileId];
-    console.log(tile);
-    if (!tile) return;
-    title = tile.title;
-    year = tile.year;
-  } else {
-    res = Object.fromEntries(new FormData(event.target.form).entries());
-    title = res.title;
-    year = res.year;
-  }
-
-  if (!title) return;
-
-  toggleNotice(`Searching for ${title} (${year})...`);
-
-  // Make a fetch request to the /alternative-search endpoint
-  fetch("/api/alternative-search", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ title, year }),
-  })
-    .then((response) => response.json())
-    .then((response) => {
-      console.log(response);
-      setTimeout(() => {
-        toggleNotice();
-      }, 1000);
-      if (response.error) {
-        showError(response.error);
-      } else {
-        showMessage(response, true);
-      }
-    })
-    .catch((error) => {
-      console.log("Error:", error);
-    });
-}
-
-function showError(error) {
-  console.log(error);
-  // Check visible toast count before showing another toast
-  toastCount = document.querySelectorAll(".iziToast-capsule")?.length || 0;
-  if (toastCount >= 7) {
-    console.log(
-      `There are already ${toastCount} visible toasts on the page, error skipped. Message: ${error}`
-    );
-    return;
-  }
-  iziToast.show({
-    title: "Error",
-    message: error,
-    color: "red",
-    position: "topCenter",
-    progressBarColor: "red",
-    progressBarEasing: "linear",
-    progressBar: true,
-    timeout: 3000,
-    resetOnHover: true,
-    overlay: false,
-    overlayClose: true,
-    position: "topRight",
-    backgroundColor: "#fbc500",
-  });
-}
-
-const queuedMessages = [];
-
-function showMessage(messageData, isHTML = false) {
-  console.log(messageData, isHTML);
-
-  const visibleToastsCount =
-    document.querySelectorAll(".iziToast-capsule")?.length || 0;
-
-  // don't show more than 3 toasts at a time
-  if (visibleToastsCount >= 3) {
-    // if the message is HTML, queue it up to show after the current toasts are closed
-    if (isHTML) queuedMessages.push(messageData);
-    console.log(
-      `There are already ${visibleToastsCount} visible toasts on the page, message queued. Message: ${messageData}`
-    );
-    return;
-  }
-
-  const toastOptions = {
-    message: isHTML
-      ? `<a href="${messageData.url}" target="_blank">${messageData.text}</a>`
-      : messageData,
-    theme: "light",
-    layout: 1,
-    progressBar: false,
-    timeout: isHTML ? false : 3000,
-    position: "topRight",
-    backgroundColor: "#fbc500",
-  };
-
-  if (isHTML) {
-    toastOptions.onClosed = () => {
-      if (queuedMessages.length > 0) {
-        showMessage(queuedMessages.shift(), true);
-      }
-    };
-  }
-
-  iziToast.show(toastOptions);
-}
-
-function toggleNotice(msg) {
-  const notice = document.querySelectorAll("#notice")?.[0];
-  if (notice) {
-    // remove iziToast-capsule to avoid stacking
-    notice.parentElement.remove();
-    return;
-  }
-
-  try {
-    iziToast.show({
-      id: "notice",
-      title: "Please wait...",
-      message: msg,
-      theme: "dark",
-      progressBarColor: "#5DA5DA",
-      progressBarEasing: "linear",
-      timeout: 10000, // 10s
-    });
-  } catch (error) {
-    // normal to get an error here, but it's ok
-  }
-}
-
-function hideNotice() {
-  const notice = document.querySelector(".iziToast-capsule")?.[0];
-  if (notice) notice.remove();
-}
-
-const movieTiles = {};
-const updatedTiles = {};
-let streamingProviders = {};
-
-function rebuildMovieMosaic(title, year, data) {
-  const id = `${year}-${title
-    .toUpperCase()
-    .replace(/ /g, "-")
-    .replace(/[^A-Z0-9]/g, "")}`;
-
-  const existingTile = document.querySelector(`div[data-id="${id}"]`);
-
-  if (existingTile) {
-    const tileData = movieTiles[id];
-    if (!tileData.streamingServices || !tileData.streamingServices.length)
-      tileData.streamingServices = data.streamingServices;
-    if (!tileData.poster) tileData.poster = data.poster;
-    if (!tileData.link) tileData.link = data.link;
-    updateTile(existingTile, tileData);
-    updatedTiles[id] = true; // Mark the tile as updated
-  } else {
-    const tile = document.createElement("div");
-    tile.setAttribute("data-id", id);
-    tile.classList.add("poster");
-
-    const streamingServices = data?.streamingServices || [];
-    const link = data?.link || "";
-    const poster = data?.poster || "";
-
-    const tileData = {
-      link,
-      streamingServices,
-      poster,
-      title,
-      year,
-      id,
-    };
-
-    movieTiles[id] = tileData; // Store the tile data
-    updateTile(tile, tileData);
-    updatedTiles[id] = true; // Mark the tile as updated
-
-    var moviesContainer = document.querySelector(".poster-showcase");
-    moviesContainer.appendChild(tile);
-  }
-
-  if (data.iconsAndNames && data.iconsAndNames.length) {
-    data.iconsAndNames.forEach((provider) => {
-      if (streamingProviders[provider.name]) return;
-      streamingProviders[provider.name] = provider;
-    });
-    updateStreamingProviderIcons(Object.values(streamingProviders));
-  }
-}
-
-function updateTile(tile, data) {
-  const streamingServices = data?.streamingServices || [];
-  const link = data?.link || "";
-  const poster = data?.poster || "";
-  tile.innerHTML = `
-    <a href="${link}" target="_blank">
-      <img src="${poster}" alt="${data.title} Poster">
-    </a>
-    <div class="poster-info">
-      <h2 class="poster-title">${data.title}</h2>
-      <p class="poster-release-date">Release Date: ${data.year}</p>
-      <p class="streaming-services">${streamingServices.join(" / ")}</p>
-      <p class="alternative-search" onclick="alternativeSearch(event)">🏴‍☠️</p>
-    </div>
-  `;
-}
-
-function showAlternativeSearch() {
-  document
-    .querySelector(".alternative-search")
-    .classList.remove("hide-alternative-search");
-}
-
-function filterTiles() {
-  const activeProviders = document.querySelectorAll("#icons-container .active");
-
-  if (!activeProviders || !activeProviders.length) {
-    // display all tiles
-    document.querySelectorAll(".poster").forEach((tile) => {
-      tile.style.display = "";
-    });
-    return;
-  }
-
-  const selectedServices = Array.from(activeProviders).map(
-    (elem) => elem.dataset.sp
-  );
-
-  Object.values(movieTiles).forEach((data) => {
-    const streamingServices = data.streamingServices;
-    const includedServices = selectedServices.filter((service) =>
-      streamingServices.includes(service)
-    );
-    const tile = document.querySelector(`div[data-id="${data.id}"]`);
-    if (includedServices.length > 0) {
-      tile.style.display = "";
-    } else {
-      tile.style.display = "none";
-    }
-  });
-}
-
-function updateStreamingProviderIcons(streamingProviders) {
-  // Select the container for the streaming provider icons
-  const spIconsContainer = document.querySelector("#icons-container");
-  spIconsContainer.innerHTML = "";
-
-  // Loop through each streaming provider
-  for (let i = 0; i < streamingProviders.length; i++) {
-    const provider = streamingProviders[i];
-
-    // Create a new streaming provider icon
-    const spIcon = document.createElement("div");
-    spIcon.classList.add("streaming-provider-icon");
-    spIcon.dataset.sp = provider.name;
-
-    // Create a new streaming provider icon image
-    const spIconImage = document.createElement("img");
-    spIconImage.src = provider.icon;
-    spIconImage.alt = provider.name;
-    spIconImage.addEventListener("click", (event) => {
-      event.target.parentElement.classList.toggle("active");
-      filterTiles();
-    });
-
-    // Add the streaming provider icon image to the streaming provider icon
-    spIcon.appendChild(spIconImage);
-
-    // Add the streaming provider icon to the container
-    spIconsContainer.appendChild(spIcon);
-  }
-}
 
 /** Automagically search movies */
 $(document).ready(() => {
@@ -447,11 +174,11 @@ $(document).ready(() => {
                 ? `<img src="${movie.Poster}" class="mr-3" alt="${movie.Title}" width="50">`
                 : "";
             return `
-              <li class="list-group-item d-flex align-items-center">
-                ${poster}
-                <div><strong>${movie.Title}</strong> (${movie.Year}) </div>
-              </li>
-            `;
+                  <li class="list-group-item d-flex align-items-center">
+                    ${poster}
+                    <div><strong>${movie.Title}</strong> (${movie.Year}) </div>
+                  </li>
+                `;
           },
         },
       }
