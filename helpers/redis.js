@@ -24,6 +24,7 @@ const getCacheValue = async (key) => {
       return value;
     }
   } catch (error) {
+    console.log(error);
     return null;
   }
 };
@@ -36,6 +37,7 @@ const setCacheValue = async (key, value, ttl = 60) => {
     const result = await pool.set(hashedKey, serializedValue, ttl);
     return result === "OK";
   } catch (error) {
+    console.log(error);
     return false;
   }
 };
