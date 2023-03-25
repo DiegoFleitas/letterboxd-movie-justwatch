@@ -1,13 +1,12 @@
-const expressSession = require("express-session");
-const uuid = require("uuid");
+const cookieSession = require("cookie-session");
 
-const session = expressSession({
-  secret: process.env.APP_SECRET_KEY,
-  resave: false,
-  saveUninitialized: true,
-  genid: () => {
-    return uuid.v4();
-  },
+const session = cookieSession({
+  name: "session",
+  keys: [process.env.APP_SECRET_KEY],
+  maxAge: 24 * 60 * 60 * 1000, // 24 hours
+  sameSite: "lax", // For CSRF protection
+  secure: true, // Only send cookie over HTTPS
+  httpOnly: true, // Prevent client-side JavaScript from accessing the cookie
 });
 
 module.exports = { session };
