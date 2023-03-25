@@ -45,6 +45,4 @@ morgan.format("json", function (tokens, req, res) {
   )}`;
 });
 
-const logging = morgan("json");
-
-export { logging };
+export const logging = morgan("json");
