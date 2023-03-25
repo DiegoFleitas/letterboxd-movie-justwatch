@@ -34,8 +34,7 @@
     "express": "^4.17.1",
     "morgan": "^1.10.0",
     "redis-connection-pool": "^4.0.1",
-    "ua-parser-js": "^1.0.34",
-    "uuid": "^9.0.0"
+    "ua-parser-js": "^1.0.34"
   },
   "devDependencies": {
     "cross-var": "^1.1.0"
