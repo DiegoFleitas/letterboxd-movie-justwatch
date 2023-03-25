@@ -1,7 +1,5 @@
-const redis = require("redis");
-const crypto = require("crypto");
-
-require("dotenv").config();
+import redis from "redis";
+import crypto from "crypto";
 
 let redisClient = null;
 
@@ -98,4 +96,4 @@ const getCacheKey = (str) => {
   return `${process.env.FLY_APP_NAME}:${hash.digest("hex")}`;
 };
 
-module.exports = { getCacheValue, setCacheValue, isHealthy };
+export { getCacheValue, setCacheValue, isHealthy };

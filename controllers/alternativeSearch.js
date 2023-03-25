@@ -1,12 +1,14 @@
-const axios = require("../helpers/axios")();
-const { getCacheValue, setCacheValue } = require("../helpers/redis");
+import axiosHelper from "../helpers/axios.js";
+const axios = axiosHelper();
+import { getCacheValue, setCacheValue } from "../helpers/redis.js";
+
 const cacheTtl = process.env.CACHE_TTL || 3600; // 1h (seconds)
 
-const alternativeSearch = async (req, res) => {
+export const alternativeSearch = async (req, res) => {
   const { title, year } = req.body;
 
-  jackettKey = process.env.JACKETT_API_KEY;
-  jackettEndpoint = process.env.JACKETT_API_ENDPOINT;
+  const jackettKey = process.env.JACKETT_API_KEY;
+  const jackettEndpoint = process.env.JACKETT_API_ENDPOINT;
 
   try {
     // replace spaces in searchQuery with +
@@ -76,5 +78,3 @@ const alternativeSearch = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
-
-module.exports = { alternativeSearch };

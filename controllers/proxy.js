@@ -1,8 +1,10 @@
-const axios = require("../helpers/axios")();
-const { getCacheValue, setCacheValue } = require("../helpers/redis");
+import axiosHelper from "../helpers/axios.js";
+const axios = axiosHelper();
+import { getCacheValue, setCacheValue } from "../helpers/redis.js";
+
 const cacheTtl = process.env.CACHE_TTL || 60; // minutes
 
-const proxy = async (req, res) => {
+export const proxy = async (req, res) => {
   const url = req.originalUrl.replace("/proxy/", "");
   const { method } = req;
   try {
@@ -50,5 +52,3 @@ const addApiKeyToUrl = (url) => {
   console.log(result);
   return result;
 };
-
-module.exports = { proxy };

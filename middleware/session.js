@@ -1,4 +1,4 @@
-const cookieSession = require("cookie-session");
+import cookieSession from "cookie-session";
 
 const session = cookieSession({
   name: "session",
@@ -9,4 +9,4 @@ const session = cookieSession({
   httpOnly: true, // Prevent client-side JavaScript from accessing the cookie
 });
 
-module.exports = { session };
+export { session };

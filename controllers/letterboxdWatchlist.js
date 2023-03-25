@@ -1,6 +1,8 @@
-const axios = require("../helpers/axios")(true); // Set keepAlive to true
-const cheerio = require("cheerio");
-const { getCacheValue, setCacheValue } = require("../helpers/redis");
+import axiosHelper from "../helpers/axios.js";
+const axios = axiosHelper(true); // Set keepAlive to true
+import cheerio from "cheerio";
+import { getCacheValue, setCacheValue } from "../helpers/redis.js";
+
 const cacheTtl = process.env.CACHE_TTL || 1; // minutes
 
 const POSTER_WIDTH = 230;
@@ -74,7 +76,7 @@ const getPageFilms = async (url) => {
     });
 };
 
-const letterboxdWatchlist = async (req, res) => {
+export const letterboxdWatchlist = async (req, res) => {
   try {
     let { username } = req.body;
     if (!username)
@@ -128,5 +130,3 @@ const letterboxdWatchlist = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
-
-module.exports = { letterboxdWatchlist };

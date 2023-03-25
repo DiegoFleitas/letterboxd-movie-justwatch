@@ -1,16 +1,17 @@
-const express = require("express");
-const bodyParser = require("body-parser");
-require("dotenv").config();
-const { session } = require("./middleware/session");
-const { logging } = require("./middleware/logging");
-const {
+import express from "express";
+import bodyParser from "body-parser";
+import { config as dotenvConfig } from "dotenv";
+dotenvConfig();
+import { session } from "./middleware/session.js";
+import { logging } from "./middleware/logging.js";
+import {
   searchMovie,
   poster,
   letterboxdWatchlist,
   alternativeSearch,
   proxy,
-} = require("./controllers");
-const { isHealthy } = require("./helpers/redis");
+} from "./controllers/index.js";
+import { isHealthy } from "./helpers/redis.js";
 
 const app = express();
 const port = process.env.PORT || 3000;

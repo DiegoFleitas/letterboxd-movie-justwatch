@@ -1,5 +1,5 @@
-const morgan = require("morgan");
-const uaParser = require("ua-parser-js");
+import morgan from "morgan";
+import uaParser from "ua-parser-js";
 
 morgan.token("browser", function (req) {
   const userAgent = req.headers["user-agent"];
@@ -47,4 +47,4 @@ morgan.format("json", function (tokens, req, res) {
 
 const logging = morgan("json");
 
-module.exports = { logging };
+export { logging };
