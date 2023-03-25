@@ -1,13 +1,7 @@
-const { searchMovie } = require("./searchMovie");
-const { poster } = require("./poster");
-const { letterboxdWatchlist } = require("./letterboxdWatchlist");
-const { alternativeSearch } = require("./alternativeSearch");
-const { proxy } = require("./proxy");
+import { searchMovie } from "./searchMovie.js";
+import { poster } from "./poster.js";
+import { letterboxdWatchlist } from "./letterboxdWatchlist.js";
+import { alternativeSearch } from "./alternativeSearch.js";
+import { proxy } from "./proxy.js";
 
-module.exports = {
-  searchMovie,
-  poster,
-  letterboxdWatchlist,
-  alternativeSearch,
-  proxy,
-};
+export { searchMovie, poster, letterboxdWatchlist, alternativeSearch, proxy };

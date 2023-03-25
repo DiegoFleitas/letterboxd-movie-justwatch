@@ -1,11 +1,9 @@
-const redis = require("redis");
-const crypto = require("crypto");
-
-require("dotenv").config();
+import redis from "redis";
+import crypto from "crypto";
 
 let redisClient = null;
 
-const isHealthy = async () => {
+export const isHealthy = async () => {
   const client = await getRedisClient();
   if (!client) {
     return false;
@@ -44,7 +42,7 @@ const getRedisClient = async () => {
 };
 
 // get a value from Redis cache
-const getCacheValue = async (key) => {
+export const getCacheValue = async (key) => {
   const client = await getRedisClient();
   if (!client) {
     return null;
@@ -70,7 +68,7 @@ const getCacheValue = async (key) => {
 };
 
 // set a value in Redis cache with a TTL (time-to-live) in minutes
-const setCacheValue = async (key, value, ttl = 60) => {
+export const setCacheValue = async (key, value, ttl = 60) => {
   const client = await getRedisClient();
   if (!client) {
     return null;
@@ -97,5 +95,3 @@ const getCacheKey = (str) => {
   // since upstash is shared, we need to namespace the keys
   return `${process.env.FLY_APP_NAME}:${hash.digest("hex")}`;
 };
-
-module.exports = { getCacheValue, setCacheValue, isHealthy };
