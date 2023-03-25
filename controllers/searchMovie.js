@@ -1,8 +1,10 @@
-const axios = require("../helpers/axios")();
-const { getCacheValue, setCacheValue } = require("../helpers/redis");
+import axiosHelper from "../helpers/axios.js";
+const axios = axiosHelper();
+import { getCacheValue, setCacheValue } from "../helpers/redis.js";
+
 const cacheTtl = process.env.CACHE_TTL || 3600; // 1h (seconds)
 
-const searchMovie = async (req, res) => {
+export const searchMovie = async (req, res) => {
   try {
     const { title, year, country } = req.body;
     const countryCode = country || "es_UY";
@@ -147,5 +149,3 @@ const searchMovie = async (req, res) => {
       .json({ error: "Internal Server Error", title: title, year: year });
   }
 };
-
-module.exports = { searchMovie };

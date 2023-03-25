@@ -1,6 +1,6 @@
-const cookieSession = require("cookie-session");
+import cookieSession from "cookie-session";
 
-const session = cookieSession({
+export const session = cookieSession({
   name: "session",
   keys: [process.env.APP_SECRET_KEY],
   maxAge: 24 * 60 * 60 * 1000, // 24 hours
@@ -8,5 +8,3 @@ const session = cookieSession({
   secure: true, // Only send cookie over HTTPS
   httpOnly: true, // Prevent client-side JavaScript from accessing the cookie
 });
-
-module.exports = { session };

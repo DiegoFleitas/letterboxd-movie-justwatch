@@ -1,8 +1,10 @@
-const axios = require("../helpers/axios")();
-const { getCacheValue, setCacheValue } = require("../helpers/redis");
+import axiosHelper from "../helpers/axios.js";
+const axios = axiosHelper();
+import { getCacheValue, setCacheValue } from "../helpers/redis.js";
+
 const cacheTtl = process.env.CACHE_TTL || 60; // minutes
 
-const poster = async (req, res) => {
+export const poster = async (req, res) => {
   const omdbApiKey = process.env.OMDB_API_KEY;
   let { title, year } = req.body;
   const cacheKey = `poster:${title}:${year}`;
@@ -56,5 +58,3 @@ const poster = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
-
-module.exports = { poster };

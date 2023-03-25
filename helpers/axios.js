@@ -1,5 +1,5 @@
-const axios = require("axios");
-const https = require("https");
+import axios from "axios";
+import https from "https";
 
 const instance = axios.create({
   // Config options
@@ -11,7 +11,7 @@ instance.interceptors.request.use((config) => {
 });
 
 // allow reusing existing connections (performance)
-module.exports = (keepAlive) => {
+export default (keepAlive) => {
   if (keepAlive) {
     instance.defaults.httpsAgent = new https.Agent({ keepAlive: true });
   }
