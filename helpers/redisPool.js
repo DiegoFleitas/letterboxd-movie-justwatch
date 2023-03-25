@@ -11,7 +11,9 @@ const connectionPool = (() => {
       max_clients: 25,
       perform_checks: true,
       database: 0,
+      disableOfflineQueue: true,
       acquireTimeoutMillis: 1000,
+      connectTimeoutMillis: 5000,
     };
 
     return redisConnectionPoolFactory(REDIS_POOL_NAME, redisConfig);

@@ -7,6 +7,7 @@ const isHealthy = async () => {
     const result = await pool.sendCommand("PING");
     return result === "PONG";
   } catch (error) {
+    console.log(error);
     return false;
   }
 };
