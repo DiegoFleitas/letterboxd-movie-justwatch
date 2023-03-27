@@ -100,8 +100,6 @@ export const letterboxdWatchlist = async (req, res) => {
     const maxPages = 80;
     while (currentPage <= maxPages) {
       const url = `${baseUrl}/page/${currentPage}/`;
-      const response = await axios.get(url);
-      const $ = cheerio.load(response.data);
       const pageFilms = await getPageFilms(url);
       if (pageFilms.length === 0) {
         // No films on this page, we're done scraping
