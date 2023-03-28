@@ -3,7 +3,8 @@ const axios = axiosHelper(true); // Set keepAlive to true
 import cheerio from "cheerio";
 import { getCacheValue, setCacheValue } from "../helpers/redis.js";
 
-const cacheTtl = process.env.CACHE_TTL || 1; // minutes
+const cacheTtl = process.env.CACHE_TTL || 20; // minutes
+const postersTtl = process.env.CACHE_TTL || 60; // minutes
 
 const POSTER_WIDTH = 230;
 const POSTER_HEIGHT = 345;
@@ -41,6 +42,10 @@ const getFilmData = async (film) => {
       .find("img")
       ?.attr("src")
       ?.replace("125-0-187", `${POSTER_WIDTH}-0-${POSTER_HEIGHT}`);
+
+    // Store the poster URL in Redis
+    const posterCacheKey = `letterboxd-poster:${id}`;
+    await setCacheValue(posterCacheKey, poster, postersTtl);
   }
 
   return { title, year, link, poster, id, titleSlug };
@@ -62,9 +67,15 @@ const getPageFilms = async (url) => {
 
   return films
     .filter(({ status }) => status === "fulfilled")
-    .map(({ value: { title, year, link, poster, id, titleSlug } }) => {
+    .map(async ({ value: { title, year, link, poster, id, titleSlug } }) => {
       if (!poster) {
-        poster = getPosterUrl(id, titleSlug, cacheBustingKey);
+        // Retrieve the poster URL from Redis
+        const posterCacheKey = `letterboxd-poster:${id}`;
+        poster = await getCacheValue(posterCacheKey);
+
+        if (!poster) {
+          poster = getPosterUrl(id, titleSlug, cacheBustingKey);
+        }
       }
 
       return {
