@@ -10,6 +10,23 @@ instance.interceptors.request.use((config) => {
   return config;
 });
 
+instance.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const { config, response } = error;
+    if (response.status === 429) {
+      console.log(response)
+      const retryAfter = response.headers["retry-after"] || 1;
+      console.log(`[axios] Rate limit exceeded, retrying in ${retryAfter} (s)`);
+      // Retry the request after a certain amount of time
+      return new Promise((resolve) => {
+        setTimeout(() => resolve(axios(config)), retryAfter * 1000);
+      });
+    }
+    return Promise.reject(error);
+  }
+);
+
 // allow reusing existing connections (performance)
 export default (keepAlive) => {
   if (keepAlive) {
