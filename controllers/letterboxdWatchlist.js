@@ -35,26 +35,29 @@ const getFilmData = async (film) => {
     const $$ = cheerio.load(ajaxResponse.data);
     let filmAux = $$(".film-poster");
 
-    id = filmAux?.attr("data-film-id");
-    year = filmAux?.attr("data-film-release-year");
-    titleSlug = filmAux?.attr("data-film-link");
     poster = filmAux
       .find("img")
       ?.attr("src")
       ?.replace("125-0-187", `${POSTER_WIDTH}-0-${POSTER_HEIGHT}`);
 
     // Store the poster URL in Redis
-    const posterCacheKey = `letterboxd-poster:${id}`;
+    const posterCacheKey = `letterboxd-poster:${titleSlug}`;
     await setCacheValue(posterCacheKey, poster, postersTtl);
+
+    titleSlug = filmAux?.attr("data-film-link");
+    id = filmAux?.attr("data-film-id");
+    year = filmAux?.attr("data-film-release-year");
   }
 
   return { title, year, link, poster, id, titleSlug };
 };
 
-const getPageFilms = async (url) => {
-  const response = await axios.get(url);
-  const $ = cheerio.load(response.data);
+const getFilmsCount = ($) => {
+  const rawFilmsText = $("h1.section-heading").text();
+  return parseInt(rawFilmsText.replace(/[^0-9]/g, ""));
+};
 
+const getPageFilms = async ($) => {
   const filmPromises = $(".poster-container")
     .map(async (i, el) => {
       const film = $(el);
@@ -70,7 +73,7 @@ const getPageFilms = async (url) => {
     .map(async ({ value: { title, year, link, poster, id, titleSlug } }) => {
       if (!poster) {
         // Retrieve the poster URL from Redis
-        const posterCacheKey = `letterboxd-poster:${id}`;
+        const posterCacheKey = `letterboxd-poster:${titleSlug}`;
         poster = await getCacheValue(posterCacheKey);
 
         if (!poster) {
@@ -89,41 +92,62 @@ const getPageFilms = async (url) => {
 
 export const letterboxdWatchlist = async (req, res) => {
   try {
-    let { username } = req.body;
+    const { username, page = 1 } = { ...req.body };
     if (!username)
       return res.status(400).json({ error: "Watchlist file not found" });
 
-    const cacheKey = `watchlist:${username}`;
-    const cachedWatchlist = await getCacheValue(cacheKey);
-    if (cachedWatchlist) {
-      console.log("Watchlist found (cached)");
-      return res.status(200).json({
-        message: "Watchlist found",
-        watchlist: cachedWatchlist,
-      });
-    }
+    if (page < 1) return res.status(400).json({ error: "Invalid page number" });
 
-    const proxy = "";
-    const baseUrl = `${proxy}https://letterboxd.com/${username}/watchlist/by/popular`;
-    let currentPage = 1;
-    let films = [];
+    const maxPages = 20;
+    const filmsPerPage = 28; // letterboxd default
+    let totalPages = 1;
+    let currentPage = 0;
+    let filmsCount = 0;
+    let filmsPromises = [];
+    let lastPage = null;
 
-    const maxPages = 80;
-    while (currentPage <= maxPages) {
-      const url = `${baseUrl}/page/${currentPage}/`;
-      const pageFilms = await getPageFilms(url);
-      if (pageFilms.length === 0) {
-        // No films on this page, we're done scraping
-        break;
+    for (let index = 0; index < maxPages; index++) {
+      currentPage = parseInt(page) + index;
+      const cacheKey = `watchlist:${username}:page:${currentPage}`;
+      const cachedWatchlist = await getCacheValue(cacheKey);
+
+      if (cachedWatchlist) {
+        console.log(`Watchlist for page ${currentPage} found (cached)`);
+        filmsPromises = filmsPromises.concat(cachedWatchlist);
+      } else {
+        const proxy = "";
+        const baseUrl = `${proxy}https://letterboxd.com/${username}/watchlist/by/popular`;
+        const url = `${baseUrl}/page/${currentPage}/`;
+        const response = await axios.get(url);
+        const $ = cheerio.load(response.data);
+        if (!filmsCount) {
+          filmsCount = getFilmsCount($);
+          totalPages = Math.ceil(filmsCount / filmsPerPage);
+          if (currentPage > totalPages) {
+            // No more pages to scrape
+            return res.status(404).json({ error: "Invalid watchlist page" });
+          }
+        }
+        const pageFilmsPromise = await getPageFilms($);
+
+        if (pageFilmsPromise.length === 0) {
+          // No films on this page, we're done scraping
+          break;
+        }
+        // cache films eventually
+        Promise.all(pageFilmsPromise).then((pageFilms) => {
+          setCacheValue(cacheKey, pageFilms, cacheTtl);
+        });
+        filmsPromises = filmsPromises.concat(pageFilmsPromise);
       }
-      films = films.concat(pageFilms);
-      currentPage++;
     }
-    const filmsArray = await Promise.all(films);
-    await setCacheValue(cacheKey, filmsArray, cacheTtl);
+
+    const films = await Promise.all(filmsPromises);
     res.status(200).json({
       message: "Watchlist found",
-      watchlist: filmsArray,
+      watchlist: films,
+      lastPage: Math.min(currentPage, totalPages),
+      totalPages: totalPages || lastPage, // Fallback to lastPage if totalPages is not available
     });
   } catch (error) {
     console.log(error);
@@ -135,7 +159,6 @@ export const letterboxdWatchlist = async (req, res) => {
       res.status(404).json({ error: "Watchlist is not public" });
       return;
     }
-    // console.log(response.data);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };

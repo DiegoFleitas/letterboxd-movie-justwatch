@@ -14,11 +14,11 @@ const form = document.getElementById("movie-form");
 form.addEventListener("submit", (event) => {
   event.preventDefault(); // Prevent the form from submitting normally
 
-  console.log(event.target);
+  // console.log(event.target);
   const formData = new FormData(event.target);
 
   const data = Object.fromEntries(formData.entries());
-  console.log(data);
+  // console.log(data);
 
   data.country = document.querySelector("#country1").value;
 
@@ -38,7 +38,7 @@ form.addEventListener("submit", (event) => {
       return response.json();
     })
     .then((response) => {
-      console.log(response);
+      // console.log(response);
       const { error, title, year, message, streamingServices } = response;
       if (error) {
         showError(`[${title} (${year})] ${error}`);
@@ -56,10 +56,10 @@ const letterboxdWatchlistForm = document.getElementById(
   "letterboxd-watchlist-form"
 );
 
-letterboxdWatchlistForm.addEventListener("submit", (event) => {
+letterboxdWatchlistForm.addEventListener("submit", async (event) => {
   event.preventDefault(); // Prevent the form from submitting normally
 
-  console.log(event.target);
+  // console.log(event.target);
   const formData = new FormData(event.target);
 
   let data = Object.fromEntries(formData.entries());
@@ -72,64 +72,126 @@ letterboxdWatchlistForm.addEventListener("submit", (event) => {
 
   toggleNotice(`Scraping watchlist for ${data?.username}...`);
 
-  fetch("/api/letterboxd-watchlist", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
-  })
-    .then((response) => response.json())
-    .then((response) => {
-      console.log(response);
-      setTimeout(() => {
-        toggleNotice();
-      }, 1000);
-      const { error, watchlist } = response;
-      if (error) {
-        showError(error);
-        return;
-      }
-      for (let index = 0; index < watchlist.length; index++) {
-        const element = watchlist[index];
-        let { title, year, link, poster } = element;
-        if (poster == "N/A") poster = "/movie_placeholder.svg";
-        rebuildMovieMosaic(title, year, { poster, link });
+  // Initialize page to 1
+  data.page = 1;
 
-        let data = { title, year };
-        data.country = document.querySelector("#country2").value;
-
-        fetch("/api/search-movie", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(data),
-        })
-          .then((response) => {
-            if (response.status === 502) {
-              console.error(response);
-            }
-            return response.json();
-          })
-          .then((response) => {
-            console.log(response);
-            const { error, title, year, message, streamingServices } = response;
-            if (error) {
-              showError(`[${title} (${year})] ${error}`);
-            } else {
-              const msg = `[${title} (${year})] ${message}: ${streamingServices.join(
-                ", "
-              )}`;
-              showMessage(msg);
-              rebuildMovieMosaic(title, year, response);
-            }
-          })
-          .catch((error) => console.error(error));
-      }
-    })
-    .catch((error) => console.error(error));
+  // Load the first page of the watchlist
+  await loadWatchlist(data);
 });
+
+let allPagesLoaded = false; // prevent unnecessary fetch requests
+let scrollListenerAdded = false; // prevent multiple scroll listeners
+let watchlistPageCount = 0;
+const MAX_PAGES_PER_LOAD = 20;
+const loadWatchlist = async (data) => {
+  try {
+    const response = await fetch("/api/letterboxd-watchlist", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+
+    const responseData = await response.json();
+    // console.log(responseData);
+    setTimeout(() => {
+      toggleNotice();
+    }, 1000);
+
+    const { error, watchlist, lastPage, totalPages } = responseData;
+    allPagesLoaded = lastPage === totalPages;
+    watchlistPageCount = totalPages;
+
+    if (error) {
+      showError(error);
+      return;
+    }
+
+    for (const element of watchlist) {
+      let { title, year, link, poster } = element;
+      if (poster == "N/A") poster = "/movie_placeholder.svg";
+      rebuildMovieMosaic(title, year, { poster, link });
+
+      let data = { title, year };
+      data.country = document.querySelector("#country2").value;
+
+      fetch("/api/search-movie", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      })
+        .then((response) => {
+          if (response.status === 502) {
+            console.error(response);
+          }
+          return response.json();
+        })
+        .then((response) => {
+          // console.log(response);
+          const { error, title, year, message, streamingServices } = response;
+          if (error) {
+            showError(`[${title} (${year})] ${error}`);
+          } else {
+            const msg = `[${title} (${year})] ${message}: ${streamingServices.join(
+              ", "
+            )}`;
+            showMessage(msg);
+            rebuildMovieMosaic(title, year, response);
+          }
+        })
+        .catch((error) => console.error(error));
+    }
+
+    // Update the page number
+    data.page = lastPage;
+
+    if (!allPagesLoaded) {
+      showMessage(`Loaded page ${data.page} of ${totalPages}...`);
+
+      if (!scrollListenerAdded) {
+        scrollListenerAdded = true;
+        window.addEventListener("scroll", handleScroll.bind(null, data), {
+          passive: true,
+        });
+      }
+    } else {
+      showMessage(`Loaded all ${totalPages} pages!`);
+    }
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+let isLoading = false; // prevent simultaneous requests
+function handleScroll(data) {
+  if (allPagesLoaded) {
+    window.removeEventListener("scroll", handleScroll);
+    return;
+  }
+
+  // Check if the user has scrolled close to the bottom
+  const scrollThreshold = 100;
+  if (
+    !isLoading &&
+    window.innerHeight + window.scrollY + scrollThreshold >=
+      document.documentElement.scrollHeight
+  ) {
+    isLoading = true;
+
+    let pagesLodingCount = Math.min(
+      watchlistPageCount - data.page,
+      MAX_PAGES_PER_LOAD
+    );
+    showMessage(`Loading another ${pagesLodingCount} page chunk...`);
+
+    loadWatchlist(data).finally(() => {
+      isLoading = false;
+    });
+  }
+}
 
 /** Automagically search movies */
 $(document).ready(() => {
@@ -168,7 +230,7 @@ $(document).ready(() => {
         source: movies,
         templates: {
           suggestion: (movie) => {
-            console.log(movie);
+            // console.log(movie);
             const poster =
               movie.Poster && movie.Poster !== "N/A"
                 ? `<img src="${movie.Poster}" class="mr-3" alt="${movie.Title}" width="50">`
@@ -224,7 +286,7 @@ $(document).ready(() => {
     })
     .on("select2:open", (evt) => {
       // set the placeholder text
-      console.log(evt.target);
+      // console.log(evt.target);
       $(evt.target)
         .data("select2")
         .$dropdown.find(":input.select2-search__field")
