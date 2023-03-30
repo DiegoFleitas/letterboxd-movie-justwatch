@@ -12,7 +12,7 @@ export const isHealthy = async () => {
     const result = await client.ping();
     return result === "PONG";
   } catch (error) {
-    console.log(error);
+    console.log(`[REDIS_PING_ERROR] ${error}`);
     return false;
   }
 };
@@ -23,12 +23,20 @@ const getRedisClient = async () => {
     try {
       const options = {
         url: process.env.FLYIO_REDIS_URL || "redis://localhost:6379",
+        disableOfflineQueue: true, // reject commands when client is reconnecting
+        poolOptions: {
+          max: 100,
+          min: 5,
+          maxWaitingClients: 50,
+          testOnBorrow: true,
+          acquireTimeoutMillis: 10000, // 10 seconds
+        },
       };
       console.log(options);
       redisClient = redis
         .createClient(options)
         .on("error", (err) => {
-          console.log("Redis connection error", err);
+          console.log(`[REDIS_CLIENT_ERROR] ${error}`);
         })
         .on("connect", () => {
           console.log("Connected to Redis");
@@ -50,19 +58,16 @@ export const getCacheValue = async (key) => {
   try {
     const hashedKey = getCacheKey(key);
     const value = await client.get(hashedKey);
-    console.log(
-      `[${new Date().toISOString()}] Get cache value for key ${hashedKey} (${key})`
-    );
+    !value
+      ? console.log(`[REDIS_MISS] ${hashedKey} (${key})`)
+      : console.log(`[REDIS_HIT] ${hashedKey} (${key})`);
     try {
       return JSON.parse(value);
     } catch (error) {
       return value;
     }
   } catch (error) {
-    console.log(
-      `[${new Date().toISOString()}] Error getting cache value for key (${key})`
-    );
-    console.log(error);
+    console.log(`[REDIS_GET_ERROR] (${key}) ${error}`);
     return null;
   }
 };
@@ -77,15 +82,11 @@ export const setCacheValue = async (key, value, ttl = 60) => {
     const serializedValue = JSON.stringify(value);
     const hashedKey = getCacheKey(key);
     const result = await client.set(hashedKey, serializedValue, { EX: ttl });
-    console.log(
-      `[${new Date().toISOString()}] Set cache value for key ${hashedKey} (${key}) with TTL ${ttl} min`
-    );
+    console.log(`[REDIS_SET] ${hashedKey} (${key}) TTL: ${ttl}`);
+
     return result === "OK";
   } catch (error) {
-    console.log(
-      `[${new Date().toISOString()}] Error setting cache value for key (${key}) with TTL ${ttl} min`
-    );
-    console.log(error);
+    console.log(`[REDIS_SET_ERROR] (${key}) ${error}`);
   }
 };
 
