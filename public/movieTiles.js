@@ -74,6 +74,7 @@ const updateTile = (tile, data) => {
   `;
 };
 
+// filters by streaming provider
 export const filterTiles = () => {
   const activeProviders = document.querySelectorAll("#icons-container .active");
 
@@ -91,14 +92,21 @@ export const filterTiles = () => {
 
   Object.values(movieTiles).forEach((data) => {
     const streamingServices = data.streamingServices;
-    const includedServices = selectedServices.filter((service) =>
-      streamingServices.includes(service)
-    );
-    const tile = document.querySelector(`div[data-id="${data.id}"]`);
-    if (includedServices.length > 0) {
-      tile.style.display = "";
-    } else {
+
+    // if the tile has no streaming services, hide it
+    if (!streamingServices || !streamingServices.length) {
+      const tile = document.querySelector(`div[data-id="${data.id}"]`);
       tile.style.display = "none";
+    } else {
+      const includedServices = selectedServices.filter((service) =>
+        streamingServices.includes(service)
+      );
+      const tile = document.querySelector(`div[data-id="${data.id}"]`);
+      if (includedServices.length > 0) {
+        tile.style.display = "";
+      } else {
+        tile.style.display = "none";
+      }
     }
   });
 };
