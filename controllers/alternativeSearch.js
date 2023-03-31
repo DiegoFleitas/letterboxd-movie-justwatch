@@ -35,7 +35,7 @@ export const alternativeSearch = async (req, res) => {
         `No results found, trying again without year (${title} ${year})`
       );
       // not all valid results for a film can be found when including the year in the search query
-      searchQueryWithoutYear = `${title}`.replace(/ /g, "+");
+      const searchQueryWithoutYear = `${title}`.replace(/ /g, "+");
       let { data } = await axios.get(
         `${baseUrl}&Query=${searchQueryWithoutYear}`
       );
