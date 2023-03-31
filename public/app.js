@@ -195,18 +195,25 @@ function handleScroll(data) {
 
 /** Automagically search movies */
 $(document).ready(() => {
+  // Debounce to delay the execution
+  const debounce = (func, wait) => {
+    let timeout;
+    return (...args) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+  };
+
+  // Bloodhound configuration
   const movies = new Bloodhound({
     datumTokenizer: Bloodhound.tokenizers.whitespace,
     queryTokenizer: Bloodhound.tokenizers.whitespace,
-    identify: (obj) => {
-      return obj.imdbID;
-    },
+    identify: (obj) => obj.imdbID,
     remote: {
-      url: "proxy/https://www.omdbapi.com/?s=%QUERY",
+      url: "proxy/https://api.themoviedb.org/3/search/movie?query=%QUERY",
       wildcard: "%QUERY",
       transform: (response) => {
-        const movieResults =
-          response.Search?.filter((result) => result.Type === "movie") || [];
+        const movieResults = response.results || [];
         return movieResults;
       },
       ajax: {
@@ -226,19 +233,23 @@ $(document).ready(() => {
       },
       {
         name: "movies",
-        display: "Title",
-        source: movies,
+        display: (movie) => movie.title,
+        source: (query, syncResults, asyncResults) => {
+          debounce(() => {
+            movies.search(query, syncResults, asyncResults);
+          }, 200)();
+        },
         templates: {
           suggestion: (movie) => {
-            // console.log(movie);
-            const poster =
-              movie.Poster && movie.Poster !== "N/A"
-                ? `<img src="${movie.Poster}" class="mr-3" alt="${movie.Title}" width="50">`
-                : "";
+            const poster = movie.poster_path
+              ? `<img src="https://image.tmdb.org/t/p/w92${movie.poster_path}" class="mr-3" alt="${movie.title}" width="50">`
+              : "";
             return `
                   <li class="list-group-item d-flex align-items-center">
                     ${poster}
-                    <div><strong>${movie.Title}</strong> (${movie.Year}) </div>
+                    <div><strong>${
+                      movie.title
+                    }</strong> (${movie.release_date.slice(0, 4)}) </div>
                   </li>
                 `;
           },
@@ -246,9 +257,9 @@ $(document).ready(() => {
       }
     )
     .on("typeahead:selected", (event, suggestion, dataset) => {
-      const year = suggestion.Year.match(/\d+/);
+      const year = suggestion.release_date.slice(0, 4);
       $("#year").val(year);
-      $("#title").val(suggestion.Title);
+      $("#title").val(suggestion.title);
     })
     .on("change", (event) => {
       $("#title").val(event.target.value);
