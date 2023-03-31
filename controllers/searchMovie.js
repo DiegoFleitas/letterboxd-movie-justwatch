@@ -3,6 +3,7 @@ const axios = axiosHelper();
 import { getCacheValue, setCacheValue } from "../helpers/redis.js";
 
 const cacheTtl = process.env.CACHE_TTL || 3600; // 1h (seconds)
+const PROXY = "";
 
 export const searchMovie = async (req, res) => {
   try {
@@ -25,7 +26,6 @@ export const searchMovie = async (req, res) => {
     }
 
     const movieDbAPIKey = process.env.MOVIE_DB_API_KEY;
-    const PROXY = "";
 
     // Search for movie on MovieDB API
     let encodedTitle = encodeURIComponent(title);
@@ -46,19 +46,29 @@ export const searchMovie = async (req, res) => {
     const movieId = movieDbData.id;
 
     // Search for movie on JustWatch API using title and year
-    const justWatchResponse = await axios.get(
+    const titlesPromise = axios.get(
       `${PROXY}https://api.justwatch.com/content/titles/${countryCode}/popular?body={"query": "${encodedTitle} ${year}"}`
     );
 
+    // Get providers list from JustWatch API
+    const providersPromise = getProviders(countryCode);
+
+    // parallelize requests
+    const [justWatchResponse, providers] = await Promise.all([
+      titlesPromise,
+      providersPromise,
+    ]);
+
     // Search for movie data in the JustWatch response based on the movie ID from MovieDB API
-    // This is done to filter out movies JustWatch "suggests" but are not necessarily the same movie
-    const movieData = justWatchResponse.data.items.find((item) => {
-      // Unreleased movies might not have scoring
-      const tmdbId = item.scoring?.find(
-        (score) => score.provider_type === "tmdb:id"
-      );
-      return tmdbId && tmdbId.value === movieId;
-    });
+    // This is done to filter out movies JustWatch "suggests" but are not necessarily the movie we are looking for
+    const movieData =
+      justWatchResponse?.data?.items.find((item) => {
+        // Unreleased movies might not have scoring
+        const tmdbId = item.scoring?.find(
+          (score) => score.provider_type === "tmdb:id"
+        );
+        return tmdbId && tmdbId.value === movieId;
+      }) || null;
 
     if (!movieData) {
       const response = { error: "Movie not found", title: title, year: year };
@@ -93,33 +103,22 @@ export const searchMovie = async (req, res) => {
       return res.status(404).json(noStreamingServicesResponse);
     }
 
-    // Get clear names for streaming services
-    const providerResponse = await axios.get(
-      `${PROXY}https://apis.justwatch.com/content/providers/locale/${countryCode}`
+    // use reduce to avoid iterating twice
+    const { clearNames, iconsAndNames } = streamingServices.reduce(
+      (acc, service) => {
+        const provider = providers.find((provider) => provider.id === service);
+        if (provider) {
+          acc.clearNames.push(provider.clear_name);
+          const icon = provider.icon_url.replace("{profile}", "");
+          acc.iconsAndNames.push({
+            name: provider.clear_name,
+            icon: `https://www.justwatch.com/images${icon}s100/icon.webp`,
+          });
+        }
+        return acc;
+      },
+      { clearNames: [], iconsAndNames: [] }
     );
-    const providers = providerResponse.data;
-    const clearNames = streamingServices
-      .map((service) => {
-        const provider = providers.find((provider) => provider.id === service);
-        return provider ? provider.clear_name : null;
-      })
-      .filter((name) => name !== null);
-
-    const iconsAndNames = streamingServices
-      .map((service) => {
-        const provider = providers.find((provider) => provider.id === service);
-        const name = provider ? provider.clear_name : null;
-        const icon = provider
-          ? provider.icon_url.replace("{profile}", "")
-          : null;
-        return {
-          name: name,
-          icon: icon
-            ? `https://www.justwatch.com/images${icon}s100/icon.webp`
-            : null,
-        };
-      })
-      .filter((name) => name !== null);
 
     if (!clearNames || !clearNames.length) {
       const services = streamingServices.join(", ");
@@ -147,5 +146,32 @@ export const searchMovie = async (req, res) => {
     res
       .status(500)
       .json({ error: "Internal Server Error", title: title, year: year });
+  }
+};
+
+const getProviders = async (countryCode) => {
+  const cacheKey = `justwatch-providers:${countryCode}`;
+  const cachedProviders = await getCacheValue(cacheKey);
+
+  if (cachedProviders) {
+    return cachedProviders;
+  }
+
+  try {
+    const providersResponse = await axios.get(
+      `${PROXY}https://apis.justwatch.com/content/providers/locale/${countryCode}`
+    );
+    const providers = providersResponse.data;
+    providers?.map((elem) => {
+      const { id, clear_name } = elem;
+      return { id, clear_name };
+    }) || [];
+    // cache for 1 day since providers don't change often
+    const cacheTtl = 60 * 60 * 24 * 1;
+    await setCacheValue(cacheKey, providers, cacheTtl);
+    return providers;
+  } catch (error) {
+    console.error(`Error fetching providers for ${countryCode}:`, error);
+    throw error;
   }
 };
