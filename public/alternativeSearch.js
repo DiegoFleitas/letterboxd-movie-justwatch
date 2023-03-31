@@ -1,5 +1,7 @@
 import { toggleNotice } from "./noticeFunctions.js";
 import { showMessage } from "./showMessage.js";
+import { showError } from "./showError.js";
+import STATE from "./state.js";
 
 export const alternativeSearch = (event) => {
   event.preventDefault(); // Prevent the form from submitting normally
@@ -11,7 +13,7 @@ export const alternativeSearch = (event) => {
     year = "";
   if (isTile) {
     const tileId = parentElement.parentElement.getAttribute("data-id");
-    const tile = movieTiles[tileId];
+    const tile = STATE.movieTiles[tileId];
     console.log(tile);
     if (!tile) return;
     title = tile.title;
