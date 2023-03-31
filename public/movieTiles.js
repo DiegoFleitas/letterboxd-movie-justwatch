@@ -2,8 +2,8 @@ import {
   streamingProviders,
   updateStreamingProviderIcons,
 } from "./streamingProviders.js";
+import STATE from "./state.js";
 
-const movieTiles = {};
 const updatedTiles = {};
 
 export const rebuildMovieMosaic = (title, year, data) => {
@@ -15,7 +15,7 @@ export const rebuildMovieMosaic = (title, year, data) => {
   const existingTile = document.querySelector(`div[data-id="${id}"]`);
 
   if (existingTile) {
-    const tileData = movieTiles[id];
+    const tileData = STATE.movieTiles[id];
     if (!tileData.streamingServices || !tileData.streamingServices.length)
       tileData.streamingServices = data.streamingServices;
     if (!tileData.poster) tileData.poster = data.poster;
@@ -40,7 +40,7 @@ export const rebuildMovieMosaic = (title, year, data) => {
       id,
     };
 
-    movieTiles[id] = tileData; // Store the tile data
+    STATE.movieTiles[id] = tileData; // Store the tile data
     updateTile(tile, tileData);
     updatedTiles[id] = true; // Mark the tile as updated
 
@@ -90,7 +90,7 @@ export const filterTiles = () => {
     (elem) => elem.dataset.sp
   );
 
-  Object.values(movieTiles).forEach((data) => {
+  Object.values(STATE.movieTiles).forEach((data) => {
     const streamingServices = data.streamingServices;
 
     // if the tile has no streaming services, hide it
