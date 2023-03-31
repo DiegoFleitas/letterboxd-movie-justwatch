@@ -12,9 +12,7 @@ export const searchMovie = async (req, res) => {
 
     if (!title) {
       console.log("No movie title");
-      return res
-        .status(404)
-        .json({ message: "Movie not found", title: title, year: year });
+      return res.json({ message: "Movie not found", title: title, year: year });
     }
 
     const cacheKey = `search-movie:${title}:${year}:${countryCode}`;
@@ -39,7 +37,7 @@ export const searchMovie = async (req, res) => {
     if (!movieDbData) {
       const response = { error: "Movie not found", title: title, year: year };
       await setCacheValue(cacheKey, response, cacheTtl);
-      return res.status(404).json(response);
+      return res.json(response);
     }
 
     // Get title and year from MovieDB API
@@ -73,7 +71,7 @@ export const searchMovie = async (req, res) => {
     if (!movieData) {
       const response = { error: "Movie not found", title: title, year: year };
       await setCacheValue(cacheKey, response, cacheTtl);
-      return res.status(404).json(response);
+      return res.json(response);
     }
 
     const noStreamingServicesResponse = {
@@ -85,7 +83,7 @@ export const searchMovie = async (req, res) => {
 
     if (!movieData.offers || !movieData.offers.length) {
       await setCacheValue(cacheKey, noStreamingServicesResponse, cacheTtl);
-      return res.status(404).json(noStreamingServicesResponse);
+      return res.json(noStreamingServicesResponse);
     }
 
     let streamingServices = movieData.offers
@@ -100,7 +98,7 @@ export const searchMovie = async (req, res) => {
 
     if (!streamingServices?.length) {
       await setCacheValue(cacheKey, noStreamingServicesResponse, cacheTtl);
-      return res.status(404).json(noStreamingServicesResponse);
+      return res.json(noStreamingServicesResponse);
     }
 
     // use reduce to avoid iterating twice
@@ -129,7 +127,7 @@ export const searchMovie = async (req, res) => {
       };
       console.log(response);
       await setCacheValue(cacheKey, response, cacheTtl);
-      return res.status(404).json(response);
+      return res.json(response);
     }
 
     const response = {
@@ -140,7 +138,7 @@ export const searchMovie = async (req, res) => {
       year: year,
     };
     await setCacheValue(cacheKey, response, cacheTtl);
-    res.status(200).json(response);
+    res.json(response);
   } catch (err) {
     console.log(err);
     res
