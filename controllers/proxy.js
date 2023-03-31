@@ -45,6 +45,9 @@ const addApiKeyToUrl = (url) => {
     case "www.omdbapi.com":
       urlObj.searchParams.append("apikey", process.env.OMDB_API_KEY);
       break;
+    case "api.themoviedb.org":
+      urlObj.searchParams.append("api_key", process.env.MOVIE_DB_API_KEY);
+      break;
     default:
       break;
   }
