@@ -43,25 +43,25 @@ app.get("/redis-healthcheck", async (req, res) => {
 });
 
 app.post("/api/search-movie", async (req, res) => {
-  // make browsers cache response for 1h
+  // let browsers cache response for 1h
   res.setHeader("Cache-Control", "public, max-age=3600");
   return searchMovie(req, res);
 });
 
 app.post("/api/poster", async (req, res) => {
-  // make browsers cache response for 1h
+  // let browsers cache response for 1h
   res.setHeader("Cache-Control", "public, max-age=3600");
   return poster(req, res);
 });
 
 app.post("/api/letterboxd-watchlist", async (req, res) => {
-  // make browsers cache response for 1h
+  // let browsers cache response for 1h
   res.setHeader("Cache-Control", "public, max-age=3600");
   return letterboxdWatchlist(req, res);
 });
 
 app.post("/api/alternative-search", async (req, res) => {
-  // make browsers cache response for 1h
+  // let browsers cache response for 1h
   res.setHeader("Cache-Control", "public, max-age=3600");
   return alternativeSearch(req, res);
 });
