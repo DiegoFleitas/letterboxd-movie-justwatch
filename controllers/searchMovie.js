@@ -18,9 +18,8 @@ export const searchMovie = async (req, res) => {
     const cacheKey = `search-movie:${title}:${year}:${countryCode}`;
     const cachedResponse = await getCacheValue(cacheKey);
     if (cachedResponse) {
-      const status = cachedResponse.error ? 404 : 200;
       console.log("Response found (cached)");
-      return res.status(status).json(cachedResponse);
+      return res.json(cachedResponse);
     }
 
     const movieDbAPIKey = process.env.MOVIE_DB_API_KEY;
