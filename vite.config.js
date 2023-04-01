@@ -7,8 +7,11 @@ export default defineConfig({
   },
   server: {
     proxy: {
+      // Set up a proxy for requests starting with "/api"
       "/api": {
+        // Forward the requests to the Express server running at this URL
         target: "http://localhost:3000",
+        // Change the request's origin to the target URL (helps avoid CORS issues)
         changeOrigin: true,
       },
     },
