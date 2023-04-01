@@ -2,8 +2,7 @@ import express from "express";
 import bodyParser from "body-parser";
 import { config as dotenvConfig } from "dotenv";
 dotenvConfig();
-import { session } from "./middleware/session.js";
-import { logging } from "./middleware/logging.js";
+import { session, logging } from "./middleware/index.js";
 import {
   searchMovie,
   poster,

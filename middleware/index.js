@@ -1,4 +1,2 @@
-import { logging } from "./logging";
-import { session } from "./session";
-
-export { logging, session };
+export { logging } from "./logging.js";
+export { session } from "./session.js";
