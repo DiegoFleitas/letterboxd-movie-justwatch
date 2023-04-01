@@ -30,7 +30,7 @@ PRE: You need to have docker to run the image at /redis folder
 
 ## Development
 
-Vite is used for development and building the front-end application. It provides fast development with features like hot module replacement (HMR) and efficient production builds. Vite is configured using `vite.config.js` in the project root. The configuration includes a proxy for API requests to the back-end Express server during development.
+Vite is used for development and building the front-end application. It provides fast development with features like hot module replacement (HMR) and efficient production builds. Vite is configured using `vite.config.js` in the project root. All requests with the `/api` prefix are forwarded to the back-end Express server during development, using the vite server-proxy configuration
 
 ## Stopping / Starting app
 
