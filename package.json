@@ -6,8 +6,12 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "fe:dev": "vite",
+    "fe:serve": "vite preview",
+    "be:dev": "nodemon server.js",
     "start": "node server.js",
-    "dev": "nodemon server.js",
+    "build": "vite build",
+    "dev": "concurrently \"npm:fe:dev\" \"npm:be:dev\"",
     "app": "npx cross-var echo $npm_package_name",
     "fly:deploy": "flyctl deploy",
     "fly:logs": "npx cross-var flyctl logs -a $npm_package_name",
@@ -39,6 +43,8 @@
     "uuid": "^9.0.0"
   },
   "devDependencies": {
-    "cross-var": "^1.1.0"
+    "concurrently": "^8.0.1",
+    "cross-var": "^1.1.0",
+    "vite": "^4.2.1"
   }
 }

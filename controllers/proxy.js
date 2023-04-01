@@ -5,7 +5,7 @@ import { getCacheValue, setCacheValue } from "../helpers/redis.js";
 const cacheTtl = process.env.CACHE_TTL || 60; // minutes
 
 export const proxy = async (req, res) => {
-  const url = req.originalUrl.replace("/proxy/", "");
+  const url = req.originalUrl.replace("/api/proxy/", "");
   const { method } = req;
   try {
     if (!url) {

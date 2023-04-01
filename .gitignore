@@ -2,7 +2,7 @@
 /node_modules
 
 # production build files
-/dist
+public/dist
 
 # local env files
 .env
