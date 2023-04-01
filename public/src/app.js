@@ -220,7 +220,7 @@ $(document).ready(() => {
     queryTokenizer: Bloodhound.tokenizers.whitespace,
     identify: (obj) => obj.imdbID,
     remote: {
-      url: "proxy/https://api.themoviedb.org/3/search/movie?query=%QUERY",
+      url: "api/proxy/https://api.themoviedb.org/3/search/movie?query=%QUERY",
       wildcard: "%QUERY",
       transform: (response) => {
         const movieResults = response.results || [];

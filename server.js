@@ -16,7 +16,7 @@ import { isHealthy } from "./helpers/redis.js";
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(express.static("public")); // serve static files
+app.use(express.static("public/dist")); // serve static files that vite built
 
 // anonymous session
 app.use(session);
@@ -66,7 +66,7 @@ app.post("/api/alternative-search", async (req, res) => {
   return alternativeSearch(req, res);
 });
 
-app.all("/proxy/:url(*)", async (req, res) => {
+app.all("/api/proxy/:url(*)", async (req, res) => {
   return proxy(req, res);
 });
 

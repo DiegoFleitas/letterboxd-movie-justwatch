@@ -41,3 +41,7 @@ Will remove ALL cache keys
 You can also use redis-cli to connect to flyio redis upstash instance
 
     flyctl redis connect
+
+## Gotchas
+
+- When running `npm run fly:deploy` the contents of .env are used. Therefore, if you set up local redis, the redis connection will fail when deployed.
