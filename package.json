@@ -13,7 +13,7 @@
     "build": "vite build",
     "dev": "concurrently \"npm:fe:dev\" \"npm:be:dev\"",
     "app": "npx cross-var echo $npm_package_name",
-    "fly:deploy": "flyctl deploy",
+    "fly:deploy": "npm run build && flyctl deploy",
     "fly:logs": "npx cross-var flyctl logs -a $npm_package_name",
     "fly:stop": "npx cross-var flyctl scale count 0 -a $npm_package_name",
     "fly:start": "npx cross-var flyctl scale count 1 -a $npm_package_name",
