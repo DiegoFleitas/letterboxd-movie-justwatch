@@ -1,7 +1,4 @@
-const { logging } = require("./logging");
-const { session } = require("./session");
+import { logging } from "./logging";
+import { session } from "./session";
 
-module.exports = {
-  logging,
-  session,
-};
+export { logging, session };
