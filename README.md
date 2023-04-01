@@ -21,12 +21,16 @@ PRE: You need to have docker to run the image at /redis folder
 
 ## First time deployment
 
-- Replace "name" & "app" strings with your new app name at package.json at fly.toml (respectively) 
+- Replace "name" & "app" strings with your new app name at package.json at fly.toml (respectively)
 - Run `npm i`
 - Rename .env.example to .env
 - Run `flyctl launch`
 - When prompted for a builder, select builtin Nodejs.
 - Run `npm run fly:deploy` (for future deployments only this command will be needed)
+
+## Development
+
+Vite is used for development and building the front-end application. It provides fast development with features like hot module replacement (HMR) and efficient production builds. Vite is configured using `vite.config.js` in the project root. The configuration includes a proxy for API requests to the back-end Express server during development.
 
 ## Stopping / Starting app
 
@@ -62,4 +66,3 @@ Currently hosted free of charge on Fly.io
 
 - https://fly.io/blog/shipping-logs/
 - https://fly.io/docs/reference/redis/
-
