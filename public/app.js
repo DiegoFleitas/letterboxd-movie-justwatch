@@ -6,6 +6,7 @@ import {
   showAlternativeSearch,
 } from "./alternativeSearch.js";
 import { rebuildMovieMosaic } from "./movieTiles.js";
+import { countries, generes } from "./consts.js";
 
 window.alternativeSearch = alternativeSearch;
 
@@ -193,6 +194,15 @@ function handleScroll(data) {
   }
 }
 
+// Function to convert genre_ids to genre names
+const getGenreNames = (genre_ids) => {
+  return (
+    genre_ids
+      .map((id) => generes?.find((genre) => genre.id === id)?.name || "")
+      .join(", ") || ""
+  );
+};
+
 /** Automagically search movies */
 $(document).ready(() => {
   // Debounce to delay the execution
@@ -244,12 +254,14 @@ $(document).ready(() => {
             const poster = movie.poster_path
               ? `<img src="https://image.tmdb.org/t/p/w92${movie.poster_path}" class="mr-3" alt="${movie.title}" width="50">`
               : "";
+            const genreString = getGenreNames(movie.genre_ids);
             return `
                   <li class="list-group-item d-flex align-items-center">
                     ${poster}
                     <div><strong>${
                       movie.title
                     }</strong> (${movie.release_date.slice(0, 4)}) </div>
+                    <small><i>${genreString}</i></small>
                   </li>
                 `;
           },
@@ -268,7 +280,7 @@ $(document).ready(() => {
   $(".country")
     .select2({
       dropdownAutoWidth: true,
-      data: countriesData || [],
+      data: countries || [],
       templateSelection: (data) => {
         return `${data.flag}`;
       },
