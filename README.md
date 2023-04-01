@@ -17,10 +17,6 @@ PRE: You need to have docker to run the image at /redis folder
 
 - Read `redis/README.md`
 
-## Gotchas
-
-- When running `npm run fly:deploy` the contents of .env are used. Therefore, if you set up local redis, the redis connection will fail when deployed.
-
 ## Deployment
 
 - Replace "name" & "app" strings with your new app name at package.json at fly.toml (respectively)
