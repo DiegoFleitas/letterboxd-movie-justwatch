@@ -1,6 +1,7 @@
 import {
   streamingProviders,
   updateStreamingProviderIcons,
+  updateTileProviders,
 } from "./streamingProviders.js";
 import STATE from "./state.js";
 
@@ -16,8 +17,8 @@ export const rebuildMovieMosaic = (title, year, data) => {
 
   if (existingTile) {
     const tileData = STATE.movieTiles[id];
-    if (!tileData.streamingServices || !tileData.streamingServices.length)
-      tileData.streamingServices = data.streamingServices;
+    if (!tileData.movieProviders || !tileData.movieProviders.length)
+      tileData.movieProviders = data.movieProviders;
     if (!tileData.poster) tileData.poster = data.poster;
     if (!tileData.link) tileData.link = data.link;
     updateTile(existingTile, tileData);
@@ -27,13 +28,13 @@ export const rebuildMovieMosaic = (title, year, data) => {
     tile.setAttribute("data-id", id);
     tile.classList.add("poster");
 
-    const streamingServices = data?.streamingServices || [];
+    const movieProviders = data?.movieProviders || [];
     const link = data?.link || "";
     const poster = data?.poster || "";
 
     const tileData = {
       link,
-      streamingServices,
+      movieProviders,
       poster,
       title,
       year,
@@ -48,19 +49,31 @@ export const rebuildMovieMosaic = (title, year, data) => {
     moviesContainer.appendChild(tile);
   }
 
-  if (data.iconsAndNames && data.iconsAndNames.length) {
-    data.iconsAndNames.forEach((provider) => {
-      if (streamingProviders[provider.name]) return;
-      streamingProviders[provider.name] = provider;
+  // collect providers
+  if (data.movieProviders && data.movieProviders.length) {
+    data.movieProviders.forEach((provider) => {
+      if (streamingProviders[provider.id]) {
+        streamingProviders[provider.id].urls.push(provider.url);
+      }
+      streamingProviders[provider.id] = {
+        id: provider.id,
+        name: provider.name,
+        icon: provider.icon,
+        urls: [provider.url],
+      };
     });
-    updateStreamingProviderIcons(Object.values(streamingProviders));
+
+    updateStreamingProviderIcons(streamingProviders);
   }
 };
 
 const updateTile = (tile, data) => {
-  const streamingServices = data?.streamingServices || [];
+  const movieProviders = data?.movieProviders || [];
   const link = data?.link || "";
   const poster = data?.poster || "";
+  // Add providers icons to the tile
+  const providersElem = updateTileProviders(data);
+  const providerNames = movieProviders.map((provider) => provider.name);
   tile.innerHTML = `
     <a href="${link}" target="_blank">
       <img src="${poster}" alt="${data.title} Poster">
@@ -68,15 +81,27 @@ const updateTile = (tile, data) => {
     <div class="poster-info">
       <h2 class="poster-title">${data.title}</h2>
       <p class="poster-release-date">Release Date: ${data.year}</p>
-      <p class="streaming-services">${streamingServices.join(" / ")}</p>
+      <p class="streaming-services" style="display:none">${providerNames.join(
+        " / "
+      )}</p>
+      <div class="poster-providers">${providersElem.innerHTML}</div>
       <p class="alternative-search" onclick="alternativeSearch(event)">🏴‍☠️</p>
     </div>
   `;
+  const proxy = "https://click.justwatch.com/a?r=";
+  tile.querySelectorAll("[data-url]").forEach((element) => {
+    const url = element.getAttribute("data-url");
+    element.addEventListener("click", () => {
+      window.open(`${proxy}${url}`, "_blank");
+    });
+  });
 };
 
 // filters by streaming provider
 export const filterTiles = () => {
-  const activeProviders = document.querySelectorAll("#icons-container .active");
+  const activeProviders = document.querySelectorAll(
+    "#icons-container-main .active"
+  );
 
   if (!activeProviders || !activeProviders.length) {
     // display all tiles
@@ -91,15 +116,15 @@ export const filterTiles = () => {
   );
 
   Object.values(STATE.movieTiles).forEach((data) => {
-    const streamingServices = data.streamingServices;
+    const providerNames = data.movieProviders.map((provider) => provider.name);
 
     // if the tile has no streaming services, hide it
-    if (!streamingServices || !streamingServices.length) {
+    if (!providerNames || !providerNames.length) {
       const tile = document.querySelector(`div[data-id="${data.id}"]`);
       tile.style.display = "none";
     } else {
       const includedServices = selectedServices.filter((service) =>
-        streamingServices.includes(service)
+        providerNames.includes(service)
       );
       const tile = document.querySelector(`div[data-id="${data.id}"]`);
       if (includedServices.length > 0) {
