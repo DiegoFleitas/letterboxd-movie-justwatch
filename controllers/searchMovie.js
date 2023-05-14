@@ -5,6 +5,7 @@ import { getCacheValue, setCacheValue } from "../helpers/redis.js";
 const cacheTtl = process.env.CACHE_TTL || 3600; // 1h (seconds)
 const PROXY = "";
 
+// TODO: refactor - way more complex than it needs to be
 export const searchMovie = async (req, res) => {
   try {
     const { title, year, country } = req.body;
@@ -58,6 +59,7 @@ export const searchMovie = async (req, res) => {
 
     // Search for movie data in the JustWatch response based on the movie ID from MovieDB API
     // This is done to filter out movies JustWatch "suggests" but are not necessarily the movie we are looking for
+    // TODO: condsider using original_release_year & object_type=movie ?
     const movieData =
       justWatchResponse?.data?.items.find((item) => {
         // Unreleased movies might not have scoring
@@ -85,14 +87,24 @@ export const searchMovie = async (req, res) => {
       return res.json(noStreamingServicesResponse);
     }
 
-    let streamingServices = movieData.offers
-      .filter(
-        (offer) =>
+    let { streamingServices, directUrls } = movieData.offers.reduce(
+      (acc, offer) => {
+        if (
           offer.monetization_type === "flatrate" ||
           offer.monetization_type === "free" ||
           offer.monetization_type === "ads"
-      )
-      .map((offer) => offer.provider_id);
+        ) {
+          let id = offer.provider_id
+          acc.streamingServices.push(id);
+
+          acc.directUrls[id] = offer?.urls?.standard_web;
+        }
+
+        return acc;
+      },
+      { streamingServices: [], directUrls: {} }
+    );
+
     streamingServices = [...new Set(streamingServices)];
 
     if (!streamingServices?.length) {
@@ -101,20 +113,22 @@ export const searchMovie = async (req, res) => {
     }
 
     // use reduce to avoid iterating twice
-    const { clearNames, iconsAndNames } = streamingServices.reduce(
+    const { clearNames, movieProviders } = streamingServices.reduce(
       (acc, service) => {
         const provider = providers.find((provider) => provider.id === service);
         if (provider) {
           acc.clearNames.push(provider.clear_name);
           const icon = provider.icon_url.replace("{profile}", "");
-          acc.iconsAndNames.push({
+          acc.movieProviders.push({
+            id: service,
             name: provider.clear_name,
             icon: `https://www.justwatch.com/images${icon}s100/icon.webp`,
+            url: directUrls[service],
           });
         }
         return acc;
       },
-      { clearNames: [], iconsAndNames: [] }
+      { clearNames: [], movieProviders: [] }
     );
 
     if (!clearNames || !clearNames.length) {
@@ -131,8 +145,7 @@ export const searchMovie = async (req, res) => {
 
     const response = {
       message: "Movie found",
-      streamingServices: clearNames,
-      iconsAndNames: iconsAndNames,
+      movieProviders: movieProviders,
       title: title,
       year: year,
     };

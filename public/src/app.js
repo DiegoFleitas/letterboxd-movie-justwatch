@@ -40,14 +40,9 @@ form.addEventListener("submit", (event) => {
     })
     .then((response) => {
       // console.log(response);
-      const { error, title, year, message, streamingServices } = response;
+      const { error, title, year } = response;
       if (error) {
         showError(`[${title} (${year})] ${error}`);
-      } else {
-        const msg = `[${title} (${year})] ${message}: ${streamingServices.join(
-          ", "
-        )}`;
-        showMessage(msg);
       }
     })
     .catch((error) => console.error(error));
@@ -132,14 +127,10 @@ const loadWatchlist = async (data) => {
         })
         .then((response) => {
           // console.log(response);
-          const { error, title, year, message, streamingServices } = response;
+          const { error, title, year } = response;
           if (error) {
             showError(`[${title} (${year})] ${error}`);
           } else {
-            const msg = `[${title} (${year})] ${message}: ${streamingServices.join(
-              ", "
-            )}`;
-            showMessage(msg);
             rebuildMovieMosaic(title, year, response);
           }
         })
