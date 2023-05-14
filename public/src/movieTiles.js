@@ -50,7 +50,6 @@ export const rebuildMovieMosaic = (title, year, data) => {
   }
 
   // collect providers
-  // TODO: url should change into an array
   if (data.movieProviders && data.movieProviders.length) {
     data.movieProviders.forEach((provider) => {
       if (streamingProviders[provider.id]) {
