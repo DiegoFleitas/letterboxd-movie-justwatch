@@ -84,8 +84,12 @@ const updateTile = (tile, data) => {
       <p class="streaming-services" style="display:none">${providerNames.join(
         " / "
       )}</p>
-      <div class="poster-providers">${providersElem.innerHTML}</div>
-      <p class="alternative-search" onclick="alternativeSearch(event)">🏴‍☠️</p>
+      <div class="poster-providers">
+        ${providersElem.innerHTML}
+        <div class="tile-icons" data-sp="alternative-search-tile">
+          <img onclick="alternativeSearch(event)" src="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏴‍☠️</text></svg>" alt="alternative search">
+        </div>
+      </div>
     </div>
   `;
   const proxy = "https://click.justwatch.com/a?r=";

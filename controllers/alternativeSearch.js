@@ -35,9 +35,9 @@ export const alternativeSearch = async (req, res) => {
         `No results found, trying again without year (${title} ${year})`
       );
       // not all valid results for a film can be found when including the year in the search query
-      const searchQueryWithoutYear = `${title}`.replace(/ /g, "+");
+      searchQuery = `${title}`.replace(/ /g, "+");
       let { data } = await axios.get(
-        `${baseUrl}&Query=${searchQueryWithoutYear}`
+        `${baseUrl}&Query=${searchQuery}`
       );
       results = data.Results;
     }
@@ -58,6 +58,9 @@ export const alternativeSearch = async (req, res) => {
         message: "🏴‍☠️",
         text: `[${bestResult.Tracker}] ${bestResult.Title} - ${bestResult.Details}`,
         url: bestResult.Details,
+        query: searchQuery,
+        title: title,
+        year: year,
       };
       await setCacheValue(cacheKey, response, cacheTtl);
       res.status(200).json(response);

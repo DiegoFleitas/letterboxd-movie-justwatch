@@ -5,14 +5,14 @@ import STATE from "./state.js";
 
 export const alternativeSearch = (event) => {
   event.preventDefault(); // Prevent the form from submitting normally
+  const elem = event.currentTarget;
   // Get the title and year from the clicked row
-  const parentElement = event.currentTarget.parentNode;
-  console.log(parentElement);
-  const isTile = parentElement.classList.contains("poster-info");
+  const isTile =
+    elem.parentNode.getAttribute("data-sp") === "alternative-search-tile";
   let title,
     year = "";
   if (isTile) {
-    const tileId = parentElement.parentElement.getAttribute("data-id");
+    const tileId = elem.closest("div.poster").getAttribute("data-id");
     const tile = STATE.movieTiles[tileId];
     console.log(tile);
     if (!tile) return;
@@ -57,4 +57,10 @@ export const showAlternativeSearch = () => {
   document
     .querySelector(".alternative-search")
     .classList.remove("hide-alternative-search");
+};
+
+export const searchSubs = (query) => {
+  // const url = `https://duckduckgo.com/?q=!ducky+subdl+${query}`
+  const url = `https://subdl.com/search?query=${query}`;
+  window.open(url, "_blank");
 };

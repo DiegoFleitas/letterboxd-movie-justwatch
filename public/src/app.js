@@ -4,11 +4,14 @@ import { showError } from "./showError.js";
 import {
   alternativeSearch,
   showAlternativeSearch,
+  searchSubs,
 } from "./alternativeSearch.js";
 import { rebuildMovieMosaic } from "./movieTiles.js";
 import { countries, generes } from "./consts.js";
 
+// for onclick events
 window.alternativeSearch = alternativeSearch;
+window.searchSubs = searchSubs;
 
 const form = document.getElementById("movie-form");
 
