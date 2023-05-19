@@ -18,7 +18,7 @@ export const showMessage = (messageData, isHTML = false) => {
 
   const toastOptions = {
     message: isHTML
-      ? `<a href="${messageData.url}" target="_blank">${messageData.text}</a>`
+      ? `<a href="${messageData.url}" target="_blank" onclick="searchSubs('${messageData.title}')">${messageData.text}</a>`
       : messageData,
     theme: "light",
     layout: 1,
