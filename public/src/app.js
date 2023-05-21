@@ -43,9 +43,17 @@ form.addEventListener("submit", (event) => {
     })
     .then((response) => {
       // console.log(response);
-      const { error, title, year } = response;
+      const { error, title, year, message, movieProviders } = response;
       if (error) {
         showError(`[${title} (${year})] ${error}`);
+      } else {
+        const streamingProviders = movieProviders
+          .map((entry) => {
+            return entry.name;
+          })
+          .join(", ");
+        const msg = `[${title} (${year})] ${message}: ${streamingProviders}`;
+        showMessage(msg);
       }
     })
     .catch((error) => console.error(error));
