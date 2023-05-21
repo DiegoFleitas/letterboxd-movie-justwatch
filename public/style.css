@@ -304,6 +304,10 @@ a.link {
   background-color:black;
 }
 
+.spoiler:hover {
+  color: white;
+}
+
 :root { 
   --ss-primary-color: #10161d !important;
   --ss-border-color: #222c38 !important;
@@ -442,4 +446,18 @@ a.link {
 /* chrome flag emojis are terrible */
 .select2-results__option {
   color: black
+}
+
+/* minecraft floating text */
+#minecraft-text {
+  font-family: "Minecraft", sans-serif;
+  text-align: left;
+  color: #FFFF00; /* This is a bright yellow color */
+  text-shadow: 2px 2px #000000; /* This adds a black shadow to the text */
+  animation: float 2s infinite ease-in-out;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
 }
