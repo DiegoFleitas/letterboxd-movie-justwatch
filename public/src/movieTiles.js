@@ -119,6 +119,7 @@ export const filterTiles = () => {
     (elem) => elem.dataset.sp
   );
 
+  // iterate through tiles checking if they have the selected streaming services
   Object.values(STATE.movieTiles).forEach((data) => {
     const providerNames = data.movieProviders.map((provider) => provider.name);
 
