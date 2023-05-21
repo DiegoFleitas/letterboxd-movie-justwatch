@@ -7,8 +7,10 @@ export const updateStreamingProviderIcons = (streamingProviders) => {
   const spIconsContainer = document.querySelector("#icons-container-main");
   spIconsContainer.innerHTML = "";
 
+  const keys = Object.keys(streamingProviders);
   // Loop through each streaming provider
-  for (const id in streamingProviders) {
+  for (let i = 0; i < keys.length; i++) {
+    const id = keys[i];
     const provider = streamingProviders[id];
 
     // Create a new streaming provider icon
@@ -16,6 +18,12 @@ export const updateStreamingProviderIcons = (streamingProviders) => {
 
     // Add the streaming provider icon to the container
     spIconsContainer.appendChild(spIcon);
+
+    // Call createAltSearchIcon on the last iteration
+    if (i === keys.length - 1) {
+      const altIcon = createAltSearchIcon();
+      spIconsContainer.appendChild(altIcon);
+    }
   }
 };
 
@@ -32,6 +40,39 @@ const createStreamingProviderIcon = (provider) => {
   spIconImage.addEventListener("click", (event) => {
     event.target.parentElement.classList.toggle("active");
     filterTiles();
+  });
+
+  // Add the streaming provider icon image to the streaming provider icon
+  spIcon.appendChild(spIconImage);
+
+  return spIcon;
+};
+
+const createAltSearchIcon = () => {
+  // Create a new streaming provider icon
+  const spIcon = document.createElement("div");
+  spIcon.classList.add("streaming-provider-icon");
+  spIcon.dataset.sp = "alternative search";
+
+  // Create a new streaming provider icon image
+  const spIconImage = document.createElement("img");
+  spIconImage.src = "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏴‍☠️</text></svg>";
+  spIconImage.alt = "alternative Search";
+  spIconImage.addEventListener("click", (event) => {
+    const clickedElement = event.target.parentElement;
+    clickedElement.classList.toggle("active");
+  
+    // Determine whether the clicked element is now active
+    const isActive = clickedElement.classList.contains("active");
+  
+    // Select all tiles with more than one provider
+    const xpath = "//div[@class='poster' and .//div[@class='poster-providers' and count(.//div[@class='tile-icons']) > 1]]";
+    const result = document.evaluate(xpath, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+  
+    for (let i = 0; i < result.snapshotLength; i++) {
+      // If the clicked element is active, hide the other tiles; otherwise, show them
+      result.snapshotItem(i).style.display = isActive ? "none" : "";
+    }
   });
 
   // Add the streaming provider icon image to the streaming provider icon
