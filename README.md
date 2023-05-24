@@ -1,4 +1,4 @@
-# Movie JustWatch
+# Letterboxd Movie JustWatch
 
 A web to scan Letterboxd watchlists & find which streaming providers currently offer those movies on the chosen country ...capable of alternative searching 🏴‍☠️
 
