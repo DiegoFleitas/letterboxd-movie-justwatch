@@ -318,3 +318,28 @@ $(document).ready(() => {
         .attr("placeholder", "🔍");
     });
 });
+
+// Random text
+const messages = [
+  "Star me on GitHub!",
+  "Try uBlock Origin!",
+  "Use magnet links!",
+  "Click pirate flags!",
+  "Watch 'The Thing'!",
+  "Watch 'Kill Bill: Vol. 1'!",
+  "Watch 'Raiders of the Lost Ark'!",
+  "Also try Terraria!",
+  "Also try Minecraft!",
+];
+
+const getRandomMessage = () => {
+  const randomIndex = Math.floor(Math.random() * messages.length);
+  return messages[randomIndex];
+};
+
+const changeText = () => {
+  const textDiv = document.getElementById("minecraft-text");
+  textDiv.innerHTML = getRandomMessage();
+};
+
+window.onload = changeText;
