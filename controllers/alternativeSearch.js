@@ -36,9 +36,7 @@ export const alternativeSearch = async (req, res) => {
       );
       // not all valid results for a film can be found when including the year in the search query
       searchQuery = `${title}`.replace(/ /g, "+");
-      let { data } = await axios.get(
-        `${baseUrl}&Query=${searchQuery}`
-      );
+      let { data } = await axios.get(`${baseUrl}&Query=${searchQuery}`);
       results = data.Results;
     }
 
@@ -46,7 +44,10 @@ export const alternativeSearch = async (req, res) => {
     let maxSeeders = 0;
     let bestResult = null;
     for (const result of results) {
-      if (result.Seeders > maxSeeders) {
+      if (
+        result.Seeders > maxSeeders &&
+        !containsBlacklistedWord(result.Title)
+      ) {
         maxSeeders = result.Seeders;
         bestResult = result;
       }
@@ -80,4 +81,16 @@ export const alternativeSearch = async (req, res) => {
     console.log(error);
     res.status(500).json({ error: "Internal Server Error" });
   }
+};
+
+const containsBlacklistedWord = (title) => {
+  // exclude 3D movies
+  const blacklist = ["HSBS", "3D", "3-D", "3DHSBS", "3D-HSBS"];
+
+  for (const word of blacklist) {
+    if (title.includes(word)) {
+      return true;
+    }
+  }
+  return false;
 };
