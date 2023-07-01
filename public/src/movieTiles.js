@@ -70,13 +70,18 @@ export const rebuildMovieMosaic = (title, year, data) => {
 const updateTile = (tile, data) => {
   const movieProviders = data?.movieProviders || [];
   const link = data?.link || "";
-  const poster = data?.poster || "";
+  const poster = data?.poster;
   // Add providers icons to the tile
   const providersElem = updateTileProviders(data);
   const providerNames = movieProviders.map((provider) => provider.name);
   tile.innerHTML = `
     <a href="${link}" target="_blank">
-      <img src="${poster}" alt="${data.title} Poster">
+      <img class="spinner" src="spinner-min.svg" alt="Spinner">
+      ${
+        poster
+          ? `<img src="${poster}" onload="hideSpinner(this)" alt="${data.title} Poster">`
+          : ""
+      }
     </a>
     <div class="poster-info">
       <h2 class="poster-title">${data.title}</h2>

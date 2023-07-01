@@ -1,6 +1,5 @@
 /* Import Roboto font from Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
-
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap");
 
 /* Adjust layout for screens less than 768px wide */
 @media screen and (max-width: 767px) {
@@ -30,7 +29,8 @@
     margin-bottom: 0.5em !important;
   }
 
-  input[type="text"], select {
+  input[type="text"],
+  select {
     margin: 0.625rem 0 1.25rem !important;
   }
 
@@ -50,7 +50,7 @@
     word-wrap: break-word; /* For older browsers */
     overflow-wrap: break-word; /* For newer browsers */
   }
-  
+
   .country-selector-container {
     padding: 0.5rem;
   }
@@ -60,7 +60,7 @@
 body {
   background-color: #060d17;
   color: #d9e8ed;
-  font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
   font-size: 1.125rem;
   line-height: 1.5;
 }
@@ -76,9 +76,8 @@ form {
   padding: 1em;
 }
 
-
-
-input[type="text"], select {
+input[type="text"],
+select {
   text-align: center;
   justify-content: center;
   margin: 0.625rem 0;
@@ -90,7 +89,8 @@ input[type="text"], select {
   background-color: #10161d;
 }
 
-input[type="text"]:focus, select:focus {
+input[type="text"]:focus,
+select:focus {
   outline: none;
   background-color: #10161d;
   color: white;
@@ -112,7 +112,8 @@ input[type="text"]:focus, select:focus {
   width: 100%;
 }
 
-button[type="submit"], button.alternative-search  {
+button[type="submit"],
+button.alternative-search {
   margin: 0.625rem;
   padding: 0.625rem 1.25rem;
   font-size: 1.25rem;
@@ -121,7 +122,7 @@ button[type="submit"], button.alternative-search  {
   background-color: #fbc500;
   font-weight: bold;
   color: #10161d;
-  font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
   cursor: pointer;
 }
 
@@ -234,8 +235,8 @@ a {
 }
 
 .bottom-section-content {
- display: flex;
- justify-content: center;
+  display: flex;
+  justify-content: center;
 }
 
 hr {
@@ -278,16 +279,20 @@ a.link {
   flex: 1;
 }
 
-         
 .btn-grad {
-  background-image: linear-gradient(to right, #000000 0%, #434343  51%, #000000  100%);
+  background-image: linear-gradient(
+    to right,
+    #000000 0%,
+    #434343 51%,
+    #000000 100%
+  );
   margin: 10px;
   padding: 15px 45px;
   text-align: center;
   text-transform: uppercase;
   transition: 0.5s;
   background-size: 200% auto;
-  color: white;            
+  color: white;
   box-shadow: 0 0 5px #eee;
   border-radius: 10px;
   /* display: block; */
@@ -300,15 +305,15 @@ a.link {
 }
 
 .spoiler {
-  color: black; 
-  background-color:black;
+  color: black;
+  background-color: black;
 }
 
 .spoiler:hover {
   color: white;
 }
 
-:root { 
+:root {
   --ss-primary-color: #10161d !important;
   --ss-border-color: #222c38 !important;
 }
@@ -318,7 +323,6 @@ a.link {
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   grid-gap: 20px;
 }
-
 
 /* Styles for mobile screens */
 @media only screen and (max-width: 767px) {
@@ -388,7 +392,7 @@ a.link {
 }
 
 .streaming-provider-icon {
-  opacity: 0.2; 
+  opacity: 0.2;
 }
 
 .streaming-provider-icon.active {
@@ -445,19 +449,29 @@ a.link {
 
 /* chrome flag emojis are terrible */
 .select2-results__option {
-  color: black
+  color: black;
 }
 
 /* minecraft floating text */
 #minecraft-text {
   font-family: "Minecraft", sans-serif;
   text-align: left;
-  color: #FFFF00; /* This is a bright yellow color */
+  color: #ffff00; /* This is a bright yellow color */
   text-shadow: 2px 2px #000000; /* This adds a black shadow to the text */
   animation: float 2s infinite ease-in-out;
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-20px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+.spinner {
+  min-width: 230px;
+  min-height: 345px;
 }

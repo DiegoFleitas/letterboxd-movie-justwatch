@@ -12,6 +12,16 @@ import { countries, generes } from "./consts.js";
 // for onclick events
 window.alternativeSearch = alternativeSearch;
 window.searchSubs = searchSubs;
+window.hideSpinner = (img) => {
+  // get the parent div of the loaded image
+  const parent = img.parentNode;
+
+  // get the spinner inside the parent div
+  const spinner = parent.querySelector(".spinner");
+
+  // hide the spinner
+  spinner.style.display = "none";
+};
 
 const form = document.getElementById("movie-form");
 
@@ -161,6 +171,7 @@ const loadWatchlist = async (data) => {
         });
       }
     } else {
+      // FIXME: at this point, tiles are loaded with no image
       showMessage(`Loaded all ${totalPages} pages!`);
     }
   } catch (error) {
