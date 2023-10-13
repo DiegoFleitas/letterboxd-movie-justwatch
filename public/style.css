@@ -456,6 +456,7 @@ a.link {
 #minecraft-text {
   font-family: "Minecraft", sans-serif;
   text-align: left;
+  width: fit-content;
   color: #ffff00; /* This is a bright yellow color */
   text-shadow: 2px 2px #000000; /* This adds a black shadow to the text */
   animation: float 2s infinite ease-in-out;
