@@ -39,10 +39,21 @@ morgan.format("json", function (tokens, req, res) {
       contentType: req.headers["content-type"],
       responseTime: tokens["response-time"](req, res),
       session_id: req.session.id, // Add session identifier to log
+      axiosError: tokens.axiosError(req),
     },
     null,
     2
   )}`;
+});
+
+morgan.token("axiosError", function (req) {
+  return {
+    statusCode: req.res?.statusCode || null,
+    statusText: req.res?.statusText || null,
+    statusMessage: req.res?.statusMessage || null,
+    headers: req.res?._headers || null,
+    data: req.res?.data || null,
+  };
 });
 
 export const logging = morgan("json");

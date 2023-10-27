@@ -32,7 +32,7 @@ export const proxy = async (req, res) => {
     await setCacheValue(cacheKey, response?.data, cacheTtl);
     return res.status(response.status).json(response?.data);
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };

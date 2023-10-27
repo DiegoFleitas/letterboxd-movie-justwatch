@@ -32,18 +32,19 @@ const getRedisClient = async () => {
           acquireTimeoutMillis: 10000, // 10 seconds
         },
       };
-      console.log(options);
+      console.log("[REDIS_OPTIONS]", options);
       redisClient = redis
         .createClient(options)
-        .on("error", (err) => {
+        .on("error", (error) => {
           console.log(`[REDIS_CLIENT_ERROR] ${error}`);
+          throw error;
         })
         .on("connect", () => {
           console.log("Connected to Redis");
         });
       await redisClient.connect();
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   }
   return redisClient;

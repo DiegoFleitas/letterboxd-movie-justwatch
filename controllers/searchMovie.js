@@ -143,7 +143,7 @@ export const searchMovie = async (req, res) => {
     await setCacheValue(cacheKey, responsePayload, cacheTtl);
     res.json(responsePayload);
   } catch (err) {
-    console.log(err);
+    console.error(err);
     res
       .status(500)
       .json({ error: "Internal Server Error", title: title, year: year });

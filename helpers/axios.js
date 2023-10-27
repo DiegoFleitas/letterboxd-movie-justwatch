@@ -14,8 +14,9 @@ instance.interceptors.response.use(
   (response) => response,
   (error) => {
     const { config, response } = error;
+    response.axiosError = error;
     if (response.status === 429) {
-      console.log(response)
+      // console.log(response);
       const retryAfter = response.headers["retry-after"] || 1;
       console.log(`[axios] Rate limit exceeded, retrying in ${retryAfter} (s)`);
       // Retry the request after a certain amount of time
