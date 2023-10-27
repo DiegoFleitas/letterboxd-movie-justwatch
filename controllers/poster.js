@@ -54,7 +54,7 @@ export const poster = async (req, res) => {
       poster: poster,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };

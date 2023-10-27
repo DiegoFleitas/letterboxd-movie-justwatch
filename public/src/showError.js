@@ -1,5 +1,5 @@
 export const showError = (error) => {
-  console.log(error);
+  console.error(error);
   // Check visible toast count before showing another toast
   const toastCount =
     document.querySelectorAll(".iziToast-capsule")?.length || 0;

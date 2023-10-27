@@ -78,7 +78,7 @@ export const alternativeSearch = async (req, res) => {
     }
 
     // If there is an error, send an error response
-    console.log(error);
+    console.error(error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };

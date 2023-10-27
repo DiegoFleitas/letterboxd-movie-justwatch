@@ -150,7 +150,7 @@ export const letterboxdWatchlist = async (req, res) => {
       totalPages: totalPages || lastPage, // Fallback to lastPage if totalPages is not available
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     if (error?.response?.status === 404) {
       res.status(404).json({ error: "Watchlist not found" });
       return;
