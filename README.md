@@ -69,7 +69,7 @@ Upstash Redis can be created with `flyctl redis create`
 
 ## Other
 
-Currently hosted free of charge on Fly.io
+Currently hosted on Fly.io free tier.
 
 - https://fly.io/blog/shipping-logs/
 - https://fly.io/docs/reference/redis/
