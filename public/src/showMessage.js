@@ -25,7 +25,7 @@ export const showMessage = (messageData, isHTML = false) => {
     progressBar: false,
     timeout: isHTML ? false : 3000,
     position: "topRight",
-    backgroundColor: "#fbc500",
+    backgroundColor: "#40bcf4",
   };
 
   if (isHTML) {
