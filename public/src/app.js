@@ -295,7 +295,7 @@ $(document).ready(() => {
       dropdownAutoWidth: true,
       data: countries || [],
       templateSelection: (data) => {
-        return `${data.flag}`;
+        return `${data.flag} ${data.id.split("_")[1]}`;
       },
       templateResult: (data) => {
         return `${data.flag}`;
