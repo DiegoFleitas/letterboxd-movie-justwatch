@@ -3,7 +3,7 @@ export const showError = (error) => {
   // Check visible toast count before showing another toast
   const toastCount =
     document.querySelectorAll(".iziToast-capsule")?.length || 0;
-  if (toastCount >= 3) {
+  if (toastCount >= 2) {
     console.log(
       `There are already ${toastCount} visible toasts on the page, error skipped. Message: ${error}`
     );
