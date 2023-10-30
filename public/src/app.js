@@ -342,7 +342,7 @@ const messages = [
   "Watch 'Cinema Paradiso'!",
   "Watch 'Gremlins'!",
   "Watch 'Rocky'!",
-  "Watch 'Wolf Children'!",
+  "Watch 'Ferris Bueller’s Day Off'!",
   "Also try Terraria!",
   "Also try Minecraft!",
 ];
