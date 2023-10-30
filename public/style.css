@@ -137,6 +137,7 @@ button.alternative-search {
 }
 
 label {
+  text-align: center;
   margin-right: 0.625rem;
   display: block;
   margin-bottom: 0.313rem;
@@ -172,18 +173,6 @@ label {
   z-index: 100;
   display: none;
   width: 100%;
-}
-
-#letterboxd-watchlist-form {
-  border: none;
-  background-color: #060d17;
-  color: #555;
-  font-size: 1.125rem;
-  border-radius: 0.313rem;
-  padding: 1em;
-  width: 100%;
-  margin-bottom: 1em;
-  text-align: center;
 }
 
 img.logo {
