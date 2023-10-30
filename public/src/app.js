@@ -207,12 +207,18 @@ function handleScroll(data) {
   }
 }
 
-// Function to convert genre_ids to genre names
+// convert genre_ids to genre names as well as truncate too many genres
 const getGenreNames = (genre_ids) => {
+  const MAX_GENRES = 3;
+  const genreNames = genre_ids
+    .map((id) => generes?.find((genre) => genre.id === id)?.name || "")
+    .filter((name) => name); // This will remove any falsy values (like "") from the array
+
+  const truncatedGenreNames = genreNames.slice(0, MAX_GENRES);
+  const additionalGenresCount = genreNames.length - MAX_GENRES;
+
   return (
-    genre_ids
-      .map((id) => generes?.find((genre) => genre.id === id)?.name || "")
-      .join(", ") || ""
+    truncatedGenreNames.join(", ") + (additionalGenresCount > 0 ? ", ..." : "")
   );
 };
 
