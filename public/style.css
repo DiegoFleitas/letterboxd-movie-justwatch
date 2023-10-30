@@ -424,6 +424,13 @@ a.link {
   padding: 8px;
 }
 
+.username-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+}
+
 .submit-container {
   display: flex;
   justify-content: center;
