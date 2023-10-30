@@ -268,12 +268,13 @@ $(document).ready(() => {
               ? `<img src="https://image.tmdb.org/t/p/w92${movie.poster_path}" class="mr-3" alt="${movie.title}" width="50">`
               : "";
             const genreString = getGenreNames(movie.genre_ids);
+            const releaseString = movie.release_date
+              ? `(${movie.release_date.slice(0, 4)})`
+              : "";
             return `
                   <li class="list-group-item d-flex align-items-center">
                     ${poster}
-                    <div><strong>${
-                      movie.title
-                    }</strong> (${movie.release_date.slice(0, 4)}) </div>
+                    <div><strong>${movie.title}</strong> ${releaseString} </div>
                     <small><i>${genreString}</i></small>
                   </li>
                 `;
