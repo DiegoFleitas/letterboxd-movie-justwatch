@@ -339,6 +339,10 @@ const messages = [
   "Watch 'The Thing'!",
   "Watch 'Kill Bill: Vol. 1'!",
   "Watch 'Raiders of the Lost Ark'!",
+  "Watch 'Cinema Paradiso'!",
+  "Watch 'Gremlins'!",
+  "Watch 'Rocky'!",
+  "Watch 'Wolf Children'!",
   "Also try Terraria!",
   "Also try Minecraft!",
 ];
