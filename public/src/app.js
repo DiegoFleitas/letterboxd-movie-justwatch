@@ -352,6 +352,8 @@ const messages = [
   "Watch 'Ferris Bueller’s Day Off'!",
   "Also try Terraria!",
   "Also try Minecraft!",
+  "Try Radarr & letterboxd-list-radarr!",
+  "Try Plex!",
 ];
 
 const getRandomMessage = () => {
