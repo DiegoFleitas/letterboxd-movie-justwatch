@@ -353,6 +353,7 @@ const messages = [
   "Also try Terraria!",
   "Also try Minecraft!",
   "Try Radarr & letterboxd-list-radarr!",
+  "Try Sonarr & mal-list-sonarr!",
   "Try Plex!",
 ];
 
