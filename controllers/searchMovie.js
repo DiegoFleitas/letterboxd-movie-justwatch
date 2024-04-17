@@ -28,8 +28,7 @@ export const searchMovie = async (req, res) => {
     const movieDbAPIKey = process.env.MOVIE_DB_API_KEY;
     let encodedTitle = encodeURIComponent(title);
     const movieDbResponse = await axios.get(
-      `${PROXY}https://api.themoviedb.org/3/search/movie?query=${encodedTitle}${
-        year ? `&year=${year}` : ""
+      `${PROXY}https://api.themoviedb.org/3/search/movie?query=${encodedTitle}${year ? `&year=${year}` : ""
       }&api_key=${movieDbAPIKey}`
     );
 
@@ -106,14 +105,14 @@ export const searchMovie = async (req, res) => {
     );
 
     if (!movieData) {
-      const response = { error: "Movie not found (TMDB/JUSTWATCH)", title: title, year: year };
+      const response = { error: "Movie not found", title: title, year: year };
       await setCacheValue(cacheKey, response, cacheTtl);
       return res.json(response);
     }
 
     const noStreamingServicesResponse = {
       error:
-        "No streaming services offering this movie on your country (JustWatch)",
+        `No streaming services offering this movie on your country (${country})`,
       title,
       year,
     };
