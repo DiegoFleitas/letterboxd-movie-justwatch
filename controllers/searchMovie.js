@@ -112,7 +112,8 @@ export const searchMovie = async (req, res) => {
 
     const noStreamingServicesResponse = {
       error:
-        `No streaming services offering this movie on your country (${country})`,
+        `No streaming services offering this movie on your country (${country})\n
+        <small>pssst! try clicking "TORRENT SEARCH"</small>`,
       title,
       year,
     };
