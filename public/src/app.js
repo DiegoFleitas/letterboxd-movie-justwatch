@@ -55,7 +55,7 @@ form.addEventListener("submit", (event) => {
       // console.log(response);
       const { error, title, year, message, movieProviders } = response;
       if (error) {
-        showError(`[${title} (${year})] ${error}`);
+        showMessage(`[${title} (${year})] ${error}`);
       } else {
         const streamingProviders = movieProviders
           .map((entry) => {
@@ -150,7 +150,7 @@ const loadWatchlist = async (data) => {
           // console.log(response);
           const { error, title, year } = response;
           if (error) {
-            showError(`[${title} (${year})] ${error}`);
+            showMessage(`[${title} (${year})] ${error}`);
           } else {
             rebuildMovieMosaic(title, year, response);
           }
@@ -191,7 +191,7 @@ function handleScroll(data) {
   if (
     !isLoading &&
     window.innerHeight + window.scrollY + scrollThreshold >=
-      document.documentElement.scrollHeight
+    document.documentElement.scrollHeight
   ) {
     isLoading = true;
 
