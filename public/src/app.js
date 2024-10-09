@@ -77,7 +77,7 @@ letterboxForm.addEventListener("submit", async (event) => {
   const formData = new FormData(event.target);
   let data = Object.fromEntries(formData.entries());
 
-  const { listUrl } = data;
+  let { listUrl } = data;
 
   if (!listUrl) {
     showError("Please enter a valid URL");
