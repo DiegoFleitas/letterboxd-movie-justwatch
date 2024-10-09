@@ -93,14 +93,14 @@ letterboxForm.addEventListener("submit", async (event) => {
   }
 
   const username = match[1];
-  const listType = match[2].startsWith("list/") ? "custom" : "watchlist";
+  const listType = match[2].startsWith("list/") ? "custom list" : "watchlist";
 
   data = { ...data, username, listType, listUrl: listUrl.trim(), page: 1 };
 
   toggleNotice(`Scraping ${listType} for ${username}...`);
 
   // Load the appropriate list
-  if (listType === "custom") {
+  if (listType !== "watchlist") {
     await loadCustomList(data);
   } else {
     await loadWatchlist(data);
