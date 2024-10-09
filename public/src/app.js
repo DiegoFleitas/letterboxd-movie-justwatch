@@ -154,7 +154,10 @@ const processList = async (data, responseData, url) => {
         });
       }
     } else {
-      showMessage(`Loaded all ${totalPages} pages!`);
+      if (totalPages)
+        showMessage(`Loaded all ${totalPages} pages!`);
+      else
+        showMessage(`Loaded all pages!`);
     }
   } catch (error) {
     console.error(error);
