@@ -21,16 +21,17 @@ processes = []
     soft_limit = 75
     type = "connections"
 
-  [[services.http_checks]]
-    grace_period = "1s"
-    interval = 60000 # 1min
-    method = "get"
-    path = "/redis-healthcheck"
-    protocol = "http"
-    restart_limit = 0
-    timeout = 2000
-    tls_skip_verify = false
-    [services.http_checks.headers]
+  # upstash redis no longer available
+  # [[services.http_checks]]
+  #   grace_period = "1s"
+  #   interval = 60000 # 1min
+  #   method = "get"
+  #   path = "/redis-healthcheck"
+  #   protocol = "http"
+  #   restart_limit = 0
+  #   timeout = 2000
+  #   tls_skip_verify = false
+  #   [services.http_checks.headers]
 
   [[services.ports]]
     force_https = true
