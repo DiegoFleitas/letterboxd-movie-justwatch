@@ -84,6 +84,11 @@ letterboxForm.addEventListener("submit", async (event) => {
     return;
   }
 
+  // remove everything after /page (included) before checking pattern
+  // https://letterboxd.com/eibonslam/list/uru-3/page/2/ > https://letterboxd.com/eibonslam/list/uru-3/
+  // https://letterboxd.com/eibonslam/watchlist/page/2/ > https://letterboxd.com/eibonslam/watchlist/
+  listUrl = listUrl.split('/page')[0];
+
   const urlPattern = /https:\/\/letterboxd\.com\/([^\/]+)\/(watchlist|list\/[^\/]+)\//;
   const match = listUrl.match(urlPattern);
 
