@@ -92,45 +92,31 @@
       <hr />
 
       <main class="bottom-section">
-        <form id="letterboxd-watchlist-form" enctype="multipart/form-data">
-          <h3>...or a Letterboxd watchlist</h3>
+        <form id="letterboxd-form" enctype="multipart/form-data">
+          <h3>...or a Letterboxd list</h3>
           <div>
-            <div class="username-container">
+            <div class="url-container">
               <input
-                id="username"
-                name="username"
+                id="list-url"
+                name="listUrl"
                 type="text"
-                placeholder="username"
+                placeholder="https://letterboxd.com/username/watchlist/"
                 required
-                aria-label="Letterboxd username input"
+                aria-label="Letterboxd list URL input"
               />
             </div>
-
             <div class="submit-container">
               <button type="submit">Submit</button>
               <div class="country-selector-container">
-                  <select
+                <select
                   id="country2"
                   class="country"
                   name="country"
                   aria-label="User country selection"
                 ></select>
-            </div>
-          </div>
-        </form>
-        <form id="letterboxd-custom-list-form" enctype="multipart/form-data">
-          <h3>...or a Letterboxd custom list</h3>
-          <div>
-            <div class="url-container">
-              <input id="custom-list-url" name="customListUrl" type="text" placeholder="Custom list URL" required
-                aria-label="Letterboxd custom list URL input" />
-            </div>
-            <div class="submit-container">
-              <button type="submit">Submit</button>
-              <div class="country-selector-container">
-                <select id="country3" class="country" name="country" aria-label="User country selection"></select>
               </div>
             </div>
+          </div>
         </form>
         <div id="icons-container-main"></div>
         <div class="poster-showcase"></div>

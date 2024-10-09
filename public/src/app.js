@@ -69,131 +69,44 @@ form.addEventListener("submit", (event) => {
     .catch((error) => console.error(error));
 });
 
-const letterboxdWatchlistForm = document.getElementById(
-  "letterboxd-watchlist-form"
-);
+const letterboxForm = document.getElementById("letterboxd-form");
 
-letterboxdWatchlistForm.addEventListener("submit", async (event) => {
-  event.preventDefault(); // Prevent the form from submitting normally
-
-  // console.log(event.target);
-  const formData = new FormData(event.target);
-
-  let data = Object.fromEntries(formData.entries());
-
-  data = { ...data, username: data.username.trim() };
-  if (data.username.length === 0) {
-    showError("Please enter valid a username");
-    return;
-  }
-
-  toggleNotice(`Scraping watchlist for ${data?.username}...`);
-
-  // Initialize page to 1
-  data.page = 1;
-
-  // Load the first page of the watchlist
-  await loadWatchlist(data);
-});
-
-const customListForm = document.getElementById("letterboxd-custom-list-form");
-
-customListForm.addEventListener("submit", async (event) => {
+letterboxForm.addEventListener("submit", async (event) => {
   event.preventDefault(); // Prevent the form from submitting normally
 
   const formData = new FormData(event.target);
   let data = Object.fromEntries(formData.entries());
 
-  data = { ...data, customListUrl: data.customListUrl.trim() };
-  if (data.customListUrl.length === 0) {
+  const { listUrl } = data;
+
+  if (!listUrl) {
     showError("Please enter a valid URL");
     return;
   }
 
-  toggleNotice(`Scraping custom list from ${data?.customListUrl}...`);
+  const urlPattern = /https:\/\/letterboxd\.com\/([^\/]+)\/(watchlist|list\/[^\/]+)\//;
+  const match = listUrl.match(urlPattern);
 
-  // Initialize page to 1
-  data.page = 1;
+  if (!match) {
+    showError("Invalid URL format");
+    return;
+  }
 
-  // Load the custom list
-  await loadCustomList(data);
+  const username = match[1];
+  const listType = match[2].startsWith("list/") ? "custom" : "watchlist";
+
+  data = { ...data, username, listType, listUrl: listUrl.trim(), page: 1 };
+
+  toggleNotice(`Scraping ${listType} for ${username}...`);
+
+  // Load the appropriate list
+  if (listType === "custom") {
+    await loadCustomList(data);
+  } else {
+    await loadWatchlist(data);
+  }
 });
 
-const loadCustomList = async (data) => {
-  try {
-    const response = await fetch("/api/letterboxd-custom-list", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
-
-    const responseData = await response.json();
-    const { error, watchlist, lastPage, totalPages } = responseData;
-    allPagesLoaded = lastPage === totalPages;
-    watchlistPageCount = totalPages;
-
-    if (error) {
-      showError(error);
-      return;
-    }
-
-    for (const element of watchlist) {
-      let { title, year, link, poster } = element;
-      if (poster == "N/A") poster = "/movie_placeholder.svg";
-      rebuildMovieMosaic(title, year, { poster, link });
-
-      let data = { title, year };
-      data.country = document.querySelector("#country3").value;
-
-      fetch("/api/search-movie", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      })
-        .then((response) => {
-          if (response.status === 502) {
-            console.error(response);
-          }
-          return response.json();
-        })
-        .then((response) => {
-          const { error, title, year } = response;
-          if (error) {
-            showMessage(`[${title} (${year})] ${error}`);
-          } else {
-            rebuildMovieMosaic(title, year, response);
-          }
-        })
-        .catch((error) => console.error(error));
-    }
-
-    data.page = lastPage;
-
-    if (!allPagesLoaded) {
-      showMessage(`Loaded page ${data.page} of ${totalPages}...`);
-
-      if (!scrollListenerAdded) {
-        scrollListenerAdded = true;
-        window.addEventListener("scroll", handleScroll.bind(null, data), {
-          passive: true,
-        });
-      }
-    } else {
-      showMessage(`Loaded all ${totalPages} pages!`);
-    }
-  } catch (error) {
-    console.error(error);
-  }
-};
-
-let allPagesLoaded = false; // prevent unnecessary fetch requests
-let scrollListenerAdded = false; // prevent multiple scroll listeners
-let watchlistPageCount = 0;
-const MAX_PAGES_PER_LOAD = 20;
 const loadWatchlist = async (data) => {
   try {
     const response = await fetch("/api/letterboxd-watchlist", {
@@ -203,7 +116,6 @@ const loadWatchlist = async (data) => {
       },
       body: JSON.stringify(data),
     });
-
     const responseData = await response.json();
     // console.log(responseData);
     setTimeout(() => {
@@ -244,7 +156,7 @@ const loadWatchlist = async (data) => {
           // console.log(response);
           const { error, title, year } = response;
           if (error) {
-            showMessage(`[${title} (${year})] ${error}`);
+            showError(`[${title} (${year})] ${error}`);
           } else {
             rebuildMovieMosaic(title, year, response);
           }
@@ -273,7 +185,122 @@ const loadWatchlist = async (data) => {
   }
 };
 
+const loadCustomList = async (data) => {
+  try {
+    const response = await fetch("/api/letterboxd-custom-list", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+    const responseData = await response.json();
+    // console.log(responseData);
+    setTimeout(() => {
+      toggleNotice();
+    }, 1000);
+
+    const { error, watchlist, lastPage, totalPages } = responseData;
+    allPagesLoaded = lastPage === totalPages;
+    watchlistPageCount = totalPages;
+
+    if (error) {
+      showError(error);
+      return;
+    }
+
+    for (const element of watchlist) {
+      let { title, year, link, poster } = element;
+      if (poster == "N/A") poster = "/movie_placeholder.svg";
+      rebuildMovieMosaic(title, year, { poster, link });
+
+      let data = { title, year };
+      data.country = document.querySelector("#country2").value;
+
+      fetch("/api/search-movie", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      })
+        .then((response) => {
+          if (response.status === 502) {
+            console.error(response);
+          }
+          return response.json();
+        })
+        .then((response) => {
+          // console.log(response);
+          const { error, title, year } = response;
+          if (error) {
+            showError(`[${title} (${year})] ${error}`);
+          } else {
+            rebuildMovieMosaic(title, year, response);
+          }
+        })
+        .catch((error) => console.error(error));
+    }
+
+    // Update the page number
+    data.page = lastPage;
+
+    if (!allPagesLoaded) {
+      showMessage(`Loaded page ${data.page} of ${totalPages}...`);
+
+      if (!scrollListenerAdded) {
+        scrollListenerAdded = true;
+        window.addEventListener("scroll", handleScroll.bind(null, data), {
+          passive: true,
+        });
+      }
+    } else {
+      // FIXME: at this point, tiles are loaded with no image
+      showMessage(`Loaded all ${totalPages} pages!`);
+    }
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+let pagesLoaded = 1;
+window.addEventListener("scroll", async () => {
+  if (window.innerHeight + window.scrollY >= document.body.offsetHeight) {
+    pagesLoaded++;
+    const formData = new FormData(form);
+    let data = Object.fromEntries(formData.entries());
+    data.page = pagesLoaded;
+
+    const { listUrl } = data;
+
+    const urlPattern = /https:\/\/letterboxd\.com\/([^\/]+)\/(watchlist|list\/[^\/]+)\//;
+    const match = listUrl.match(urlPattern);
+
+    if (!match) {
+      showError("Invalid URL format");
+      return;
+    }
+
+    const username = match[1];
+    const listType = match[2].startsWith("list/") ? "custom" : "watchlist";
+
+    data = { ...data, username, listType, listUrl: listUrl.trim() };
+
+    // Load the appropriate list
+    if (listType !== "watchlist") {
+      await loadCustomList(data);
+    } else {
+      await loadWatchlist(data);
+    }
+  }
+});
+
+let allPagesLoaded = false; // prevent unnecessary fetch requests
+let scrollListenerAdded = false; // prevent multiple scroll listeners
+let watchlistPageCount = 0;
+const MAX_PAGES_PER_LOAD = 20;
 let isLoading = false; // prevent simultaneous requests
+
 function handleScroll(data) {
   if (allPagesLoaded) {
     window.removeEventListener("scroll", handleScroll);

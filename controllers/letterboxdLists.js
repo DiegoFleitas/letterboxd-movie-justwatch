@@ -90,7 +90,7 @@ const getPageFilms = async ($) => {
     });
 };
 
-const fetchList = async (url, cacheKeyPrefix, res) => {
+const fetchList = async (url, cacheKeyPrefix, req, res) => {
   try {
     const { page = 1 } = { ...req.body };
     if (page < 1) return res.status(400).json({ error: "Invalid page number" });
@@ -151,18 +151,18 @@ const fetchList = async (url, cacheKeyPrefix, res) => {
 };
 
 export const letterboxdWatchlist = async (req, res) => {
-  const { username } = { ...req.body };
+  const { username, listUrl, listType } = { ...req.body };
   if (!username) return res.status(400).json({ error: "Watchlist file not found" });
 
-  const url = `https://letterboxd.com/${username}/watchlist/by/popular`;
-  const cacheKeyPrefix = `watchlist:${username}`;
-  await fetchList(url, cacheKeyPrefix, res);
+  // const url = `https://letterboxd.com/${username}/watchlist/by/popular`;
+  const cacheKeyPrefix = `watchlist:${username}_${listType}`;
+  await fetchList(listUrl, cacheKeyPrefix, req, res);
 };
 
 export const letterboxdCustomList = async (req, res) => {
-  const { customListUrl } = { ...req.body };
-  if (!customListUrl) return res.status(400).json({ error: "Custom list URL not found" });
+  const { username, listUrl, listType } = { ...req.body };
+  if (!listUrl) return res.status(400).json({ error: "Custom list URL not found" });
 
-  const cacheKeyPrefix = `customlist:${customListUrl}`;
-  await fetchList(customListUrl, cacheKeyPrefix, res);
+  const cacheKeyPrefix = `customlist:${username}_${listType}`;
+  await fetchList(listUrl, cacheKeyPrefix, req, res);
 };
