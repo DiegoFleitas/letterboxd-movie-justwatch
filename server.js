@@ -7,6 +7,7 @@ import {
   searchMovie,
   poster,
   letterboxdWatchlist,
+  letterboxdCustomList,
   alternativeSearch,
   proxy,
 } from "./controllers/index.js";
@@ -41,27 +42,30 @@ app.get("/redis-healthcheck", async (req, res) => {
   }
 });
 
-app.post("/api/search-movie", async (req, res) => {
+// Middleware to set cache control header
+const setCacheControl = (req, res, next) => {
   // let browsers cache response for 1h
   res.setHeader("Cache-Control", "public, max-age=3600");
+  next();
+};
+
+app.post("/api/search-movie", setCacheControl, async (req, res) => {
   return searchMovie(req, res);
 });
 
-app.post("/api/poster", async (req, res) => {
-  // let browsers cache response for 1h
-  res.setHeader("Cache-Control", "public, max-age=3600");
+app.post("/api/poster", setCacheControl, async (req, res) => {
   return poster(req, res);
 });
 
-app.post("/api/letterboxd-watchlist", async (req, res) => {
-  // let browsers cache response for 1h
-  res.setHeader("Cache-Control", "public, max-age=3600");
+app.post("/api/letterboxd-watchlist", setCacheControl, async (req, res) => {
   return letterboxdWatchlist(req, res);
 });
 
-app.post("/api/alternative-search", async (req, res) => {
-  // let browsers cache response for 1h
-  res.setHeader("Cache-Control", "public, max-age=3600");
+app.post("/api/letterboxd-custom-list", setCacheControl, async (req, res) => {
+  return letterboxdCustomList(req, res);
+});
+
+app.post("/api/alternative-search", setCacheControl, async (req, res) => {
   return alternativeSearch(req, res);
 });
 

@@ -90,12 +90,9 @@ const getPageFilms = async ($) => {
     });
 };
 
-export const letterboxdWatchlist = async (req, res) => {
+const fetchList = async (url, cacheKeyPrefix, req, res) => {
   try {
-    const { username, page = 1 } = { ...req.body };
-    if (!username)
-      return res.status(400).json({ error: "Watchlist file not found" });
-
+    const { page = 1 } = { ...req.body };
     if (page < 1) return res.status(400).json({ error: "Invalid page number" });
 
     const maxPages = 20;
@@ -108,33 +105,27 @@ export const letterboxdWatchlist = async (req, res) => {
 
     for (let index = 0; index < maxPages; index++) {
       currentPage = parseInt(page) + index;
-      const cacheKey = `watchlist:${username}:page:${currentPage}`;
-      const cachedWatchlist = await getCacheValue(cacheKey);
+      const cacheKey = `${cacheKeyPrefix}:page:${currentPage}`;
+      const cachedList = await getCacheValue(cacheKey);
 
-      if (cachedWatchlist) {
-        console.log(`Watchlist for page ${currentPage} found (cached)`);
-        filmsPromises = filmsPromises.concat(cachedWatchlist);
+      if (cachedList) {
+        console.log(`List for page ${currentPage} found (cached)`);
+        filmsPromises = filmsPromises.concat(cachedList);
       } else {
-        const proxy = "";
-        const baseUrl = `${proxy}https://letterboxd.com/${username}/watchlist/by/popular`;
-        const url = `${baseUrl}/page/${currentPage}/`;
-        const response = await axios.get(url);
+        const response = await axios.get(`${url}/page/${currentPage}/`);
         const $ = cheerio.load(response.data);
         if (!filmsCount) {
           filmsCount = getFilmsCount($);
           totalPages = Math.ceil(filmsCount / filmsPerPage);
           if (currentPage > totalPages) {
-            // No more pages to scrape
-            return res.status(404).json({ error: "Invalid watchlist page" });
+            return res.status(404).json({ error: "Invalid list page" });
           }
         }
         const pageFilmsPromise = await getPageFilms($);
 
         if (pageFilmsPromise.length === 0) {
-          // No films on this page, we're done scraping
           break;
         }
-        // cache films eventually
         Promise.all(pageFilmsPromise).then((pageFilms) => {
           setCacheValue(cacheKey, pageFilms, cacheTtl);
         });
@@ -144,21 +135,34 @@ export const letterboxdWatchlist = async (req, res) => {
 
     const films = await Promise.all(filmsPromises);
     res.status(200).json({
-      message: "Watchlist found",
+      message: "List found",
       watchlist: films,
       lastPage: Math.min(currentPage, totalPages),
-      totalPages: totalPages || lastPage, // Fallback to lastPage if totalPages is not available
+      totalPages: totalPages || lastPage,
     });
   } catch (error) {
     console.error(error);
     if (error?.response?.status === 404) {
-      res.status(404).json({ error: "Watchlist not found" });
-      return;
-    }
-    if (error?.response?.status === 401) {
-      res.status(404).json({ error: "Watchlist is not public" });
+      res.status(404).json({ error: "List not found" });
       return;
     }
     res.status(500).json({ error: "Internal Server Error" });
   }
+};
+
+export const letterboxdWatchlist = async (req, res) => {
+  const { username, listUrl, listType } = { ...req.body };
+  if (!username) return res.status(400).json({ error: "Watchlist file not found" });
+
+  // const url = `https://letterboxd.com/${username}/watchlist/by/popular`;
+  const cacheKeyPrefix = `watchlist:${username}_${listType}`;
+  await fetchList(listUrl, cacheKeyPrefix, req, res);
+};
+
+export const letterboxdCustomList = async (req, res) => {
+  const { username, listUrl, listType } = { ...req.body };
+  if (!listUrl) return res.status(400).json({ error: "Custom list URL not found" });
+
+  const cacheKeyPrefix = `customlist:${username}_${listType}`;
+  await fetchList(listUrl, cacheKeyPrefix, req, res);
 };
