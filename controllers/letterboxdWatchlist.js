@@ -162,3 +162,66 @@ export const letterboxdWatchlist = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+export const letterboxdCustomList = async (req, res) => {
+  try {
+    const { customListUrl, page = 1 } = { ...req.body };
+    if (!customListUrl)
+      return res.status(400).json({ error: "Custom list URL not found" });
+
+    if (page < 1) return res.status(400).json({ error: "Invalid page number" });
+
+    const maxPages = 20;
+    const filmsPerPage = 28; // letterboxd default
+    let totalPages = 1;
+    let currentPage = 0;
+    let filmsCount = 0;
+    let filmsPromises = [];
+    let lastPage = null;
+
+    for (let index = 0; index < maxPages; index++) {
+      currentPage = parseInt(page) + index;
+      const cacheKey = `customlist:${customListUrl}:page:${currentPage}`;
+      const cachedList = await getCacheValue(cacheKey);
+
+      if (cachedList) {
+        console.log(`Custom list for page ${currentPage} found (cached)`);
+        filmsPromises = filmsPromises.concat(cachedList);
+      } else {
+        const response = await axios.get(`${customListUrl}/page/${currentPage}/`);
+        const $ = cheerio.load(response.data);
+        if (!filmsCount) {
+          filmsCount = getFilmsCount($);
+          totalPages = Math.ceil(filmsCount / filmsPerPage);
+          if (currentPage > totalPages) {
+            return res.status(404).json({ error: "Invalid custom list page" });
+          }
+        }
+        const pageFilmsPromise = await getPageFilms($);
+
+        if (pageFilmsPromise.length === 0) {
+          break;
+        }
+        Promise.all(pageFilmsPromise).then((pageFilms) => {
+          setCacheValue(cacheKey, pageFilms, cacheTtl);
+        });
+        filmsPromises = filmsPromises.concat(pageFilmsPromise);
+      }
+    }
+
+    const films = await Promise.all(filmsPromises);
+    res.status(200).json({
+      message: "Custom list found",
+      watchlist: films,
+      lastPage: Math.min(currentPage, totalPages),
+      totalPages: totalPages || lastPage,
+    });
+  } catch (error) {
+    console.error(error);
+    if (error?.response?.status === 404) {
+      res.status(404).json({ error: "Custom list not found" });
+      return;
+    }
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
