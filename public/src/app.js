@@ -271,38 +271,6 @@ const loadCustomList = async (data) => {
   }
 };
 
-let pagesLoaded = 1;
-window.addEventListener("scroll", async () => {
-  if (window.innerHeight + window.scrollY >= document.body.offsetHeight) {
-    pagesLoaded++;
-    const formData = new FormData(form);
-    let data = Object.fromEntries(formData.entries());
-    data.page = pagesLoaded;
-
-    const { listUrl } = data;
-
-    const urlPattern = /https:\/\/letterboxd\.com\/([^\/]+)\/(watchlist|list\/[^\/]+)\//;
-    const match = listUrl.match(urlPattern);
-
-    if (!match) {
-      showError("Invalid URL format");
-      return;
-    }
-
-    const username = match[1];
-    const listType = match[2].startsWith("list/") ? "custom" : "watchlist";
-
-    data = { ...data, username, listType, listUrl: listUrl.trim() };
-
-    // Load the appropriate list
-    if (listType !== "watchlist") {
-      await loadCustomList(data);
-    } else {
-      await loadWatchlist(data);
-    }
-  }
-});
-
 let allPagesLoaded = false; // prevent unnecessary fetch requests
 let scrollListenerAdded = false; // prevent multiple scroll listeners
 let watchlistPageCount = 0;
