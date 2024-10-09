@@ -7,6 +7,7 @@ import {
   searchMovie,
   poster,
   letterboxdWatchlist,
+  letterboxdCustomList,
   alternativeSearch,
   proxy,
 } from "./controllers/index.js";
@@ -57,6 +58,12 @@ app.post("/api/letterboxd-watchlist", async (req, res) => {
   // let browsers cache response for 1h
   res.setHeader("Cache-Control", "public, max-age=3600");
   return letterboxdWatchlist(req, res);
+});
+
+app.post("/api/letterboxd-custom-list", async (req, res) => {
+  // let browsers cache response for 1h
+  res.setHeader("Cache-Control", "public, max-age=3600");
+  return letterboxdCustomList(req, res);
 });
 
 app.post("/api/alternative-search", async (req, res) => {

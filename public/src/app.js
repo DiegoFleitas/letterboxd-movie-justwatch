@@ -96,6 +96,100 @@ letterboxdWatchlistForm.addEventListener("submit", async (event) => {
   await loadWatchlist(data);
 });
 
+const customListForm = document.getElementById("letterboxd-custom-list-form");
+
+customListForm.addEventListener("submit", async (event) => {
+  event.preventDefault(); // Prevent the form from submitting normally
+
+  const formData = new FormData(event.target);
+  let data = Object.fromEntries(formData.entries());
+
+  data = { ...data, customListUrl: data.customListUrl.trim() };
+  if (data.customListUrl.length === 0) {
+    showError("Please enter a valid URL");
+    return;
+  }
+
+  toggleNotice(`Scraping custom list from ${data?.customListUrl}...`);
+
+  // Initialize page to 1
+  data.page = 1;
+
+  // Load the custom list
+  await loadCustomList(data);
+});
+
+const loadCustomList = async (data) => {
+  try {
+    const response = await fetch("/api/letterboxd-custom-list", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+
+    const responseData = await response.json();
+    const { error, watchlist, lastPage, totalPages } = responseData;
+    allPagesLoaded = lastPage === totalPages;
+    watchlistPageCount = totalPages;
+
+    if (error) {
+      showError(error);
+      return;
+    }
+
+    for (const element of watchlist) {
+      let { title, year, link, poster } = element;
+      if (poster == "N/A") poster = "/movie_placeholder.svg";
+      rebuildMovieMosaic(title, year, { poster, link });
+
+      let data = { title, year };
+      data.country = document.querySelector("#country3").value;
+
+      fetch("/api/search-movie", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      })
+        .then((response) => {
+          if (response.status === 502) {
+            console.error(response);
+          }
+          return response.json();
+        })
+        .then((response) => {
+          const { error, title, year } = response;
+          if (error) {
+            showMessage(`[${title} (${year})] ${error}`);
+          } else {
+            rebuildMovieMosaic(title, year, response);
+          }
+        })
+        .catch((error) => console.error(error));
+    }
+
+    data.page = lastPage;
+
+    if (!allPagesLoaded) {
+      showMessage(`Loaded page ${data.page} of ${totalPages}...`);
+
+      if (!scrollListenerAdded) {
+        scrollListenerAdded = true;
+        window.addEventListener("scroll", handleScroll.bind(null, data), {
+          passive: true,
+        });
+      }
+    } else {
+      showMessage(`Loaded all ${totalPages} pages!`);
+    }
+  } catch (error) {
+    console.error(error);
+  }
+};
+
 let allPagesLoaded = false; // prevent unnecessary fetch requests
 let scrollListenerAdded = false; // prevent multiple scroll listeners
 let watchlistPageCount = 0;
