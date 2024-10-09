@@ -15,10 +15,8 @@ window.searchSubs = searchSubs;
 window.hideSpinner = (img) => {
   // get the parent div of the loaded image
   const parent = img.parentNode;
-
   // get the spinner inside the parent div
   const spinner = parent.querySelector(".spinner");
-
   // hide the spinner
   spinner.style.display = "none";
 };
@@ -27,16 +25,10 @@ const form = document.getElementById("movie-form");
 
 form.addEventListener("submit", (event) => {
   event.preventDefault(); // Prevent the form from submitting normally
-
-  // console.log(event.target);
   const formData = new FormData(event.target);
-
   const data = Object.fromEntries(formData.entries());
-  // console.log(data);
-
   data.country = document.querySelector("#country1").value;
 
-  // Perform the fetch request
   fetch("/api/search-movie", {
     method: "POST",
     headers: {
@@ -52,15 +44,12 @@ form.addEventListener("submit", (event) => {
       return response.json();
     })
     .then((response) => {
-      // console.log(response);
       const { error, title, year, message, movieProviders } = response;
       if (error) {
         showMessage(`[${title} (${year})] ${error}`);
       } else {
         const streamingProviders = movieProviders
-          .map((entry) => {
-            return entry.name;
-          })
+          .map((entry) => entry.name)
           .join(", ");
         const msg = `[${title} (${year})] ${message}: ${streamingProviders}`;
         showMessage(msg);
@@ -72,11 +61,9 @@ form.addEventListener("submit", (event) => {
 const letterboxForm = document.getElementById("letterboxd-form");
 
 letterboxForm.addEventListener("submit", async (event) => {
-  event.preventDefault(); // Prevent the form from submitting normally
-
+  event.preventDefault();
   const formData = new FormData(event.target);
   let data = Object.fromEntries(formData.entries());
-
   let { listUrl } = data;
 
   if (!listUrl) {
@@ -84,9 +71,6 @@ letterboxForm.addEventListener("submit", async (event) => {
     return;
   }
 
-  // remove everything after /page (included) before checking pattern
-  // https://letterboxd.com/eibonslam/list/uru-3/page/2/ > https://letterboxd.com/eibonslam/list/uru-3/
-  // https://letterboxd.com/eibonslam/watchlist/page/2/ > https://letterboxd.com/eibonslam/watchlist/
   listUrl = listUrl.split('/page')[0];
   if (!listUrl.endsWith('/')) {
     listUrl += '/';
@@ -107,7 +91,6 @@ letterboxForm.addEventListener("submit", async (event) => {
 
   toggleNotice(`Scraping ${listType} for ${username}...`);
 
-  // Load the appropriate list
   if (listType !== "watchlist") {
     await loadCustomList(data);
   } else {
@@ -115,21 +98,8 @@ letterboxForm.addEventListener("submit", async (event) => {
   }
 });
 
-const loadWatchlist = async (data) => {
+const processList = async (data, responseData, url) => {
   try {
-    const response = await fetch("/api/letterboxd-watchlist", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
-    const responseData = await response.json();
-    // console.log(responseData);
-    setTimeout(() => {
-      toggleNotice();
-    }, 1000);
-
     const { error, watchlist, lastPage, totalPages } = responseData;
     allPagesLoaded = lastPage === totalPages;
     watchlistPageCount = totalPages;
@@ -144,15 +114,15 @@ const loadWatchlist = async (data) => {
       if (poster == "N/A") poster = "/movie_placeholder.svg";
       rebuildMovieMosaic(title, year, { poster, link });
 
-      let data = { title, year };
-      data.country = document.querySelector("#country2").value;
+      let movieData = { title, year };
+      movieData.country = document.querySelector("#country2").value;
 
       fetch("/api/search-movie", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(movieData),
       })
         .then((response) => {
           if (response.status === 502) {
@@ -161,7 +131,6 @@ const loadWatchlist = async (data) => {
           return response.json();
         })
         .then((response) => {
-          // console.log(response);
           const { error, title, year } = response;
           if (error) {
             showError(`[${title} (${year})] ${error}`);
@@ -185,90 +154,39 @@ const loadWatchlist = async (data) => {
         });
       }
     } else {
-      // FIXME: at this point, tiles are loaded with no image
       showMessage(`Loaded all ${totalPages} pages!`);
     }
   } catch (error) {
     console.error(error);
+  } finally {
+    setTimeout(() => {
+      toggleNotice();
+    }, 1000);
   }
 };
 
+const loadWatchlist = async (data) => {
+  const response = await fetch("/api/letterboxd-watchlist", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+  const responseData = await response.json();
+  await processList(data, responseData, "/api/letterboxd-watchlist");
+};
+
 const loadCustomList = async (data) => {
-  try {
-    const response = await fetch("/api/letterboxd-custom-list", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
-    const responseData = await response.json();
-    // console.log(responseData);
-    setTimeout(() => {
-      toggleNotice();
-    }, 1000);
-
-    const { error, watchlist, lastPage, totalPages } = responseData;
-    allPagesLoaded = lastPage === totalPages;
-    watchlistPageCount = totalPages;
-
-    if (error) {
-      showError(error);
-      return;
-    }
-
-    for (const element of watchlist) {
-      let { title, year, link, poster } = element;
-      if (poster == "N/A") poster = "/movie_placeholder.svg";
-      rebuildMovieMosaic(title, year, { poster, link });
-
-      let data = { title, year };
-      data.country = document.querySelector("#country2").value;
-
-      fetch("/api/search-movie", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      })
-        .then((response) => {
-          if (response.status === 502) {
-            console.error(response);
-          }
-          return response.json();
-        })
-        .then((response) => {
-          // console.log(response);
-          const { error, title, year } = response;
-          if (error) {
-            showError(`[${title} (${year})] ${error}`);
-          } else {
-            rebuildMovieMosaic(title, year, response);
-          }
-        })
-        .catch((error) => console.error(error));
-    }
-
-    // Update the page number
-    data.page = lastPage;
-
-    if (!allPagesLoaded) {
-      showMessage(`Loaded page ${data.page} of ${totalPages}...`);
-
-      if (!scrollListenerAdded) {
-        scrollListenerAdded = true;
-        window.addEventListener("scroll", handleScroll.bind(null, data), {
-          passive: true,
-        });
-      }
-    } else {
-      // FIXME: at this point, tiles are loaded with no image
-      showMessage(`Loaded all ${totalPages} pages!`);
-    }
-  } catch (error) {
-    console.error(error);
-  }
+  const response = await fetch("/api/letterboxd-custom-list", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+  const responseData = await response.json();
+  await processList(data, responseData, "/api/letterboxd-custom-list");
 };
 
 let allPagesLoaded = false; // prevent unnecessary fetch requests
@@ -426,7 +344,6 @@ $(document).ready(() => {
     })
     .on("select2:open", (evt) => {
       // set the placeholder text
-      // console.log(evt.target);
       $(evt.target)
         .data("select2")
         .$dropdown.find(":input.select2-search__field")
