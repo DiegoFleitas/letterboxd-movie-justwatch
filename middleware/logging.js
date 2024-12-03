@@ -1,5 +1,7 @@
 import morgan from "morgan";
 import uaParser from "ua-parser-js";
+import { config as dotenvConfig } from "dotenv";
+dotenvConfig();
 
 morgan.token("browser", function (req) {
   const userAgent = req.headers["user-agent"];
@@ -21,6 +23,7 @@ morgan.token("bot", function (req) {
 
 // Define a custom morgan format to log JSON to the client
 morgan.format("json", function (tokens, req, res) {
+  const PRETTIFY_LOGS = process.env.PRETTIFY_LOGS === "true";
   if (req.headers["user-agent"] === "Consul Health Check") {
     return;
   }
@@ -42,7 +45,7 @@ morgan.format("json", function (tokens, req, res) {
       axiosError: tokens.axiosError(req),
     },
     null,
-    2
+    PRETTIFY_LOGS ? 2 : 0
   )}`;
 });
 
