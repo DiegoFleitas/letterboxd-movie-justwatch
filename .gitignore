@@ -13,3 +13,5 @@ public/dist
 # misc
 *.log
 /scripts
+
+.npmrc
