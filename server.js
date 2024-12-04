@@ -2,7 +2,8 @@ import express from "express";
 import bodyParser from "body-parser";
 import { config as dotenvConfig } from "dotenv";
 dotenvConfig();
-import { session, logging } from "./middleware/index.js";
+import { session } from "./middleware/index.js";
+import { logging } from 'diegos-fly-logger/index.mjs';
 import {
   searchMovie,
   poster,
