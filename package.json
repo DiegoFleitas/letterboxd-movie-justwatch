@@ -34,7 +34,7 @@
     "body-parser": "^1.20.1",
     "cheerio": "^1.0.0-rc.12",
     "cookie-session": "^2.0.0",
-    "diegos-fly-logger": "^1.0.0",  
+    "diegos-fly-logger": "^1.0.1",
     "dotenv": "^16.0.3",
     "express": "^4.17.1",
     "morgan": "^1.10.0",
