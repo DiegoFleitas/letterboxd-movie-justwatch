@@ -1,6 +1,6 @@
 import axiosHelper from "../helpers/axios.js";
 const axios = axiosHelper(true); // Set keepAlive to true
-import cheerio from "cheerio";
+import * as cheerio from "cheerio";
 import { getCacheValue, setCacheValue } from "../helpers/redis.js";
 
 const cacheTtl = process.env.CACHE_TTL || 20; // minutes
