@@ -1,6 +1,6 @@
 FROM debian:bullseye as builder
 
-ARG NODE_VERSION=14.15.4
+ARG NODE_VERSION=18.0.0
 
 # Install necessary packages including git
 RUN apt-get update && apt-get install -y curl python-is-python3 pkg-config build-essential git
