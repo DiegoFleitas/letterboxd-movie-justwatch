@@ -35,7 +35,7 @@
     "cheerio": "^1.0.0-rc.12",
     "cookie-session": "^2.0.0",
     "crypto": "^1.0.1",
-    "diegos-fly-logger": "github:DiegoFleitas/diegos-fly-logger",
+    "diegos-fly-logger": "^1.0.0",  
     "dotenv": "^16.0.3",
     "express": "^4.17.1",
     "morgan": "^1.10.0",
