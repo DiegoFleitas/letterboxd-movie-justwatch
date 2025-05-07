@@ -6,12 +6,12 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "fe:dev": "vite",
-    "fe:serve": "vite preview",
-    "be:dev": "nodemon server.js",
+    "fe:dev": "npx vite",
+    "fe:serve": "npx vite preview",
+    "be:dev": "npx nodemon server.js",
     "start": "node server.js",
-    "build": "vite build",
-    "dev": "concurrently \"npm:fe:dev\" \"npm:be:dev\"",
+    "build": "npx vite build",
+    "dev": "concurrently \"npm:fe:dev\" \"npm:be:dev\" --kill-others",
     "app": "npx cross-var echo $npm_package_name",
     "fly:deploy": "npm run build && flyctl deploy",
     "fly:logs": "npx cross-var flyctl logs -a $npm_package_name",
@@ -45,6 +45,7 @@
   "devDependencies": {
     "concurrently": "^8.0.1",
     "cross-var": "^1.1.0",
-    "vite": "^4.2.1"
+    "vite": "^4.2.1",
+    "npx ": "^2.0.22"
   }
 }
