@@ -17,6 +17,12 @@ const getPosterUrl = (id, titleSlug, cacheBustingKey) => {
     )}/${id}-${titleSlug}-0-${POSTER_WIDTH}-0-${POSTER_HEIGHT}-crop.jpg?k=${cacheBustingKey}`;
 };
 
+// Example of the HTML structure
+// film.html()
+// ' <div class="really-lazy-load poster film-poster film-poster-576577 linked-film-poster" data-image-width="125" data-image-height="187" data-type="film" data-type-name="film" data-film-id="576577" data-item-uid="film:576577" data-film-slug="the-grave-of-st-oran" data-poster-url="/film/the-grave-of-st-oran/image-150/" data-linked="linked" data-target-link="/film/the-grave-of-st-oran/" data-target-link-target="" data-details-endpoint="/film/the-grave-of-st-oran/json/" data-cache-busting-key="_ac8883a1" data-show-menu="true"> <img src="https://s.ltrbxd.com/static/img/empty-poster-125-AiuBHVCI.png" class="image" width="125" height="187" alt="The Grave of St. Oran"> <span class="frame"><span class="frame-title"></span></span> </div> '
+// GET https://letterboxd.com/film/the-grave-of-st-oran/json/
+// {"result":true,"csrf":"d02b27d3078c84a80fb7","id":576577,"uid":"film:576577","name":"The Grave of St. Oran","type":"film","image125":"/film/the-grave-of-st-oran/image-125/","image150":"/film/the-grave-of-st-oran/image-150/","releaseYear":2019,"runTime":9,"slug":"the-grave-of-st-oran","url":"/film/the-grave-of-st-oran/","originalName":null,"filmlistAction":"/ajax/film:576577/filmlistentry","watchlistAction":"/film/the-grave-of-st-oran/add-to-watchlist/","directors":[{"name":"Jim Batt"}]}
+
 const getFilmData = async (film) => {
   const cacheBustingKey = film.find("div")?.attr("data-cache-busting-key");
   const title = film.find("img")?.attr("alt");
@@ -24,11 +30,10 @@ const getFilmData = async (film) => {
     film.find("div")?.attr("data-target-link") ||
     film.find("div")?.attr("data-film-slug");
   let id = film.find("div")?.attr("data-film-id");
-  let year = film.find("div")?.attr("data-film-slug")?.match(/\d{4}/)?.[0];
   const link =
     "https://letterboxd.com" + film.find("div")?.attr("data-target-link");
 
-  let poster;
+  let poster, year;
   if (cacheBustingKey) {
     const url = `https://letterboxd.com/ajax/poster${titleSlug}std/125x187/?k=${cacheBustingKey}`;
     const ajaxResponse = await axios.get(url);
@@ -46,7 +51,13 @@ const getFilmData = async (film) => {
 
     titleSlug = filmAux?.attr("data-film-link");
     id = filmAux?.attr("data-film-id");
-    year = filmAux?.attr("data-film-release-year");
+
+    // Use releaseYear from JSON response
+    const detailsEndpoint = film.find("div")?.attr("data-details-endpoint");
+    if (detailsEndpoint) {
+      const detailsResponse = await axios.get(`https://letterboxd.com${detailsEndpoint}`);
+      year = detailsResponse.data?.releaseYear;
+    }
   }
 
   return { title, year, link, poster, id, titleSlug };
