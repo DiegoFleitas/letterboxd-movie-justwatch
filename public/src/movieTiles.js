@@ -85,7 +85,7 @@ const updateTile = (tile, data) => {
     </a>
     <div class="poster-info">
       <h2 class="poster-title">${data.title}</h2>
-      <p class="poster-release-date">Release Date: ${data.year}</p>
+      ${data.year ? `<p class="poster-release-date">Release Date: ${data.year}</p>` : ""}
       <p class="streaming-services" style="display:none">${providerNames.join(
         " / "
       )}</p>
