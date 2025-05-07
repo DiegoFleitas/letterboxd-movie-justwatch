@@ -43,9 +43,9 @@
     "uuid": "^9.0.0"
   },
   "devDependencies": {
+    "@flydotio/dockerfile": "^0.7.10",
     "concurrently": "^8.0.1",
     "cross-var": "^1.1.0",
-    "vite": "^4.2.1",
-    "npx ": "^2.0.22"
+    "vite": "^4.2.1"
   }
 }
