@@ -1,49 +1,22 @@
-# fly.toml file generated for movie-justwatch on 2023-03-18T15:33:45-03:00
+# fly.toml app configuration file generated for letterboxd-movie-justwatch-dawn-field-3083 on 2025-05-07T20:24:58-03:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
 
-app = "movie-justwatch"
-kill_signal = "SIGINT"
-kill_timeout = 5
-processes = []
+app = 'letterboxd-movie-justwatch-dawn-field-3083'
+primary_region = 'gru'
 
-[env]
-  PORT = "8080"
+[build]
 
-[experimental]
-  auto_rollback = true
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
 
-[[services]]
-  internal_port = 8080
-  processes = ["app"]
-  protocol = "tcp"
-  script_checks = []
-  [services.concurrency]
-    hard_limit = 100
-    soft_limit = 75
-    type = "connections"
-
-  # upstash redis no longer available
-  # [[services.http_checks]]
-  #   grace_period = "1s"
-  #   interval = 60000 # 1min
-  #   method = "get"
-  #   path = "/redis-healthcheck"
-  #   protocol = "http"
-  #   restart_limit = 0
-  #   timeout = 2000
-  #   tls_skip_verify = false
-  #   [services.http_checks.headers]
-
-  [[services.ports]]
-    force_https = true
-    handlers = ["http"]
-    port = 80
-
-  [[services.ports]]
-    handlers = ["tls", "http"]
-    port = 443
-
-  [[services.tcp_checks]]
-    grace_period = "1s"
-    interval = "15s"
-    restart_limit = 10 # after 10 consecutive failures, the vm will be restarted
-    timeout = "2s"
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1
