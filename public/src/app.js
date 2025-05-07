@@ -72,6 +72,9 @@ letterboxForm.addEventListener("submit", async (event) => {
   }
 
   listUrl = listUrl.split('/page')[0];
+  if (!listUrl.includes('watchlist') && !listUrl.includes('list')) {
+    listUrl += '/watchlist';
+  }
   if (!listUrl.endsWith('/')) {
     listUrl += '/';
   }
