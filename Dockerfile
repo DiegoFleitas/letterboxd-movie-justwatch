@@ -1,40 +1,49 @@
-FROM debian:bullseye as builder
+# syntax = docker/dockerfile:1
 
-ARG NODE_VERSION=18.0.0
+# Adjust NODE_VERSION as desired
+ARG NODE_VERSION=18.12.1
+FROM node:${NODE_VERSION}-slim AS base
 
-# Install necessary packages including git
-RUN apt-get update && apt-get install -y curl python-is-python3 pkg-config build-essential git
+LABEL fly_launch_runtime="Node.js"
 
-# Install Volta and Node.js
-RUN curl https://get.volta.sh | bash
-ENV VOLTA_HOME /root/.volta
-ENV PATH /root/.volta/bin:$PATH
-RUN volta install node@${NODE_VERSION}
-
-#######################################################################
-
-RUN mkdir /app
+# Node.js app lives here
 WORKDIR /app
 
-# NPM will not install any package listed in "devDependencies" when NODE_ENV is set to "production",
-# to install all modules: "npm install --production=false".
-# Ref: https://docs.npmjs.com/cli/v9/commands/npm-install#description
+# Set production environment
+ENV NODE_ENV="production"
 
-ENV NODE_ENV production
+# Install pnpm
+ARG PNPM_VERSION=10.10.0
+RUN npm install -g pnpm@$PNPM_VERSION
 
+
+# Throw-away build stage to reduce size of final image
+FROM base AS build
+
+# Install packages needed to build node modules
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y build-essential node-gyp pkg-config python-is-python3
+
+# Install node modules
+COPY package-lock.json package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile --prod=false
+
+# Copy application code
 COPY . .
 
-RUN npm install
+# Build application
+RUN pnpm run build
 
-FROM debian:bullseye
+# Remove development dependencies
+RUN pnpm prune --prod
 
-LABEL fly_launch_runtime="nodejs"
 
-COPY --from=builder /root/.volta /root/.volta
-COPY --from=builder /app /app
+# Final stage for app image
+FROM base
 
-WORKDIR /app
-ENV NODE_ENV production
-ENV PATH /root/.volta/bin:$PATH
+# Copy built application
+COPY --from=build /app /app
 
-CMD [ "npm", "run", "start" ]
+# Start the server by default, this can be overwritten at runtime
+EXPOSE 3000
+CMD [ "pnpm", "run", "start" ]
