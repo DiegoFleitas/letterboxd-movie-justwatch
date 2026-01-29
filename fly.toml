@@ -1,9 +1,9 @@
-# fly.toml app configuration file generated for letterboxd-movie-justwatch-dawn-field-3083 on 2025-05-07T20:24:58-03:00
+# fly.toml app configuration file generated for letterboxd-movie-justwatch-dawn-field-3083 on 2026-01-29T17:40:11-03:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'letterboxd-movie-justwatch-dawn-field-3083'
+app = 'movie-justwatch'
 primary_region = 'gru'
 
 [build]
@@ -20,3 +20,4 @@ primary_region = 'gru'
   memory = '1gb'
   cpu_kind = 'shared'
   cpus = 1
+  memory_mb = 1024
