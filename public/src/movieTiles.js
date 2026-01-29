@@ -13,20 +13,122 @@ export const rebuildMovieMosaic = (title, year, data) => {
     .replace(/ /g, "-")
     .replace(/[^A-Z0-9]/g, "")}`;
 
-  const existingTile = document.querySelector(`div[data-id="${id}"]`);
+  // First check if tile already exists in STATE (faster than DOM search)
+  let existingTile = null;
+  let existingId = id;
+  
+  // Check if we have this tile in STATE already
+  if (STATE.movieTiles[id]) {
+    // We have it, now find the DOM element
+    existingTile = document.querySelector(`div[data-id="${id}"]`);
+  } else if (data?.link) {
+    // Not found by ID, try to find by link in STATE
+    const linkToMatch = data.link.startsWith('http') ? data.link : `https://letterboxd.com${data.link}`;
+    
+    // Search STATE for existing tile with this link
+    for (const [stateId, tileData] of Object.entries(STATE.movieTiles)) {
+      if (tileData.link === linkToMatch) {
+        existingId = stateId;
+        existingTile = document.querySelector(`div[data-id="${stateId}"]`);
+        
+        // Update the ID if it changed
+        if (existingId !== id) {
+          if (existingTile) {
+            existingTile.setAttribute('data-id', id);
+          }
+          STATE.movieTiles[id] = STATE.movieTiles[existingId];
+          delete STATE.movieTiles[existingId];
+        }
+        break;
+      }
+    }
+    
+    // If still not found in STATE, try DOM search as fallback
+    if (!existingTile) {
+      existingTile = document.querySelector(`div[data-letterboxd-link="${linkToMatch}"]`);
+      if (existingTile) {
+        const oldId = existingTile.getAttribute('data-id');
+        existingTile.setAttribute('data-id', id);
+        if (oldId && oldId !== id && STATE.movieTiles[oldId]) {
+          STATE.movieTiles[id] = STATE.movieTiles[oldId];
+          delete STATE.movieTiles[oldId];
+        }
+      }
+    }
+  } else {
+    // No link provided, try DOM search by ID
+    existingTile = document.querySelector(`div[data-id="${id}"]`);
+  }
+  
+  // Fallback: if not found by year-title or link, try finding by title only (for year mismatches)
+  if (!existingTile) {
+    const titleId = title.toUpperCase().replace(/ /g, "-").replace(/[^A-Z0-9]/g, "");
+    const allTiles = document.querySelectorAll('.poster[data-id]');
+    for (const tile of allTiles) {
+      const tileId = tile.getAttribute('data-id');
+      if (tileId && tileId.endsWith(titleId)) {
+        existingTile = tile;
+        // Update the tile's ID to the correct one
+        tile.setAttribute('data-id', id);
+        // Update STATE reference
+        const oldData = STATE.movieTiles[tileId];
+        if (oldData) {
+          delete STATE.movieTiles[tileId];
+          STATE.movieTiles[id] = oldData;
+        }
+        break;
+      }
+    }
+  }
 
   if (existingTile) {
     const tileData = STATE.movieTiles[id];
-    if (!tileData.movieProviders || !tileData.movieProviders.length)
-      tileData.movieProviders = data.movieProviders;
-    if (!tileData.poster) tileData.poster = data.poster;
-    if (!tileData.link) tileData.link = data.link;
-    updateTile(existingTile, tileData);
+    
+    // If tileData doesn't exist under new ID, it might be under old ID
+    if (!tileData) {
+      console.log(`[rebuildMovieMosaic] Tile not found in STATE under ID "${id}", checking for old IDs`);
+      const oldId = existingTile.getAttribute('data-id');
+      if (oldId && oldId !== id && STATE.movieTiles[oldId]) {
+        console.log(`[rebuildMovieMosaic] Found tile in STATE under old ID "${oldId}", moving to "${id}"`);
+        STATE.movieTiles[id] = STATE.movieTiles[oldId];
+        delete STATE.movieTiles[oldId];
+      } else {
+        console.log(`[rebuildMovieMosaic] Could not find tile in STATE, creating new entry`);
+        STATE.movieTiles[id] = {
+          id,
+          title,
+          year,
+          link: data.link,
+          movieProviders: [],
+          poster: null
+        };
+      }
+    }
+    
+    const currentTileData = STATE.movieTiles[id];
+    // Always update providers if data includes it (even if empty array)
+    if (data.hasOwnProperty('movieProviders')) {
+      currentTileData.movieProviders = data.movieProviders || [];
+    }
+    // Update poster if new one is provided and not a placeholder
+    if (data.poster && data.poster !== "/movie_placeholder.svg") {
+      currentTileData.poster = data.poster;
+    } else if (data.poster && !currentTileData.poster) {
+      currentTileData.poster = data.poster;
+    }
+    if (data.link && !currentTileData.link) currentTileData.link = data.link;
+    if (!currentTileData.year) currentTileData.year = year; // Update year if it was missing
+    updateTile(existingTile, currentTileData);
     updatedTiles[id] = true; // Mark the tile as updated
   } else {
     const tile = document.createElement("div");
     tile.setAttribute("data-id", id);
     tile.classList.add("poster");
+    
+    // Store Letterboxd link for duplicate detection
+    if (data?.link) {
+      tile.setAttribute("data-letterboxd-link", data.link);
+    }
 
     const movieProviders = data?.movieProviders || [];
     const link = data?.link || "";
@@ -54,13 +156,14 @@ export const rebuildMovieMosaic = (title, year, data) => {
     data.movieProviders.forEach((provider) => {
       if (streamingProviders[provider.id]) {
         streamingProviders[provider.id].urls.push(provider.url);
+      } else {
+        streamingProviders[provider.id] = {
+          id: provider.id,
+          name: provider.name,
+          icon: provider.icon,
+          urls: [provider.url],
+        };
       }
-      streamingProviders[provider.id] = {
-        id: provider.id,
-        name: provider.name,
-        icon: provider.icon,
-        urls: [provider.url],
-      };
     });
 
     updateStreamingProviderIcons(streamingProviders);
@@ -125,22 +228,26 @@ export const filterTiles = () => {
   );
 
   // iterate through tiles checking if they have the selected streaming services
-  Object.values(STATE.movieTiles).forEach((data) => {
-    const providerNames = data.movieProviders.map((provider) => provider.name);
+  Object.entries(STATE.movieTiles).forEach(([id, data]) => {
+    const providerNames = data.movieProviders ? data.movieProviders.map((provider) => provider.name) : [];
 
     // if the tile has no streaming services, hide it
     if (!providerNames || !providerNames.length) {
-      const tile = document.querySelector(`div[data-id="${data.id}"]`);
-      tile.style.display = "none";
+      const tile = document.querySelector(`div[data-id="${id}"]`);
+      if (tile) {
+        tile.style.display = "none";
+      }
     } else {
       const includedServices = selectedServices.filter((service) =>
         providerNames.includes(service)
       );
-      const tile = document.querySelector(`div[data-id="${data.id}"]`);
-      if (includedServices.length > 0) {
-        tile.style.display = "";
-      } else {
-        tile.style.display = "none";
+      const tile = document.querySelector(`div[data-id="${id}"]`);
+      if (tile) {
+        if (includedServices.length > 0) {
+          tile.style.display = "";
+        } else {
+          tile.style.display = "none";
+        }
       }
     }
   });

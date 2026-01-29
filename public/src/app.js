@@ -113,9 +113,25 @@ const processList = async (data, responseData, url) => {
     }
 
     for (const element of watchlist) {
-      let { title, year, link, poster } = element;
-      if (poster == "N/A") poster = "/movie_placeholder.svg";
+      let { title, year, link, posterPath, poster } = element;
+      
+      // Create tile immediately with placeholder
+      poster = poster || "/movie_placeholder.svg";
       rebuildMovieMosaic(title, year, { poster, link });
+      
+      // Try to fetch poster URL from Letterboxd's API (browsers can access it)
+      if (posterPath) {
+        fetch(`https://letterboxd.com${posterPath}poster/std/230/`)
+          .then(res => res.json())
+          .then(data => {
+            if (data && data.url) {
+              rebuildMovieMosaic(title, year, { poster: data.url, link });
+            }
+          })
+          .catch(() => {
+            // Poster fetch failed, tile already has placeholder
+          });
+      }
 
       let movieData = { title, year };
       movieData.country = document.querySelector("#country2").value;
@@ -134,11 +150,15 @@ const processList = async (data, responseData, url) => {
           return response.json();
         })
         .then((response) => {
-          const { error, title, year } = response;
+          const { error, title, year, poster } = response;
           if (error) {
             showError(`[${title} (${year})] ${error}`);
+            // Update the tile even when there's an error (ensures it's in STATE for filtering)
+            rebuildMovieMosaic(title, year, { poster, link, movieProviders: [] });
           } else {
-            rebuildMovieMosaic(title, year, response);
+            // This will update with poster and streaming providers
+            // Include the original Letterboxd link to prevent duplicates
+            rebuildMovieMosaic(title, year, { ...response, link });
           }
         })
         .catch((error) => console.error(error));

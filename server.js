@@ -9,6 +9,7 @@ import {
   poster,
   letterboxdWatchlist,
   letterboxdCustomList,
+  letterboxdPoster,
   alternativeSearch,
   proxy,
 } from "./controllers/index.js";
@@ -64,6 +65,10 @@ app.post("/api/letterboxd-watchlist", setCacheControl, async (req, res) => {
 
 app.post("/api/letterboxd-custom-list", setCacheControl, async (req, res) => {
   return letterboxdCustomList(req, res);
+});
+
+app.post("/api/letterboxd-poster", setCacheControl, async (req, res) => {
+  return letterboxdPoster(req, res);
 });
 
 app.post("/api/alternative-search", setCacheControl, async (req, res) => {

@@ -9,58 +9,56 @@ const postersTtl = process.env.CACHE_TTL || 60; // minutes
 const POSTER_WIDTH = 230;
 const POSTER_HEIGHT = 345;
 
-const getPosterUrl = (id, titleSlug, cacheBustingKey) => {
-  return `https://a.ltrbxd.com/resized/film-poster/${id
-    ?.split("")
-    ?.join(
-      "/"
-    )}/${id}-${titleSlug}-0-${POSTER_WIDTH}-0-${POSTER_HEIGHT}-crop.jpg?k=${cacheBustingKey}`;
-};
+// Note: Letterboxd poster CDN URLs are blocked by Cloudflare
+// We'll return null and let the frontend fetch posters from OMDB instead
 
+
+// OLD:
 // Example of the HTML structure
 // film.html()
 // ' <div class="really-lazy-load poster film-poster film-poster-576577 linked-film-poster" data-image-width="125" data-image-height="187" data-type="film" data-type-name="film" data-film-id="576577" data-item-uid="film:576577" data-film-slug="the-grave-of-st-oran" data-poster-url="/film/the-grave-of-st-oran/image-150/" data-linked="linked" data-target-link="/film/the-grave-of-st-oran/" data-target-link-target="" data-details-endpoint="/film/the-grave-of-st-oran/json/" data-cache-busting-key="_ac8883a1" data-show-menu="true"> <img src="https://s.ltrbxd.com/static/img/empty-poster-125-AiuBHVCI.png" class="image" width="125" height="187" alt="The Grave of St. Oran"> <span class="frame"><span class="frame-title"></span></span> </div> '
 // GET https://letterboxd.com/film/the-grave-of-st-oran/json/
 // {"result":true,"csrf":"d02b27d3078c84a80fb7","id":576577,"uid":"film:576577","name":"The Grave of St. Oran","type":"film","image125":"/film/the-grave-of-st-oran/image-125/","image150":"/film/the-grave-of-st-oran/image-150/","releaseYear":2019,"runTime":9,"slug":"the-grave-of-st-oran","url":"/film/the-grave-of-st-oran/","originalName":null,"filmlistAction":"/ajax/film:576577/filmlistentry","watchlistAction":"/film/the-grave-of-st-oran/add-to-watchlist/","directors":[{"name":"Jim Batt"}]}
 
+
+// NEW:
+// Example of the HTML structure
+// film.html()
+// <div class="react-component" data-component-class="LazyPoster" data-request-poster-metadata="true" data-likeable="true" data-watchable="true" data-rateable="true" data-image-width="125" data-image-height="187" data-item-name="The Little Drummer Girl (2018)" data-item-slug="the-little-drummer-girl-2018" data-item-link="/film/the-little-drummer-girl-2018/" data-item-full-display-name="The Little Drummer Girl (2018)" data-film-id="484585" data-postered-identifier="{&quot;lid&quot;:&quot;kkCS&quot;,&quot;uid&quot;:&quot;film:484585&quot;,&quot;type&quot;:&quot;film&quot;,&quot;typeName&quot;:&quot;film&quot;}" data-poster-url="/film/the-little-drummer-girl-2018/image-150/" data-resolvable-poster-path="{&quot;postered&quot;:{&quot;lid&quot;:&quot;kkCS&quot;,&quot;uid&quot;:&quot;film:484585&quot;,&quot;type&quot;:&quot;film&quot;,&quot;typeName&quot;:&quot;film&quot;},&quot;posteredBaseLink&quot;:&quot;/film/the-little-drummer-girl-2018/&quot;,&quot;isAdultThemed&quot;:false,&quot;hasDefaultPoster&quot;:true,&quot;cacheBustingKey&quot;:&quot;9aa648f4&quot;}" data-empty-poster-src="https://s.ltrbxd.com/static/img/empty-poster-125-AiuBHVCI.png" data-is-linked="true" data-target-link="/film/the-little-drummer-girl-2018/" data-details-endpoint="/film/the-little-drummer-girl-2018/json/" data-show-menu="true"> <div class="poster film-poster"> <img src="https://s.ltrbxd.com/static/img/empty-poster-125-AiuBHVCI.png" class="image" width="125" height="187" alt="The Little Drummer Girl"> <span class="frame"><span class="frame-title"></span></span> </div> </div>
+
 const getFilmData = async (film) => {
-  const cacheBustingKey = film.find("div")?.attr("data-cache-busting-key");
   const title = film.find("img")?.attr("alt");
-  let titleSlug =
-    film.find("div")?.attr("data-target-link") ||
-    film.find("div")?.attr("data-film-slug");
+  const targetLink = film.find("div")?.attr("data-target-link");
+  let titleSlug = targetLink || film.find("div")?.attr("data-film-slug");
   let id = film.find("div")?.attr("data-film-id");
-  const link =
-    "https://letterboxd.com" + film.find("div")?.attr("data-target-link");
+  const link = "https://letterboxd.com" + targetLink;
+  const posterPath = targetLink; // Keep the path for poster API
 
-  let poster, year;
-  if (cacheBustingKey) {
-    const url = `https://letterboxd.com/ajax/poster${titleSlug}std/125x187/?k=${cacheBustingKey}`;
-    const ajaxResponse = await axios.get(url);
-    const $$ = cheerio.load(ajaxResponse.data);
-    let filmAux = $$(".film-poster");
-
-    poster = filmAux
-      .find("img")
-      ?.attr("src")
-      ?.replace("125-0-187", `${POSTER_WIDTH}-0-${POSTER_HEIGHT}`);
-
-    // Store the poster URL in Redis
-    const posterCacheKey = `letterboxd-poster:${titleSlug}`;
-    await setCacheValue(posterCacheKey, poster, postersTtl);
-
-    titleSlug = filmAux?.attr("data-film-link");
-    id = filmAux?.attr("data-film-id");
-
-    // Use releaseYear from JSON response
-    const detailsEndpoint = film.find("div")?.attr("data-details-endpoint");
-    if (detailsEndpoint) {
-      const detailsResponse = await axios.get(`https://letterboxd.com${detailsEndpoint}`);
-      year = detailsResponse.data?.releaseYear;
+  // Extract year from multiple sources
+  let year = null;
+  
+  // Try data-item-name first (e.g., "The Little Drummer Girl (2018)")
+  const itemName = film.find("div")?.attr("data-item-name");
+  if (itemName) {
+    const yearMatch = itemName.match(/\((\d{4})\)/);
+    if (yearMatch) {
+      year = yearMatch[1];
+    }
+  }
+  
+  // Fallback: try target link slug (e.g., "/film/the-little-drummer-girl-2018/")
+  if (!year && targetLink) {
+    const yearMatch = targetLink.match(/-(\d{4})\/?$/);
+    if (yearMatch) {
+      year = yearMatch[1];
     }
   }
 
-  return { title, year, link, poster, id, titleSlug };
+  // Don't fetch poster server-side - Letterboxd blocks server requests
+  // The frontend will fetch poster URLs directly since browsers can access them
+  let poster = null;
+
+  return { title, year, link, posterPath, poster, id, titleSlug };
 };
 
 const getFilmsCount = ($) => {
@@ -69,7 +67,7 @@ const getFilmsCount = ($) => {
 };
 
 const getPageFilms = async ($) => {
-  const filmPromises = $(".poster-container")
+  const filmPromises = $(".griditem")
     .map(async (i, el) => {
       const film = $(el);
       return getFilmData(film);
@@ -81,17 +79,7 @@ const getPageFilms = async ($) => {
 
   return films
     .filter(({ status }) => status === "fulfilled")
-    .map(async ({ value: { title, year, link, poster, id, titleSlug } }) => {
-      if (!poster) {
-        // Retrieve the poster URL from Redis
-        const posterCacheKey = `letterboxd-poster:${titleSlug}`;
-        poster = await getCacheValue(posterCacheKey);
-
-        if (!poster) {
-          poster = getPosterUrl(id, titleSlug, cacheBustingKey);
-        }
-      }
-
+    .map(({ value: { title, year, link, poster, id, titleSlug } }) => {
       return {
         title,
         year,
@@ -125,6 +113,14 @@ const fetchList = async (url, cacheKeyPrefix, req, res) => {
       } else {
         const response = await axios.get(`${url}/page/${currentPage}/`);
         const $ = cheerio.load(response.data);
+        
+        // Check if page has any films (list items in the grid)
+        const hasFilms = $(".poster-grid ul.grid li").length > 0;
+        if (!hasFilms) {
+          console.log(`Page ${url}/page/${currentPage}/ has no content, stopping pagination.`);
+          break;
+        }
+        
         if (!filmsCount) {
           filmsCount = getFilmsCount($);
           totalPages = Math.ceil(filmsCount / filmsPerPage);
