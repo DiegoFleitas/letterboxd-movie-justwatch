@@ -41,63 +41,80 @@ export const searchMovie = async (req, res) => {
     }
 
     const tmdbId = movieDbData.id;
+    const tmdbPoster = movieDbData.poster_path 
+      ? `https://image.tmdb.org/t/p/w500${movieDbData.poster_path}`
+      : null;
 
-    const query = `
-      query GetSuggestedTitles($country: Country!, $language: Language!, $first: Int!, $filter: TitleFilter) {
-        popularTitles(country: $country, first: $first, filter: $filter) {
-          edges {
-            node {
-              id
-              objectType
-              objectId
-              content(country: $country, language: $language) {
-                fullPath
-                title
-                originalReleaseYear
-                posterUrl
-                fullPath
-                scoring {
-                  imdbScore
+    let justWatchResponse;
+    try {
+      const query = `
+        query GetSuggestedTitles($country: Country!, $language: Language!, $first: Int!, $filter: TitleFilter) {
+          popularTitles(country: $country, first: $first, filter: $filter) {
+            edges {
+              node {
+                id
+                objectType
+                objectId
+                content(country: $country, language: $language) {
+                  fullPath
+                  title
+                  originalReleaseYear
+                  posterUrl
+                  fullPath
+                  scoring {
+                    imdbScore
+                    __typename
+                  }
+                  externalIds {
+                    imdbId
+                    tmdbId
+                    __typename
+                  }
                   __typename
                 }
-                externalIds {
-                  imdbId
-                  tmdbId
-                  __typename
+                offers(country: $country, platform: WEB) {
+                  monetizationType
+                  availableToTime
+                  availableFromTime
+                  standardWebURL
+                  package {
+                    clearName
+                    technicalName
+                    icon
+                  }
                 }
                 __typename
-              }
-              offers(country: $country, platform: WEB) {
-                monetizationType
-                availableToTime
-                availableFromTime
-                standardWebURL
-                package {
-                  clearName
-                  technicalName
-                  icon
-                }
               }
               __typename
             }
             __typename
           }
-          __typename
         }
-      }
-    `;
+      `;
 
-    const variables = {
-      country: country,
-      language: language,
-      first: 4,
-      filter: { searchQuery: title },
-    };
+      const variables = {
+        country: country,
+        language: language,
+        first: 4,
+        filter: { searchQuery: title },
+      };
 
-    const justWatchResponse = await axios.post(
-      `${PROXY}https://apis.justwatch.com/graphql`,
-      { query, variables }
-    );
+      justWatchResponse = await axios.post(
+        `${PROXY}https://apis.justwatch.com/graphql`,
+        { query, variables }
+      );
+    } catch (error) {
+      console.error(`JustWatch API error for ${title}:`, error.message);
+      // Return TMDB poster even if JustWatch fails
+      const response = {
+        error: "JustWatch API unavailable",
+        title: movieDbData.title || title,
+        year: movieDbData.release_date?.substring(0, 4) || year,
+        poster: tmdbPoster,
+      };
+      await setCacheValue(cacheKey, response, cacheTtl);
+      return res.json(response);
+    }
 
     const edges = justWatchResponse.data.data.popularTitles.edges;
     const movieData = edges.find(
@@ -105,17 +122,29 @@ export const searchMovie = async (req, res) => {
     );
 
     if (!movieData) {
-      const response = { error: "Movie not found", title: title, year: year };
+      // Movie not in JustWatch, return TMDB poster at least
+      const response = { 
+        error: "Movie not found in JustWatch", 
+        title: movieDbData.title || title, 
+        year: movieDbData.release_date?.substring(0, 4) || year,
+        poster: tmdbPoster
+      };
       await setCacheValue(cacheKey, response, cacheTtl);
       return res.json(response);
     }
+
+    // Extract poster - prefer JustWatch, fallback to TMDB
+    const poster = movieData.node.content.posterUrl 
+      ? `https://images.justwatch.com${movieData.node.content.posterUrl.replace("{profile}", "s592").replace("{format}", "jpg")}`
+      : tmdbPoster;
 
     const noStreamingServicesResponse = {
       error:
         `No streaming services offering this movie on your country (${country})<br>
         <small>pssst! try clicking pirate flags like these 🏴‍☠️</small>`,
-      title,
-      year,
+      title: movieData.node.content.title,
+      year: movieData.node.content.originalReleaseYear,
+      poster,
     };
 
     if (!movieData.node.offers || !movieData.node.offers.length) {
@@ -138,6 +167,7 @@ export const searchMovie = async (req, res) => {
       movieProviders: providers,
       title: movieData.node.content.title,
       year: movieData.node.content.originalReleaseYear,
+      poster,
     };
 
     await setCacheValue(cacheKey, responsePayload, cacheTtl);
