@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Filter Test</title>
+  <style>
+    .poster { border: 1px solid #ccc; margin: 10px; padding: 10px; }
+    .poster[style*="display: none"] { border-color: red; }
+  </style>
+</head>
+<body>
+  <h1>Filter Test</h1>
+  <div id="test-output"></div>
+  <div class="poster-showcase"></div>
+  <div id="icons-container-main"></div>
+
+  <script type="module">
+    import STATE from '/src/state.js';
+    import { rebuildMovieMosaic, filterTiles } from '/src/movieTiles.js';
+    
+    const output = document.getElementById('test-output');
+    
+    function log(msg) {
+      const p = document.createElement('p');
+      p.textContent = msg;
+      output.appendChild(p);
+    }
+    
+    async function runTest() {
+      log('=== Starting Filter Test ===');
+      
+      // Simulate watchlist load
+      const watchlist = [
+        { title: "Her Private Hell", year: null, link: "https://letterboxd.com/film/her-private-hell-1/" },
+        { title: "The Greatest Hits", year: "2024", link: "https://letterboxd.com/film/the-greatest-hits/" },
+        { title: "Lake Mungo", year: "2008", link: "https://letterboxd.com/film/lake-mungo/" },
+      ];
+      
+      log('Step 1: Creating tiles');
+      for (const item of watchlist) {
+        rebuildMovieMosaic(item.title, item.year, { 
+          poster: "/movie_placeholder.svg", 
+          link: item.link 
+        });
+      }
+      
+      log(`STATE has ${Object.keys(STATE.movieTiles).length} tiles`);
+      log(`DOM has ${document.querySelectorAll('.poster').length} tiles`);
+      
+      // Wait a bit for DOM updates
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      log('Step 2: Simulating search results');
+      const searchResults = [
+        { title: "Her Private Hell", year: "2026", link: "https://letterboxd.com/film/her-private-hell-1/", movieProviders: [] },
+        { title: "The Greatest Hits", year: "2024", link: "https://letterboxd.com/film/the-greatest-hits/", movieProviders: [{ id: "337", name: "Disney Plus", icon: "icon.jpg", url: "https://..." }] },
+        { title: "Lake Mungo", year: "2009", link: "https://letterboxd.com/film/lake-mungo/", movieProviders: [] },
+      ];
+      
+      for (const result of searchResults) {
+        rebuildMovieMosaic(result.title, result.year, result);
+      }
+      
+      log(`STATE has ${Object.keys(STATE.movieTiles).length} tiles after search`);
+      log(`IDs: ${Object.keys(STATE.movieTiles).join(', ')}`);
+      
+      // Check each tile
+      for (const [id, data] of Object.entries(STATE.movieTiles)) {
+        const hasProviders = Array.isArray(data.movieProviders);
+        const count = data.movieProviders?.length || 0;
+        log(`  ${id}: ${data.title} - ${count} providers, array=${hasProviders}`);
+      }
+      
+      // Create a fake active filter icon
+      log('Step 3: Creating filter icon and activating it');
+      const filterIcon = document.createElement('div');
+      filterIcon.classList.add('active');
+      filterIcon.dataset.sp = 'Disney Plus';
+      document.getElementById('icons-container-main').appendChild(filterIcon);
+      
+      log('Step 4: Running filterTiles()');
+      filterTiles();
+      
+      // Check visibility
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      log('Step 5: Checking tile visibility');
+      const tiles = document.querySelectorAll('.poster');
+      let visibleCount = 0;
+      tiles.forEach(tile => {
+        const id = tile.getAttribute('data-id');
+        const isHidden = tile.style.display === 'none';
+        const tileData = STATE.movieTiles[id];
+        if (!isHidden) visibleCount++;
+        log(`  ${id} (${tileData?.title}): ${isHidden ? 'HIDDEN' : 'VISIBLE'}`);
+      });
+      
+      log('=== Results ===');
+      log(`Total tiles: ${tiles.length}`);
+      log(`Visible tiles: ${visibleCount}`);
+      log(`Expected visible: 1 (The Greatest Hits)`);
+      log(`Test ${visibleCount === 1 ? 'PASSED ✓' : 'FAILED ✗'}`);
+    }
+    
+    runTest().catch(err => {
+      log('ERROR: ' + err.message);
+      console.error(err);
+    });
+  </script>
+</body>
+</html>
