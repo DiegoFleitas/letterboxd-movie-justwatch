@@ -1,0 +1,69 @@
+.select2-hidden-accessible {
+  position: absolute !important;
+  width: 1px !important;
+  overflow: hidden !important;
+}
+/* Select2 plugin styles */
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+  color: #fff !important;
+}
+.select2-container--default .select2-results__option--highlighted,
+.select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
+  background: transparent !important;
+  color: #fff !important;
+}
+.select2-container--default .select2-selection--single {
+  border: 1.5px solid #232a36 !important;
+  background: #111924 !important;
+}
+.select2-container--default .select2-dropdown {
+  border: 1.5px solid #232a36 !important;
+}
+.select2-search--dropdown {
+  background: #111924 !important;
+}
+.select2-search--dropdown .select2-search__field {
+  background: #111924 !important;
+  color: #78a6b8 !important;
+  border: 1.5px solid #232a36 !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__rendered:not([title]) {
+  color: #78a6b8 !important;
+}
+.select2-container--default .select2-results__option {
+  color: #78a6b8 !important;
+  background: transparent !important;
+}
+.select2-container--default .select2-results__option[aria-selected="true"] {
+  color: #fff !important;
+  background: transparent !important;
+}
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+  color: #fff !important;
+  background: transparent !important;
+}
+.select2-container--default .select2-results__option--highlighted[aria-selected],
+.select2-container--default .select2-results__option[aria-selected="true"] {
+  color: #fff !important;
+}
+.select2-container {
+  width: auto !important;
+}
+.select2-selection__arrow * {
+  left: calc(100% - 10px) !important;
+}
+.select2-container--default .select2-dropdown {
+  background-color: #060d17 !important;
+}
+.select2-container--default .select2-results__option {
+  display: inline-block;
+  width: auto;
+  height: 60px;
+  margin: 4px;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: top;
+  padding: 8px;
+}

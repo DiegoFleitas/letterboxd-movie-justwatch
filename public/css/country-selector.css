@@ -1,0 +1,102 @@
+/* Country selector styles */
+#country-selector {
+  position: relative;
+  width: 260px;
+  margin: 0 auto 1.5rem auto;
+  font-size: 1.1rem;
+  z-index: 100;
+}
+.country-selected {
+  display: flex;
+  align-items: center;
+  background: #10161d;
+  border-radius: 12px;
+  padding: 0.7em 1em;
+  cursor: pointer;
+  border: 2px solid #232a36;
+  transition: border 0.2s;
+}
+.country-selected:focus, .country-selected:hover {
+  border: 2px solid #fbc500;
+}
+.country-flag {
+  width: 28px;
+  height: 20px;
+  border-radius: 4px;
+  margin-right: 0.7em;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+}
+.country-name {
+  flex: 1;
+  color: #78a6b8;
+  font-weight: 500;
+}
+.country-arrow {
+  color: #aaa;
+  margin-left: 0.5em;
+  font-size: 1.1em;
+}
+.country-modal {
+  position: absolute;
+  top: 110%;
+  left: 0;
+  width: 100%;
+  background: #111924;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+  padding: 1em 0.5em 0.5em 0.5em;
+  z-index: 999;
+  max-height: 340px;
+  overflow-y: auto;
+}
+.country-modal-header {
+  color: #fff;
+  font-size: 1.1em;
+  font-weight: 700;
+  margin-bottom: 0.7em;
+  padding-left: 0.2em;
+}
+.country-search {
+  width: 100%;
+  padding: 0.5em 1em;
+  border-radius: 8px;
+  border: 1.5px solid #232a36;
+  background: #10161d;
+  color: #fff;
+  margin-bottom: 0.7em;
+  font-size: 1em;
+}
+.country-list {
+  max-height: 200px;
+  overflow-y: auto;
+  background: #111924;
+  border-radius: 8px;
+}
+.country-list-item {
+  display: flex;
+  align-items: center;
+  padding: 0.5em 0.7em;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-bottom: 2px;
+  background: #060d17;
+  color: #78a6b8;
+}
+.country-list-item.selected, .country-list-item:hover {
+  background: #232a36;
+}
+.country-list-item.selected .country-name,
+.country-list-item:hover .country-name {
+  color: #fff;
+}
+.country-list-item .country-flag {
+  margin-right: 0.7em;
+}
+.country-list-item .country-name {
+  color: #78a6b8;
+  font-weight: 500;
+}
+#country-selector.open .country-modal {
+  display: block !important;
+}

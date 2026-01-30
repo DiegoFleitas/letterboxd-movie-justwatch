@@ -1,3 +1,24 @@
+// --- Tabs for Movie vs List ---
+document.addEventListener("DOMContentLoaded", () => {
+  const tabMovie = document.getElementById("tab-movie");
+  const tabList = document.getElementById("tab-list");
+  const movieForm = document.getElementById("movie-form");
+  const listForm = document.getElementById("letterboxd-form");
+  if (tabMovie && tabList && movieForm && listForm) {
+    tabMovie.addEventListener("click", () => {
+      tabMovie.classList.add("active");
+      tabList.classList.remove("active");
+      movieForm.classList.add("is-active");
+      listForm.classList.remove("is-active");
+    });
+    tabList.addEventListener("click", () => {
+      tabList.classList.add("active");
+      tabMovie.classList.remove("active");
+      movieForm.classList.remove("is-active");
+      listForm.classList.add("is-active");
+    });
+  }
+});
 import { toggleNotice } from "./noticeFunctions.js";
 import { showMessage } from "./showMessage.js";
 import { showError } from "./showError.js";
@@ -24,10 +45,11 @@ window.hideSpinner = (img) => {
 const form = document.getElementById("movie-form");
 
 form.addEventListener("submit", (event) => {
-  event.preventDefault(); // Prevent the form from submitting normally
+  event.preventDefault();
   const formData = new FormData(event.target);
   const data = Object.fromEntries(formData.entries());
-  data.country = document.querySelector("#country1").value;
+  // Use global region selector
+  data.country = document.querySelector("#country-global").value;
 
   fetch("/api/search-movie", {
     method: "POST",
@@ -65,6 +87,9 @@ letterboxForm.addEventListener("submit", async (event) => {
   const formData = new FormData(event.target);
   let data = Object.fromEntries(formData.entries());
   let { listUrl } = data;
+
+  // Use global region selector
+  data.country = document.querySelector("#country-global").value;
 
   if (!listUrl) {
     showError("Please enter a valid URL");
@@ -133,8 +158,11 @@ const processList = async (data, responseData, url) => {
           });
       }
 
+
       let movieData = { title, year };
-      movieData.country = document.querySelector("#country2").value;
+      // Use global region selector (fixes null error)
+      const globalCountry = document.querySelector("#country-global");
+      movieData.country = globalCountry ? globalCountry.value : "";
 
       fetch("/api/search-movie", {
         method: "POST",
@@ -338,15 +366,24 @@ $(document).ready(() => {
       $("#title").val(event.target.value);
     });
 
+  $(".country").each(function() {
+    const select = $(this);
+    select.empty();
+    countries.forEach(country => {
+      select.append(
+        `<option value="${country.id}"${country.selected ? ' selected' : ''}>${country.flag} ${country.text}</option>`
+      );
+    });
+  });
+
   $(".country")
     .select2({
       dropdownAutoWidth: true,
-      data: countries || [],
       templateSelection: (data) => {
-        return `${data.flag} ${data.id.split("_")[1]}`;
+        return `${data.text}`;
       },
       templateResult: (data) => {
-        return `${data.flag}`;
+        return `${data.text}`;
       },
       matcher: (params, data) => {
         if ($.trim(params.term) === "") {

@@ -1,0 +1,121 @@
+.global-country-selector {
+  margin-bottom: 1.1rem;
+}
+.twitter-typeahead {
+  display: block !important;
+  width: 100%;
+}
+/* Form and input styles */
+form {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin: 0.625rem 0;
+  padding: 1em;
+  width: 100%;
+  max-width: 100vw;
+  box-sizing: border-box;
+}
+input[type="text"],
+select {
+  text-align: center;
+  justify-content: center;
+  margin: 1rem 0;
+  padding: 0.85rem 1rem;
+  font-size: 1.15rem;
+  border-radius: 0.75rem;
+  border: 1.5px solid #222c38;
+  color: #f3f3f3;
+  background-color: #10161d;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  transition: border 0.2s, box-shadow 0.2s;
+}
+input[type="text"]:focus,
+select:focus {
+  outline: none;
+  border: 1.5px solid #fbc500;
+  box-shadow: 0 2px 8px rgba(251,197,0,0.10);
+  background-color: #181f29;
+  color: #fff;
+}
+#year:focus::placeholder {
+  color: transparent;
+}
+#movie-form {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+}
+#movie-form input[type="text"],
+#movie-form select,
+#movie-form span,
+#letterboxd-form input[type="text"],
+#letterboxd-form select {
+  box-sizing: border-box;
+  width: 100%;
+}
+label {
+  text-align: left;
+  margin-right: 0.625rem;
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #eaeaea;
+  letter-spacing: 0.01em;
+}
+
+/* Typeahead/tt-menu styles moved from style.css */
+.tt-menu {
+  background: #10161d;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 12px;
+  box-shadow: 0 18px 48px rgba(0,0,0,.6);
+  overflow: hidden;
+  z-index: 9999;
+}
+
+.twitter-typeahead { position: relative; }
+
+.tt-suggestion {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+
+  padding: 10px 12px;
+  margin: 0;
+  background: #10161d;
+  color: #e5e7eb;
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.tt-suggestion + .tt-suggestion {
+  border-top: 1px solid rgba(255,255,255,.06);
+}
+
+.tt-suggestion:hover,
+.tt-suggestion.tt-cursor {
+  background: #17202b;
+}
+
+.tt-suggestion img {
+  width: 44px;
+  height: 66px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex: 0 0 auto;
+}
+
+.tt-suggestion .title {
+  font-weight: 700;
+  color: #f9fafb;
+}
+
+.tt-suggestion .meta {
+  margin-top: 2px;
+  font-size: 12px;
+  color: rgba(229,231,235,.75);
+}
