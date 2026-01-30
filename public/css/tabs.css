@@ -1,0 +1,35 @@
+.tab-pane {
+  display: none;
+}
+.tab-pane.is-active {
+  display: block;
+}
+/* Tabs and tab content styles */
+.search-tabs {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 2rem;
+  gap: 1.5rem;
+}
+.tab-btn {
+  background: #232a36;
+  color: #ffe066;
+  border: none;
+  border-radius: 1.2rem 1.2rem 0 0;
+  padding: 0.8rem 2.2rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+  outline: none;
+}
+.tab-btn.active {
+  background: #ffe066;
+  color: #10161d;
+  box-shadow: 0 2px 12px rgba(251,197,0,0.10);
+  z-index: 2;
+}
+.tab-content {
+  width: 100%;
+}

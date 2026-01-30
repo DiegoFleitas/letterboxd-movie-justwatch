@@ -1,0 +1,40 @@
+/* Utility classes and miscellaneous styles */
+.spoiler {
+  color: black;
+  background-color: black;
+}
+.spoiler:hover {
+  color: white;
+}
+.list-group-item {
+  border: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+}
+.list-group-item:hover {
+  background-color: #242a30;
+  color: #999;
+}
+.list-group-item img {
+  margin-right: 10px;
+}
+.list-group-item div {
+  flex: 1;
+}
+.username-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+}
+.submit-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  margin: 2.5rem 0 1.5rem 0;
+}
+.submit-container * {
+  display: flex;
+}

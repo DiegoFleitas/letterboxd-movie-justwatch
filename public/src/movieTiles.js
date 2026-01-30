@@ -178,27 +178,26 @@ const updateTile = (tile, data) => {
   const providersElem = updateTileProviders(data);
   const providerNames = movieProviders.map((provider) => provider.name);
   tile.innerHTML = `
-    <a href="${link}" target="_blank">
-      <img class="spinner" src="spinner-min.svg" alt="Spinner">
+    <a href="${link}" class="poster-link" target="_blank" tabindex="0" aria-label="${data.title} (${data.year})">
       ${
         poster
-          ? `<img src="${poster}" onload="hideSpinner(this)" alt="${data.title} Poster">`
-          : ""
+          ? `<img class="spinner" src="spinner-min.svg" alt="Loading...">` +
+            `<img src="${poster}" onload="hideSpinner(this)" alt="${data.title} Poster">`
+          : `<div class="poster-skeleton"></div>`
       }
-    </a>
-    <div class="poster-info">
-      <h2 class="poster-title">${data.title}</h2>
-      ${data.year ? `<p class="poster-release-date">Release Date: ${data.year}</p>` : ""}
-      <p class="streaming-services" style="display:none">${providerNames.join(
-        " / "
-      )}</p>
-      <div class="poster-providers">
-        ${providersElem.innerHTML}
-        <div class="tile-icons" data-sp="alternative-search-tile">
-          <img onclick="alternativeSearch(event)" src="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏴‍☠️</text></svg>" alt="alternative search">
+      <div class="poster-gradient"></div>
+      <div class="poster-info">
+        <h2 class="poster-title">${data.title}</h2>
+        ${data.year ? `<p class="poster-release-date">${data.year}</p>` : ""}
+        <p class="streaming-services" style="display:none">${providerNames.join(" / ")}</p>
+        <div class="poster-providers">
+          ${providersElem.innerHTML}
+          <div class="tile-icons" data-sp="alternative-search-tile">
+            <img onclick="alternativeSearch(event)" src="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏴‍☠️</text></svg>" alt="alternative search">
+          </div>
         </div>
       </div>
-    </div>
+    </a>
   `;
   const proxy = "https://click.justwatch.com/a?r=";
   tile.querySelectorAll("[data-url]").forEach((element) => {
