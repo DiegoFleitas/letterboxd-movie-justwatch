@@ -1,0 +1,59 @@
+/* Miscellaneous styles */
+img.logo {
+  top: 0;
+  right: 0;
+  padding: 2em;
+}
+.diagonal-text-container {
+  content: "Movie";
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: rotate(-45deg);
+  font-size: 2em;
+  font-weight: bold;
+  color: #a11818;
+  z-index: 1;
+}
+#icons-container-main {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+}
+#icons-container-main img {
+  width: 50px;
+  height: 50px;
+  margin: 10px 5px;
+  cursor: pointer;
+  border-radius: 5px;
+}
+.streaming-provider-icon {
+  opacity: 0.2;
+}
+.streaming-provider-icon.active {
+  opacity: 1;
+}
+#minecraft-text {
+  font-family: "Minecraft", sans-serif;
+  text-align: center;
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto 0.5rem auto;
+  color: #ffe066;
+  text-shadow: 1px 1px #000000;
+  animation: float 2s infinite ease-in-out;
+  font-size: 0.95rem;
+  line-height: 1.2;
+  font-weight: 400;
+  opacity: 0.6;
+}
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(15%);
+  }
+}

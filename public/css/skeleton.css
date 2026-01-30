@@ -9,6 +9,15 @@
   margin-bottom: 0.5rem;
   display: block;
 }
-
-/* All styles have been migrated to /public/css/*.css files. This file is now empty and can be deleted. */
-
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+.spinner {
+  min-width: 230px;
+  min-height: 345px;
+}
