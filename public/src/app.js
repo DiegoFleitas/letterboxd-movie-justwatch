@@ -4,19 +4,24 @@ document.addEventListener("DOMContentLoaded", () => {
   const tabList = document.getElementById("tab-list");
   const movieForm = document.getElementById("movie-form");
   const listForm = document.getElementById("letterboxd-form");
-  if (tabMovie && tabList && movieForm && listForm) {
+  const tabContent = document.querySelector(".tab-content");
+  if (tabMovie && tabList && movieForm && listForm && tabContent) {
     tabMovie.addEventListener("click", () => {
       tabMovie.classList.add("active");
       tabList.classList.remove("active");
       movieForm.classList.add("is-active");
       listForm.classList.remove("is-active");
+      tabContent.classList.add("active-section");
     });
     tabList.addEventListener("click", () => {
       tabList.classList.add("active");
       tabMovie.classList.remove("active");
       movieForm.classList.remove("is-active");
       listForm.classList.add("is-active");
+      tabContent.classList.add("active-section");
     });
+    // Set initial state
+    tabContent.classList.add("active-section");
   }
 });
 import { toggleNotice } from "./noticeFunctions.js";
