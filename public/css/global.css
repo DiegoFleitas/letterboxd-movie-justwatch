@@ -1,9 +1,9 @@
+@import url('https://fonts.googleapis.com/css?family=Lato:400,700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap");
 html, body {
   overflow-x: hidden;
 }
 /* Global styles, fonts, and utility classes */
-@import url('https://fonts.googleapis.com/css?family=Lato:400,700&display=swap');
-@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap");
 html, body {
   background-color: #060d17;
   color: #d9e8ed;
