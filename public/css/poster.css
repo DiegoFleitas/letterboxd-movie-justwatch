@@ -23,9 +23,9 @@
 }
 .poster {
   position: relative;
-  background: #10161d;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
   overflow: hidden;
   padding: 0;
   display: flex;
@@ -35,7 +35,7 @@
   cursor: pointer;
 }
 .poster:hover {
-  box-shadow: 0 6px 24px rgba(251,197,0,0.13);
+  box-shadow: 0 6px 24px rgba(242, 183, 5, 0.25);
   transform: translateY(-2px) scale(1.02);
 }
 .poster-link {
@@ -78,7 +78,7 @@
   margin: 0 0 0.2rem 0;
   font-size: 1.15rem;
   font-weight: 800;
-  color: #ffe066;
+  color: var(--color-accent-soft);
   text-align: left;
   letter-spacing: 0.01em;
   line-height: 1.2;
