@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useAppState } from "./AppStateContext.jsx";
 import { countries, generes } from "./consts.js";
+import { CountrySelector } from "./CountrySelector.jsx";
 
 const TMDB_DEBOUNCE_MS = 120;
 const TMDB_MIN_LENGTH = 2;
@@ -105,21 +106,7 @@ export function LeftPanel() {
   return (
     <article>
       <div className="country-selector-container global-country-selector">
-        <select
-          id="country-global"
-          className="country"
-          name="country"
-          aria-label="User country selection"
-          data-testid="country-selector"
-          value={country}
-          onChange={(e) => setCountry(e.target.value)}
-        >
-          {countries.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.flag} {c.text}
-            </option>
-          ))}
-        </select>
+        <CountrySelector value={country} onChange={setCountry} />
       </div>
       <div className="search-tabs">
         <button
@@ -215,13 +202,13 @@ export function LeftPanel() {
             onChange={(e) => setMovieYear(e.target.value)}
           />
           <div className="submit-container">
-            <button type="submit" data-testid="movie-submit">
+            <button type="submit" className="btn btn-primary" data-testid="movie-submit">
               Search
             </button>
           </div>
           <button
             type="button"
-            className={`alternative-search btn-grad ${showAltSearchButton ? "" : "hide-alternative-search"}`}
+            className={`alternative-search btn btn-secondary ${showAltSearchButton ? "" : "hide-alternative-search"}`}
             aria-label="Alternative search button"
             data-testid="alternative-search-btn"
             onClick={handleAlternativeSearch}
@@ -251,7 +238,11 @@ export function LeftPanel() {
               />
             </div>
             <div className="submit-container">
-              <button type="submit" data-testid="list-submit">
+              <button
+                type="submit"
+                className="btn btn-primary"
+                data-testid="list-submit"
+              >
                 Submit
               </button>
             </div>
