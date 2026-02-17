@@ -34,3 +34,30 @@ a {
   --ss-primary-color: #10161d;
   --ss-border-color: #222c38;
 }
+
+/* React-hot-toast: match app dark theme */
+.toaster-container > div {
+  background: #10161d;
+  color: #d9e8ed;
+  border: 1px solid #222c38;
+  border-radius: 12px;
+  box-shadow: 0 18px 48px rgba(0,0,0,.6);
+}
+.toaster-container .app-toast div {
+  white-space: pre-line;
+}
+.app-toast-link {
+  display: block;
+  padding: 12px 16px;
+  background: #10161d;
+  color: #d9e8ed;
+  border: 1px solid #222c38;
+  border-radius: 12px;
+  text-decoration: none;
+  font-family: inherit;
+  box-shadow: 0 18px 48px rgba(0,0,0,.6);
+}
+.app-toast-link:hover {
+  border-color: #fbc500;
+  color: #fbc500;
+}

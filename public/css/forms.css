@@ -119,3 +119,36 @@ label {
   font-size: 12px;
   color: rgba(229,231,235,.75);
 }
+
+/* React movie typeahead (reuses tt-menu / tt-suggestion look) */
+.twitter-typeahead {
+  position: relative;
+  width: 100%;
+}
+.movie-suggestions {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  margin: 0.25rem 0 0;
+  padding: 0;
+  list-style: none;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.typeahead-loading {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  color: rgba(229,231,235,.6);
+  pointer-events: none;
+}
+.typeahead-poster-placeholder {
+  width: 44px;
+  height: 66px;
+  border-radius: 8px;
+  background: rgba(255,255,255,.06);
+  flex: 0 0 auto;
+}

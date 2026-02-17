@@ -13,21 +13,8 @@
     <link href="/css/buttons.css" rel="stylesheet" />
     <link href="/css/skeleton.css" rel="stylesheet" />
     <link href="/css/utilities.css" rel="stylesheet" />
-    <link href="/css/select2.css" rel="stylesheet" />
     <link href="/css/misc.css" rel="stylesheet" />
-    <link
-      href="https://unpkg.com/izitoast@1.4.0/dist/css/iziToast.css"
-      rel="stylesheet"
-    />
     <link href="https://fonts.cdnfonts.com/css/minecraft-3" rel="stylesheet">
-    <script src="https://unpkg.com/jquery@3.6.4/dist/jquery.min.js"></script>
-    <script src="https://unpkg.com/corejs-typeahead@1.3.1/dist/typeahead.bundle.min.js"></script>
-    <script src="https://unpkg.com/izitoast@1.4.0/dist/js/iziToast.js"></script>
-    <script src="https://unpkg.com/select2@4.1.0-rc.0/dist/js/select2.js"></script>
-    <link
-      href="https://unpkg.com/select2@4.1.0-rc.0/dist/css/select2.css"
-      rel="stylesheet"
-    />
     <link
       href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/css/flag-icon.min.css"
       rel="stylesheet"
@@ -42,113 +29,10 @@
           right: 0;
           padding: 5px;
       }
-  </style>
+    </style>
 
-    <div class="wrapper">
-      <!-- Left: Search Card (fixed width) -->
-      <div class="left-panel">
-        <!-- Playful header text moved to footer -->
-        <article>
-          <!-- Grouped region selector + tabs -->
-          <div class="country-selector-container global-country-selector">
-            <select
-              id="country-global"
-              class="country"
-              name="country"
-              aria-label="User country selection"
-            ></select>
-          </div>
-          <div class="search-tabs">
-            <button class="tab-btn active" id="tab-movie" type="button">Movie</button>
-            <button class="tab-btn" id="tab-list" type="button">List</button>
-          </div>
-          <div class="tab-content">
-            <form id="movie-form" class="tab-pane is-active">
-              <h3>Search a specific movie...</h3>
-              <label for="title">Movie Title:</label>
-              <input
-                type="text"
-                id="movie-input"
-                list="movie-suggestions"
-                placeholder="Jurassic Park"
-                required
-              />
-              <input
-                type="text"
-                id="title"
-                name="title"
-                required
-                style="display: none"
-              />
-              <label for="year">Release year:</label>
-              <input
-                type="text"
-                id="year"
-                name="year"
-                placeholder="1993"
-                required
-                aria-label="Movie release year input"
-              />
-              <div class="submit-container">
-                <button type="submit">Search</button>
-              </div>
-              <button
-                onclick="alternativeSearch(event)"
-                class="alternative-search hide-alternative-search btn-grad"
-                aria-label="Alternative search button"
-              >
-                Torrent search 🏴‍☠️
-              </button>
-            </form>
-            <form id="letterboxd-form" enctype="multipart/form-data" class="tab-pane">
-              <h3>...or a Letterboxd list</h3>
-              <div>
-                <div class="url-container">
-                  <input
-                    id="list-url"
-                    name="listUrl"
-                    type="text"
-                    placeholder="https://letterboxd.com/username/watchlist/"
-                    required
-                    aria-label="Letterboxd list URL input"
-                  />
-                </div>
-                <div class="submit-container">
-                  <button type="submit">Submit</button>
-                </div>
-              </div>
-            </form>
-          </div>
-        </article>
-      </div>
+    <div id="root"></div>
 
-      <!-- Right: Results/Recent/Help -->
-      <div class="right-panel">
-        <div id="icons-container-main"></div>
-        <div class="poster-showcase"></div>
-        <!-- TODO: Add recent searches/help panel here -->
-        <footer>
-          <div id="minecraft-text">Try Sonarr & mal-list-sonarr!</div>
-          <p class="foot-notes">
-            This site helps you find where to watch <u>Movies</u>, not TV shows.
-            It checks everything with JustWatch & TMDB & OMDb API to make sure
-            it's accurate. If it can't find the movie you want, it won't suggest
-            random stuff. <br>
-            Oh! & <i>don't download from torrent sites because it's not
-            cool with copyright laws or smt like that. 
-            Even if the movie you want to watch is not available in any other way,
-            or if the streaming providers offer it but butcher the movie with <u>bad dubbing & no subs!!</u></i>
-          </p>
-          <p class="foot-notes spoiler">
-            <span class="icons" style="display:block;text-align:center;font-size:1.3em;">🏴‍☠️🏴‍☠️🏴‍☠️</span>
-            It uses Jackett API to search for torrents on 1337x, RARBG, etc.
-            <span class="icons" style="display:block;text-align:center;font-size:1.3em;">🏴‍☠️🏴‍☠️🏴‍☠️</span>
-          </p>
-        </footer>
-      </div>
-    </div>
-
-    <!-- vite handles the rest! -->
-    <script src="/src/app.js" type="module"></script>
+    <script src="/src/main.jsx" type="module"></script>
   </body>
 </html>
