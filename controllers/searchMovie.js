@@ -140,8 +140,7 @@ export const searchMovie = async (req, res) => {
 
     const noStreamingServicesResponse = {
       error:
-        `No streaming services offering this movie on your country (${country})<br>
-        <small>pssst! try clicking pirate flags like these 🏴‍☠️</small>`,
+        `No streaming services offering this movie on your country (${country})\n\npssst! try clicking pirate flags like these 🏴‍☠️`,
       title: movieData.node.content.title,
       year: movieData.node.content.originalReleaseYear,
       poster,
