@@ -116,6 +116,12 @@ export function LeftPanel() {
           data-testid="tab-movie"
           onClick={() => setActiveTab("movie")}
         >
+          <span className="tab-btn-icon" aria-hidden>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="4" width="20" height="16" rx="2" />
+              <path d="M10 9l5 3-5 3V9z" />
+            </svg>
+          </span>
           Movie
         </button>
         <button
@@ -125,6 +131,16 @@ export function LeftPanel() {
           data-testid="tab-list"
           onClick={() => setActiveTab("list")}
         >
+          <span className="tab-btn-icon" aria-hidden>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="8" y1="6" x2="21" y2="6" />
+              <line x1="8" y1="12" x2="21" y2="12" />
+              <line x1="8" y1="18" x2="21" y2="18" />
+              <line x1="3" y1="6" x2="3.01" y2="6" />
+              <line x1="3" y1="12" x2="3.01" y2="12" />
+              <line x1="3" y1="18" x2="3.01" y2="18" />
+            </svg>
+          </span>
           List
         </button>
       </div>
@@ -208,7 +224,8 @@ export function LeftPanel() {
           </div>
           <button
             type="button"
-            className={`alternative-search btn btn-secondary ${showAltSearchButton ? "" : "hide-alternative-search"}`}
+            className={`alternative-search btn ${showAltSearchButton ? "" : "hide-alternative-search"}`}
+            style={{ backgroundColor: "#000" }}
             aria-label="Alternative search button"
             data-testid="alternative-search-btn"
             onClick={handleAlternativeSearch}

@@ -91,13 +91,12 @@ button.alternative-search {
   letter-spacing: 0.02em;
   display: block;
   transition: background 0.18s, box-shadow 0.18s, transform 0.12s, color 0.18s;
-  background-color: transparent;
+  background: #000;
   color: var(--color-text);
-  border: 1px solid var(--color-border);
 }
 
 button.alternative-search:hover {
-  background-color: rgba(43, 52, 64, 0.9);
+  background: #111;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
   transform: translateY(-1px);
 }
@@ -115,7 +114,18 @@ button:disabled {
 
 .alternative-search {
   cursor: pointer;
-  background-color: #000000;
+  background: #000;
   color: var(--color-text);
-  border: 1px solid var(--color-border);
+}
+
+/* Force black for Torrent search (override any cascade) */
+.left-panel form button.alternative-search.btn,
+button.alternative-search.btn {
+  background: #000 !important;
+  background-color: #000 !important;
+}
+.left-panel form button.alternative-search.btn:hover,
+button.alternative-search.btn:hover {
+  background: #111 !important;
+  background-color: #111 !important;
 }
