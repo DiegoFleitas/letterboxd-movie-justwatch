@@ -44,4 +44,4 @@ You can also use redis-cli to connect to flyio redis upstash instance
 
 ## Gotchas
 
-- When running `npm run fly:deploy` the contents of .env are used. Therefore, if you set up local redis, the redis connection will fail when deployed.
+- When running `pnpm run fly:deploy` the contents of .env are used. Therefore, if you set up local redis, the redis connection will fail when deployed.
