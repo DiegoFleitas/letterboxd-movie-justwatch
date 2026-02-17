@@ -80,7 +80,10 @@ export function MovieTile({ data, onAlternativeSearch }) {
                   if (onAlternativeSearch) onAlternativeSearch(data);
                 }}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
+                  if (e.key === "Enter") {
+                    e.stopPropagation();
+                    if (onAlternativeSearch) onAlternativeSearch(data);
+                  } else if (e.key === " ") {
                     e.preventDefault();
                     e.stopPropagation();
                     if (onAlternativeSearch) onAlternativeSearch(data);
