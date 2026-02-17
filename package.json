@@ -19,12 +19,12 @@
     "start": "node server.js",
     "build": "npx vite build",
     "dev": "concurrently \"pnpm:fe:dev\" \"pnpm:be:dev\" --kill-others",
-    "app": "npx cross-var echo $npm_package_name",
+    "app": "node -p \"require('./package.json').name\"",
     "fly:deploy": "pnpm run build && flyctl deploy",
-    "fly:logs": "npx cross-var flyctl logs -a $npm_package_name",
-    "fly:stop": "npx cross-var flyctl scale count 0 -a $npm_package_name",
-    "fly:start": "npx cross-var flyctl scale count 1 -a $npm_package_name",
-    "fly:ssh": "npx cross-var flyctl ssh console -a $npm_package_name"
+    "fly:logs": "flyctl logs -a $(node -p \"require('./package.json').name\")",
+    "fly:stop": "flyctl scale count 0 -a $(node -p \"require('./package.json').name\")",
+    "fly:start": "flyctl scale count 1 -a $(node -p \"require('./package.json').name\")",
+    "fly:ssh": "flyctl ssh console -a $(node -p \"require('./package.json').name\")"
   },
   "repository": {
     "type": "git",
@@ -59,7 +59,6 @@
     "@vitejs/plugin-react": "^4.7.0",
     "@vitest/ui": "^4.0.18",
     "concurrently": "^8.0.1",
-    "cross-var": "^1.1.0",
     "jsdom": "^27.4.0",
     "vite": "^4.5.3",
     "vitest": "^4.0.18"
