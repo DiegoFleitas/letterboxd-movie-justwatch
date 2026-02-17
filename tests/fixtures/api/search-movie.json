@@ -1,0 +1,251 @@
+[
+  {
+    "request": {
+      "title": "A Ghost Story",
+      "year": "2017",
+      "country": "es_UY"
+    },
+    "response": {
+      "error": "No streaming services offering this movie on your country (UY)\n\npssst! try clicking pirate flags like these 🏴‍☠️",
+      "title": "A Ghost Story",
+      "year": 2017,
+      "poster": "https://images.justwatch.com/poster/8851402/s592/.jpg"
+    }
+  },
+  {
+    "request": {
+      "title": "The Old Man & the Gun",
+      "year": "2018",
+      "country": "es_UY"
+    },
+    "response": {
+      "error": "No streaming services offering this movie on your country (UY)\n\npssst! try clicking pirate flags like these 🏴‍☠️",
+      "title": "The Old Man & the Gun",
+      "year": 2018,
+      "poster": "https://images.justwatch.com/poster/87980559/s592/.jpg"
+    }
+  },
+  {
+    "request": {
+      "title": "The Little Drummer Girl",
+      "year": "2018",
+      "country": "es_UY"
+    },
+    "response": {
+      "error": "Movie not found (TMDB)",
+      "title": "The Little Drummer Girl",
+      "year": "2018"
+    }
+  },
+  {
+    "request": {
+      "title": "Her Private Hell",
+      "year": null,
+      "country": "es_UY"
+    },
+    "response": {
+      "error": "No streaming services offering this movie on your country (UY)\n\npssst! try clicking pirate flags like these 🏴‍☠️",
+      "title": "Her Private Hell",
+      "year": 2026,
+      "poster": "https://images.justwatch.com/poster/338500011/s592/.jpg"
+    }
+  },
+  {
+    "request": {
+      "title": "Exit 8",
+      "year": "2025",
+      "country": "es_UY"
+    },
+    "response": {
+      "error": "No streaming services offering this movie on your country (UY)\n\npssst! try clicking pirate flags like these 🏴‍☠️",
+      "title": "Exit 8",
+      "year": 2025,
+      "poster": "https://images.justwatch.com/poster/341598158/s592/.jpg"
+    }
+  },
+  {
+    "request": {
+      "title": "It's Never Over, Jeff Buckley",
+      "year": "2025",
+      "country": "es_UY"
+    },
+    "response": {
+      "error": "No streaming services offering this movie on your country (UY)\n\npssst! try clicking pirate flags like these 🏴‍☠️",
+      "title": "It's Never Over, Jeff Buckley",
+      "year": 2025,
+      "poster": "https://images.justwatch.com/poster/333094905/s592/.jpg"
+    }
+  },
+  {
+    "request": {
+      "title": "Dinner in America",
+      "year": "2020",
+      "country": "es_UY"
+    },
+    "response": {
+      "error": "No streaming services offering this movie on your country (UY)\n\npssst! try clicking pirate flags like these 🏴‍☠️",
+      "title": "Dinner in America",
+      "year": 2020,
+      "poster": "https://images.justwatch.com/poster/283786918/s592/.jpg"
+    }
+  },
+  {
+    "request": {
+      "title": "Shoplifters",
+      "year": "2018",
+      "country": "es_UY"
+    },
+    "response": {
+      "error": "No streaming services offering this movie on your country (UY)\n\npssst! try clicking pirate flags like these 🏴‍☠️",
+      "title": "Shoplifters",
+      "year": 2018,
+      "poster": "https://images.justwatch.com/poster/94182642/s592/.jpg"
+    }
+  },
+  {
+    "request": {
+      "title": "Lake Mungo",
+      "year": "2008",
+      "country": "es_UY"
+    },
+    "response": {
+      "error": "No streaming services offering this movie on your country (UY)\n\npssst! try clicking pirate flags like these 🏴‍☠️",
+      "title": "Lake Mungo",
+      "year": 2009,
+      "poster": "https://images.justwatch.com/poster/125301487/s592/.jpg"
+    }
+  },
+  {
+    "request": {
+      "title": "Mystery Train",
+      "year": "1989",
+      "country": "es_UY"
+    },
+    "response": {
+      "error": "No streaming services offering this movie on your country (UY)\n\npssst! try clicking pirate flags like these 🏴‍☠️",
+      "title": "Mystery Train",
+      "year": 1989,
+      "poster": "https://images.justwatch.com/poster/179644979/s592/.jpg"
+    }
+  },
+  {
+    "request": {
+      "title": "You'll Never Find Me",
+      "year": "2023",
+      "country": "es_UY"
+    },
+    "response": {
+      "error": "No streaming services offering this movie on your country (UY)\n\npssst! try clicking pirate flags like these 🏴‍☠️",
+      "title": "You'll Never Find Me",
+      "year": 2024,
+      "poster": "https://images.justwatch.com/poster/327158203/s592/.jpg"
+    }
+  },
+  {
+    "request": {
+      "title": "Nikita",
+      "year": "1990",
+      "country": "es_UY"
+    },
+    "response": {
+      "error": "No streaming services offering this movie on your country (UY)\n\npssst! try clicking pirate flags like these 🏴‍☠️",
+      "title": "La Femme Nikita",
+      "year": 1990,
+      "poster": "https://images.justwatch.com/poster/67815690/s592/.jpg"
+    }
+  },
+  {
+    "request": {
+      "title": "The Greatest Hits",
+      "year": "2024",
+      "country": "es_UY"
+    },
+    "response": {
+      "message": "Movie found",
+      "movieProviders": [
+        {
+          "id": "disneyplus",
+          "name": "Disney Plus",
+          "icon": "https://images.justwatch.com/icon/313118777/s100/disneyplus.jpg",
+          "url": "https://disneyplus.bn5x.net/c/1206980/705874/9358?u=https%3A%2F%2Fwww.disneyplus.com%2Fmovies%2Fthe-greatest-hits%2F4C72nF9o2ITM&subId3=justappsvod",
+          "type": "FLATRATE"
+        },
+        {
+          "id": "disneyplus",
+          "name": "Disney Plus",
+          "icon": "https://images.justwatch.com/icon/313118777/s100/disneyplus.jpg",
+          "url": "https://disneyplus.bn5x.net/c/1206980/705874/9358?u=https%3A%2F%2Fwww.disneyplus.com%2Fes-uy%2Fbrowse%2Fentity-ac6ed39b-a4e7-4f1c-b085-d071d52df314&subId3=justappsvod",
+          "type": "FLATRATE"
+        }
+      ],
+      "title": "The Greatest Hits",
+      "year": 2024,
+      "poster": "https://images.justwatch.com/poster/313937058/s592/.jpg"
+    }
+  },
+  {
+    "request": {
+      "title": "The Invisible Fight",
+      "year": "2023",
+      "country": "es_UY"
+    },
+    "response": {
+      "error": "No streaming services offering this movie on your country (UY)\n\npssst! try clicking pirate flags like these 🏴‍☠️",
+      "title": "Nähtamatu võitlus",
+      "year": 2023,
+      "poster": "https://images.justwatch.com/poster/312842566/s592/.jpg"
+    }
+  },
+  {
+    "request": {
+      "title": "Idiot Box",
+      "year": "1996",
+      "country": "es_UY"
+    },
+    "response": {
+      "error": "No streaming services offering this movie on your country (UY)\n\npssst! try clicking pirate flags like these 🏴‍☠️",
+      "title": "Idiot Box",
+      "year": 1997,
+      "poster": "https://images.justwatch.com/poster/243499536/s592/.jpg"
+    }
+  },
+  {
+    "request": {
+      "title": "Smoke Sauna Sisterhood",
+      "year": "2023",
+      "country": "es_UY"
+    },
+    "response": {
+      "error": "No streaming services offering this movie on your country (UY)\n\npssst! try clicking pirate flags like these 🏴‍☠️",
+      "title": "Savvusanna sõsarad",
+      "year": 2023,
+      "poster": "https://images.justwatch.com/poster/307072205/s592/.jpg"
+    }
+  },
+  {
+    "request": {
+      "title": "Ghost World",
+      "year": "2001",
+      "country": "es_UY"
+    },
+    "response": {
+      "error": "No streaming services offering this movie on your country (UY)\n\npssst! try clicking pirate flags like these 🏴‍☠️",
+      "title": "Ghost World",
+      "year": 2001,
+      "poster": "https://images.justwatch.com/poster/176230141/s592/.jpg"
+    }
+  },
+  {
+    "request": {
+      "title": "Charcoal",
+      "year": "2022",
+      "country": "es_UY"
+    },
+    "response": {
+      "error": "Movie not found in JustWatch",
+      "title": "Charcoal Skies",
+      "year": "2022",
+      "poster": "https://image.tmdb.org/t/p/w500/zaDs06sU5s1KEkMUhe2mU8trbcV.jpg"
+    }
+  }
+]

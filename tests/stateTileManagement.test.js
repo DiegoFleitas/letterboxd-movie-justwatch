@@ -1,9 +1,22 @@
 /**
  * Unit tests for state tile ID management
- * Tests how tiles are created, updated, and IDs are managed
+ * Tests how tiles are created, updated, and IDs are managed.
+ * Uses tests/fixtures/api/*.json for real film data (links, years) where relevant.
  */
 
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import { TestSuite, assertEqual, assert, assertTruthy } from './testUtils.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const letterboxd = JSON.parse(readFileSync(join(__dirname, 'fixtures', 'api', 'letterboxd-watchlist.json'), 'utf-8'));
+const searchMovie = JSON.parse(readFileSync(join(__dirname, 'fixtures', 'api', 'search-movie.json'), 'utf-8'));
+
+const watchlist = letterboxd[0]?.response?.watchlist || [];
+const herPrivateHell = watchlist.find((f) => f.title === 'Her Private Hell');
+const lakeMungo = watchlist.find((f) => f.title === 'Lake Mungo');
+const lakeMungoSearch = searchMovie.find((f) => f.request?.title === 'Lake Mungo')?.response;
 
 const suite = new TestSuite('State Tile Management');
 
@@ -92,23 +105,24 @@ suite.test('Should update existing tile with same ID', () => {
 });
 
 suite.test('Should move tile to new ID when year changes', () => {
+  const film = herPrivateHell || { title: 'Her Private Hell', year: null, link: 'https://letterboxd.com/film/her-private-hell-1/' };
   const state = {
     movieTiles: {
       'null-HERPRIVATEHELL': {
         id: 'null-HERPRIVATEHELL',
-        title: 'Her Private Hell',
-        year: null,
-        link: 'https://letterboxd.com/film/her-private-hell-1/',
+        title: film.title,
+        year: film.year,
+        link: film.link,
         movieProviders: []
       }
     }
   };
-  
-  const result = updateMovieTile(state, 'Her Private Hell', '2026', {
-    link: 'https://letterboxd.com/film/her-private-hell-1/',
+
+  const result = updateMovieTile(state, film.title, '2026', {
+    link: film.link,
     movieProviders: []
   });
-  
+
   assertEqual(result.id, '2026-HERPRIVATEHELL', 'Should use new ID with correct year');
   assertEqual(result.oldId, 'null-HERPRIVATEHELL', 'Should return old ID');
   assertTruthy(state.movieTiles['2026-HERPRIVATEHELL'], 'Tile should exist with new ID');
@@ -116,28 +130,32 @@ suite.test('Should move tile to new ID when year changes', () => {
 });
 
 suite.test('Should preserve data when moving to new ID', () => {
+  const film = lakeMungo || { title: 'Lake Mungo', year: '2008', link: 'https://letterboxd.com/film/lake-mungo/' };
+  const newYear = lakeMungoSearch?.year ?? '2009';
+  const poster = lakeMungoSearch?.poster ?? 'https://example.com/poster.jpg';
+
   const state = {
     movieTiles: {
       '2008-LAKEMUNGO': {
         id: '2008-LAKEMUNGO',
-        title: 'Lake Mungo',
-        year: '2008',
-        link: 'https://letterboxd.com/film/lake-mungo/',
-        poster: 'https://example.com/poster.jpg',
+        title: film.title,
+        year: film.year,
+        link: film.link,
+        poster,
         movieProviders: []
       }
     }
   };
-  
-  const result = updateMovieTile(state, 'Lake Mungo', '2009', {
-    link: 'https://letterboxd.com/film/lake-mungo/',
+
+  const result = updateMovieTile(state, film.title, String(newYear), {
+    link: film.link,
     movieProviders: [{ name: 'Disney Plus' }]
   });
-  
-  const newTile = state.movieTiles['2009-LAKEMUNGO'];
-  assertEqual(newTile.poster, 'https://example.com/poster.jpg', 'Should preserve poster');
+
+  const newTile = state.movieTiles[`${newYear}-LAKEMUNGO`];
+  assertEqual(newTile.poster, poster, 'Should preserve poster');
   assertEqual(newTile.movieProviders.length, 1, 'Should update providers');
-  assertEqual(newTile.year, '2009', 'Should update year');
+  assertEqual(newTile.year, String(newYear), 'Should update year');
 });
 
 await suite.run();
