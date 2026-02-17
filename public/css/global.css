@@ -88,6 +88,26 @@ a {
   white-space: normal;
 }
 
+@media (min-width: 768px) {
+  .toaster-container .app-toast,
+  .app-toast-link {
+    min-width: 340px;
+    width: 420px;
+    max-width: 560px;
+    min-height: 40px;
+    height: auto !important;
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+    margin-top: 8px !important;
+    margin-bottom: 8px !important;
+    font-size: 1rem;
+    line-height: 1.4;
+    word-break: break-word;
+  }
+}
+
 .app-toast-link {
   display: block;
   padding: 12px 16px;
