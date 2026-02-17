@@ -2,6 +2,8 @@
 .spoiler {
   color: black;
   background-color: black;
+  border-radius: var(--radius-lg);
+  padding: 0.5rem 0;
 }
 .spoiler:hover {
   color: white;

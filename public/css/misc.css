@@ -40,7 +40,7 @@ img.logo {
   width: 100%;
   max-width: 320px;
   margin: 0 auto 0.5rem auto;
-  color: #ffe066;
+  color: var(--color-accent-soft);
   text-shadow: 1px 1px #000000;
   animation: float 2s infinite ease-in-out;
   font-size: 0.95rem;
