@@ -1,5 +1,9 @@
 import { defineConfig } from "vite";
+import path from "path";
+import { fileURLToPath } from "url";
 import react from "@vitejs/plugin-react";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /** Strip React DevTools script from HTML in production builds. */
 function stripDevToolsScript() {
@@ -22,7 +26,7 @@ export default defineConfig({
   build: {
     outDir: "dist", // Set the output directory for the production build
     rollupOptions: {
-      input: "index.html", // Only main app entry; test HTML files use legacy API and are not built
+      input: path.resolve(__dirname, "public", "index.html"), // Only main app entry; test HTML files use legacy API and are not built
     },
   },
   server: {
