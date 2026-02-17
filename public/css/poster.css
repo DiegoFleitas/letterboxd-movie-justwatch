@@ -31,12 +31,8 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  transition: box-shadow 0.18s, transform 0.12s;
+  transition: box-shadow 0.18s;
   cursor: pointer;
-}
-.poster:hover {
-  box-shadow: 0 6px 24px rgba(242, 183, 5, 0.25);
-  transform: translateY(-2px) scale(1.02);
 }
 .poster-link {
   display: block;
@@ -45,6 +41,20 @@
   position: relative;
   text-decoration: none;
   color: inherit;
+}
+.poster-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.22);
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s;
+  border-radius: var(--radius-lg);
+}
+.poster:hover .poster-link::after {
+  opacity: 1;
 }
 .poster-gradient {
   position: absolute;
