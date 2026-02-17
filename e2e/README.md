@@ -7,8 +7,8 @@ Regression tests for the app. Run them **before** the React migration; after mig
 **Option A – use existing dev server (recommended)**
 
 ```bash
-npm run dev   # in one terminal
-npm run test:e2e   # in another
+pnpm run dev   # in one terminal
+pnpm run test:e2e   # in another
 ```
 
 If something is already serving `http://localhost:5173`, Playwright will reuse it (see `reuseExistingServer` in `playwright.config.js`).
@@ -16,10 +16,10 @@ If something is already serving `http://localhost:5173`, Playwright will reuse i
 **Option B – let Playwright start the app**
 
 ```bash
-npm run test:e2e
+pnpm run test:e2e
 ```
 
-Playwright will run `npm run dev` and wait for the app to be ready (longer first run).
+Playwright will run `pnpm run dev` and wait for the app to be ready (longer first run).
 
 ## Run in CI
 

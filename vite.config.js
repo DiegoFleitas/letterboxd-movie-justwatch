@@ -21,6 +21,9 @@ export default defineConfig({
   root: "public", // Set the project root to the 'public' folder
   build: {
     outDir: "dist", // Set the output directory for the production build
+    rollupOptions: {
+      input: "index.html", // Only main app entry; test HTML files use legacy API and are not built
+    },
   },
   server: {
     proxy: {
