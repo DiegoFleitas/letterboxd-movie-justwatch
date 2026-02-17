@@ -1,0 +1,126 @@
+[
+  {
+    "request": {
+      "listUrl": "https://letterboxd.com/shoemonger/watchlist/",
+      "country": "es_UY",
+      "username": "shoemonger",
+      "listType": "watchlist",
+      "page": 1
+    },
+    "response": {
+      "message": "List found",
+      "watchlist": [
+        {
+          "title": "A Ghost Story",
+          "year": "2017",
+          "link": "https://letterboxd.com/film/a-ghost-story-2017/",
+          "poster": null
+        },
+        {
+          "title": "The Old Man & the Gun",
+          "year": "2018",
+          "link": "https://letterboxd.com/film/the-old-man-the-gun/",
+          "poster": null
+        },
+        {
+          "title": "The Little Drummer Girl",
+          "year": "2018",
+          "link": "https://letterboxd.com/film/the-little-drummer-girl-2018/",
+          "poster": null
+        },
+        {
+          "title": "Her Private Hell",
+          "year": null,
+          "link": "https://letterboxd.com/film/her-private-hell-1/",
+          "poster": null
+        },
+        {
+          "title": "Exit 8",
+          "year": "2025",
+          "link": "https://letterboxd.com/film/exit-8/",
+          "poster": null
+        },
+        {
+          "title": "It's Never Over, Jeff Buckley",
+          "year": "2025",
+          "link": "https://letterboxd.com/film/its-never-over-jeff-buckley/",
+          "poster": null
+        },
+        {
+          "title": "Dinner in America",
+          "year": "2020",
+          "link": "https://letterboxd.com/film/dinner-in-america/",
+          "poster": null
+        },
+        {
+          "title": "Shoplifters",
+          "year": "2018",
+          "link": "https://letterboxd.com/film/shoplifters/",
+          "poster": null
+        },
+        {
+          "title": "Lake Mungo",
+          "year": "2008",
+          "link": "https://letterboxd.com/film/lake-mungo/",
+          "poster": null
+        },
+        {
+          "title": "Mystery Train",
+          "year": "1989",
+          "link": "https://letterboxd.com/film/mystery-train/",
+          "poster": null
+        },
+        {
+          "title": "You'll Never Find Me",
+          "year": "2023",
+          "link": "https://letterboxd.com/film/youll-never-find-me/",
+          "poster": null
+        },
+        {
+          "title": "Nikita",
+          "year": "1990",
+          "link": "https://letterboxd.com/film/nikita/",
+          "poster": null
+        },
+        {
+          "title": "The Greatest Hits",
+          "year": "2024",
+          "link": "https://letterboxd.com/film/the-greatest-hits/",
+          "poster": null
+        },
+        {
+          "title": "The Invisible Fight",
+          "year": "2023",
+          "link": "https://letterboxd.com/film/the-invisible-fight/",
+          "poster": null
+        },
+        {
+          "title": "Idiot Box",
+          "year": "1996",
+          "link": "https://letterboxd.com/film/idiot-box/",
+          "poster": null
+        },
+        {
+          "title": "Smoke Sauna Sisterhood",
+          "year": "2023",
+          "link": "https://letterboxd.com/film/smoke-sauna-sisterhood/",
+          "poster": null
+        },
+        {
+          "title": "Ghost World",
+          "year": "2001",
+          "link": "https://letterboxd.com/film/ghost-world/",
+          "poster": null
+        },
+        {
+          "title": "Charcoal",
+          "year": "2022",
+          "link": "https://letterboxd.com/film/charcoal-2022/",
+          "poster": null
+        }
+      ],
+      "lastPage": 1,
+      "totalPages": 1
+    }
+  }
+]
