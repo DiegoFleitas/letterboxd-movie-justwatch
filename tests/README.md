@@ -6,18 +6,18 @@ Automated tests for the Letterboxd JustWatch integration.
 
 ### All Unit Tests
 ```bash
-npm test
+pnpm test
 ```
 
 ### Individual Test Suites
 ```bash
-npm run test:filter     # Filter logic tests
-npm run test:state      # State management tests
+pnpm run test:filter     # Filter logic tests
+pnpm run test:state      # State management tests
 ```
 
 ### Browser Test
 ```bash
-npm run dev
+pnpm run dev
 # Then open http://localhost:5173/testBrowserState.html
 ```
 

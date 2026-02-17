@@ -11,7 +11,7 @@ Vite is used for development and building the front-end application. It provides
 PRE: You need to have docker to run the image at /redis folder
 
 - Rename .env.example to .env & update the values
-- Run `npm run dev`
+- Run `pnpm run dev`
 
 ## Disclaimer
 
@@ -31,20 +31,20 @@ If you would like to work with JustWatch and use the official Data API take a lo
 ## Deployment
 
 - Replace "name" & "app" strings with your new app name at package.json at fly.toml (respectively)
-- Run `npm i`
+- Run `pnpm i`
 - Rename .env.example to .env
 - Run `flyctl launch`
 - When prompted for a builder, select builtin Nodejs.
-- Run `npm run fly:deploy` (for future deployments only this command will be needed)
+- Run `pnpm run fly:deploy` (for future deployments only this command will be needed)
 
 ## Stopping / Starting app
 
-- `npm run fly:stop`
-- `npm run fly:start`
+- `pnpm run fly:stop`
+- `pnpm run fly:start`
 
 ## Read app secrets
 
-- `npm run fly:ssh`
+- `pnpm run fly:ssh`
 - type `env`
 - quit with `exit`
 
@@ -58,7 +58,7 @@ Add them to .env file. Alternatively use fly.io built command but note those tak
 
 From terminal
 
-- `npm run fly:logs`
+- `pnpm run fly:logs`
 
 ## Redis
 
