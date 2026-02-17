@@ -46,7 +46,7 @@ export function AppStateProvider({ children }) {
   useEffect(() => {
     setNoticeImpl(setNotice);
     return () => setNoticeImpl(null);
-  }, [setNotice]);
+  }, []);
 
   const value = {
     movieTiles: appData.movieTiles,

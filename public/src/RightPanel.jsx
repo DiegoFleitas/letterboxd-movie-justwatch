@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useAppState } from "./AppStateContext.jsx";
 import { getTileProviderNames } from "./movieTiles.js";
 import { MovieTile } from "./MovieTile.jsx";
@@ -42,16 +42,18 @@ export function RightPanel() {
     setAltSearchFilter((prev) => !prev);
   };
 
-  const tileList = Object.values(tiles);
-  const providerList = Object.values(providers).filter((p) => p?.name);
+  const tileList = useMemo(() => Object.values(tiles), [tiles]);
+  const providerList = useMemo(() => Object.values(providers).filter((p) => p?.name), [providers]);
 
-  const visibleTiles = tileList.filter((tile) => {
-    const names = getTileProviderNames(tile);
-    if (altSearchFilter) return names.length > 0;
-    if (!activeFilters.length) return true;
-    if (!names.length) return false;
-    return activeFilters.some((f) => names.includes(f));
-  });
+  const visibleTiles = useMemo(() => {
+    return tileList.filter((tile) => {
+      const names = getTileProviderNames(tile);
+      if (altSearchFilter) return names.length > 0;
+      if (!activeFilters.length) return true;
+      if (!names.length) return false;
+      return activeFilters.some((f) => names.includes(f));
+    });
+  }, [tileList, activeFilters, altSearchFilter]);
 
   const handleAlternativeSearch = (tileData) => {
     runAlternativeSearch?.(tileData.title, tileData.year);
@@ -69,7 +71,12 @@ export function RightPanel() {
             role="button"
             tabIndex={0}
             onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") toggleFilter(provider.name);
+              if (e.key === "Enter") {
+                toggleFilter(provider.name);
+              } else if (e.key === " ") {
+                e.preventDefault();
+                toggleFilter(provider.name);
+              }
             }}
           >
             <img src={provider.icon} alt={provider.name} />
@@ -82,7 +89,12 @@ export function RightPanel() {
           role="button"
           tabIndex={0}
           onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") toggleAltSearchFilter();
+            if (e.key === "Enter") {
+              toggleAltSearchFilter();
+            } else if (e.key === " ") {
+              e.preventDefault();
+              toggleAltSearchFilter();
+            }
           }}
         >
           <img

@@ -52,7 +52,12 @@ export function MovieTile({ data, onAlternativeSearch }) {
                   data-url={provider.url}
                   onClick={(e) => handleProviderClick(e, provider.url)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") handleProviderClick(e, provider.url);
+                    if (e.key === "Enter") {
+                      handleProviderClick(e, provider.url);
+                    } else if (e.key === " ") {
+                      e.preventDefault();
+                      handleProviderClick(e, provider.url);
+                    }
                   }}
                   role="button"
                   tabIndex={0}
@@ -73,6 +78,17 @@ export function MovieTile({ data, onAlternativeSearch }) {
                   e.preventDefault();
                   e.stopPropagation();
                   if (onAlternativeSearch) onAlternativeSearch(data);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (onAlternativeSearch) onAlternativeSearch(data);
+                  } else if (e.key === " ") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (onAlternativeSearch) onAlternativeSearch(data);
+                  }
                 }}
                 role="button"
                 tabIndex={0}

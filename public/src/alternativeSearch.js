@@ -19,11 +19,6 @@ export function runAlternativeSearch(title, year) {
     .catch((err) => console.error(err));
 }
 
-export const showAlternativeSearch = () => {
-  const el = document.querySelector(".alternative-search");
-  if (el) el.classList.remove("hide-alternative-search");
-};
-
 export const searchSubs = (query) => {
   // const url = `https://duckduckgo.com/?q=!ducky+subdl+${query}`
   const url = `https://subdl.com/search?query=${query}`;
