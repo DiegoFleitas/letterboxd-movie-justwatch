@@ -2,8 +2,28 @@
 /**
  * E2E tests are UI-only: drive the app via forms, clicks, and visibility.
  * No window.submitMovieSearch / window.submitLetterboxdList so they stay valid after full React migration.
+ * List and search mocks use tests/fixtures/api/*.json for real API response shapes.
  */
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import { test, expect } from '@playwright/test';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const fixturesDir = join(__dirname, '..', 'tests', 'fixtures', 'api');
+const letterboxdFixtures = JSON.parse(readFileSync(join(fixturesDir, 'letterboxd-watchlist.json'), 'utf-8'));
+const searchMovieFixtures = JSON.parse(readFileSync(join(fixturesDir, 'search-movie.json'), 'utf-8'));
+
+function findSearchMovieResponse(body) {
+  const t = (v) => (v == null ? '' : String(v));
+  const entry = searchMovieFixtures.find(
+    (f) =>
+      t(f.request?.title) === t(body?.title) &&
+      t(f.request?.year) === t(body?.year) &&
+      t(f.request?.country) === t(body?.country)
+  );
+  return entry ? entry.response : null;
+}
 
 test.describe('App shell and left panel', () => {
   test('loads and shows country selector, tabs, and movie form', async ({ page }) => {
@@ -48,54 +68,53 @@ test.describe('Movie form', () => {
       { timeout: 15000 }
     );
 
+    // Use fixture: The Greatest Hits has message + movieProviders (Disney Plus)
+    const successFixture = searchMovieFixtures.find((f) => f.response?.message === 'Movie found');
+    const { request: req, response: res } = successFixture;
+
     await page.route('**/api/search-movie', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({
-          title: 'Jurassic Park',
-          year: '1993',
-          message: 'Available on',
-          movieProviders: [{ name: 'Netflix', id: 1, icon: '', url: '' }],
-        }),
+        body: JSON.stringify(res),
       })
     );
 
-    await page.getByTestId('movie-input').fill('Jurassic Park');
-    await page.getByTestId('movie-year').fill('1993');
+    await page.getByTestId('movie-input').fill(req.title);
+    await page.getByTestId('movie-year').fill(String(req.year ?? ''));
     await expect(page.getByTestId('country-selector')).toBeAttached({ timeout: 5000 });
     await page.getByTestId('movie-submit').click();
 
     const response = await searchPromise;
     expect(response.ok()).toBe(true);
     const body = await response.json();
-    expect(body.title).toBe('Jurassic Park');
-    expect(body.year).toBe('1993');
+    expect(body.title).toBe(res.title);
+    expect(body.year).toBe(res.year);
 
-    await expect(page.getByRole('status').filter({ hasText: /Jurassic Park|Available on/ })).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole('status').filter({ hasText: new RegExp(`${res.title}|Available on|${res.message || ''}`) })).toBeVisible({ timeout: 5000 });
   });
 
   test('API error shows error toast', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByTestId('movie-form')).toBeVisible();
 
+    // Use fixture: e.g. The Little Drummer Girl has error "Movie not found (TMDB)"
+    const errorFixture = searchMovieFixtures.find((f) => f.response?.error?.includes('Movie not found'));
+    const { request: req, response: res } = errorFixture;
+
     await page.route('**/api/search-movie', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({
-          title: 'Unknown Movie',
-          year: '1999',
-          error: 'No results found.',
-        }),
+        body: JSON.stringify(res),
       })
     );
 
-    await page.getByTestId('movie-input').fill('Unknown Movie');
-    await page.getByTestId('movie-year').fill('1999');
+    await page.getByTestId('movie-input').fill(req.title);
+    await page.getByTestId('movie-year').fill(String(req.year ?? ''));
     await page.getByTestId('movie-submit').click();
 
-    await expect(page.getByText(/Unknown Movie.*No results found|No results found/)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(new RegExp(`${req.title}|${(res.error || '').substring(0, 25)}`))).toBeVisible({ timeout: 5000 });
   });
 });
 
@@ -103,46 +122,38 @@ test.describe('List form', () => {
   test('submit with valid watchlist URL loads tiles into poster showcase', async ({ page }) => {
     await page.goto('/');
 
+    // Use fixture: one film from letterboxd watchlist so one tile + one search-movie call
+    const listResponse = letterboxdFixtures[0].response;
+    const oneFilm = {
+      ...listResponse,
+      watchlist: listResponse.watchlist.slice(0, 1),
+    };
+
     await page.route('**/api/letterboxd-watchlist', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({
-          watchlist: [
-            {
-              title: 'The Matrix',
-              year: '1999',
-              link: '/film/the-matrix/',
-              posterPath: null,
-              poster: null,
-            },
-          ],
-          lastPage: 1,
-          totalPages: 1,
-        }),
+        body: JSON.stringify(oneFilm),
       })
     );
 
-    await page.route('**/api/search-movie', (route) =>
-      route.fulfill({
+    await page.route('**/api/search-movie', (route) => {
+      const body = route.request().postDataJSON();
+      const response = findSearchMovieResponse(body) || { title: body?.title, year: body?.year, error: 'No fixture' };
+      return route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({
-          title: 'The Matrix',
-          year: '1999',
-          message: 'Available on',
-          movieProviders: [{ name: 'Netflix', id: 1, icon: '', url: '' }],
-          poster: null,
-        }),
-      })
-    );
+        body: JSON.stringify(response),
+      });
+    });
 
     await page.getByTestId('tab-list').click();
     await page.getByTestId('list-url').fill('https://letterboxd.com/someuser/watchlist/');
     await page.getByTestId('list-submit').click();
 
+    const firstTitle = oneFilm.watchlist[0].title;
     await expect(page.getByTestId('poster-showcase').getByTestId('tile')).toHaveCount(1, { timeout: 10000 });
-    await expect(page.locator('[data-id]').filter({ hasText: 'The Matrix' })).toBeVisible();
+    await expect(page.locator('[data-id]').filter({ hasText: firstTitle })).toBeVisible();
   });
 
   test('invalid list URL shows error toast and no tiles', async ({ page }) => {
@@ -161,36 +172,28 @@ test.describe('Filtering', () => {
   test('clicking provider icon filters tiles', async ({ page }) => {
     await page.goto('/');
 
+    // Use fixture: two films — The Greatest Hits (Disney Plus), A Ghost Story (no providers)
+    const listResponse = letterboxdFixtures[0].response;
+    const twoFilms = {
+      ...listResponse,
+      watchlist: [listResponse.watchlist[0], listResponse.watchlist[12]], // A Ghost Story, The Greatest Hits
+    };
+
     await page.route('**/api/letterboxd-watchlist', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({
-          watchlist: [
-            { title: 'Movie A', year: '2020', link: '/film/movie-a/', posterPath: null, poster: null },
-            { title: 'Movie B', year: '2021', link: '/film/movie-b/', posterPath: null, poster: null },
-          ],
-          lastPage: 1,
-          totalPages: 1,
-        }),
+        body: JSON.stringify(twoFilms),
       })
     );
 
     await page.route('**/api/search-movie', (route) => {
       const body = route.request().postDataJSON();
-      const hasNetflix = body?.title === 'Movie A';
+      const response = findSearchMovieResponse(body) || { title: body?.title, year: body?.year, error: 'No fixture' };
       return route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({
-          title: body?.title || 'Unknown',
-          year: body?.year || '',
-          message: 'Available on',
-          movieProviders: hasNetflix
-            ? [{ name: 'Netflix', id: 1, icon: '', url: '' }]
-            : [{ name: 'Disney+', id: 2, icon: '', url: '' }],
-          poster: null,
-        }),
+        body: JSON.stringify(response),
       });
     });
 
@@ -199,15 +202,15 @@ test.describe('Filtering', () => {
     await page.getByTestId('list-submit').click();
 
     await expect(page.getByTestId('poster-showcase').getByTestId('tile')).toHaveCount(2, { timeout: 15000 });
-    await expect(page.getByTestId('provider-icons').locator('img[alt="Netflix"]')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId('provider-icons').locator('img[alt="Disney Plus"]')).toBeVisible({ timeout: 10000 });
 
-    const netflixIcon = page.getByTestId('provider-icons').locator('.streaming-provider-icon').filter({ has: page.locator('img[alt="Netflix"]') }).first();
-    await netflixIcon.click();
+    const disneyIcon = page.getByTestId('provider-icons').locator('.streaming-provider-icon').filter({ has: page.locator('img[alt="Disney Plus"]') }).first();
+    await disneyIcon.click();
 
-    const tileMovieA = page.getByTestId('poster-showcase').getByTestId('tile').filter({ hasText: 'Movie A' });
-    const tileMovieB = page.getByTestId('poster-showcase').getByTestId('tile').filter({ hasText: 'Movie B' });
-    await expect(tileMovieA).toBeVisible();
-    await expect(tileMovieB).toBeHidden();
+    const withProvider = page.getByTestId('poster-showcase').getByTestId('tile').filter({ hasText: 'The Greatest Hits' });
+    const withoutProvider = page.getByTestId('poster-showcase').getByTestId('tile').filter({ hasText: 'A Ghost Story' });
+    await expect(withProvider).toBeVisible();
+    await expect(withoutProvider).toBeHidden();
   });
 });
 
