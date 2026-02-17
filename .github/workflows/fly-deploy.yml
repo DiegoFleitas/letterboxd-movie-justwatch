@@ -1,15 +1,22 @@
-# See https://fly.io/docs/app-guides/continuous-deployment-with-github-actions/
+# Deploys to Fly.io after CI passes. See https://fly.io/docs/app-guides/continuous-deployment-with-github-actions/
 
 name: Fly Deploy
+
 on:
-  push:
-    branches:
-      - main
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main, master]
+  # Allow manual run
+  workflow_dispatch:
+
 jobs:
   deploy:
     name: Deploy app
     runs-on: ubuntu-latest
-    concurrency: deploy-group    # optional: ensure only one action runs at a time
+    # Only deploy when CI succeeded (skip on PRs, failures, or other branches)
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    concurrency: deploy-group
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
