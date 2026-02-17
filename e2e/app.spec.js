@@ -63,7 +63,7 @@ test.describe('Movie form', () => {
 
     await page.getByTestId('movie-input').fill('Jurassic Park');
     await page.getByTestId('movie-year').fill('1993');
-    await expect(page.locator('#country-global option').first()).toBeAttached({ timeout: 5000 });
+    await expect(page.getByTestId('country-selector')).toBeAttached({ timeout: 5000 });
     await page.getByTestId('movie-submit').click();
 
     const response = await searchPromise;

@@ -95,7 +95,7 @@ export function useLetterboxdList(mergeTile) {
         setTimeout(toggleNotice, 1000);
       }
     },
-    []
+    [mergeTile]
   );
 
   const loadWatchlist = useCallback(async (data) => {
