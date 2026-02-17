@@ -26,6 +26,9 @@
   box-shadow: 0 2px 8px rgba(16,22,29,0.08);
 }
 .tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   background: transparent;
   color: var(--color-text-muted);
   border: none;
@@ -36,6 +39,15 @@
   cursor: pointer;
   transition: background 0.18s, color 0.18s;
   outline: none;
+}
+
+.tab-btn-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.tab-btn-icon svg {
+  vertical-align: middle;
 }
 
 .tab-btn:hover {
