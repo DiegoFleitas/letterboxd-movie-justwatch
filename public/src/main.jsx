@@ -7,7 +7,7 @@ function PostHogWindowRef() {
   const posthog = usePostHog();
   useEffect(() => {
     if (posthog) {
-      if (typeof window !== "undefined") window.posthog = posthog;
+      if (import.meta.env.DEV && typeof window !== "undefined") window.posthog = posthog;
       posthog.register({ environment: import.meta.env.DEV ? "development" : "production" });
     }
   }, [posthog]);
