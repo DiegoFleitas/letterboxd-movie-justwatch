@@ -15,7 +15,7 @@ import {
   proxy,
 } from "./controllers/index.js";
 import { isHealthy } from "./helpers/redis.js";
-import { getPosthog } from "./lib/posthog.js";
+import { getPosthog, shutdownPosthog } from "./lib/posthog.js";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -88,7 +88,8 @@ app.all("/api/proxy/:url(*)", asyncHandler(async (req, res) => {
   return proxy(req, res);
 }));
 
-// PostHog: capture API errors when POSTHOG_KEY is set
+// PostHog: capture errors that propagate to the error middleware.
+// Note: controllers that catch errors internally must call getPosthog().captureException(err) directly.
 const posthog = getPosthog();
 if (posthog) {
   setupExpressErrorHandler(posthog, app);
@@ -101,6 +102,21 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: "Internal Server Error" });
 });
 
-app.listen(port, () =>
+const server = app.listen(port, () =>
   console.log(`app listening on port http://localhost:${port}`)
 );
+
+// Graceful shutdown: stop accepting connections, flush queued PostHog events, then exit
+const gracefulShutdown = async () => {
+  server.close(async () => {
+    try {
+      await shutdownPosthog();
+      process.exit(0);
+    } catch (err) {
+      console.error("Error during PostHog shutdown:", err);
+      process.exit(1);
+    }
+  });
+};
+process.on("SIGTERM", gracefulShutdown);
+process.on("SIGINT", gracefulShutdown);
