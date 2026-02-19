@@ -1,5 +1,8 @@
 import express from "express";
 import bodyParser from "body-parser";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 import { config as dotenvConfig } from "dotenv";
 dotenvConfig();
 import { setupExpressErrorHandler } from "posthog-node";
@@ -16,7 +19,9 @@ import {
 } from "./controllers/index.js";
 import { isHealthy } from "./helpers/redis.js";
 import { getPosthog, shutdownPosthog } from "./lib/posthog.js";
+import { injectPosthogConfig } from "./lib/injectPosthogConfig.js";
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -27,7 +32,26 @@ function asyncHandler(fn) {
   };
 }
 
+// Serve index.html with runtime-injected PostHog config (so Fly secrets work; they're not available at Docker build time)
+const distIndexPath = path.join(__dirname, "public", "dist", "index.html");
+function serveAppWithPosthogConfig(req, res, next) {
+  if (!fs.existsSync(distIndexPath)) return next();
+  const posthogKey = process.env.POSTHOG_KEY || "";
+  const posthogHost = process.env.POSTHOG_HOST || "https://us.i.posthog.com";
+  const html = fs.readFileSync(distIndexPath, "utf8");
+  const injected = injectPosthogConfig(html, posthogKey, posthogHost);
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.send(injected);
+}
+app.get("/", serveAppWithPosthogConfig);
+
 app.use(express.static("public/dist")); // serve static files that vite built
+
+// SPA fallback: serve app (with injected config) for any non-file GET so client routes and PostHog work after refresh
+app.get("*", (req, res, next) => {
+  if (req.path.startsWith("/api") || req.path.startsWith("/healthcheck") || req.path.startsWith("/redis-healthcheck")) return next();
+  serveAppWithPosthogConfig(req, res, next);
+});
 
 // anonymous session
 app.use(session);

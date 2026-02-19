@@ -1,10 +1,15 @@
 /**
- * Unit tests for PostHog integration (lib/posthog.js and server error handling pattern)
+ * Unit tests for PostHog integration (lib/posthog.js, runtime config injection, and frontend fallback)
  */
 
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 import { TestSuite, assertEqual, assertTruthy, assertFalsy } from "./testUtils.js";
 import { getPosthog, _resetPosthogForTesting } from "../lib/posthog.js";
+import { injectPosthogConfig } from "../lib/injectPosthogConfig.js";
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const suite = new TestSuite("PostHog");
 
 const savedEnv = {};
@@ -84,6 +89,42 @@ suite.test("getPosthog returns null again after reset when key removed", () => {
   assertFalsy(result, "after reset and unset key, getPosthog() should return null");
 
   if (savedEnv.POSTHOG_KEY !== undefined) process.env.POSTHOG_KEY = savedEnv.POSTHOG_KEY;
+});
+
+// --- Runtime config injection (prevents regression: PostHog key must work when only available at runtime, e.g. Fly secrets) ---
+
+suite.test("injectPosthogConfig injects key and host into HTML", () => {
+  const html = "<!DOCTYPE html><html><head></head><body></body></html>";
+  const key = "phc_prod_abc123";
+  const host = "https://eu.i.posthog.com";
+  const result = injectPosthogConfig(html, key, host);
+
+  assertTruthy(result.includes("window.__POSTHOG_KEY__"), "injected HTML must contain window.__POSTHOG_KEY__");
+  assertTruthy(result.includes("window.__POSTHOG_HOST__"), "injected HTML must contain window.__POSTHOG_HOST__");
+  assertTruthy(result.includes(key), "injected HTML must contain the key value");
+  assertTruthy(result.includes(host), "injected HTML must contain the host value");
+  assertTruthy(result.includes("</head>"), "original </head> must still be present");
+});
+
+suite.test("injectPosthogConfig escapes key so HTML is safe", () => {
+  const html = "<!DOCTYPE html><html><head></head><body></body></html>";
+  const key = 'phc_"quoted"';
+  const result = injectPosthogConfig(html, key, "https://us.i.posthog.com");
+  assertTruthy(result.includes("__POSTHOG_KEY__"), "key must be present");
+  assertTruthy(result.includes("phc_"), "key value must appear (JSON-escaped)");
+});
+
+suite.test("frontend main.jsx reads runtime config (window.__POSTHOG_KEY__) so Fly secrets work", () => {
+  const mainPath = path.join(__dirname, "..", "public", "src", "main.jsx");
+  const source = fs.readFileSync(mainPath, "utf8");
+  assertTruthy(
+    source.includes("__POSTHOG_KEY__"),
+    "main.jsx must use window.__POSTHOG_KEY__ so PostHog works when key is only available at runtime (e.g. Fly secrets). Do not rely only on VITE_POSTHOG_KEY."
+  );
+  assertTruthy(
+    source.includes("__POSTHOG_HOST__"),
+    "main.jsx must use window.__POSTHOG_HOST__ for runtime config"
+  );
 });
 
 // Run and report
