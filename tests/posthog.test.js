@@ -119,11 +119,19 @@ suite.test("frontend main.jsx reads runtime config (window.__POSTHOG_KEY__) so F
   const source = fs.readFileSync(mainPath, "utf8");
   assertTruthy(
     source.includes("__POSTHOG_KEY__"),
-    "main.jsx must use window.__POSTHOG_KEY__ so PostHog works when key is only available at runtime (e.g. Fly secrets). Do not rely only on VITE_POSTHOG_KEY."
+    "main.jsx must use window.__POSTHOG_KEY__ so PostHog works when key is only available at runtime (e.g. Fly secrets). Do not rely only on build-time env."
   );
   assertTruthy(
     source.includes("__POSTHOG_HOST__"),
     "main.jsx must use window.__POSTHOG_HOST__ for runtime config"
+  );
+  assertTruthy(
+    source.includes("VITE_PUBLIC_POSTHOG_KEY"),
+    "main.jsx must use VITE_PUBLIC_POSTHOG_KEY (not VITE_POSTHOG_KEY) for build-time fallback"
+  );
+  assertTruthy(
+    source.includes("VITE_PUBLIC_POSTHOG_HOST"),
+    "main.jsx must use VITE_PUBLIC_POSTHOG_HOST for build-time fallback"
   );
 });
 
