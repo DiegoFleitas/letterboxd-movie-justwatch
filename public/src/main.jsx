@@ -1,22 +1,40 @@
 import { createRoot } from "react-dom/client";
-import posthog from "posthog-js";
-import { PostHogProvider } from "@posthog/react";
+import { useEffect } from "react";
+import { PostHogProvider, usePostHog } from "@posthog/react";
 import { App } from "./App.jsx";
+
+function PostHogWindowRef() {
+  const posthog = usePostHog();
+  useEffect(() => {
+    if (posthog) {
+      if (import.meta.env.DEV && typeof window !== "undefined") window.posthog = posthog;
+      posthog.register({ environment: import.meta.env.DEV ? "development" : "production" });
+    }
+  }, [posthog]);
+  return null;
+}
 
 const rootEl = document.getElementById("root");
 if (rootEl) {
-  const key = import.meta.env.VITE_POSTHOG_KEY;
-  if (key) {
-    posthog.init(key, {
-      api_host: import.meta.env.VITE_POSTHOG_HOST || "https://us.i.posthog.com",
-      capture_exceptions: true,
-    });
-    posthog.register({ environment: import.meta.env.DEV ? "development" : "production" });
-  }
+  // Prefer runtime-injected config (from server, so Fly secrets work); fall back to build-time env
+  const key =
+    (typeof window !== "undefined" && window.__POSTHOG_KEY__) ||
+    import.meta.env.VITE_PUBLIC_POSTHOG_KEY;
+  const host =
+    (typeof window !== "undefined" && window.__POSTHOG_HOST__) ||
+    import.meta.env.VITE_PUBLIC_POSTHOG_HOST ||
+    "https://us.i.posthog.com";
+
+  const options = {
+    api_host: host,
+    capture_exceptions: true,
+    defaults: "2026-01-30",
+  };
 
   createRoot(rootEl).render(
     key ? (
-      <PostHogProvider client={posthog}>
+      <PostHogProvider apiKey={key} options={options}>
+        <PostHogWindowRef />
         <App />
       </PostHogProvider>
     ) : (
