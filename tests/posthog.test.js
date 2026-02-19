@@ -114,16 +114,46 @@ suite.test("injectPosthogConfig escapes key so HTML is safe", () => {
   assertTruthy(result.includes("phc_"), "key value must appear (JSON-escaped)");
 });
 
+suite.test("injectPosthogConfig prevents </script> injection in key", () => {
+  const html = "<!DOCTYPE html><html><head></head><body></body></html>";
+  const maliciousKey = 'phc_</script><script>alert(1)</script>';
+  const result = injectPosthogConfig(html, maliciousKey, "https://us.i.posthog.com");
+  assertFalsy(
+    result.includes("</script><script>"),
+    "injectPosthogConfig must not allow </script> injection in the key"
+  );
+});
+
+suite.test("injectPosthogConfig matches </HEAD> (case-insensitive)", () => {
+  const htmlUpper = "<!DOCTYPE html><html><HEAD></HEAD><body></body></html>";
+  const result = injectPosthogConfig(htmlUpper, "phc_test", "https://us.i.posthog.com");
+  assertTruthy(result.includes("window.__POSTHOG_KEY__"), "must inject config even when </HEAD> is uppercase");
+});
+
 suite.test("frontend main.jsx reads runtime config (window.__POSTHOG_KEY__) so Fly secrets work", () => {
   const mainPath = path.join(__dirname, "..", "public", "src", "main.jsx");
   const source = fs.readFileSync(mainPath, "utf8");
   assertTruthy(
-    source.includes("__POSTHOG_KEY__"),
+    source.includes("window.__POSTHOG_KEY__"),
     "main.jsx must use window.__POSTHOG_KEY__ so PostHog works when key is only available at runtime (e.g. Fly secrets). Do not rely only on build-time env."
   );
   assertTruthy(
-    source.includes("__POSTHOG_HOST__"),
+    source.includes("window.__POSTHOG_HOST__"),
     "main.jsx must use window.__POSTHOG_HOST__ for runtime config"
+  );
+
+  // Verify that the runtime config is actually used to initialize PostHog (via PostHogProvider), not just present in the source.
+  // The key derived from window.__POSTHOG_KEY__ must be passed as apiKey to PostHogProvider.
+  // Expected pattern: <PostHogProvider apiKey={key} ...> (single-line, no JSX line breaks between tag name and apiKey)
+  assertTruthy(
+    /PostHogProvider[^>]*apiKey=\{key\}/.test(source),
+    "main.jsx must pass the runtime-derived key to PostHogProvider as apiKey."
+  );
+  // The host derived from window.__POSTHOG_HOST__ must be used in the options object passed to PostHogProvider.
+  // Expected pattern: api_host: host (within the options object literal)
+  assertTruthy(
+    /api_host:\s*host/.test(source),
+    "main.jsx must use the runtime-derived host as api_host in PostHogProvider options."
   );
   assertTruthy(
     source.includes("VITE_PUBLIC_POSTHOG_KEY"),

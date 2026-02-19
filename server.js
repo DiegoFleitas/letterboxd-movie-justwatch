@@ -33,25 +33,23 @@ function asyncHandler(fn) {
 }
 
 // Serve index.html with runtime-injected PostHog config (so Fly secrets work; they're not available at Docker build time)
+// The HTML is read and injected once at startup for efficiency.
 const distIndexPath = path.join(__dirname, "public", "dist", "index.html");
-function serveAppWithPosthogConfig(req, res, next) {
-  if (!fs.existsSync(distIndexPath)) return next();
+let cachedIndexHtml = null;
+if (fs.existsSync(distIndexPath)) {
   const posthogKey = process.env.POSTHOG_KEY || "";
   const posthogHost = process.env.POSTHOG_HOST || "https://us.i.posthog.com";
   const html = fs.readFileSync(distIndexPath, "utf8");
-  const injected = injectPosthogConfig(html, posthogKey, posthogHost);
+  cachedIndexHtml = injectPosthogConfig(html, posthogKey, posthogHost);
+}
+function serveAppWithPosthogConfig(req, res, next) {
+  if (!cachedIndexHtml) return next();
   res.setHeader("Content-Type", "text/html; charset=utf-8");
-  res.send(injected);
+  res.send(cachedIndexHtml);
 }
 app.get("/", serveAppWithPosthogConfig);
 
 app.use(express.static("public/dist")); // serve static files that vite built
-
-// SPA fallback: serve app (with injected config) for any non-file GET so client routes and PostHog work after refresh
-app.get("*", (req, res, next) => {
-  if (req.path.startsWith("/api") || req.path.startsWith("/healthcheck") || req.path.startsWith("/redis-healthcheck")) return next();
-  serveAppWithPosthogConfig(req, res, next);
-});
 
 // anonymous session
 app.use(session);
@@ -111,6 +109,9 @@ app.post("/api/alternative-search", setCacheControl, asyncHandler(async (req, re
 app.all("/api/proxy/:url(*)", asyncHandler(async (req, res) => {
   return proxy(req, res);
 }));
+
+// SPA fallback: serve app (with injected config) for any non-API GET so client routes and PostHog work after refresh
+app.get("*", serveAppWithPosthogConfig);
 
 // PostHog: capture errors that propagate to the error middleware.
 // Note: controllers that catch errors internally must call getPosthog().captureException(err) directly.
