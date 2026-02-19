@@ -6,9 +6,10 @@
   "type": "module",
   "packageManager": "pnpm@10.10.0",
   "scripts": {
-    "test": "node tests/filterLogic.test.js && node tests/stateTileManagement.test.js",
+    "test": "node tests/filterLogic.test.js && node tests/stateTileManagement.test.js && node tests/posthog.test.js",
     "test:filter": "node tests/filterLogic.test.js",
     "test:state": "node tests/stateTileManagement.test.js",
+    "test:posthog": "node tests/posthog.test.js",
     "test:browser": "echo 'Open http://localhost:5173/testBrowserState.html in your browser'",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
