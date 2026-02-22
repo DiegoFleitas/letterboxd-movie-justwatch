@@ -18,10 +18,9 @@ import {
   proxy,
 } from "./controllers/index.js";
 import { isHealthy } from "./helpers/redis.js";
-import { getCanonicalProviderMap } from "./helpers/loadCanonicalProviders.js";
+import { getCanonicalProviderMap, getCanonicalProviderByNames } from "./helpers/loadCanonicalProviders.js";
 import { getPosthog, shutdownPosthog } from "./lib/posthog.js";
 import { injectPosthogConfig } from "./lib/injectPosthogConfig.js";
-import { getCanonicalProviderByNames } from "./helpers/loadCanonicalProviders.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
