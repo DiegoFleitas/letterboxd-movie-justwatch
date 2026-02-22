@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useAppState } from "./AppStateContext.jsx";
 import { getTileProviderNames } from "./movieTiles.js";
 import { MovieTile } from "./MovieTile.jsx";
+import { deduplicateProviderList, tileMatchesProviderFilter } from "./providerUtils.js";
 
 const FOOTER_MESSAGES = [
   "Star me on GitHub!",
@@ -43,7 +44,10 @@ export function RightPanel() {
   };
 
   const tileList = useMemo(() => Object.values(tiles), [tiles]);
-  const providerList = useMemo(() => Object.values(providers).filter((p) => p?.name), [providers]);
+  const providerList = useMemo(
+    () => deduplicateProviderList(Object.values(providers)),
+    [providers]
+  );
 
   const visibleTiles = useMemo(() => {
     return tileList.filter((tile) => {
@@ -51,7 +55,7 @@ export function RightPanel() {
       if (altSearchFilter) return names.length > 0;
       if (!activeFilters.length) return true;
       if (!names.length) return false;
-      return activeFilters.some((f) => names.includes(f));
+      return tileMatchesProviderFilter(names, activeFilters);
     });
   }, [tileList, activeFilters, altSearchFilter]);
 
@@ -67,6 +71,7 @@ export function RightPanel() {
             key={provider.id}
             className={`streaming-provider-icon ${activeFilters.includes(provider.name) ? "active" : ""}`}
             data-sp={provider.name}
+            title={provider.name}
             onClick={() => toggleFilter(provider.name)}
             role="button"
             tabIndex={0}
@@ -85,6 +90,7 @@ export function RightPanel() {
         <div
           className={`streaming-provider-icon ${altSearchFilter ? "active" : ""}`}
           data-sp="alternative search"
+          title="Alternative search"
           onClick={toggleAltSearchFilter}
           role="button"
           tabIndex={0}
