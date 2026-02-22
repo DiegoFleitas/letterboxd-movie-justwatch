@@ -51,6 +51,11 @@ function serveAppWithPosthogConfig(req, res, next) {
 }
 app.get("/", serveAppWithPosthogConfig);
 
+// Placeholder lives in public/ but Vite build only outputs public/dist; serve it so prod works
+app.get("/movie_placeholder.svg", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "movie_placeholder.svg"));
+});
+
 app.use(express.static("public/dist")); // serve static files that vite built
 
 // anonymous session
