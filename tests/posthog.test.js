@@ -130,6 +130,21 @@ suite.test("injectPosthogConfig matches </HEAD> (case-insensitive)", () => {
   assertTruthy(result.includes("window.__POSTHOG_KEY__"), "must inject config even when </HEAD> is uppercase");
 });
 
+suite.test("injectPosthogConfig injects canonicalByNames when provided", () => {
+  const html = "<!DOCTYPE html><html><head></head><body></body></html>";
+  const canonicalByNames = { "HBO Max": { id: "max", name: "HBO Max" } };
+  const result = injectPosthogConfig(html, "", "https://us.i.posthog.com", canonicalByNames);
+  assertTruthy(result.includes("window.__CANONICAL_PROVIDERS_BY_NAME__"), "injected HTML must contain __CANONICAL_PROVIDERS_BY_NAME__");
+  assertTruthy(result.includes('"max"'), "canonical id must appear (JSON-serialized)");
+});
+
+suite.test("injectPosthogConfig does not inject canonical when 4th arg is null/undefined", () => {
+  const html = "<!DOCTYPE html><html><head></head><body></body></html>";
+  const result = injectPosthogConfig(html, "k", "https://us.i.posthog.com", null);
+  assertTruthy(result.includes("__POSTHOG_KEY__"));
+  assertTruthy(!result.includes("__CANONICAL_PROVIDERS_BY_NAME__"));
+});
+
 suite.test("frontend main.jsx reads runtime config (window.__POSTHOG_KEY__) so Fly secrets work", () => {
   const mainPath = path.join(__dirname, "..", "public", "src", "main.jsx");
   const source = fs.readFileSync(mainPath, "utf8");

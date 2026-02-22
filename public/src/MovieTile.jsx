@@ -50,6 +50,7 @@ export function MovieTile({ data, onAlternativeSearch }) {
                   className="tile-icons"
                   data-sp={provider.name}
                   data-url={provider.url}
+                  title={provider.name}
                   onClick={(e) => handleProviderClick(e, provider.url)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
@@ -70,10 +71,10 @@ export function MovieTile({ data, onAlternativeSearch }) {
                 </div>
               ))}
             </div>
-            <div className="tile-icons" data-sp="alternative-search-tile">
+            <div className="tile-icons" data-sp="alternative-search-tile" title="Alternative search">
               <img
                 src="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏴‍☠️</text></svg>"
-                alt="alternative search"
+                alt="Alternative search"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();

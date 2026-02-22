@@ -18,8 +18,10 @@ import {
   proxy,
 } from "./controllers/index.js";
 import { isHealthy } from "./helpers/redis.js";
+import { getCanonicalProviderMap } from "./helpers/loadCanonicalProviders.js";
 import { getPosthog, shutdownPosthog } from "./lib/posthog.js";
 import { injectPosthogConfig } from "./lib/injectPosthogConfig.js";
+import { getCanonicalProviderByNames } from "./helpers/loadCanonicalProviders.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -40,7 +42,7 @@ if (fs.existsSync(distIndexPath)) {
   const posthogKey = process.env.POSTHOG_KEY || "";
   const posthogHost = process.env.POSTHOG_HOST || "https://us.i.posthog.com";
   const html = fs.readFileSync(distIndexPath, "utf8");
-  cachedIndexHtml = injectPosthogConfig(html, posthogKey, posthogHost);
+  cachedIndexHtml = injectPosthogConfig(html, posthogKey, posthogHost, getCanonicalProviderByNames());
 }
 function serveAppWithPosthogConfig(req, res, next) {
   if (!cachedIndexHtml) return next();
@@ -53,6 +55,9 @@ app.use(express.static("public/dist")); // serve static files that vite built
 
 // anonymous session
 app.use(session);
+
+// Preload canonical provider map for deduplication (id → canonical id/name)
+app.locals.canonicalProviderMap = getCanonicalProviderMap();
 
 // logging
 app.use(logging);
