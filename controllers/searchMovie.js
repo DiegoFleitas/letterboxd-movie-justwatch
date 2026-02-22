@@ -1,6 +1,7 @@
 import axiosHelper from "../helpers/axios.js";
 const axios = axiosHelper();
 import { getCacheValue, setCacheValue } from "../helpers/redis.js";
+import { processOffers } from "../helpers/processOffers.js";
 
 const cacheTtl = process.env.CACHE_TTL || 3600; // 1h (seconds)
 const PROXY = "";
@@ -151,9 +152,11 @@ export const searchMovie = async (req, res) => {
       return res.json(noStreamingServicesResponse);
     }
 
+    const canonicalMap = req.app.locals.canonicalProviderMap ?? {};
     const providers = processOffers(
       movieData.node.offers,
-      movieData.node.content.fullPath
+      movieData.node.content.fullPath,
+      canonicalMap
     );
 
     if (!providers?.length) {
@@ -177,29 +180,6 @@ export const searchMovie = async (req, res) => {
       .status(500)
       .json({ error: "Internal Server Error", title: title, year: year });
   }
-};
-
-const processOffers = (offers, fullPath) => {
-  const uniqueProviders = new Set(); // Set to store unique serialized providers
-  return offers.reduce((acc, offer) => {
-    if (["FLATRATE", "FREE", "ADS"].includes(offer.monetizationType)) {
-      const provider = {
-        id: offer.package.technicalName,
-        name: offer.package.clearName,
-        icon: `https://images.justwatch.com${offer.package.icon
-          .replace("{profile}", "s100")
-          .replace("{format}", "jpg")}`,
-        url: offer.standardWebURL || fullPath,
-        type: offer.monetizationType,
-      };
-      const serializedProvider = JSON.stringify(provider);
-      if (!uniqueProviders.has(serializedProvider)) {
-        uniqueProviders.add(serializedProvider); // Add serialized provider to Set
-        acc.push(provider); // Push provider object to accumulator
-      }
-    }
-    return acc;
-  }, []);
 };
 
 const getProviders = async (country) => {
