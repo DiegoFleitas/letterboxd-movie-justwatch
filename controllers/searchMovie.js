@@ -36,7 +36,12 @@ export const searchMovie = async (req, res) => {
     const movieDbData = movieDbResponse.data.results[0];
 
     if (!movieDbData) {
-      const response = { error: "Movie not found (TMDB)", title: title, year: year };
+      const response = {
+        error: "Movie not found (TMDB)",
+        title: title,
+        year: year,
+        poster: "/movie_placeholder.svg",
+      };
       await setCacheValue(cacheKey, response, cacheTtl);
       return res.json(response);
     }
