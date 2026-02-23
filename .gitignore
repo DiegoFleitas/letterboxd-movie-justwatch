@@ -16,3 +16,18 @@ public/dist
 /scripts
 
 .npmrc
+
+# Ignore Playwright test output
+playwright-report/
+
+# Ignore Playwright trace files
+playwright-report/data/trace/
+
+# Ignore Playwright screenshots
+playwright-report/screenshots/
+
+# Ignore Playwright videos
+playwright-report/videos/
+
+# Ignore Playwright logs
+playwright-report/logs/
