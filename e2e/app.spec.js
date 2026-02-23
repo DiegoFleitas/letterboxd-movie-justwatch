@@ -25,6 +25,22 @@ function findSearchMovieResponse(body) {
   return entry ? entry.response : null;
 }
 
+/** Wait for automatic geo to complete so the country selector is stable (mock returns UY). */
+async function waitForGeoReady(page) {
+  await expect(page.getByTestId('country-selector').getByText('Uruguay')).toBeVisible({ timeout: 10000 });
+}
+
+test.beforeEach(async ({ page }) => {
+  // Mock ipapi.co so automatic geo detection returns UY; fixtures use es_UY so requests match.
+  await page.route('**/ipapi.co/**', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ country_code: 'UY', ip: '127.0.0.1' }),
+    })
+  );
+});
+
 test.describe('App shell and left panel', () => {
   test('loads and shows country selector, tabs, and movie form', async ({ page }) => {
     await page.goto('/');
@@ -39,9 +55,17 @@ test.describe('App shell and left panel', () => {
     await expect(page.getByTestId('movie-submit')).toBeVisible();
   });
 
+  test('automatic country detection uses geo mock and shows detected country', async ({ page }) => {
+    await page.goto('/');
+    await page.evaluate(() => localStorage.removeItem('letterboxd-justwatch-country'));
+    await page.reload();
+    await expect(page.getByTestId('country-selector')).toBeVisible();
+    await expect(page.getByTestId('country-selector').getByText('Uruguay')).toBeVisible();
+  });
+
   test('switching to List tab shows list form', async ({ page }) => {
     await page.goto('/');
-
+    await waitForGeoReady(page);
     await page.getByTestId('tab-list').click();
     await expect(page.getByTestId('list-form')).toBeVisible();
     await expect(page.getByTestId('list-url')).toBeVisible();
@@ -61,6 +85,7 @@ test.describe('App shell and left panel', () => {
 test.describe('Movie form', () => {
   test('submit triggers search and shows toast', async ({ page }) => {
     await page.goto('/');
+    await waitForGeoReady(page);
     await expect(page.getByTestId('movie-form')).toBeVisible();
 
     const searchPromise = page.waitForResponse(
@@ -96,6 +121,7 @@ test.describe('Movie form', () => {
 
   test('API error shows error toast', async ({ page }) => {
     await page.goto('/');
+    await waitForGeoReady(page);
     await expect(page.getByTestId('movie-form')).toBeVisible();
 
     // Use fixture: e.g. The Little Drummer Girl has error "Movie not found (TMDB)"
@@ -121,6 +147,7 @@ test.describe('Movie form', () => {
 test.describe('List form', () => {
   test('submit with valid watchlist URL loads tiles into poster showcase', async ({ page }) => {
     await page.goto('/');
+    await waitForGeoReady(page);
 
     // Use fixture: one film from letterboxd watchlist so one tile + one search-movie call
     const listResponse = letterboxdFixtures[0].response;
@@ -158,7 +185,7 @@ test.describe('List form', () => {
 
   test('invalid list URL shows error toast and no tiles', async ({ page }) => {
     await page.goto('/');
-
+    await waitForGeoReady(page);
     await page.getByTestId('tab-list').click();
     await page.getByTestId('list-url').fill('https://example.com/');
     await page.getByTestId('list-submit').click();
@@ -171,6 +198,7 @@ test.describe('List form', () => {
 test.describe('Filtering', () => {
   test('clicking provider icon filters tiles', async ({ page }) => {
     await page.goto('/');
+    await waitForGeoReady(page);
 
     // Use fixture: two films — The Greatest Hits (Disney Plus), A Ghost Story (no providers)
     const listResponse = letterboxdFixtures[0].response;
@@ -217,6 +245,7 @@ test.describe('Filtering', () => {
 test.describe('Alternative search', () => {
   test('alternative search button triggers API and shows result', async ({ page }) => {
     await page.goto('/');
+    await waitForGeoReady(page);
 
     await page.route('**/api/search-movie', (route) =>
       route.fulfill({

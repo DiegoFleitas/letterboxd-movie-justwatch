@@ -562,7 +562,6 @@ export const countries = [
   {
     id: "es_UY",
     text: "Uruguay",
-    selected: true,
     flag: "🇺🇾",
   },
   {
