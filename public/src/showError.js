@@ -30,7 +30,22 @@ export const showBatchErrors = (errors) => {
     showError(`[${title} (${year})] ${message}`);
     return;
   }
-  showError(
-    `${errors.length} titles have no streaming in your country. Try pirate flags 🏴‍☠️ for alternatives.`
-  );
+  const uniqueMessages = [
+    ...new Set(errors.map((error) => error.message).filter(Boolean)),
+  ];
+  let batchMessage;
+
+  if (uniqueMessages.length === 0) {
+    batchMessage = `${errors.length} titles encountered errors while loading.`;
+  } else if (uniqueMessages.length === 1) {
+    // All errors share the same cause; summarize using that shared message.
+    batchMessage = `${errors.length} titles: ${uniqueMessages[0]}`;
+  } else {
+    // Multiple distinct causes; provide a generic summary plus the unique messages.
+    batchMessage =
+      `${errors.length} titles encountered errors while loading:\n` +
+      uniqueMessages.map((msg) => `- ${msg}`).join("\n");
+  }
+
+  showError(batchMessage);
 };
