@@ -266,7 +266,9 @@ test.describe('List form', () => {
     await page.getByTestId('list-submit').click();
 
     await expect(page.getByTestId('poster-showcase').getByTestId('tile')).toHaveCount(1, { timeout: 10000 });
-    await expect(page.getByText(/A Ghost Story|No streaming|pirate flags/)).toBeVisible({ timeout: 5000 });
+    await expect(
+      page.getByRole('status').filter({ hasText: /A Ghost Story|No streaming|pirate flags/ })
+    ).toBeVisible({ timeout: 5000 });
   });
 });
 
