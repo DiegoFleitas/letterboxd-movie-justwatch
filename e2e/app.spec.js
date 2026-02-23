@@ -193,6 +193,83 @@ test.describe('List form', () => {
     await expect(page.getByText(/Invalid URL format|valid URL/)).toBeVisible({ timeout: 5000 });
     await expect(page.getByTestId('poster-showcase').getByTestId('tile')).toHaveCount(0);
   });
+
+  test('list load with multiple movie errors shows one grouped error toast', async ({ page }) => {
+    await page.goto('/');
+    await waitForGeoReady(page);
+
+    // Three films that all have error responses in search-movie fixtures (no streaming / not found)
+    const listResponse = letterboxdFixtures[0].response;
+    const threeErrorFilms = {
+      ...listResponse,
+      watchlist: listResponse.watchlist.slice(0, 3), // A Ghost Story, The Old Man & the Gun, The Little Drummer Girl
+    };
+
+    await page.route('**/api/letterboxd-watchlist', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(threeErrorFilms),
+      })
+    );
+
+    await page.route('**/api/search-movie', (route) => {
+      const body = route.request().postDataJSON();
+      const response = findSearchMovieResponse(body) || { title: body?.title, year: body?.year, error: 'No fixture' };
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(response),
+      });
+    });
+
+    await page.getByTestId('tab-list').click();
+    await page.getByTestId('list-url').fill('https://letterboxd.com/user/watchlist/');
+    await page.getByTestId('list-submit').click();
+
+    await expect(page.getByTestId('poster-showcase').getByTestId('tile')).toHaveCount(3, { timeout: 15000 });
+    const groupedToast = page.getByRole('status').filter({ hasText: /3 titles (encountered errors|:)/ });
+    await expect(groupedToast).toBeVisible({ timeout: 5000 });
+    await expect(groupedToast).toHaveCount(1);
+  });
+
+  test('list load with one movie error shows single-movie error toast', async ({ page }) => {
+    await page.goto('/');
+    await waitForGeoReady(page);
+
+    const listResponse = letterboxdFixtures[0].response;
+    const oneErrorFilm = {
+      ...listResponse,
+      watchlist: listResponse.watchlist.slice(0, 1), // A Ghost Story - has error fixture
+    };
+
+    await page.route('**/api/letterboxd-watchlist', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(oneErrorFilm),
+      })
+    );
+
+    await page.route('**/api/search-movie', (route) => {
+      const body = route.request().postDataJSON();
+      const response = findSearchMovieResponse(body) || { title: body?.title, year: body?.year, error: 'No fixture' };
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(response),
+      });
+    });
+
+    await page.getByTestId('tab-list').click();
+    await page.getByTestId('list-url').fill('https://letterboxd.com/user/watchlist/');
+    await page.getByTestId('list-submit').click();
+
+    await expect(page.getByTestId('poster-showcase').getByTestId('tile')).toHaveCount(1, { timeout: 10000 });
+    await expect(
+      page.getByRole('status').filter({ hasText: /A Ghost Story|No streaming|pirate flags/ })
+    ).toBeVisible({ timeout: 5000 });
+  });
 });
 
 test.describe('Filtering', () => {
