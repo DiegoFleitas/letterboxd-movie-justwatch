@@ -1,7 +1,6 @@
 import { useRef, useCallback, useEffect } from "react";
 import { toggleNotice } from "./noticeFunctions.js";
-import { showMessage } from "./showMessage.js";
-import { showError } from "./showError.js";
+import { showError, showBatchErrors } from "./showError.js";
 
 const MAX_PAGES_PER_LOAD = 20;
 
@@ -12,6 +11,8 @@ export function useLetterboxdList(mergeTile) {
   const isLoadingRef = useRef(false);
   const dataRef = useRef(null);
   const loadWatchlistRef = useRef(null);
+  const batchIdRef = useRef(0);
+  const batchMapRef = useRef(new Map());
 
   const processList = useCallback(
     async (data, responseData) => {
@@ -23,6 +24,12 @@ export function useLetterboxdList(mergeTile) {
           showError(error);
           return;
         }
+        const batchId = ++batchIdRef.current;
+        batchMapRef.current.set(batchId, {
+          total: watchlist.length,
+          completed: 0,
+          errors: [],
+        });
         for (const element of watchlist) {
           let { title, year, link, posterPath, poster } = element;
           poster = poster || "/movie_placeholder.svg";
@@ -42,19 +49,36 @@ export function useLetterboxdList(mergeTile) {
             .then((r) => r.json())
             .then((response) => {
               const { error: err, title: t, year: y, poster: p, link: l } = response;
+              const batch = batchMapRef.current.get(batchId);
+              if (!batch) return;
+              batch.completed++;
               if (err) {
-                showError(`[${t} (${y})] ${err}`);
+                batch.errors.push({ title: t, year: y, message: err });
                 mergeTile?.(t, y, { poster: p, link: l, movieProviders: [] });
               } else {
                 mergeTile?.(t, y, { ...response, link: l });
               }
+              if (batch.completed === batch.total) {
+                showBatchErrors(batch.errors);
+                batchMapRef.current.delete(batchId);
+              }
             })
-            .catch((e) => console.error(e));
+            .catch((e) => {
+              const batch = batchMapRef.current.get(batchId);
+              if (batch) {
+                batch.completed++;
+                if (batch.completed === batch.total) {
+                  showBatchErrors(batch.errors);
+                  batchMapRef.current.delete(batchId);
+                }
+              }
+              console.error(e);
+            });
         }
         data.page = lastPage;
         dataRef.current = data;
         if (!allPagesLoadedRef.current) {
-          showMessage(`Loaded page ${data.page} of ${totalPages}...`);
+          toggleNotice(`Loaded page ${data.page} of ${totalPages}...`);
           if (!scrollListenerRef.current) {
             const handleScroll = () => {
               if (allPagesLoadedRef.current) {
@@ -75,7 +99,7 @@ export function useLetterboxdList(mergeTile) {
                   watchlistPageCountRef.current - d.page,
                   MAX_PAGES_PER_LOAD
                 );
-                showMessage(`Loading another ${n} page chunk...`);
+                toggleNotice(`Loading more pages...`);
                 (loadWatchlistRef.current || (() => Promise.resolve()))(d).finally(() => {
                   isLoadingRef.current = false;
                 });
@@ -85,14 +109,20 @@ export function useLetterboxdList(mergeTile) {
             window.addEventListener("scroll", handleScroll, { passive: true });
           }
         } else {
-          showMessage(
-            totalPages ? `Loaded all ${totalPages} pages!` : "Loaded all pages!"
+          toggleNotice(
+            totalPages === 1
+              ? "Loaded 1 page!"
+              : totalPages
+                ? `Loaded all ${totalPages} pages!`
+                : "Loaded all pages!"
           );
         }
       } catch (e) {
         console.error(e);
       } finally {
-        setTimeout(toggleNotice, 1000);
+        if (allPagesLoadedRef.current) {
+          setTimeout(toggleNotice, 1500);
+        }
       }
     },
     [mergeTile]
