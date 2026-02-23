@@ -228,7 +228,7 @@ test.describe('List form', () => {
     await page.getByTestId('list-submit').click();
 
     await expect(page.getByTestId('poster-showcase').getByTestId('tile')).toHaveCount(3, { timeout: 15000 });
-    const groupedToast = page.getByRole('status').filter({ hasText: /3 titles have no streaming|pirate flags|alternatives/ });
+    const groupedToast = page.getByRole('status').filter({ hasText: /3 titles (encountered errors|:)/ });
     await expect(groupedToast).toBeVisible({ timeout: 5000 });
     await expect(groupedToast).toHaveCount(1);
   });

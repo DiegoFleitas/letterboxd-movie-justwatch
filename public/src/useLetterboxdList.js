@@ -119,6 +119,7 @@ export function useLetterboxdList(mergeTile) {
         }
       } catch (e) {
         console.error(e);
+        toggleNotice();
       } finally {
         if (allPagesLoadedRef.current) {
           setTimeout(toggleNotice, 1500);
@@ -179,6 +180,7 @@ export function useLetterboxdList(mergeTile) {
         listType,
         page: 1,
       };
+      batchMapRef.current.clear();
       toggleNotice(`Scraping ${listType} for ${username}...`);
       if (listType !== "watchlist") {
         await loadCustomList(data);
@@ -194,6 +196,7 @@ export function useLetterboxdList(mergeTile) {
       if (scrollListenerRef.current) {
         window.removeEventListener("scroll", scrollListenerRef.current);
       }
+      batchMapRef.current.clear();
     };
   }, []);
 
