@@ -2,6 +2,18 @@ import { useState, useEffect, useRef } from "react";
 import { useAppState } from "./AppStateContext.jsx";
 import { countries, generes } from "./consts.js";
 import { CountrySelector } from "./CountrySelector.jsx";
+import { fetchCountryFromIp } from "./countryGeo.js";
+
+const COUNTRY_STORAGE_KEY = "letterboxd-justwatch-country";
+const FALLBACK_COUNTRY_ID = "en_US";
+
+function getStoredCountryId() {
+  try {
+    const id = localStorage.getItem(COUNTRY_STORAGE_KEY);
+    if (id && countries.some((c) => c.id === id)) return id;
+  } catch (_) {}
+  return null;
+}
 
 const TMDB_DEBOUNCE_MS = 120;
 const TMDB_MIN_LENGTH = 2;
@@ -28,10 +40,26 @@ function getGenreNames(genreIds) {
 export function LeftPanel() {
   const { showAltSearchButton, loadLetterboxdList, submitMovieSearch, runAlternativeSearch } = useAppState();
   const [activeTab, setActiveTab] = useState("movie");
-  const [country, setCountry] = useState(() => {
-    const selected = countries.find((c) => c.selected);
-    return selected?.id ?? countries[0]?.id ?? "";
+  const [country, setCountryState] = useState(() => {
+    const stored = getStoredCountryId();
+    return stored ?? countries.find((c) => c.id === FALLBACK_COUNTRY_ID)?.id ?? countries[0]?.id ?? "";
   });
+
+  const setCountry = (id) => {
+    setCountryState(id);
+    try {
+      localStorage.setItem(COUNTRY_STORAGE_KEY, id);
+    } catch (_) {}
+  };
+
+  useEffect(() => {
+    if (getStoredCountryId() !== null) return;
+    let cancelled = false;
+    fetchCountryFromIp(countries).then((id) => {
+      if (!cancelled && id) setCountryState(id);
+    });
+    return () => { cancelled = true; };
+  }, []);
   const [movieTitle, setMovieTitle] = useState("");
   const [movieYear, setMovieYear] = useState("");
   const [listUrl, setListUrl] = useState("");
