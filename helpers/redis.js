@@ -1,7 +1,9 @@
-import redis from "redis";
+import Redis from "ioredis";
 import crypto from "crypto";
 
 let redisClient = null;
+/** Set in tests via _injectRedisClientForTest. When undefined, use real client; when null, no client; when object, use as mock. */
+let _testClient = undefined;
 
 export const isHealthy = async () => {
   const client = await getRedisClient();
@@ -19,22 +21,12 @@ export const isHealthy = async () => {
 
 // create a Redis client instance if it doesn't exist, or return the existing one
 const getRedisClient = async () => {
+  if (_testClient !== undefined) return _testClient;
   if (!redisClient) {
     try {
-      const options = {
-        url: process.env.FLYIO_REDIS_URL || "redis://localhost:6379",
-        disableOfflineQueue: true, // reject commands when client is reconnecting
-        poolOptions: {
-          max: 100,
-          min: 5,
-          maxWaitingClients: 50,
-          testOnBorrow: true,
-          acquireTimeoutMillis: 10000, // 10 seconds
-        },
-      };
-      console.log("[REDIS_OPTIONS]", options);
-      redisClient = redis
-        .createClient(options)
+      const url = process.env.FLYIO_REDIS_URL || "redis://localhost:6379";
+      console.log("[REDIS_OPTIONS]", { url: url.replace(/:[^:@]+@/, ":***@") });
+      redisClient = new Redis(url)
         .on("error", (error) => {
           console.log(`[REDIS_CLIENT_ERROR] ${error}`);
           throw error;
@@ -42,7 +34,6 @@ const getRedisClient = async () => {
         .on("connect", () => {
           console.log("Connected to Redis");
         });
-      await redisClient.connect();
     } catch (error) {
       console.error(error);
     }
@@ -73,8 +64,9 @@ export const getCacheValue = async (key) => {
   }
 };
 
-// set a value in Redis cache with a TTL (time-to-live) in minutes
-export const setCacheValue = async (key, value, ttl = 60) => {
+// set a value in Redis cache with a TTL (time-to-live) in seconds
+// category: if set (e.g. "list"), key is added to an index so clearCacheByCategory can clear it
+export const setCacheValue = async (key, value, ttl = 60, category = null) => {
   const client = await getRedisClient();
   if (!client) {
     return null;
@@ -82,12 +74,38 @@ export const setCacheValue = async (key, value, ttl = 60) => {
   try {
     const serializedValue = JSON.stringify(value);
     const hashedKey = getCacheKey(key);
-    const result = await client.set(hashedKey, serializedValue, { EX: ttl });
+    const result = await client.set(hashedKey, serializedValue, "EX", ttl);
     console.log(`[REDIS_SET] ${hashedKey} (${key}) TTL: ${ttl}`);
 
+    if (result === "OK" && category) {
+      const indexKey = `${process.env.FLY_APP_NAME || "app"}:keys:${category}`;
+      await client.sadd(indexKey, hashedKey);
+    }
     return result === "OK";
   } catch (error) {
     console.log(`[REDIS_SET_ERROR] (${key}) ${error}`);
+  }
+};
+
+/** Remove all keys in a category (e.g. "list"). Only keys set with that category after deploy are cleared. */
+export const clearCacheByCategory = async (category) => {
+  const client = await getRedisClient();
+  if (!client) {
+    return { cleared: 0, error: "Redis unavailable" };
+  }
+  const indexKey = `${process.env.FLY_APP_NAME || "app"}:keys:${category}`;
+  try {
+    const keys = await client.smembers(indexKey);
+    if (keys.length === 0) {
+      return { cleared: 0 };
+    }
+    await client.del(...keys);
+    await client.del(indexKey);
+    console.log(`[REDIS_CLEAR] ${category}: ${keys.length} keys`);
+    return { cleared: keys.length };
+  } catch (error) {
+    console.log(`[REDIS_CLEAR_ERROR] (${category}) ${error}`);
+    return { cleared: 0, error: error.message };
   }
 };
 
@@ -95,5 +113,25 @@ const getCacheKey = (str) => {
   const hash = crypto.createHash("sha256");
   hash.update(str);
   // since upstash is shared, we need to namespace the keys
-  return `${process.env.FLY_APP_NAME}:${hash.digest("hex")}`;
+  return `${process.env.FLY_APP_NAME || "app"}:${hash.digest("hex")}`;
+};
+
+/** Graceful shutdown: close the Redis connection. Call from server shutdown. */
+export const disconnectRedis = async () => {
+  if (redisClient) {
+    await redisClient.quit();
+    redisClient = null;
+    console.log("Redis connection closed");
+  }
+};
+
+/** For tests only: clear singleton and injected client so next call creates a fresh client (or test can inject mock). */
+export const _resetRedisForTesting = () => {
+  redisClient = null;
+  _testClient = undefined;
+};
+
+/** For tests only: inject a mock Redis client; getRedisClient() will return it until reset. */
+export const _injectRedisClientForTest = (client) => {
+  _testClient = client;
 };

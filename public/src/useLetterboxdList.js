@@ -3,6 +3,18 @@ import { toggleNotice } from "./noticeFunctions.js";
 import { showError, showBatchErrors } from "./showError.js";
 
 const MAX_PAGES_PER_LOAD = 20;
+/** Max concurrent /api/search-movie requests to avoid JustWatch rate limits */
+const SEARCH_CONCURRENCY = 4;
+
+function runWithConcurrency(tasks, limit) {
+  let index = 0;
+  function runNext() {
+    if (index >= tasks.length) return Promise.resolve();
+    const i = index++;
+    return tasks[i]().then(() => runNext());
+  }
+  return Promise.all(Array.from({ length: Math.min(limit, tasks.length) }, runNext));
+}
 
 export function useLetterboxdList(mergeTile) {
   const allPagesLoadedRef = useRef(false);
@@ -40,41 +52,46 @@ export function useLetterboxdList(mergeTile) {
               .then((d) => d?.url && mergeTile?.(title, year, { poster: d.url, link }))
               .catch(() => {});
           }
+        }
+        const searchTasks = watchlist.map((element) => {
+          const { title, year, link } = element;
           const movieData = { title, year, country: data.country ?? "" };
-          fetch("/api/search-movie", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(movieData),
-          })
-            .then((r) => r.json())
-            .then((response) => {
-              const { error: err, title: t, year: y, poster: p, link: l } = response;
-              const batch = batchMapRef.current.get(batchId);
-              if (!batch) return;
-              batch.completed++;
-              if (err) {
-                batch.errors.push({ title: t, year: y, message: err });
-                mergeTile?.(t, y, { poster: p, link: l, movieProviders: [] });
-              } else {
-                mergeTile?.(t, y, { ...response, link: l });
-              }
-              if (batch.completed === batch.total) {
-                showBatchErrors(batch.errors);
-                batchMapRef.current.delete(batchId);
-              }
+          return () =>
+            fetch("/api/search-movie", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(movieData),
             })
-            .catch((e) => {
-              const batch = batchMapRef.current.get(batchId);
-              if (batch) {
+              .then((r) => r.json())
+              .then((response) => {
+                const { error: err, title: t, year: y, poster: p, link: l } = response;
+                const batch = batchMapRef.current.get(batchId);
+                if (!batch) return;
                 batch.completed++;
+                if (err) {
+                  batch.errors.push({ title: t, year: y, message: err });
+                  mergeTile?.(t, y, { poster: p, link: l, movieProviders: [] });
+                } else {
+                  mergeTile?.(t, y, { ...response, link: l });
+                }
                 if (batch.completed === batch.total) {
                   showBatchErrors(batch.errors);
                   batchMapRef.current.delete(batchId);
                 }
-              }
-              console.error(e);
-            });
-        }
+              })
+              .catch((e) => {
+                const batch = batchMapRef.current.get(batchId);
+                if (batch) {
+                  batch.completed++;
+                  if (batch.completed === batch.total) {
+                    showBatchErrors(batch.errors);
+                    batchMapRef.current.delete(batchId);
+                  }
+                }
+                console.error(e);
+              });
+        });
+        runWithConcurrency(searchTasks, SEARCH_CONCURRENCY);
         data.page = lastPage;
         dataRef.current = data;
         if (!allPagesLoadedRef.current) {
