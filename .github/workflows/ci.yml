@@ -68,10 +68,13 @@ jobs:
 
       - name: Install Playwright system deps
         if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: pnpm exec playwright install-deps chromium
+        run: pnpm exec playwright install-deps
 
       - name: Run E2E tests
-        run: pnpm run test:e2e
+        run: |
+          pnpm run dev &
+          npx wait-on http://localhost:5173 --timeout 120000
+          pnpm run test:e2e
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
