@@ -27,7 +27,7 @@ function findSearchMovieResponse(body) {
 
 /** Wait for automatic geo to complete so the country selector is stable (mock returns UY). */
 async function waitForGeoReady(page) {
-  await expect(page.getByTestId('country-selector').getByText('Uruguay')).toBeVisible({ timeout: 10000 });
+  await expect(page.getByTestId('country-selector').getByText('Uruguay')).toBeVisible({ timeout: 5000 });
 }
 
 test.beforeEach(async ({ page }) => {
