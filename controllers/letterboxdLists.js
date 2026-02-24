@@ -134,7 +134,7 @@ const fetchList = async (url, cacheKeyPrefix, req, res) => {
           break;
         }
         Promise.all(pageFilmsPromise).then((pageFilms) => {
-          setCacheValue(cacheKey, pageFilms, cacheTtl);
+          setCacheValue(cacheKey, pageFilms, cacheTtl, "list");
         });
         filmsPromises = filmsPromises.concat(pageFilmsPromise);
       }

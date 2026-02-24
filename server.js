@@ -17,7 +17,7 @@ import {
   alternativeSearch,
   proxy,
 } from "./controllers/index.js";
-import { isHealthy } from "./helpers/redis.js";
+import { isHealthy, clearCacheByCategory, disconnectRedis } from "./helpers/redis.js";
 import { getCanonicalProviderMap } from "./helpers/loadCanonicalProviders.js";
 import { getPosthog, shutdownPosthog } from "./lib/posthog.js";
 import { injectPosthogConfig } from "./lib/injectPosthogConfig.js";
@@ -120,6 +120,15 @@ app.all("/api/proxy/:url(*)", asyncHandler(async (req, res) => {
   return proxy(req, res);
 }));
 
+// Dev only: clear list cache (Letterboxd list pages + search-movie results)
+app.post("/api/dev/clear-list-cache", asyncHandler(async (req, res) => {
+  if (process.env.NODE_ENV === "production") {
+    return res.status(404).json({ error: "Not available in production" });
+  }
+  const result = await clearCacheByCategory("list");
+  return res.json({ ok: true, ...result });
+}));
+
 // SPA fallback: serve app (with injected config) for any non-API GET so client routes and PostHog work after refresh
 app.get("*", serveAppWithPosthogConfig);
 
@@ -141,14 +150,15 @@ const server = app.listen(port, () =>
   console.log(`app listening on port http://localhost:${port}`)
 );
 
-// Graceful shutdown: stop accepting connections, flush queued PostHog events, then exit
+// Graceful shutdown: stop accepting connections, close Redis, flush queued PostHog events, then exit
 const gracefulShutdown = async () => {
   server.close(async () => {
     try {
+      await disconnectRedis();
       await shutdownPosthog();
       process.exit(0);
     } catch (err) {
-      console.error("Error during PostHog shutdown:", err);
+      console.error("Error during shutdown:", err);
       process.exit(1);
     }
   });

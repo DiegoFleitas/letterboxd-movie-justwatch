@@ -282,7 +282,7 @@ export function LeftPanel() {
                 onChange={(e) => setListUrl(e.target.value)}
               />
             </div>
-            <div className="submit-container">
+          <div className="submit-container">
               <button
                 type="submit"
                 className="btn btn-primary"
@@ -290,6 +290,28 @@ export function LeftPanel() {
               >
                 Submit
               </button>
+              {import.meta.env?.DEV && (
+                <button
+                  type="button"
+                  className="btn btn-secondary dev-clear-cache"
+                  data-testid="dev-clear-list-cache"
+                  onClick={async () => {
+                    try {
+                      const r = await fetch("/api/dev/clear-list-cache", { method: "POST" });
+                      const data = await r.json();
+                      if (r.ok) {
+                        window.alert(`Cleared ${data.cleared ?? 0} list cache entries.`);
+                      } else {
+                        window.alert(data.error || "Failed to clear cache");
+                      }
+                    } catch (e) {
+                      window.alert("Failed to clear cache: " + e.message);
+                    }
+                  }}
+                >
+                  Clear list cache (dev)
+                </button>
+              )}
             </div>
           </div>
         </form>
