@@ -4,7 +4,44 @@ import { getCacheValue, setCacheValue } from "../helpers/redis.js";
 import { processOffers } from "../helpers/processOffers.js";
 
 const cacheTtl = process.env.CACHE_TTL || 3600; // 1h (seconds)
+const CACHE_TTL_UNAVAILABLE = 120; // 2 min for "API unavailable" so retries can succeed sooner
+const JUSTWATCH_TIMEOUT_MS = 15000;
+const JUSTWATCH_RETRIES = 3;
 const PROXY = "";
+
+async function justWatchPost(axiosInstance, url, body) {
+  let lastError;
+  for (let attempt = 1; attempt <= JUSTWATCH_RETRIES; attempt++) {
+    try {
+      const res = await axiosInstance.post(url, body, {
+        timeout: JUSTWATCH_TIMEOUT_MS,
+        headers: {
+          "Content-Type": "application/json",
+          "User-Agent": "Letterboxd-Movie-JustWatch/1.0",
+        },
+      });
+      return res;
+    } catch (err) {
+      lastError = err;
+      const isRetryable =
+        !err.response ||
+        err.response.status >= 500 ||
+        err.response.status === 429 ||
+        err.code === "ECONNABORTED" ||
+        err.code === "ETIMEDOUT" ||
+        err.code === "ENOTFOUND" ||
+        err.code === "ECONNRESET";
+      if (attempt < JUSTWATCH_RETRIES && isRetryable) {
+        const delay = Math.min(1000 * Math.pow(2, attempt - 1), 8000);
+        console.log(`JustWatch attempt ${attempt}/${JUSTWATCH_RETRIES} failed, retrying in ${delay}ms:`, err.message);
+        await new Promise((r) => setTimeout(r, delay));
+      } else {
+        throw lastError;
+      }
+    }
+  }
+  throw lastError;
+}
 
 // TODO: refactor - way more complex than it needs to be
 export const searchMovie = async (req, res) => {
@@ -42,7 +79,7 @@ export const searchMovie = async (req, res) => {
         year: year,
         poster: "/movie_placeholder.svg",
       };
-      await setCacheValue(cacheKey, response, cacheTtl);
+      await setCacheValue(cacheKey, response, cacheTtl, "list");
       return res.json(response);
     }
 
@@ -105,7 +142,8 @@ export const searchMovie = async (req, res) => {
         filter: { searchQuery: title },
       };
 
-      justWatchResponse = await axios.post(
+      justWatchResponse = await justWatchPost(
+        axios,
         `${PROXY}https://apis.justwatch.com/graphql`,
         { query, variables }
       );
@@ -118,7 +156,7 @@ export const searchMovie = async (req, res) => {
         year: movieDbData.release_date?.substring(0, 4) || year,
         poster: tmdbPoster,
       };
-      await setCacheValue(cacheKey, response, cacheTtl);
+      await setCacheValue(cacheKey, response, CACHE_TTL_UNAVAILABLE, "list");
       return res.json(response);
     }
 
@@ -135,7 +173,7 @@ export const searchMovie = async (req, res) => {
         year: movieDbData.release_date?.substring(0, 4) || year,
         poster: tmdbPoster
       };
-      await setCacheValue(cacheKey, response, cacheTtl);
+      await setCacheValue(cacheKey, response, cacheTtl, "list");
       return res.json(response);
     }
 
@@ -153,7 +191,7 @@ export const searchMovie = async (req, res) => {
     };
 
     if (!movieData.node.offers || !movieData.node.offers.length) {
-      await setCacheValue(cacheKey, noStreamingServicesResponse, cacheTtl);
+      await setCacheValue(cacheKey, noStreamingServicesResponse, cacheTtl, "list");
       return res.json(noStreamingServicesResponse);
     }
 
@@ -165,7 +203,7 @@ export const searchMovie = async (req, res) => {
     );
 
     if (!providers?.length) {
-      await setCacheValue(cacheKey, noStreamingServicesResponse, cacheTtl);
+      await setCacheValue(cacheKey, noStreamingServicesResponse, cacheTtl, "list");
       return res.json(noStreamingServicesResponse);
     }
 
@@ -177,7 +215,7 @@ export const searchMovie = async (req, res) => {
       poster,
     };
 
-    await setCacheValue(cacheKey, responsePayload, cacheTtl);
+    await setCacheValue(cacheKey, responsePayload, cacheTtl, "list");
     res.json(responsePayload);
   } catch (err) {
     console.error(err);

@@ -1,5 +1,30 @@
-fly.toml
-Dockerfile
-.dockerignore
+# Dependencies (reinstalled in container)
 node_modules
+.pnpm-store
+
+# Version control and IDE
 .git
+.gitignore
+.vscode
+.cursor
+
+# Env and secrets
+.env
+.env.*
+
+# Build output and logs
+public/dist
+*.log
+playwright-report
+
+# Tests and dev tooling (not needed for build/start)
+tests
+e2e
+
+# Separate service
+redis
+
+# Optional: uncomment if you want a smaller context
+# scripts
+# .npmrc
+# *.md
