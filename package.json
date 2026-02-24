@@ -16,7 +16,6 @@
     "build:providers:dry-run": "node scripts/buildCanonicalProviders.js --dry-run",
     "export-redis": "node scripts/export-redis-snapshot.js",
     "seed-redis": "node scripts/seed-redis-from-snapshot.js",
-    "test:browser": "echo 'Open http://localhost:5173/testBrowserState.html in your browser'",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "fe:dev": "npx vite",

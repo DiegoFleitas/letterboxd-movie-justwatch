@@ -15,12 +15,6 @@ pnpm run test:filter     # Filter logic tests
 pnpm run test:state      # State management tests
 ```
 
-### Browser Test
-```bash
-pnpm run dev
-# Then open http://localhost:5173/testBrowserState.html
-```
-
 ## Test Structure
 
 ### Unit Tests
@@ -34,11 +28,8 @@ pnpm run dev
   - Tests creating, updating, and moving tiles when year changes
   - Validates data preservation during updates
 
-### Browser Test
-- **testBrowserState.html** - End-to-end test in the browser
-  - Simulates the full flow: create tiles → add providers → filter
-  - Tests actual DOM manipulation and filterTiles() function
-  - Visual pass/fail indicator
+### E2E Tests
+- **e2e/app.spec.js** (Playwright) - Full app flow in the browser
 
 ## Test Output
 
