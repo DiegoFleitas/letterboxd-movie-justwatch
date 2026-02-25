@@ -80,7 +80,7 @@ suite.test("Should handle null year", () => {
 });
 
 suite.test("Should create new tile when it doesn't exist", () => {
-  const state = { movieTiles: {} as Record<string, TileData> };
+  const state = { movieTiles: {} satisfies Record<string, TileData> };
   const result = updateMovieTile(state, "Test Movie", "2024", {
     link: "https://letterboxd.com/film/test/",
     movieProviders: [],
