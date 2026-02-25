@@ -1,0 +1,1 @@
+{"compilerOptions":{"target":"ES2022","module":"NodeNext","moduleResolution":"NodeNext","strict":true,"esModuleInterop":true,"skipLibCheck":true,"noEmit":true,"jsx":"react-jsx","resolveJsonModule":true,"isolatedModules":true,"allowJs":false},"include":["**/*.ts","**/*.tsx"],"exclude":["node_modules","dist","public/dist","public/src","test-results","playwright-report"]}

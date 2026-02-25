@@ -20,6 +20,7 @@ public/dist
 
 # Ignore Playwright test output
 playwright-report/
+test-results/
 
 # Ignore Playwright trace files
 playwright-report/data/trace/
