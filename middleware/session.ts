@@ -1,6 +1,12 @@
 import cookieSession from "cookie-session";
 
-const keys = process.env.APP_SECRET_KEY ? [process.env.APP_SECRET_KEY] : ["dev-secret"];
+const appSecretKey = process.env.APP_SECRET_KEY;
+
+if (!appSecretKey && process.env.NODE_ENV === "production") {
+  throw new Error("APP_SECRET_KEY environment variable must be set in production.");
+}
+
+const keys = appSecretKey ? [appSecretKey] : ["dev-secret"];
 
 export const session = cookieSession({
   name: "session",
