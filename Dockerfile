@@ -34,7 +34,7 @@ COPY . .
 # Build application
 RUN pnpm run build
 
-# Remove development dependencies
+# Remove development dependencies (keeps dependencies, including tsx for running server.ts)
 RUN pnpm prune --prod
 
 
