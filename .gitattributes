@@ -1,1 +1,4 @@
 * text=auto
+
+# Exclude HTML from GitHub language statistics
+*.html linguist-documentation=true
