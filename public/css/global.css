@@ -24,6 +24,29 @@
   --ss-border-color: #222c38;
 }
 
+:root {
+  /* Core palette (duplicate for proper :root selector support) */
+  --color-bg: #03070d;
+  --color-bg-alt: #2b3440;
+  --color-surface: #10161d;
+
+  --color-text: #f5f7fa;
+  --color-text-muted: #8fa5b8;
+
+  --color-accent: #f2b705;
+  --color-accent-soft: #f2cf63;
+  --color-border: #bfa863;
+
+  --radius-lg: 12px;
+  --radius-md: 8px;
+  --shadow-soft: 0 2px 12px rgba(0, 0, 0, 0.28);
+  --shadow-strong: 0 18px 48px rgba(0, 0, 0, 0.6);
+
+  /* Third-party widgets (e.g. selects/typeahead) */
+  --ss-primary-color: var(--color-surface);
+  --ss-border-color: #222c38;
+}
+
 html,
 body {
   overflow-x: hidden;
@@ -50,6 +73,27 @@ body {
   line-height: 1.5;
   letter-spacing: 0.01em;
   min-height: 100vh;
+}
+
+/* Accessible focus outlines for key interactive elements */
+button:focus-visible,
+a:focus-visible,
+.streaming-provider-icon:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Visually hidden utility for screen-reader-only text */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .foot-notes {
