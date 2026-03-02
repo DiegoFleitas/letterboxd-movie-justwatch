@@ -20,6 +20,7 @@ function getStoredCountryId(): string | null {
 const TMDB_DEBOUNCE_MS = 120;
 const TMDB_MIN_LENGTH = 2;
 const TMDB_MAX_SUGGESTIONS = 8;
+const MOVIE_SUGGESTIONS_ID = "movie-suggestions";
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -202,6 +203,10 @@ export function LeftPanel(): React.ReactElement {
               ref={movieInputRef}
               type="text"
               id="movie-input"
+              role="combobox"
+              aria-autocomplete="list"
+              aria-expanded={suggestionsOpen}
+              aria-controls={MOVIE_SUGGESTIONS_ID}
               placeholder="Jurassic Park"
               required
               data-testid="movie-input"
@@ -211,10 +216,20 @@ export function LeftPanel(): React.ReactElement {
               autoComplete="off"
             />
             {suggestionsLoading && (
-              <span className="typeahead-loading" aria-hidden="true">…</span>
+              <>
+                <span className="typeahead-loading" aria-hidden="true">…</span>
+                <span className="sr-only" aria-live="polite">
+                  Loading movie suggestions
+                </span>
+              </>
             )}
             {suggestionsOpen && suggestions.length > 0 && (
-              <ul className="tt-menu movie-suggestions">
+              <ul
+                id={MOVIE_SUGGESTIONS_ID}
+                className="tt-menu movie-suggestions"
+                role="listbox"
+                aria-label="Movie title suggestions"
+              >
                 {suggestions.map((movie) => (
                   <li
                     key={movie.id}
@@ -224,7 +239,7 @@ export function LeftPanel(): React.ReactElement {
                       (e.key === "Enter" || e.key === " ") &&
                       (e.preventDefault(), pickSuggestion(movie))
                     }
-                    role="button"
+                    role="option"
                     tabIndex={0}
                   >
                     {movie.poster_path ? (
