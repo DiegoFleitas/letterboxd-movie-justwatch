@@ -1,7 +1,7 @@
 {
   "name": "movie-justwatch",
   "version": "1.0.0",
-  "description": "",
+  "description": "Scan a Letterboxd watchlist, see what's streaming in your country—no JustWatch recommendations, optional alternative search.",
   "main": "server.ts",
   "type": "module",
   "packageManager": "pnpm@10.10.0",

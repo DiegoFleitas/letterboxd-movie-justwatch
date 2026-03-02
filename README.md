@@ -1,8 +1,6 @@
 # Letterboxd Movie JustWatch
 
-A web that allows you to scan any public Letterboxd watchlist & find which streaming providers currently offer the listed movies on the chosen country ...capable of alternative searching 🏴‍☠️
-
-Forget the headache of sifting through annoying, irrelevant movie recommendations while searching movies on JustWatch
+Scan any public Letterboxd watchlist and see which services stream each film in your chosen country. Uses JustWatch data without the recommendation clutter; supports alternative search.
 
 ## Development
 

@@ -9,12 +9,12 @@ export function App(): ReactElement {
     <AppStateProvider>
       <ToastProvider>
         <div className="wrapper">
-          <div className="left-panel" data-testid="left-panel">
+          <aside className="left-panel" data-testid="left-panel" aria-label="Search controls">
             <LeftPanel />
-          </div>
-          <div className="right-panel" data-testid="right-panel">
+          </aside>
+          <main className="right-panel" data-testid="right-panel" aria-label="Search results">
             <RightPanel />
-          </div>
+          </main>
         </div>
       </ToastProvider>
     </AppStateProvider>
