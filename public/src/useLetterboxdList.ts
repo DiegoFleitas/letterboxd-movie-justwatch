@@ -3,7 +3,6 @@ import { toggleNotice } from "./noticeFunctions";
 import { showError, showBatchErrors } from "./showError";
 import type { MergeData } from "./movieTiles";
 
-const MAX_PAGES_PER_LOAD = 20;
 const SEARCH_CONCURRENCY = 4;
 
 function runWithConcurrency(tasks: (() => Promise<unknown>)[], limit: number): Promise<void> {
@@ -81,7 +80,7 @@ export function useLetterboxdList(
           errors: [],
         });
         for (const element of watchlist) {
-          let { title, year, link, posterPath, poster } = element;
+          let { title, year, posterPath, poster } = element;
           poster = poster || "/movie_placeholder.svg";
           mergeTile?.(title ?? "", year ?? null, { poster, link });
           if (posterPath) {
@@ -95,7 +94,7 @@ export function useLetterboxdList(
           }
         }
         const searchTasks = watchlist.map((element) => {
-          const { title, year, link } = element;
+          const { title, year } = element;
           const movieData = { title, year, country: data.country ?? "" };
           return () =>
             fetch("/api/search-movie", {
@@ -162,10 +161,6 @@ export function useLetterboxdList(
                 const d = dataRef.current;
                 if (!d) return;
                 isLoadingRef.current = true;
-                const n = Math.min(
-                  watchlistPageCountRef.current - (d.page ?? 0),
-                  MAX_PAGES_PER_LOAD,
-                );
                 toggleNotice(`Loading more pages...`);
                 (loadWatchlistRef.current || (() => Promise.resolve()))(d).finally(() => {
                   isLoadingRef.current = false;

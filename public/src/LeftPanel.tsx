@@ -265,6 +265,7 @@ export function LeftPanel(): React.ReactElement {
                       (e.preventDefault(), pickSuggestion(movie))
                     }
                     role="option"
+                    aria-selected={false}
                     tabIndex={0}
                   >
                     {movie.poster_path ? (

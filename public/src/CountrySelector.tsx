@@ -92,7 +92,12 @@ export function CountrySelector({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-          <div className="country-list" role="listbox" aria-activedescendant={current?.id}>
+          <div
+            className="country-list"
+            role="listbox"
+            aria-activedescendant={current?.id}
+            tabIndex={-1}
+          >
             {filtered.map((c) => {
               const code = getFlagCode(c.id);
               const selected = c.id === current?.id;
