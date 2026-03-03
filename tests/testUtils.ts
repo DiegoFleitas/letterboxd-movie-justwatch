@@ -52,7 +52,7 @@ export function assert(condition: boolean, message: string = "Assertion failed")
 export function assertEqual<T>(actual: T, expected: T, message?: string): void {
   if (actual !== expected) {
     throw new Error(
-      message || `Expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`
+      message || `Expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`,
     );
   }
 }

@@ -57,7 +57,11 @@ function runTests(): void {
   let failed = 0;
 
   for (const testCase of TEST_CASES) {
-    const constructed = constructPosterUrl(testCase.filmId, testCase.slug, testCase.cacheBustingKey);
+    const constructed = constructPosterUrl(
+      testCase.filmId,
+      testCase.slug,
+      testCase.cacheBustingKey,
+    );
     const matches = constructed === testCase.expectedUrl;
 
     if (matches) {

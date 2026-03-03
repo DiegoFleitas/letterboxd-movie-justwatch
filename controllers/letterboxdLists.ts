@@ -74,7 +74,7 @@ const fetchList = async (
   url: string,
   cacheKeyPrefix: string,
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const body = (req.body as { page?: number }) ?? {};
@@ -95,7 +95,7 @@ const fetchList = async (
     for (let index = 0; index < maxPages; index++) {
       currentPage = Number(page) + index;
       const cacheKey = `${cacheKeyPrefix}:page:${currentPage}`;
-      const cachedList = await getCacheValue(cacheKey) as PageFilm[] | null | undefined;
+      const cachedList = (await getCacheValue(cacheKey)) as PageFilm[] | null | undefined;
 
       if (cachedList && Array.isArray(cachedList)) {
         console.log(`List for page ${currentPage} found (cached)`);

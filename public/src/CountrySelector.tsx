@@ -26,7 +26,7 @@ export function CountrySelector({
 
   const current = useMemo(
     () => countries.find((c) => c.id === value) ?? countries[0],
-    [countries, value]
+    [countries, value],
   );
 
   const filtered = useMemo(() => {
@@ -74,10 +74,7 @@ export function CountrySelector({
         aria-expanded={open}
       >
         {currentCode && (
-          <span
-            className={`flag-icon flag-icon-${currentCode} country-flag`}
-            aria-hidden="true"
-          />
+          <span className={`flag-icon flag-icon-${currentCode} country-flag`} aria-hidden="true" />
         )}
         <span className="country-name">{current?.text}</span>
         <span className="country-arrow" aria-hidden="true">
@@ -95,11 +92,7 @@ export function CountrySelector({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-          <div
-            className="country-list"
-            role="listbox"
-            aria-activedescendant={current?.id}
-          >
+          <div className="country-list" role="listbox" aria-activedescendant={current?.id}>
             {filtered.map((c) => {
               const code = getFlagCode(c.id);
               const selected = c.id === current?.id;

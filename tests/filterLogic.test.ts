@@ -31,7 +31,7 @@ const createMockState = () => ({
 
 function filterMovies(
   state: ReturnType<typeof createMockState>,
-  selectedServices: string[]
+  selectedServices: string[],
 ): { visible: string[]; hidden: string[] } {
   const visible: string[] = [];
   const hidden: string[] = [];

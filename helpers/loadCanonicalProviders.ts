@@ -19,7 +19,10 @@ export function _resetCache(): void {
 }
 
 export function _injectForTest(
-  data: { byTechnicalName?: CanonicalProviderMap; byClearName?: Record<string, { id: string; name: string }> } | null
+  data: {
+    byTechnicalName?: CanonicalProviderMap;
+    byClearName?: Record<string, { id: string; name: string }>;
+  } | null,
 ): void {
   cached =
     data && (data.byTechnicalName != null || data.byClearName != null)
@@ -39,7 +42,10 @@ function load(): CanonicalData {
   try {
     const raw = readFileSync(dataPath, "utf8");
     const data = JSON.parse(raw) as
-      | { byTechnicalName?: CanonicalProviderMap; byClearName?: Record<string, { id: string; name: string }> }
+      | {
+          byTechnicalName?: CanonicalProviderMap;
+          byClearName?: Record<string, { id: string; name: string }>;
+        }
       | CanonicalProviderMap;
     if (data && typeof data === "object" && "byTechnicalName" in data && "byClearName" in data) {
       cached = data as CanonicalData;

@@ -120,16 +120,19 @@ suite.test("injectPosthogConfig does not inject canonical when 4th arg is null/u
   assertTruthy(!result.includes("__CANONICAL_PROVIDERS_BY_NAME__"));
 });
 
-suite.test("frontend main.tsx reads runtime config (window.__POSTHOG_KEY__) so Fly secrets work", () => {
-  const mainPath = path.join(__dirname, "..", "public", "src", "main.tsx");
-  const source = fs.readFileSync(mainPath, "utf8");
-  assertTruthy(source.includes("window.__POSTHOG_KEY__"));
-  assertTruthy(source.includes("window.__POSTHOG_HOST__"));
-  assertTruthy(/PostHogProvider[^>]*apiKey=\{key\}/.test(source));
-  assertTruthy(/api_host:\s*host/.test(source));
-  assertTruthy(source.includes("VITE_PUBLIC_POSTHOG_KEY"));
-  assertTruthy(source.includes("VITE_PUBLIC_POSTHOG_HOST"));
-});
+suite.test(
+  "frontend main.tsx reads runtime config (window.__POSTHOG_KEY__) so Fly secrets work",
+  () => {
+    const mainPath = path.join(__dirname, "..", "public", "src", "main.tsx");
+    const source = fs.readFileSync(mainPath, "utf8");
+    assertTruthy(source.includes("window.__POSTHOG_KEY__"));
+    assertTruthy(source.includes("window.__POSTHOG_HOST__"));
+    assertTruthy(/PostHogProvider[^>]*apiKey=\{key\}/.test(source));
+    assertTruthy(/api_host:\s*host/.test(source));
+    assertTruthy(source.includes("VITE_PUBLIC_POSTHOG_KEY"));
+    assertTruthy(source.includes("VITE_PUBLIC_POSTHOG_HOST"));
+  },
+);
 
 const results = await suite.run();
 process.exit(results.failed > 0 ? 1 : 0);

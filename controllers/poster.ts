@@ -32,7 +32,7 @@ export const poster = async (req: Request, res: Response): Promise<void> => {
 
     const encodedTitle = encodeURIComponent(title);
     const response = await axios.get(
-      `http://www.omdbapi.com/?t=${encodedTitle}&y=${year}&apikey=${omdbApiKey}`
+      `http://www.omdbapi.com/?t=${encodedTitle}&y=${year}&apikey=${omdbApiKey}`,
     );
 
     const data = response?.data as

@@ -25,7 +25,9 @@ function createMockClient(overrides: Record<string, unknown> = {}): Record<strin
   };
   const defaultSmembers = (key: string) => {
     calls.smembers.push([key]);
-    const ret = Array.isArray(overrides.smembers) ? overrides.smembers : ((overrides.smembers as string[]) ?? []);
+    const ret = Array.isArray(overrides.smembers)
+      ? overrides.smembers
+      : ((overrides.smembers as string[]) ?? []);
     return Promise.resolve(ret);
   };
   return {
@@ -133,7 +135,9 @@ suite.test("setCacheValue returns null when client is null", async () => {
 
 suite.test("setCacheValue calls set with EX and ttl and returns true", async () => {
   _resetRedisForTesting();
-  const mock = createMockClient() as ReturnType<typeof createMockClient> & { _calls: { set: unknown[][] } };
+  const mock = createMockClient() as ReturnType<typeof createMockClient> & {
+    _calls: { set: unknown[][] };
+  };
   _injectRedisClientForTest(mock as never);
   const result = await setCacheValue("mykey", { x: 1 }, 120);
   assertEqual(result, true);
@@ -148,7 +152,9 @@ suite.test("setCacheValue calls set with EX and ttl and returns true", async () 
 
 suite.test("setCacheValue with category calls sadd with index key", async () => {
   _resetRedisForTesting();
-  const mock = createMockClient() as ReturnType<typeof createMockClient> & { _calls: { sadd: unknown[][] } };
+  const mock = createMockClient() as ReturnType<typeof createMockClient> & {
+    _calls: { sadd: unknown[][] };
+  };
   _injectRedisClientForTest(mock as never);
   await setCacheValue("foo", "bar", 60, "list");
   assertTruthy(mock._calls.sadd.length === 1);
@@ -161,7 +167,9 @@ suite.test("setCacheValue uses FLY_APP_NAME in key and index when set", async ()
   _resetRedisForTesting();
   const saved = process.env.FLY_APP_NAME;
   process.env.FLY_APP_NAME = "movie-justwatch";
-  const mock = createMockClient() as ReturnType<typeof createMockClient> & { _calls: { set: unknown[][]; sadd: unknown[][] } };
+  const mock = createMockClient() as ReturnType<typeof createMockClient> & {
+    _calls: { set: unknown[][]; sadd: unknown[][] };
+  };
   _injectRedisClientForTest(mock as never);
   await setCacheValue("k", 1, 60, "list");
   assertTruthy((mock._calls.set[0][0] as string).startsWith("movie-justwatch:"));
@@ -180,7 +188,9 @@ suite.test("clearCacheByCategory returns error when client is null", async () =>
 
 suite.test("clearCacheByCategory returns cleared 0 when smembers returns empty", async () => {
   _resetRedisForTesting();
-  const mock = createMockClient({ smembers: () => Promise.resolve([]) }) as ReturnType<typeof createMockClient> & { _calls: { del: unknown[] } };
+  const mock = createMockClient({ smembers: () => Promise.resolve([]) }) as ReturnType<
+    typeof createMockClient
+  > & { _calls: { del: unknown[] } };
   _injectRedisClientForTest(mock as never);
   const result = await clearCacheByCategory("list");
   assertDeepEqual(result, { cleared: 0 });
@@ -193,7 +203,9 @@ suite.test("clearCacheByCategory deletes keys and index and returns cleared coun
   const saved = process.env.FLY_APP_NAME;
   delete process.env.FLY_APP_NAME;
   const keys = ["app:abc", "app:def"];
-  const mock = createMockClient({ smembers: () => Promise.resolve(keys) }) as ReturnType<typeof createMockClient> & { _calls: { del: unknown[][] } };
+  const mock = createMockClient({ smembers: () => Promise.resolve(keys) }) as ReturnType<
+    typeof createMockClient
+  > & { _calls: { del: unknown[][] } };
   _injectRedisClientForTest(mock as never);
   const result = await clearCacheByCategory("list");
   assertDeepEqual(result, { cleared: 2 });
@@ -208,7 +220,9 @@ suite.test("clearCacheByCategory uses FLY_APP_NAME in index key", async () => {
   _resetRedisForTesting();
   const saved = process.env.FLY_APP_NAME;
   process.env.FLY_APP_NAME = "myapp";
-  const mock = createMockClient({ smembers: ["myapp:k1"] }) as ReturnType<typeof createMockClient> & { _calls: { smembers: unknown[][] } };
+  const mock = createMockClient({ smembers: ["myapp:k1"] }) as ReturnType<
+    typeof createMockClient
+  > & { _calls: { smembers: unknown[][] } };
   _injectRedisClientForTest(mock as never);
   await clearCacheByCategory("search");
   assertEqual(mock._calls.smembers[0][0], "myapp:keys:search");
