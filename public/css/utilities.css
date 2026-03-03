@@ -20,15 +20,17 @@
   display: inline-block;
   padding: 0.35rem 0.6rem;
   border-radius: 999px;
-  background: rgba(255,255,255,0.03);
+  background: rgba(255, 255, 255, 0.03);
   color: var(--color-accent);
   font-weight: 600;
-  border: 1px solid rgba(255,255,255,0.03);
-  transition: background 0.18s, transform 0.12s;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  transition:
+    background 0.18s,
+    transform 0.12s;
 }
 .jackett-summary:focus,
 .jackett-summary:hover {
-  background: rgba(255,255,255,0.06);
+  background: rgba(255, 255, 255, 0.06);
   transform: translateY(-1px);
 }
 .jackett-body {
@@ -51,7 +53,7 @@
   margin: 0 0.45rem;
   transform-origin: 50% 10%;
   animation: pirate-sway 2.2s ease-in-out infinite;
-  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.35));
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.35));
   font-size: 1.05em;
   opacity: 0.95;
 }
@@ -60,22 +62,32 @@
 }
 
 @keyframes pirate-sway {
-  0% { transform: rotate(-6deg) translateY(0); }
-  50% { transform: rotate(6deg) translateY(-2px); }
-  100% { transform: rotate(-6deg) translateY(0); }
+  0% {
+    transform: rotate(-6deg) translateY(0);
+  }
+  50% {
+    transform: rotate(6deg) translateY(-2px);
+  }
+  100% {
+    transform: rotate(-6deg) translateY(0);
+  }
 }
 
 .jackett-body {
-  border: 1px solid rgba(255,255,255,0.03);
-  background: linear-gradient(180deg, rgba(0,0,0,0.02), rgba(0,0,0,0.00));
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.02), 0 10px 30px rgba(0,0,0,0.45);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.02),
+    0 10px 30px rgba(0, 0, 0, 0.45);
   border-radius: 10px;
   max-width: 880px;
   margin-left: auto;
   margin-right: auto;
 }
 
-.jackett-summary .icons { display: none; }
+.jackett-summary .icons {
+  display: none;
+}
 .list-group-item {
   border: none;
   list-style: none;
