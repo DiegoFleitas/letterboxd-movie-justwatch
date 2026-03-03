@@ -23,7 +23,7 @@ instance.interceptors.response.use(
       }
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export default (keepAlive?: boolean): AxiosInstance => {

@@ -30,7 +30,8 @@ export function showMessage(messageData: string | MessageWithLink, isHTML = fals
     }
     return;
   }
-  const izi = (globalThis as { iziToast?: { show: (o: Record<string, unknown>) => void } }).iziToast;
+  const izi = (globalThis as { iziToast?: { show: (o: Record<string, unknown>) => void } })
+    .iziToast;
   if (typeof izi === "undefined") return;
   const visibleToastsCount = document.querySelectorAll(".iziToast-capsule")?.length || 0;
   if (visibleToastsCount >= 3) {

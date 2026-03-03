@@ -6,7 +6,7 @@ export function injectPosthogConfig(
   html: string,
   posthogKey: string = "",
   posthogHost: string = "https://us.i.posthog.com",
-  canonicalByNames: Record<string, { id: string; name: string }> | null = null
+  canonicalByNames: Record<string, { id: string; name: string }> | null = null,
 ): string {
   const safePosthogKey = JSON.stringify(posthogKey).replace(/<\/script>/g, "<\\/script>");
   const safePosthogHost = JSON.stringify(posthogHost).replace(/<\/script>/g, "<\\/script>");

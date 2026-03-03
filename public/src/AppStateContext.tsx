@@ -48,7 +48,7 @@ export function AppStateProvider({ children }: { children: ReactNode }): React.R
     (title: string, year: string | number | null, data: Parameters<typeof mergeTileState>[3]) => {
       setAppData((prev: TileState) => mergeTileState(prev, title, year, data));
     },
-    []
+    [],
   );
 
   const loadLetterboxdList = useLetterboxdList(mergeTile);
@@ -88,8 +88,6 @@ export function AppStateProvider({ children }: { children: ReactNode }): React.R
   };
 
   return (
-    <AppStateContext.Provider value={value}>
-      {children}
-    </AppStateContext.Provider>
+    <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>
   ) as React.ReactElement;
 }
