@@ -6,3 +6,5 @@ playwright-report
 test-results
 .turbo
 .cache
+pnpm-lock.yaml
+package-lock.json
