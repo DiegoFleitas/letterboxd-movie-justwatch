@@ -91,7 +91,8 @@
     padding: 16px;
     overflow-y: auto;
   }
-  .left-panel, .right-panel {
+  .left-panel,
+  .right-panel {
     max-width: 100%;
     min-width: 0;
     border-right: none;

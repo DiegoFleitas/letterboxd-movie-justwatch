@@ -1,0 +1,22 @@
+{
+  "name": "Movie JustWatch",
+  "short_name": "Movie JW",
+  "description": "Scan a Letterboxd watchlist and see where movies are streaming in your country.",
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "/",
+  "scope": "/",
+  "theme_color": "#f2b705",
+  "background_color": "#03070d",
+  "display": "standalone"
+}

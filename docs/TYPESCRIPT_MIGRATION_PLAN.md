@@ -6,13 +6,13 @@ This document outlines a safe, incremental plan to migrate the letterboxd-movie-
 
 ## 1. Current state summary
 
-| Area | Location | Count | Notes |
-|------|----------|--------|------|
-| **Backend** | `server.js`, `controllers/`, `middleware/`, `helpers/`, `lib/` | ~20 JS files | Express, Redis, PostHog, axios |
-| **Frontend** | `public/src/`, `public/` | 8 JSX + ~15 JS | React 19, Vite, PostHog |
-| **Tests** | `tests/*.test.js`, `e2e/app.spec.js` | 6 unit + 1 E2E | Unit tests run via `node`; Playwright for E2E |
-| **Config** | Root | `vite.config.js`, `playwright.config.js` | |
-| **Scripts** | `scripts/` (if present) | buildCanonicalProviders, export-redis, seed-redis | Referenced in package.json |
+| Area         | Location                                                       | Count                                             | Notes                                         |
+| ------------ | -------------------------------------------------------------- | ------------------------------------------------- | --------------------------------------------- |
+| **Backend**  | `server.js`, `controllers/`, `middleware/`, `helpers/`, `lib/` | ~20 JS files                                      | Express, Redis, PostHog, axios                |
+| **Frontend** | `public/src/`, `public/`                                       | 8 JSX + ~15 JS                                    | React 19, Vite, PostHog                       |
+| **Tests**    | `tests/*.test.js`, `e2e/app.spec.js`                           | 6 unit + 1 E2E                                    | Unit tests run via `node`; Playwright for E2E |
+| **Config**   | Root                                                           | `vite.config.js`, `playwright.config.js`          |                                               |
+| **Scripts**  | `scripts/` (if present)                                        | buildCanonicalProviders, export-redis, seed-redis | Referenced in package.json                    |
 
 Critical paths to keep green:
 
@@ -186,16 +186,16 @@ Critical paths to keep green:
 
 ## 9. File and script change summary
 
-| Item | Before | After |
-|------|--------|--------|
-| Backend entry | `node server.js` | `tsx server.ts` or `node dist/server.js` |
-| Unit tests | `node tests/*.test.js` | `tsx tests/*.test.ts` or Vitest |
-| Frontend entry | `public/src/main.jsx` | `public/src/main.tsx` |
-| HTML script | `src/main.jsx` | `src/main.tsx` |
-| Configs | `vite.config.js`, `playwright.config.js` | `vite.config.ts`, `playwright.config.ts` |
-| E2E spec | `e2e/app.spec.js` | `e2e/app.spec.ts` |
-| Optional test | (standalone) | `pnpm run test:poster-flow` (tsx tests/testPosterFlow.test.ts) |
-| package.json `main` | `server.js` | `server.ts` (or keep for compatibility; start script is what matters) |
+| Item                | Before                                   | After                                                                 |
+| ------------------- | ---------------------------------------- | --------------------------------------------------------------------- |
+| Backend entry       | `node server.js`                         | `tsx server.ts` or `node dist/server.js`                              |
+| Unit tests          | `node tests/*.test.js`                   | `tsx tests/*.test.ts` or Vitest                                       |
+| Frontend entry      | `public/src/main.jsx`                    | `public/src/main.tsx`                                                 |
+| HTML script         | `src/main.jsx`                           | `src/main.tsx`                                                        |
+| Configs             | `vite.config.js`, `playwright.config.js` | `vite.config.ts`, `playwright.config.ts`                              |
+| E2E spec            | `e2e/app.spec.js`                        | `e2e/app.spec.ts`                                                     |
+| Optional test       | (standalone)                             | `pnpm run test:poster-flow` (tsx tests/testPosterFlow.test.ts)        |
+| package.json `main` | `server.js`                              | `server.ts` (or keep for compatibility; start script is what matters) |
 
 ---
 
@@ -220,12 +220,14 @@ Critical paths to keep green:
 ## 12. Quick reference: dependency and script updates
 
 **Install (Phase 0):**
+
 ```bash
 pnpm add -D typescript @types/node @types/express @types/react @types/react-dom
 pnpm add -D tsx
 ```
 
 **Example script updates (after migration):**
+
 ```json
 "start": "tsx server.ts",
 "be:dev": "nodemon --exec tsx server.ts",
@@ -234,6 +236,7 @@ pnpm add -D tsx
 ```
 
 **Optional:** Add type-check script and run in CI:
+
 ```json
 "typecheck": "tsc --noEmit"
 ```

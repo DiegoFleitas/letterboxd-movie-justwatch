@@ -5,11 +5,13 @@ Automated tests for the Letterboxd JustWatch integration.
 ## Running Tests
 
 ### All Unit Tests
+
 ```bash
 pnpm test
 ```
 
 ### Individual Test Suites
+
 ```bash
 pnpm run test:filter     # Filter logic tests
 pnpm run test:state      # State management tests
@@ -18,6 +20,7 @@ pnpm run test:state      # State management tests
 ## Test Structure
 
 ### Unit Tests
+
 - **filterLogic.test.js** - Tests the movie filtering algorithm
   - Verifies movies are correctly shown/hidden based on streaming provider filters
   - Tests single and multiple provider selection
@@ -29,16 +32,19 @@ pnpm run test:state      # State management tests
   - Validates data preservation during updates
 
 ### E2E Tests
+
 - **e2e/app.spec.js** (Playwright) - Full app flow in the browser
 
 ## Test Output
 
 Tests automatically show:
+
 - ✓ Passed tests in green
 - ✗ Failed tests with error messages
 - Total count of passed/failed tests
 
 Example:
+
 ```
   Filter Logic
     ✓ Should hide movies with no providers when filter is active
@@ -50,15 +56,17 @@ Example:
 
 1. Create a new file: `tests/yourTest.test.js`
 2. Import test utilities:
+
 ```javascript
-import { TestSuite, assertEqual, assert } from './testUtils.js';
+import { TestSuite, assertEqual, assert } from "./testUtils.js";
 ```
 
 3. Create test suite and add tests:
-```javascript
-const suite = new TestSuite('Your Feature');
 
-suite.test('Should do something', () => {
+```javascript
+const suite = new TestSuite("Your Feature");
+
+suite.test("Should do something", () => {
   assertEqual(actual, expected);
 });
 
@@ -66,6 +74,7 @@ await suite.run();
 ```
 
 4. Add to package.json scripts:
+
 ```json
 "test:yourfeature": "node tests/yourTest.test.js"
 ```
@@ -73,6 +82,7 @@ await suite.run();
 ## Test Utilities
 
 Available assertions from `testUtils.js`:
+
 - `assert(condition, message)` - Basic assertion
 - `assertEqual(actual, expected, message)` - Strict equality
 - `assertDeepEqual(actual, expected, message)` - Deep object comparison
