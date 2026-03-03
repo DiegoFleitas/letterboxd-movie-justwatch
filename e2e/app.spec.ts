@@ -39,9 +39,9 @@ function findSearchMovieResponse(body: SearchMovieBody | null): unknown {
 
 /** Wait for automatic geo to complete so the country selector is stable (mock returns UY). */
 async function waitForGeoReady(page: Page): Promise<void> {
-  await expect(page.getByTestId("country-selector").getByText("Uruguay")).toBeVisible({
-    timeout: 5000,
-  });
+  const selector = page.getByTestId("country-selector");
+  await expect(selector).toBeAttached({ timeout: 5000 });
+  await expect(selector.getByText("Uruguay")).toBeVisible({ timeout: 5000 });
 }
 
 test.beforeEach(async ({ page }) => {
