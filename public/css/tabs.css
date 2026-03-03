@@ -23,7 +23,7 @@
   border-top-right-radius: 1rem;
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
-  box-shadow: 0 2px 8px rgba(16,22,29,0.08);
+  box-shadow: 0 2px 8px rgba(16, 22, 29, 0.08);
 }
 .tab-btn {
   display: inline-flex;
@@ -37,7 +37,9 @@
   font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.18s, color 0.18s;
+  transition:
+    background 0.18s,
+    color 0.18s;
   outline: none;
 }
 
@@ -66,7 +68,9 @@
   background: var(--color-surface);
   box-shadow: 0 4px 24px rgba(16, 22, 29, 0.35);
   border-radius: 0 0 1rem 1rem;
-  transition: background 0.2s, box-shadow 0.2s;
+  transition:
+    background 0.2s,
+    box-shadow 0.2s;
   padding: 2rem 1.5rem 1.5rem 1.5rem;
   margin-top: 0;
   border-top-left-radius: 0;
