@@ -40,6 +40,6 @@ if (rootEl) {
       </PostHogProvider>
     ) : (
       <App />
-    )
+    ),
   );
 }

@@ -14,7 +14,7 @@ function runWithConcurrency(tasks: (() => Promise<unknown>)[], limit: number): P
     return tasks[i]().then(() => runNext()) as Promise<void>;
   }
   return Promise.all(
-    Array.from({ length: Math.min(limit, tasks.length) }, runNext)
+    Array.from({ length: Math.min(limit, tasks.length) }, runNext),
   ) as Promise<unknown> as Promise<void>;
 }
 
@@ -41,13 +41,11 @@ interface LoadData {
   page?: number;
 }
 
-type MergeTileFn = (
-  title: string,
-  year: string | number | null,
-  data?: MergeData | null
-) => void;
+type MergeTileFn = (title: string, year: string | number | null, data?: MergeData | null) => void;
 
-export function useLetterboxdList(mergeTile: MergeTileFn | null | undefined): (listUrl: string, country: string) => Promise<void> {
+export function useLetterboxdList(
+  mergeTile: MergeTileFn | null | undefined,
+): (listUrl: string, country: string) => Promise<void> {
   const allPagesLoadedRef = useRef(false);
   const watchlistPageCountRef = useRef(0);
   const scrollListenerRef = useRef<(() => void) | null>(null);
@@ -58,7 +56,11 @@ export function useLetterboxdList(mergeTile: MergeTileFn | null | undefined): (l
   const batchMapRef = useRef<
     Map<
       number,
-      { total: number; completed: number; errors: { title?: string; year?: string | number; message: string }[] }
+      {
+        total: number;
+        completed: number;
+        errors: { title?: string; year?: string | number; message: string }[];
+      }
     >
   >(new Map());
 
@@ -85,7 +87,10 @@ export function useLetterboxdList(mergeTile: MergeTileFn | null | undefined): (l
           if (posterPath) {
             fetch(`https://letterboxd.com${posterPath}poster/std/230/`)
               .then((res) => res.json())
-              .then((d: { url?: string }) => d?.url && mergeTile?.(title ?? "", year ?? null, { poster: d.url, link }))
+              .then(
+                (d: { url?: string }) =>
+                  d?.url && mergeTile?.(title ?? "", year ?? null, { poster: d.url, link }),
+              )
               .catch(() => {});
           }
         }
@@ -99,22 +104,31 @@ export function useLetterboxdList(mergeTile: MergeTileFn | null | undefined): (l
               body: JSON.stringify(movieData),
             })
               .then((r) => r.json())
-              .then((response: { error?: string; title?: string; year?: string | number; poster?: string; link?: string; movieProviders?: unknown[] }) => {
-                const { error: err, title: t, year: y, poster: p, link: l } = response;
-                const batch = batchMapRef.current.get(batchId);
-                if (!batch) return;
-                batch.completed++;
-                if (err) {
-                  batch.errors.push({ title: t ?? "", year: y ?? "", message: err });
-                  mergeTile?.(t ?? "", y ?? null, { poster: p, link: l, movieProviders: [] });
-                } else {
-                  mergeTile?.(t ?? "", y ?? null, { ...response, link: l } as MergeData);
-                }
-                if (batch.completed === batch.total) {
-                  showBatchErrors(batch.errors);
-                  batchMapRef.current.delete(batchId);
-                }
-              })
+              .then(
+                (response: {
+                  error?: string;
+                  title?: string;
+                  year?: string | number;
+                  poster?: string;
+                  link?: string;
+                  movieProviders?: unknown[];
+                }) => {
+                  const { error: err, title: t, year: y, poster: p, link: l } = response;
+                  const batch = batchMapRef.current.get(batchId);
+                  if (!batch) return;
+                  batch.completed++;
+                  if (err) {
+                    batch.errors.push({ title: t ?? "", year: y ?? "", message: err });
+                    mergeTile?.(t ?? "", y ?? null, { poster: p, link: l, movieProviders: [] });
+                  } else {
+                    mergeTile?.(t ?? "", y ?? null, { ...response, link: l } as MergeData);
+                  }
+                  if (batch.completed === batch.total) {
+                    showBatchErrors(batch.errors);
+                    batchMapRef.current.delete(batchId);
+                  }
+                },
+              )
               .catch((e) => {
                 const batch = batchMapRef.current.get(batchId);
                 if (batch) {
@@ -150,7 +164,7 @@ export function useLetterboxdList(mergeTile: MergeTileFn | null | undefined): (l
                 isLoadingRef.current = true;
                 const n = Math.min(
                   watchlistPageCountRef.current - (d.page ?? 0),
-                  MAX_PAGES_PER_LOAD
+                  MAX_PAGES_PER_LOAD,
                 );
                 toggleNotice(`Loading more pages...`);
                 (loadWatchlistRef.current || (() => Promise.resolve()))(d).finally(() => {
@@ -167,7 +181,7 @@ export function useLetterboxdList(mergeTile: MergeTileFn | null | undefined): (l
               ? "Loaded 1 page!"
               : totalPages
                 ? `Loaded all ${totalPages} pages!`
-                : "Loaded all pages!"
+                : "Loaded all pages!",
           );
         }
       } catch (e) {
@@ -179,7 +193,7 @@ export function useLetterboxdList(mergeTile: MergeTileFn | null | undefined): (l
         }
       }
     },
-    [mergeTile]
+    [mergeTile],
   );
 
   const loadWatchlist = useCallback(
@@ -192,7 +206,7 @@ export function useLetterboxdList(mergeTile: MergeTileFn | null | undefined): (l
       const responseData = (await response.json()) as ListResponse;
       await processList(data, responseData);
     },
-    [processList]
+    [processList],
   );
 
   loadWatchlistRef.current = loadWatchlist;
@@ -207,7 +221,7 @@ export function useLetterboxdList(mergeTile: MergeTileFn | null | undefined): (l
       const responseData = (await response.json()) as ListResponse;
       await processList(data, responseData);
     },
-    [processList]
+    [processList],
   );
 
   const loadLetterboxdList = useCallback(
@@ -217,12 +231,9 @@ export function useLetterboxdList(mergeTile: MergeTileFn | null | undefined): (l
         return;
       }
       listUrl = listUrl.split("/page")[0];
-      if (!listUrl.includes("watchlist") && !listUrl.includes("list"))
-        listUrl += "/watchlist";
+      if (!listUrl.includes("watchlist") && !listUrl.includes("list")) listUrl += "/watchlist";
       if (!listUrl.endsWith("/")) listUrl += "/";
-      const match = listUrl.match(
-        /https:\/\/letterboxd\.com\/([^/]+)\/(watchlist|list\/[^/]+)\//
-      );
+      const match = listUrl.match(/https:\/\/letterboxd\.com\/([^/]+)\/(watchlist|list\/[^/]+)\//);
       if (!match) {
         showError("Invalid URL format");
         return;
@@ -244,7 +255,7 @@ export function useLetterboxdList(mergeTile: MergeTileFn | null | undefined): (l
         await loadWatchlist(data);
       }
     },
-    [loadCustomList, loadWatchlist]
+    [loadCustomList, loadWatchlist],
   );
 
   useEffect(() => {

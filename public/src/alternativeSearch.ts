@@ -14,7 +14,8 @@ export function runAlternativeSearch(title: string, year?: string | number): voi
     .then((response: { error?: string; text?: string; url?: string; title?: string }) => {
       setTimeout(() => toggleNotice(null), 1000);
       if (response.error) showError(response.error);
-      else showMessage({ text: response.text ?? "", url: response.url, title: response.title }, true);
+      else
+        showMessage({ text: response.text ?? "", url: response.url, title: response.title }, true);
     })
     .catch((err) => console.error(err));
 }

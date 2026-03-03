@@ -1,10 +1,9 @@
-import type { CanonicalProviderMap, MovieProvider } from "../types/index.js";
-import type { JustWatchOffer } from "../types/index.js";
+import type { CanonicalProviderMap, MovieProvider, JustWatchOffer } from "../types/index.js";
 
 export function processOffers(
   offers: JustWatchOffer[],
   fullPath: string,
-  canonicalMap?: CanonicalProviderMap | null
+  canonicalMap?: CanonicalProviderMap | null,
 ): MovieProvider[] {
   const byId = new Map<
     string,

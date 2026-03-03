@@ -80,7 +80,7 @@ export const setCacheValue = async (
   key: string,
   value: unknown,
   ttl: number = 60,
-  category: string | null = null
+  category: string | null = null,
 ): Promise<boolean | null> => {
   const client = await getRedisClient();
   if (!client) {
@@ -104,7 +104,7 @@ export const setCacheValue = async (
 };
 
 export const clearCacheByCategory = async (
-  category: string
+  category: string,
 ): Promise<{ cleared: number; error?: string }> => {
   const client = await getRedisClient();
   if (!client) {

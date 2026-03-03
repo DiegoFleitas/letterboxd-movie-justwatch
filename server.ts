@@ -18,7 +18,10 @@ import {
   proxy,
 } from "./controllers/index.js";
 import { isHealthy, clearCacheByCategory, disconnectRedis } from "./helpers/redis.js";
-import { getCanonicalProviderMap, getCanonicalProviderByNames } from "./helpers/loadCanonicalProviders.js";
+import {
+  getCanonicalProviderMap,
+  getCanonicalProviderByNames,
+} from "./helpers/loadCanonicalProviders.js";
 import { getPosthog, shutdownPosthog } from "./lib/posthog.js";
 import { injectPosthogConfig } from "./lib/injectPosthogConfig.js";
 
@@ -29,7 +32,7 @@ const port = process.env.PORT || 3000;
 type AsyncRequestHandler = (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => Promise<void | Response>;
 
 function asyncHandler(fn: AsyncRequestHandler) {
@@ -48,7 +51,7 @@ if (fs.existsSync(distIndexPath)) {
     html,
     posthogKey,
     posthogHost,
-    getCanonicalProviderByNames()
+    getCanonicalProviderByNames(),
   );
 }
 
@@ -87,7 +90,7 @@ app.get(
     } else {
       res.status(500).send("Redis is not healthy");
     }
-  })
+  }),
 );
 
 const setCacheControl = (_req: Request, res: Response, next: NextFunction) => {
@@ -112,7 +115,7 @@ app.post(
     }
     const result = await clearCacheByCategory("list");
     res.json({ ok: true, ...result });
-  })
+  }),
 );
 
 app.get("*", serveAppWithPosthogConfig);
@@ -129,7 +132,7 @@ app.use((err: unknown, _req: Request, res: Response, next: NextFunction) => {
 });
 
 const server = app.listen(port, () =>
-  console.log(`app listening on port http://localhost:${port}`)
+  console.log(`app listening on port http://localhost:${port}`),
 );
 
 const gracefulShutdown = async () => {

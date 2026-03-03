@@ -15,7 +15,7 @@ const PROXY = "";
 async function justWatchPost(
   axiosInstance: AxiosInstance,
   url: string,
-  body: object
+  body: object,
 ): Promise<{ data: { data: { popularTitles: { edges: JustWatchOfferEdge[] } } } }> {
   let lastError: unknown;
   for (let attempt = 1; attempt <= JUSTWATCH_RETRIES; attempt++) {
@@ -45,7 +45,7 @@ async function justWatchPost(
         const delay = Math.min(1000 * Math.pow(2, attempt - 1), 8000);
         console.log(
           `JustWatch attempt ${attempt}/${JUSTWATCH_RETRIES} failed, retrying in ${delay}ms:`,
-          e.message
+          e.message,
         );
         await new Promise((r) => setTimeout(r, delay));
       } else {
@@ -77,8 +77,7 @@ interface TMDBResult {
 }
 
 export const searchMovie = async (req: Request, res: Response): Promise<void> => {
-  const title = (req.body as { title?: string; year?: string | number; country?: string })
-    .title;
+  const title = (req.body as { title?: string; year?: string | number; country?: string }).title;
   const year = (req.body as { year?: string | number }).year;
   const countryCode = (req.body as { country?: string }).country;
   const [, country] = (countryCode || "es_UY").split("_");
@@ -103,7 +102,7 @@ export const searchMovie = async (req: Request, res: Response): Promise<void> =>
     const movieDbAPIKey = process.env.MOVIE_DB_API_KEY;
     const encodedTitle = encodeURIComponent(title);
     const movieDbResponse = await axios.get(
-      `${PROXY}https://api.themoviedb.org/3/search/movie?query=${encodedTitle}${year ? `&year=${year}` : ""}&api_key=${movieDbAPIKey}`
+      `${PROXY}https://api.themoviedb.org/3/search/movie?query=${encodedTitle}${year ? `&year=${year}` : ""}&api_key=${movieDbAPIKey}`,
     );
 
     const results = (movieDbResponse.data as { results?: TMDBResult[] }).results;
@@ -180,11 +179,10 @@ export const searchMovie = async (req: Request, res: Response): Promise<void> =>
         filter: { searchQuery: title },
       };
 
-      justWatchResponse = await justWatchPost(
-        axios,
-        `${PROXY}https://apis.justwatch.com/graphql`,
-        { query, variables }
-      );
+      justWatchResponse = await justWatchPost(axios, `${PROXY}https://apis.justwatch.com/graphql`, {
+        query,
+        variables,
+      });
     } catch (error) {
       console.error(`JustWatch API error for ${title}:`, (error as Error).message);
       const response = {
@@ -200,7 +198,7 @@ export const searchMovie = async (req: Request, res: Response): Promise<void> =>
 
     const edges = justWatchResponse.data.data.popularTitles.edges;
     const movieData = edges.find(
-      (edge) => String(edge.node.content.externalIds?.tmdbId) === String(tmdbId)
+      (edge) => String(edge.node.content.externalIds?.tmdbId) === String(tmdbId),
     );
 
     if (!movieData) {
@@ -236,7 +234,7 @@ export const searchMovie = async (req: Request, res: Response): Promise<void> =>
     const providers = processOffers(
       movieData.node.offers as JustWatchOffer[],
       movieData.node.content.fullPath,
-      canonicalMap
+      canonicalMap,
     );
 
     if (!providers?.length) {
@@ -257,8 +255,6 @@ export const searchMovie = async (req: Request, res: Response): Promise<void> =>
     res.json(responsePayload);
   } catch (err) {
     console.error(err);
-    res
-      .status(500)
-      .json({ error: "Internal Server Error", title, year });
+    res.status(500).json({ error: "Internal Server Error", title, year });
   }
 };

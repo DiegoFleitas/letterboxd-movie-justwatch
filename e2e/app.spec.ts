@@ -11,11 +11,14 @@ import { test, expect, type Page } from "@playwright/test";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const fixturesDir = join(__dirname, "..", "tests", "fixtures", "api");
 const letterboxdFixtures = JSON.parse(
-  readFileSync(join(fixturesDir, "letterboxd-watchlist.json"), "utf-8")
+  readFileSync(join(fixturesDir, "letterboxd-watchlist.json"), "utf-8"),
 ) as { response: { watchlist: { title?: string }[] } }[];
 const searchMovieFixtures = JSON.parse(
-  readFileSync(join(fixturesDir, "search-movie.json"), "utf-8")
-) as { request?: { title?: string; year?: string | number; country?: string }; response: unknown }[];
+  readFileSync(join(fixturesDir, "search-movie.json"), "utf-8"),
+) as {
+  request?: { title?: string; year?: string | number; country?: string };
+  response: unknown;
+}[];
 
 interface SearchMovieBody {
   title?: string;
@@ -29,14 +32,16 @@ function findSearchMovieResponse(body: SearchMovieBody | null): unknown {
     (f) =>
       t(f.request?.title) === t(body?.title) &&
       t(f.request?.year) === t(body?.year) &&
-      t(f.request?.country) === t(body?.country)
+      t(f.request?.country) === t(body?.country),
   );
   return entry ? entry.response : null;
 }
 
 /** Wait for automatic geo to complete so the country selector is stable (mock returns UY). */
 async function waitForGeoReady(page: Page): Promise<void> {
-  await expect(page.getByTestId("country-selector").getByText("Uruguay")).toBeVisible({ timeout: 5000 });
+  await expect(page.getByTestId("country-selector").getByText("Uruguay")).toBeVisible({
+    timeout: 5000,
+  });
 }
 
 test.beforeEach(async ({ page }) => {
@@ -45,7 +50,7 @@ test.beforeEach(async ({ page }) => {
       status: 200,
       contentType: "application/json",
       body: JSON.stringify({ country_code: "UY", ip: "127.0.0.1" }),
-    })
+    }),
   );
 });
 
@@ -98,21 +103,25 @@ test.describe("Movie form", () => {
 
     const searchPromise = page.waitForResponse(
       (res) => res.url().includes("/api/search-movie") && res.request().method() === "POST",
-      { timeout: 15000 }
+      { timeout: 15000 },
     );
 
     const successFixture = searchMovieFixtures.find(
-      (f) => (f.response as { message?: string })?.message === "Movie found"
+      (f) => (f.response as { message?: string })?.message === "Movie found",
     );
     const req = successFixture?.request as { title: string; year?: string | number };
-    const res = successFixture?.response as { title?: string; year?: string | number; message?: string };
+    const res = successFixture?.response as {
+      title?: string;
+      year?: string | number;
+      message?: string;
+    };
 
     await page.route("**/api/search-movie", (route) =>
       route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify(res),
-      })
+      }),
     );
 
     await page.getByTestId("movie-input").fill(req.title);
@@ -127,7 +136,9 @@ test.describe("Movie form", () => {
     expect(body.year).toBe(res.year);
 
     await expect(
-      page.getByRole("status").filter({ hasText: new RegExp(`${res.title ?? ""}|Available on|${res.message ?? ""}`) })
+      page
+        .getByRole("status")
+        .filter({ hasText: new RegExp(`${res.title ?? ""}|Available on|${res.message ?? ""}`) }),
     ).toBeVisible({ timeout: 5000 });
   });
 
@@ -137,7 +148,7 @@ test.describe("Movie form", () => {
     await expect(page.getByTestId("movie-form")).toBeVisible();
 
     const errorFixture = searchMovieFixtures.find((f) =>
-      (f.response as { error?: string })?.error?.includes("Movie not found")
+      (f.response as { error?: string })?.error?.includes("Movie not found"),
     );
     const req = errorFixture?.request as { title: string; year?: string | number };
     const res = errorFixture?.response as { error?: string };
@@ -147,7 +158,7 @@ test.describe("Movie form", () => {
         status: 200,
         contentType: "application/json",
         body: JSON.stringify(res),
-      })
+      }),
     );
 
     await page.getByTestId("movie-input").fill(req.title);
@@ -155,7 +166,7 @@ test.describe("Movie form", () => {
     await page.getByTestId("movie-submit").click();
 
     await expect(
-      page.getByText(new RegExp(`${req.title}|${(res.error ?? "").substring(0, 25)}`))
+      page.getByText(new RegExp(`${req.title}|${(res.error ?? "").substring(0, 25)}`)),
     ).toBeVisible({ timeout: 5000 });
   });
 });
@@ -176,12 +187,16 @@ test.describe("List form", () => {
         status: 200,
         contentType: "application/json",
         body: JSON.stringify(oneFilm),
-      })
+      }),
     );
 
     await page.route("**/api/search-movie", (route) => {
       const body = route.request().postDataJSON() as SearchMovieBody | null;
-      const response = findSearchMovieResponse(body) || { title: body?.title, year: body?.year, error: "No fixture" };
+      const response = findSearchMovieResponse(body) || {
+        title: body?.title,
+        year: body?.year,
+        error: "No fixture",
+      };
       return route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -194,7 +209,9 @@ test.describe("List form", () => {
     await page.getByTestId("list-submit").click();
 
     const firstTitle = oneFilm.watchlist[0].title;
-    await expect(page.getByTestId("poster-showcase").getByTestId("tile")).toHaveCount(1, { timeout: 10000 });
+    await expect(page.getByTestId("poster-showcase").getByTestId("tile")).toHaveCount(1, {
+      timeout: 10000,
+    });
     await expect(page.locator("[data-id]").filter({ hasText: firstTitle ?? "" })).toBeVisible();
   });
 
@@ -224,12 +241,16 @@ test.describe("List form", () => {
         status: 200,
         contentType: "application/json",
         body: JSON.stringify(threeErrorFilms),
-      })
+      }),
     );
 
     await page.route("**/api/search-movie", (route) => {
       const body = route.request().postDataJSON() as SearchMovieBody | null;
-      const response = findSearchMovieResponse(body) || { title: body?.title, year: body?.year, error: "No fixture" };
+      const response = findSearchMovieResponse(body) || {
+        title: body?.title,
+        year: body?.year,
+        error: "No fixture",
+      };
       return route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -241,8 +262,12 @@ test.describe("List form", () => {
     await page.getByTestId("list-url").fill("https://letterboxd.com/user/watchlist/");
     await page.getByTestId("list-submit").click();
 
-    await expect(page.getByTestId("poster-showcase").getByTestId("tile")).toHaveCount(3, { timeout: 15000 });
-    const groupedToast = page.getByRole("status").filter({ hasText: /3 titles (encountered errors|:)/ });
+    await expect(page.getByTestId("poster-showcase").getByTestId("tile")).toHaveCount(3, {
+      timeout: 15000,
+    });
+    const groupedToast = page
+      .getByRole("status")
+      .filter({ hasText: /3 titles (encountered errors|:)/ });
     await expect(groupedToast).toBeVisible({ timeout: 5000 });
     await expect(groupedToast).toHaveCount(1);
   });
@@ -262,12 +287,16 @@ test.describe("List form", () => {
         status: 200,
         contentType: "application/json",
         body: JSON.stringify(oneErrorFilm),
-      })
+      }),
     );
 
     await page.route("**/api/search-movie", (route) => {
       const body = route.request().postDataJSON() as SearchMovieBody | null;
-      const response = findSearchMovieResponse(body) || { title: body?.title, year: body?.year, error: "No fixture" };
+      const response = findSearchMovieResponse(body) || {
+        title: body?.title,
+        year: body?.year,
+        error: "No fixture",
+      };
       return route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -279,9 +308,11 @@ test.describe("List form", () => {
     await page.getByTestId("list-url").fill("https://letterboxd.com/user/watchlist/");
     await page.getByTestId("list-submit").click();
 
-    await expect(page.getByTestId("poster-showcase").getByTestId("tile")).toHaveCount(1, { timeout: 10000 });
+    await expect(page.getByTestId("poster-showcase").getByTestId("tile")).toHaveCount(1, {
+      timeout: 10000,
+    });
     await expect(
-      page.getByRole("status").filter({ hasText: /A Ghost Story|No streaming|pirate flags/ })
+      page.getByRole("status").filter({ hasText: /A Ghost Story|No streaming|pirate flags/ }),
     ).toBeVisible({ timeout: 5000 });
   });
 });
@@ -302,12 +333,16 @@ test.describe("Filtering", () => {
         status: 200,
         contentType: "application/json",
         body: JSON.stringify(twoFilms),
-      })
+      }),
     );
 
     await page.route("**/api/search-movie", (route) => {
       const body = route.request().postDataJSON() as SearchMovieBody | null;
-      const response = findSearchMovieResponse(body) || { title: body?.title, year: body?.year, error: "No fixture" };
+      const response = findSearchMovieResponse(body) || {
+        title: body?.title,
+        year: body?.year,
+        error: "No fixture",
+      };
       return route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -319,8 +354,12 @@ test.describe("Filtering", () => {
     await page.getByTestId("list-url").fill("https://letterboxd.com/user/watchlist/");
     await page.getByTestId("list-submit").click();
 
-    await expect(page.getByTestId("poster-showcase").getByTestId("tile")).toHaveCount(2, { timeout: 15000 });
-    await expect(page.getByTestId("provider-icons").locator('img[alt="Disney Plus"]')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId("poster-showcase").getByTestId("tile")).toHaveCount(2, {
+      timeout: 15000,
+    });
+    await expect(page.getByTestId("provider-icons").locator('img[alt="Disney Plus"]')).toBeVisible({
+      timeout: 10000,
+    });
 
     const disneyIcon = page
       .getByTestId("provider-icons")
@@ -329,8 +368,14 @@ test.describe("Filtering", () => {
       .first();
     await disneyIcon.click();
 
-    const withProvider = page.getByTestId("poster-showcase").getByTestId("tile").filter({ hasText: "The Greatest Hits" });
-    const withoutProvider = page.getByTestId("poster-showcase").getByTestId("tile").filter({ hasText: "A Ghost Story" });
+    const withProvider = page
+      .getByTestId("poster-showcase")
+      .getByTestId("tile")
+      .filter({ hasText: "The Greatest Hits" });
+    const withoutProvider = page
+      .getByTestId("poster-showcase")
+      .getByTestId("tile")
+      .filter({ hasText: "A Ghost Story" });
     await expect(withProvider).toBeVisible();
     await expect(withoutProvider).toBeHidden();
   });
@@ -351,14 +396,16 @@ test.describe("Alternative search", () => {
           message: "Available on",
           movieProviders: [],
         }),
-      })
+      }),
     );
 
     await page.getByTestId("movie-input").fill("Inception");
     await page.getByTestId("movie-year").fill("2010");
     await page.getByTestId("movie-submit").click();
 
-    await expect(page.getByRole("status").filter({ hasText: /Inception|Available on/ })).toBeVisible({ timeout: 5000 });
+    await expect(
+      page.getByRole("status").filter({ hasText: /Inception|Available on/ }),
+    ).toBeVisible({ timeout: 5000 });
     await expect(page.getByTestId("alternative-search-btn")).toBeVisible({ timeout: 3000 });
 
     await page.route("**/api/alternative-search", (route) =>
@@ -370,7 +417,7 @@ test.describe("Alternative search", () => {
           url: "https://example.com/torrent",
           title: "Inception",
         }),
-      })
+      }),
     );
 
     await page.getByTestId("alternative-search-btn").click();

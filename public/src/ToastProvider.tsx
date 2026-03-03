@@ -37,7 +37,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }): Reac
           style: toastStyle,
         }),
       dismissLoading: (id: string) => toast.dismiss(id),
-      messageWithLink: (data: { url?: string; text?: string; title?: string; error?: string } | string | null) => {
+      messageWithLink: (
+        data: { url?: string; text?: string; title?: string; error?: string } | string | null,
+      ) => {
         if (!data || typeof data !== "object" || (data as { error?: string }).error) {
           const d = data as { text?: string; error?: string } | undefined;
           const fallback = d?.text ?? d?.error ?? (typeof data === "string" ? data : "");
@@ -61,7 +63,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }): Reac
               {text}
             </a>
           ),
-          { duration: Infinity, position: "top-right", style: toastStyle }
+          { duration: Infinity, position: "top-right", style: toastStyle },
         );
       },
     });

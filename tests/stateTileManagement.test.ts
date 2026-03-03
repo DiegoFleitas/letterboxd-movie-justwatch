@@ -8,10 +8,10 @@ import { TestSuite, assertEqual, assert, assertTruthy } from "./testUtils.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const letterboxd = JSON.parse(
-  readFileSync(join(__dirname, "fixtures", "api", "letterboxd-watchlist.json"), "utf-8")
+  readFileSync(join(__dirname, "fixtures", "api", "letterboxd-watchlist.json"), "utf-8"),
 );
 const searchMovieData = JSON.parse(
-  readFileSync(join(__dirname, "fixtures", "api", "search-movie.json"), "utf-8")
+  readFileSync(join(__dirname, "fixtures", "api", "search-movie.json"), "utf-8"),
 );
 
 const watchlist = letterboxd[0]?.response?.watchlist || [];
@@ -19,7 +19,7 @@ const herPrivateHell = watchlist.find((f: { title?: string }) => f.title === "He
 const lakeMungo = watchlist.find((f: { title?: string }) => f.title === "Lake Mungo");
 const lakeMungoSearch = searchMovieData.find(
   (f: { request?: { title?: string }; response?: { year?: string; poster?: string } }) =>
-    f.request?.title === "Lake Mungo"
+    f.request?.title === "Lake Mungo",
 )?.response;
 
 const suite = new TestSuite("State Tile Management");
@@ -44,7 +44,7 @@ function updateMovieTile(
   state: { movieTiles: Record<string, TileData> },
   title: string,
   year: string | null,
-  data: Partial<TileData>
+  data: Partial<TileData>,
 ): { id: string; updated: boolean; oldId?: string } {
   const id = generateTileId(title, year);
   if (data?.link) {
@@ -71,7 +71,7 @@ suite.test("Should generate correct tile ID", () => {
 suite.test("Should handle special characters in title", () => {
   assertEqual(
     generateTileId("It's Never Over, Jeff Buckley", "2025"),
-    "2025-ITSNEVEROVERJEFFBUCKLEY"
+    "2025-ITSNEVEROVERJEFFBUCKLEY",
   );
 });
 
@@ -146,7 +146,8 @@ suite.test("Should preserve data when moving to new ID", () => {
       link: "https://letterboxd.com/film/lake-mungo/",
     } as TileData);
   const newYear = (lakeMungoSearch as { year?: string })?.year ?? "2009";
-  const poster = (lakeMungoSearch as { poster?: string })?.poster ?? "https://example.com/poster.jpg";
+  const poster =
+    (lakeMungoSearch as { poster?: string })?.poster ?? "https://example.com/poster.jpg";
   const state: { movieTiles: Record<string, TileData> } = {
     movieTiles: {
       "2008-LAKEMUNGO": {

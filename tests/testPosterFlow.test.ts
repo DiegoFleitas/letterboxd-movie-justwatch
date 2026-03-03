@@ -39,7 +39,7 @@ async function testSearchMovie(title: string, year: string | null): Promise<Sear
         year,
         country: "es_UY",
       },
-      { timeout: 10_000 }
+      { timeout: 10_000 },
     );
 
     const data = response.data as {
@@ -54,7 +54,11 @@ async function testSearchMovie(title: string, year: string | null): Promise<Sear
     if (!hasPoster || data.error) {
       console.log(`${hasPoster ? "⚠️ " : "❌"} ${title}${year ? ` (${year})` : ""}`);
       if (data.error) {
-        console.log(`   ${String(data.error).replace(/<[^>]*>/g, "").substring(0, 80)}`);
+        console.log(
+          `   ${String(data.error)
+            .replace(/<[^>]*>/g, "")
+            .substring(0, 80)}`,
+        );
       }
       if (!hasPoster) {
         console.log("   No poster available");
@@ -100,13 +104,17 @@ async function runTests(): Promise<void> {
 
   console.log("\n" + "━".repeat(60));
   console.log("📊 Summary:");
-  console.log(`   Posters loaded: ${withPosters}/${results.length} (${Math.round((withPosters / results.length) * 100)}%)`);
+  console.log(
+    `   Posters loaded: ${withPosters}/${results.length} (${Math.round((withPosters / results.length) * 100)}%)`,
+  );
   console.log(`   With providers: ${withProviders}/${results.length}`);
   console.log(`   Failed requests: ${failed}/${results.length}`);
 
   const missingPosters = results.filter((r) => !r.hasPoster).length;
   if (missingPosters > 0) {
-    console.log(`\n💡 Note: ${missingPosters} movie(s) missing posters (likely TV series or not in TMDB)`);
+    console.log(
+      `\n💡 Note: ${missingPosters} movie(s) missing posters (likely TV series or not in TMDB)`,
+    );
   } else {
     console.log("\n✅ All movies loaded posters successfully!");
   }

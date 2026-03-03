@@ -37,7 +37,7 @@ export function mergeTileState(
   prev: TileState,
   title: string,
   year: string | number | null,
-  data?: MergeData | null
+  data?: MergeData | null,
 ): TileState {
   const { movieTiles: prevTiles, streamingProviders: prevProviders } = prev;
   const id = normalizeId(title, year);
@@ -79,7 +79,7 @@ export function mergeTileState(
         ? data.poster
         : data?.poster && !existing?.poster
           ? data.poster
-          : existing?.poster ?? null,
+          : (existing?.poster ?? null),
   };
   if (data?.link && !tileData.link) tileData.link = data.link;
   if (!tileData.year) tileData.year = year;
@@ -116,7 +116,7 @@ export function getTileProviderNames(tileData: TileData | null | undefined): str
 
 export function tileMatchesFilter(
   tileData: TileData | null | undefined,
-  activeProviderNames: string[] | null | undefined
+  activeProviderNames: string[] | null | undefined,
 ): boolean {
   if (!activeProviderNames?.length) return true;
   const names = getTileProviderNames(tileData);

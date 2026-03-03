@@ -70,15 +70,15 @@ export function MovieTile({ data, onAlternativeSearch }: MovieTileProps): React.
                   role="button"
                   tabIndex={0}
                 >
-                  <img
-                    className="tile-icons"
-                    src={provider.icon ?? ""}
-                    alt={provider.name}
-                  />
+                  <img className="tile-icons" src={provider.icon ?? ""} alt={provider.name} />
                 </div>
               ))}
             </div>
-            <div className="tile-icons" data-sp="alternative-search-tile" title="Alternative search">
+            <div
+              className="tile-icons"
+              data-sp="alternative-search-tile"
+              title="Alternative search"
+            >
               <img
                 src="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏴‍☠️</text></svg>"
                 alt="Alternative search"

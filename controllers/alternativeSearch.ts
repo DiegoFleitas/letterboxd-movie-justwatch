@@ -22,7 +22,7 @@ export const alternativeSearch = async (req: Request, res: Response): Promise<vo
     let searchQuery = `${title} ${year}`.replace(/ /g, "+");
 
     const cacheKey = `jackett:${searchQuery}:`;
-    const cachedResponse = await getCacheValue(cacheKey) as
+    const cachedResponse = (await getCacheValue(cacheKey)) as
       | { error?: string; message?: string; [k: string]: unknown }
       | null
       | undefined;
@@ -36,14 +36,14 @@ export const alternativeSearch = async (req: Request, res: Response): Promise<vo
     const categories = { film: 2000 };
     const baseUrl = `${jackettEndpoint}/api/v2.0/indexers/all/results?apikey=${jackettKey}&Category=${categories.film}`;
     let { data } = await axios.get<{ Results?: JackettResult[] }>(
-      `${baseUrl}&Query=${searchQuery}`
+      `${baseUrl}&Query=${searchQuery}`,
     );
     let results = data.Results ?? [];
     if (results.length === 0) {
       console.log(`No results found, trying again without year (${title} ${year})`);
       searchQuery = `${title}`.replace(/ /g, "+");
       const retry = await axios.get<{ Results?: JackettResult[] }>(
-        `${baseUrl}&Query=${searchQuery}`
+        `${baseUrl}&Query=${searchQuery}`,
       );
       results = retry.data.Results ?? [];
     }
@@ -51,10 +51,7 @@ export const alternativeSearch = async (req: Request, res: Response): Promise<vo
     let maxSeeders = 0;
     let bestResult: JackettResult | null = null;
     for (const result of results) {
-      if (
-        (result.Seeders ?? 0) > maxSeeders &&
-        !containsBlacklistedWord(result.Title ?? "")
-      ) {
+      if ((result.Seeders ?? 0) > maxSeeders && !containsBlacklistedWord(result.Title ?? "")) {
         maxSeeders = result.Seeders ?? 0;
         bestResult = result;
       }

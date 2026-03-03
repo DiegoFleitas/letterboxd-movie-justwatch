@@ -40,8 +40,7 @@ export const letterboxdPoster = async (req: Request, res: Response): Promise<voi
       responseType: "arraybuffer",
       headers: {
         Referer: "https://letterboxd.com/",
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
       },
     });
 

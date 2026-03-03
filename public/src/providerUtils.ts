@@ -37,7 +37,7 @@ export function deduplicateProviderList(providers: ProviderLike[]): ProviderLike
 
 export function tileMatchesProviderFilter(
   tileProviderNames: string[],
-  activeFilterNames: string[]
+  activeFilterNames: string[],
 ): boolean {
   if (!Array.isArray(activeFilterNames) || activeFilterNames.length === 0) return true;
   const names = Array.isArray(tileProviderNames) ? tileProviderNames : [];
