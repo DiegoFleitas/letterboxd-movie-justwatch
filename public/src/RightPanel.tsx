@@ -131,21 +131,14 @@ export function RightPanel(): React.ReactElement {
             <u>bad dubbing & no subs!!</u>
           </i>
         </p>
-        <p className="foot-notes spoiler">
-          <span
-            className="icons"
-            style={{ display: "block", textAlign: "center", fontSize: "1.3em" }}
-          >
-            🏴‍☠️🏴‍☠️🏴‍☠️
-          </span>
-          It uses Jackett API to search for torrents on 1337x, RARBG, etc.
-          <span
-            className="icons"
-            style={{ display: "block", textAlign: "center", fontSize: "1.3em" }}
-          >
-            🏴‍☠️🏴‍☠️🏴‍☠️
-          </span>
-        </p>
+        <details className="jackett-details">
+          <summary className="jackett-summary">
+            Why pirate flags? <span className="icons">🏴‍☠️</span>
+          </summary>
+          <div className="jackett-body">
+            It uses Jackett API to search for torrents on 1337x, RARBG, etc.
+          </div>
+        </details>
       </footer>
     </>
   );
