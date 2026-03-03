@@ -1,10 +1,10 @@
 /* Design system: distinctive fonts, tokens and subtle atmospherics */
-@import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Karla:wght@400;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Karla:wght@400;700&display=swap");
 
 :root {
   /* Typography */
-  --display-font: 'Merriweather', serif;
-  --ui-font: 'Karla', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --display-font: "Merriweather", serif;
+  --ui-font: "Karla", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
   /* Accent and mood (warmer, cinematic) */
   --color-accent: #f4a261; /* warm amber */
@@ -22,24 +22,29 @@
 }
 
 /* Apply UI font across the app (will override global Roboto) */
-html, body {
+html,
+body {
   font-family: var(--ui-font);
 }
 
 /* Display headings use a strong serif for personality */
-h1, h2, h3, .poster-title {
+h1,
+h2,
+h3,
+.poster-title {
   font-family: var(--display-font);
   letter-spacing: -0.01em;
 }
 
 /* Subtle page-level vignette/backdrop to add depth */
 body::before {
-  content: '';
+  content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(1200px 600px at 10% 20%, rgba(231,111,81,0.06), transparent 8%),
-              radial-gradient(800px 400px at 90% 80%, rgba(244,162,97,0.04), transparent 6%);
+  background:
+    radial-gradient(1200px 600px at 10% 20%, rgba(231, 111, 81, 0.06), transparent 8%),
+    radial-gradient(800px 400px at 90% 80%, rgba(244, 162, 97, 0.04), transparent 6%);
   mix-blend-mode: overlay;
   z-index: 0;
 }
@@ -48,7 +53,7 @@ body::before {
 .grain-overlay {
   position: absolute;
   inset: 0;
-  background-image: linear-gradient(transparent, rgba(0,0,0,var(--grain)));
+  background-image: linear-gradient(transparent, rgba(0, 0, 0, var(--grain)));
   mix-blend-mode: overlay;
   pointer-events: none;
 }
