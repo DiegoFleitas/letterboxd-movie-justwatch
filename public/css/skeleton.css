@@ -18,6 +18,12 @@
   }
 }
 .spinner {
-  min-width: 230px;
-  min-height: 345px;
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 48px;
+  height: 48px;
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0.95;
 }
