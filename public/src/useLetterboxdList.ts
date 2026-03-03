@@ -80,7 +80,7 @@ export function useLetterboxdList(
           errors: [],
         });
         for (const element of watchlist) {
-          let { title, year, posterPath, poster } = element;
+          let { title, year, posterPath, poster, link } = element;
           poster = poster || "/movie_placeholder.svg";
           mergeTile?.(title ?? "", year ?? null, { poster, link });
           if (posterPath) {
