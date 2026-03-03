@@ -74,33 +74,27 @@ export function MovieTile({ data, onAlternativeSearch }: MovieTileProps): React.
                 </div>
               ))}
             </div>
-            <div
+            <button
+              type="button"
               className="tile-icons"
               data-sp="alternative-search-tile"
               title="Alternative search"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onAlternativeSearch?.(data);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === " ") {
+                  e.preventDefault();
+                }
+              }}
             >
               <img
                 src="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏴‍☠️</text></svg>"
                 alt="Alternative search"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onAlternativeSearch?.(data);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.stopPropagation();
-                    onAlternativeSearch?.(data);
-                  } else if (e.key === " ") {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    onAlternativeSearch?.(data);
-                  }
-                }}
-                role="button"
-                tabIndex={0}
               />
-            </div>
+            </button>
           </div>
         </div>
       </a>

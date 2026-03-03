@@ -29,7 +29,7 @@ export async function fetchCountryFromIp(countries: CountryWithId[]): Promise<st
     // No valid country from API (e.g. error, localhost). Try browser locale as fallback.
     const localeId = getCountryIdFromLocale(countries);
     return localeId;
-  } catch (err) {
+  } catch {
     clearTimeout(timeout);
     return null;
   }

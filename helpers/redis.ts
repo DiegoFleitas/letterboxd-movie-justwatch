@@ -62,9 +62,11 @@ export const getCacheValue = async (key: string): Promise<unknown> => {
   try {
     const hashedKey = getCacheKey(key);
     const value = await client.get(hashedKey);
-    !value
-      ? console.log(`[REDIS_MISS] ${hashedKey} (${key})`)
-      : console.log(`[REDIS_HIT] ${hashedKey} (${key})`);
+    if (!value) {
+      console.log(`[REDIS_MISS] ${hashedKey} (${key})`);
+    } else {
+      console.log(`[REDIS_HIT] ${hashedKey} (${key})`);
+    }
     try {
       return value !== null ? JSON.parse(value) : value;
     } catch {

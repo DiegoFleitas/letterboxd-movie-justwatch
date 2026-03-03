@@ -117,7 +117,7 @@ suite.test("buildCanonicalProviderMaps returns byClearName for data-driven norma
     { technicalName: "max", clearName: "HBO Max" },
     { technicalName: "amazonmax", clearName: "HBO Max  Amazon Channel" },
   ];
-  const { byTechnicalName, byClearName } = buildCanonicalProviderMaps(packages);
+  const { byClearName } = buildCanonicalProviderMaps(packages);
   assertEqual(byClearName["HBO Max"]?.id, "max");
   assertEqual(byClearName["HBO Max  Amazon Channel"]?.id, "max");
   assertEqual(byClearName["HBO Max  Amazon Channel"]?.name, "HBO Max");
