@@ -1,0 +1,8 @@
+node_modules
+dist
+build
+public/dist
+playwright-report
+test-results
+.turbo
+.cache
