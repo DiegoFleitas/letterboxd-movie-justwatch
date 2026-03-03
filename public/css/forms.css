@@ -35,8 +35,10 @@ select {
   border: 1.5px solid rgba(255, 255, 255, 0.16);
   color: var(--color-text);
   background-color: var(--color-surface);
-  box-shadow: 0 1px 4px rgba(0,0,0,0.18);
-  transition: border 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+  transition:
+    border 0.2s,
+    box-shadow 0.2s;
 }
 
 .global-country-selector select,
@@ -90,7 +92,9 @@ label {
   z-index: 9999;
 }
 
-.twitter-typeahead { position: relative; }
+.twitter-typeahead {
+  position: relative;
+}
 
 .tt-suggestion {
   display: flex;
