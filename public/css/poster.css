@@ -31,8 +31,9 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  transition: box-shadow 0.18s;
+  transition: transform 0.28s cubic-bezier(.2,.9,.2,1), box-shadow 0.18s;
   cursor: pointer;
+  transform-origin: 50% 60%;
 }
 .poster-link {
   display: block;
@@ -56,6 +57,17 @@
 .poster:hover .poster-link::after {
   opacity: 1;
 }
+.poster::before {
+  /* decorative diagonal sheen for cinematic feel */
+  content: '';
+  position: absolute;
+  inset: -30% -10% auto -10%;
+  height: 60%;
+  transform: rotate(-7deg);
+  background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.06) 40%, rgba(255,255,255,0.02));
+  z-index: 0;
+  pointer-events: none;
+}
 .poster-gradient {
   position: absolute;
   left: 0;
@@ -69,7 +81,10 @@
 .poster img {
   width: 100%;
   height: auto;
-  border-radius: 5px;
+  border-radius: 6px;
+  display: block;
+  transform-origin: center center;
+  transition: transform 0.36s cubic-bezier(.2,.9,.2,1);
 }
 .poster-info {
   position: absolute;
@@ -88,7 +103,7 @@
   margin: 0 0 0.2rem 0;
   font-size: 1.15rem;
   font-weight: 800;
-  color: var(--color-accent-soft);
+  color: var(--color-accent);
   text-align: left;
   letter-spacing: 0.01em;
   line-height: 1.2;
@@ -118,4 +133,48 @@
   cursor: pointer;
   border-radius: 2.5px;
   opacity: 1;
+}
+
+/* Ensure buttons/wrappers for icons don't create large boxes inside posters */
+.tile-icon-btn,
+.icons-container .tile-icon-btn,
+.icons-container .tile-icons {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+
+.tile-icon-btn img {
+  width: 28px;
+  height: 28px;
+  display: block;
+}
+
+/* Hover/active micro-interactions */
+.poster:hover {
+  transform: translateY(-8px) scale(1.02) rotate(-0.3deg);
+  box-shadow: var(--shadow-strong);
+}
+.poster:hover img {
+  transform: scale(1.03) translateY(-2px) rotate(-0.5deg);
+}
+.poster:active {
+  transform: translateY(-2px) scale(0.995) rotate(0deg);
+}
+
+/* Small asymmetric accent bar */
+.poster::after {
+  content: '';
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 6px;
+  height: 72px;
+  background: linear-gradient(180deg, var(--color-accent-2), var(--color-accent));
+  border-radius: 4px;
+  z-index: 3;
+  opacity: 0.95;
 }

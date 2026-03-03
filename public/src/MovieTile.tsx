@@ -43,6 +43,8 @@ export function MovieTile({ data, onAlternativeSearch }: MovieTileProps): React.
         ) : (
           <div className="poster-skeleton" />
         )}
+        {/* subtle film grain overlay (decorative) */}
+        <div className="grain-overlay" aria-hidden="true" />
         <div className="poster-gradient" />
         <div className="poster-info">
           <h2 className="poster-title">{title}</h2>
@@ -55,7 +57,7 @@ export function MovieTile({ data, onAlternativeSearch }: MovieTileProps): React.
               {movieProviders.map((provider: TileProvider) => (
                 <div
                   key={provider.id}
-                  className="tile-icons"
+                  className="tile-icon-btn"
                   data-sp={provider.name}
                   data-url={provider.url}
                   title={provider.name}
@@ -76,7 +78,7 @@ export function MovieTile({ data, onAlternativeSearch }: MovieTileProps): React.
             </div>
             <button
               type="button"
-              className="tile-icons"
+              className="tile-icon-btn"
               data-sp="alternative-search-tile"
               title="Alternative search"
               onClick={(e) => {
@@ -91,6 +93,7 @@ export function MovieTile({ data, onAlternativeSearch }: MovieTileProps): React.
               }}
             >
               <img
+                className="tile-icons"
                 src="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏴‍☠️</text></svg>"
                 alt="Alternative search"
               />
