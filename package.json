@@ -6,7 +6,7 @@
   "type": "module",
   "packageManager": "pnpm@10.10.0",
   "scripts": {
-    "prepare": "husky",
+    "prepare": "husky || true",
     "typecheck": "tsc --noEmit && cd public && tsc --noEmit",
     "test": "tsx tests/filterLogic.test.ts && tsx tests/stateTileManagement.test.ts && tsx tests/providerDeduplication.test.ts && tsx tests/loadCanonicalProviders.test.ts && tsx tests/posthog.test.ts && tsx tests/redis.test.ts && tsx tests/testPosterUrlConstruction.test.ts",
     "test:filter": "tsx tests/filterLogic.test.ts",
