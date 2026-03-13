@@ -13,39 +13,40 @@
 
 .search-tabs {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  justify-content: stretch;
+  align-items: stretch;
+  margin-top: 2.5rem;
   margin-bottom: 0;
   gap: 0;
-  padding: 0 1.25rem;
-  background: var(--color-surface);
-  border-top-left-radius: 1rem;
-  border-top-right-radius: 1rem;
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
-  box-shadow: 0 2px 8px rgba(16, 22, 29, 0.08);
+  padding: 0;
+  background: transparent;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
 }
+
 .tab-btn {
+  flex: 1;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-  background: transparent;
+  background: var(--color-surface-elevated);
   color: var(--color-text-muted);
   border: none;
-  border-radius: 1rem 1rem 0 0;
-  padding: 0.55rem 1.6rem;
-  font-size: 1rem;
-  font-weight: 700;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  padding: 0.65rem 1.25rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
   cursor: pointer;
   transition:
-    background 0.18s,
-    color 0.18s;
+    background 0.2s ease,
+    color 0.2s ease;
   outline: none;
 }
 
 .tab-btn-icon {
   display: inline-flex;
   flex-shrink: 0;
+  opacity: 0.85;
 }
 
 .tab-btn-icon svg {
@@ -53,26 +54,19 @@
 }
 
 .tab-btn:hover {
-  background: rgba(43, 52, 64, 0.6);
-  color: var(--color-accent);
+  background: var(--color-bg-alt);
+  color: var(--color-accent-soft);
 }
 
 .tab-btn.active {
-  background: var(--color-accent);
-  color: #10161d;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(191, 168, 99, 0.9);
-  z-index: 2;
+  background: var(--color-surface);
+  color: var(--color-accent);
+  z-index: 1;
 }
+
 .tab-content.active-section {
   background: var(--color-surface);
-  box-shadow: 0 4px 24px rgba(16, 22, 29, 0.35);
-  border-radius: 0 0 1rem 1rem;
-  transition:
-    background 0.2s,
-    box-shadow 0.2s;
-  padding: 2rem 1.5rem 1.5rem 1.5rem;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  padding: 1.75rem 1.25rem 1.25rem;
   margin-top: 0;
-  border-top-left-radius: 0;
-  border-top-right-radius: 0;
 }

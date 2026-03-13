@@ -2,10 +2,15 @@
 .poster-skeleton {
   width: 100%;
   aspect-ratio: 2/3;
-  background: linear-gradient(90deg, #181f29 25%, #232a36 50%, #181f29 75%);
+  background: linear-gradient(
+    90deg,
+    var(--color-surface) 25%,
+    var(--color-surface-elevated) 50%,
+    var(--color-surface) 75%
+  );
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.2s infinite linear;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   margin-bottom: 0.5rem;
   display: block;
 }

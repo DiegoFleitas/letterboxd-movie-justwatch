@@ -1,83 +1,21 @@
-@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap");
-
-/* Design tokens: JustWatch-inspired dark theme */
+/* Global styles — tokens come from design-system.css (load first) */
 :root {
-  /* Core palette */
-  --color-bg: #03070d; /* near-black background */
-  --color-bg-alt: #2b3440; /* dark blue/gray panels */
-  --color-surface: #10161d; /* cards, toasts, controls */
-
-  --color-text: #f5f7fa;
-  --color-text-muted: #8fa5b8;
-
-  --color-accent: #f2b705; /* primary accent */
-  --color-accent-soft: #f2cf63; /* lighter accent for hovers */
-  --color-border: #bfa863; /* subtle warm borders */
-
-  --radius-lg: 12px;
-  --radius-md: 8px;
-  --shadow-soft: 0 2px 12px rgba(0, 0, 0, 0.28);
-  --shadow-strong: 0 18px 48px rgba(0, 0, 0, 0.6);
-
-  /* Third-party widgets (e.g. selects/typeahead) */
   --ss-primary-color: var(--color-surface);
-  --ss-border-color: #222c38;
-}
-
-:root {
-  /* Core palette (duplicate for proper :root selector support) */
-  --color-bg: #03070d;
-  --color-bg-alt: #2b3440;
-  --color-surface: #10161d;
-
-  --color-text: #f5f7fa;
-  --color-text-muted: #8fa5b8;
-
-  --color-accent: #f2b705;
-  --color-accent-soft: #f2cf63;
-  --color-border: #bfa863;
-
-  --radius-lg: 12px;
-  --radius-md: 8px;
-  --shadow-soft: 0 2px 12px rgba(0, 0, 0, 0.28);
-  --shadow-strong: 0 18px 48px rgba(0, 0, 0, 0.6);
-
-  /* Third-party widgets (e.g. selects/typeahead) */
-  --ss-primary-color: var(--color-surface);
-  --ss-border-color: #222c38;
+  --ss-border-color: var(--color-border);
 }
 
 html,
 body {
   overflow-x: hidden;
-}
-
-/* Global styles, fonts, and utility classes */
-html,
-body {
   background-color: var(--color-bg);
   color: var(--color-text);
-  font-family:
-    "Roboto",
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    system-ui,
-    sans-serif;
   min-height: 100vh;
 }
 
-html.md {
-  --ion-default-font: "Roboto", "Helvetica Neue", sans-serif;
-}
-
 body {
-  background-color: var(--color-bg);
-  color: var(--color-text);
-  font-size: 1.125rem;
-  line-height: 1.5;
+  font-size: 1.0625rem;
+  line-height: 1.55;
   letter-spacing: 0.01em;
-  min-height: 100vh;
 }
 
 /* Accessible focus outlines for key interactive elements */
@@ -103,7 +41,20 @@ a:focus-visible,
 
 .foot-notes {
   text-align: center;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: var(--color-text-subtle);
+  max-width: 52ch;
+  margin: 0 auto 1rem;
+}
+
+.foot-notes u {
+  color: var(--color-accent-soft);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.foot-notes i {
   color: var(--color-text-muted);
 }
 
