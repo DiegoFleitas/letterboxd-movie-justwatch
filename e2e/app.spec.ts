@@ -219,13 +219,14 @@ test.describe("List form", () => {
     await page.goto("/");
     await waitForGeoReady(page);
 
+    // Use a film whose search-movie fixture has matching year so list + search yield one tile (same id).
     const csvResponse = {
       message: "List found",
       watchlist: [
         {
-          title: "Lake Mungo",
-          year: "2008",
-          link: "https://letterboxd.com/film/lake-mungo/",
+          title: "Mystery Train",
+          year: "1989",
+          link: "https://letterboxd.com/film/mystery-train/",
           posterPath: null,
           poster: null,
         },
@@ -257,13 +258,13 @@ test.describe("List form", () => {
     });
 
     await page.getByTestId("tab-list").click();
-    await page.getByTestId("list-url").fill("Title,Year\nLake Mungo,2008");
+    await page.getByTestId("list-url").fill("Title,Year\nMystery Train,1989");
     await page.getByTestId("list-submit").click();
 
     await expect(page.getByTestId("poster-showcase").getByTestId("tile")).toHaveCount(1, {
       timeout: 10000,
     });
-    await expect(page.locator("[data-id]").filter({ hasText: "Lake Mungo" })).toBeVisible();
+    await expect(page.locator("[data-id]").filter({ hasText: "Mystery Train" })).toBeVisible();
   });
 
   test("invalid list URL shows error toast and no tiles", async ({ page }) => {

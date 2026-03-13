@@ -142,6 +142,6 @@ suite.test("getFilmsCount returns 0 when heading has no digits", () => {
   assertEqual(getFilmsCount($), 0);
 });
 
-suite.run().then(({ passed, failed }) => {
+suite.run().then(({ failed }) => {
   process.exit(failed > 0 ? 1 : 0);
 });
