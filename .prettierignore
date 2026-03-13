@@ -8,3 +8,6 @@ test-results
 .cache
 pnpm-lock.yaml
 package-lock.json
+
+# Scraped/generated fixture HTML; structure matters for tests, formatting does not
+tests/fixtures/*.html
