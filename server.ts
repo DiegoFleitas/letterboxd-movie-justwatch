@@ -13,6 +13,7 @@ import {
   poster,
   letterboxdWatchlist,
   letterboxdCustomList,
+  letterboxdListFromCsv,
   letterboxdPoster,
   alternativeSearch,
   proxy,
@@ -102,6 +103,7 @@ app.post("/api/search-movie", setCacheControl, asyncHandler(searchMovie));
 app.post("/api/poster", setCacheControl, asyncHandler(poster));
 app.post("/api/letterboxd-watchlist", setCacheControl, asyncHandler(letterboxdWatchlist));
 app.post("/api/letterboxd-custom-list", setCacheControl, asyncHandler(letterboxdCustomList));
+app.post("/api/letterboxd-list-from-csv", setCacheControl, asyncHandler(letterboxdListFromCsv));
 app.post("/api/letterboxd-poster", setCacheControl, asyncHandler(letterboxdPoster));
 app.post("/api/alternative-search", setCacheControl, asyncHandler(alternativeSearch));
 app.all("/api/proxy/:url(*)", asyncHandler(proxy));
