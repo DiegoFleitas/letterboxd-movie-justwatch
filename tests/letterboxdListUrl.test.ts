@@ -2,7 +2,7 @@
  * Unit tests for Letterboxd list URL parsing (watchlist and custom list).
  */
 import { parseLetterboxdListUrl, isLetterboxdListUrlInput } from "../lib/letterboxdListUrl.js";
-import { TestSuite, assertEqual, assertTruthy, assertFalsy, assertDeepEqual } from "./testUtils.js";
+import { TestSuite, assertEqual, assertTruthy, assertFalsy } from "./testUtils.js";
 
 const suite = new TestSuite("Letterboxd list URL parsing");
 
@@ -100,6 +100,6 @@ suite.test("isLetterboxdListUrlInput: false for empty", () => {
   assertFalsy(isLetterboxdListUrlInput(""));
 });
 
-suite.run().then(({ passed, failed }) => {
+suite.run().then(({ failed }) => {
   process.exit(failed > 0 ? 1 : 0);
 });

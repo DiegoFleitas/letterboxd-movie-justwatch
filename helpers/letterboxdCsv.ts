@@ -10,8 +10,6 @@ export interface LetterboxdCsvRow {
   link: string;
 }
 
-const KNOWN_HEADERS = ["letterboxduri", "url", "title", "year"] as const;
-
 /**
  * Parse a single CSV line respecting double-quoted fields (commas inside quotes are not delimiters).
  * Does not handle escaped quotes inside quoted fields (Letterboxd uses backslash-escape).
