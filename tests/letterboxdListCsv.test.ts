@@ -2,13 +2,7 @@
  * Unit tests for Letterboxd CSV list parsing (import format).
  */
 import { parseLetterboxdCsv } from "../helpers/letterboxdCsv.js";
-import {
-  TestSuite,
-  assertEqual,
-  assertTruthy,
-  assertDeepEqual,
-  assertArrayLength,
-} from "./testUtils.js";
+import { TestSuite, assertEqual, assertTruthy, assertArrayLength } from "./testUtils.js";
 
 const suite = new TestSuite("Letterboxd CSV list parsing");
 
@@ -90,7 +84,7 @@ suite.test("no Title and no LetterboxdURI/url column throws", () => {
   let threw = false;
   try {
     parseLetterboxdCsv("Rating,Year\n5,1986\n");
-  } catch (e) {
+  } catch {
     threw = true;
   }
   assertTruthy(threw);
@@ -130,6 +124,6 @@ Top Gun,1986,5,Great`;
   assertEqual(rows[0].year, "1986");
 });
 
-suite.run().then(({ passed, failed }) => {
+suite.run().then(({ failed }) => {
   process.exit(failed > 0 ? 1 : 0);
 });
