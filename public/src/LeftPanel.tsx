@@ -313,7 +313,6 @@ export function LeftPanel(): React.ReactElement {
           <button
             type="button"
             className={`alternative-search btn ${showAltSearchButton ? "" : "hide-alternative-search"}`}
-            style={{ backgroundColor: "#000" }}
             aria-label="Alternative search button"
             data-testid="alternative-search-btn"
             onClick={handleAlternativeSearch}

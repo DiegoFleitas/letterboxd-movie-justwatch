@@ -9,84 +9,57 @@
   color: white;
 }
 
-/* Collapsible Jackett details (compact, themed) */
+/* Collapsible "Why pirate flags?" — disclosure styled as a small chip */
 .jackett-details {
-  max-width: 920px;
-  margin: 1rem auto;
+  max-width: 480px;
+  margin: 1.25rem auto 0;
   text-align: center;
 }
+
 .jackett-summary {
   cursor: pointer;
-  display: inline-block;
-  padding: 0.35rem 0.6rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--color-accent);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-elevated);
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
   font-weight: 600;
-  border: 1px solid rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--color-border);
   transition:
-    background 0.18s,
-    transform 0.12s;
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+  list-style: none;
 }
+
+.jackett-summary::-webkit-details-marker {
+  display: none;
+}
+
 .jackett-summary:focus,
 .jackett-summary:hover {
-  background: rgba(255, 255, 255, 0.06);
-  transform: translateY(-1px);
-}
-.jackett-body {
-  margin-top: 0.6rem;
-  padding: 0.6rem 1rem;
-  color: var(--color-text-muted);
-  background: transparent;
-  border-radius: 8px;
-  font-size: 0.95rem;
-}
-
-/* Pirate flavor: decorative flags, subtle rope border, and a cheeky sway animation */
-.jackett-summary {
-  position: relative;
-}
-.jackett-summary::before,
-.jackett-summary::after {
-  content: "🏴‍☠️";
-  display: inline-block;
-  margin: 0 0.45rem;
-  transform-origin: 50% 10%;
-  animation: pirate-sway 2.2s ease-in-out infinite;
-  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.35));
-  font-size: 1.05em;
-  opacity: 0.95;
-}
-.jackett-summary::after {
-  animation-delay: 0.18s;
-}
-
-@keyframes pirate-sway {
-  0% {
-    transform: rotate(-6deg) translateY(0);
-  }
-  50% {
-    transform: rotate(6deg) translateY(-2px);
-  }
-  100% {
-    transform: rotate(-6deg) translateY(0);
-  }
+  background: var(--color-bg-alt);
+  color: var(--color-accent-soft);
+  border-color: var(--color-accent-muted);
 }
 
 .jackett-body {
-  border: 1px solid rgba(255, 255, 255, 0.03);
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0));
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.02),
-    0 10px 30px rgba(0, 0, 0, 0.45);
-  border-radius: 10px;
-  max-width: 880px;
-  margin-left: auto;
-  margin-right: auto;
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  color: var(--color-text-subtle);
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  text-align: left;
+  max-width: 100%;
 }
 
 .jackett-summary .icons {
-  display: none;
+  font-size: 1em;
 }
 .list-group-item {
   border: none;
