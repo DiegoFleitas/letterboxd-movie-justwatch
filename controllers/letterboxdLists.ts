@@ -1,74 +1,17 @@
 import type { Request, Response } from "express";
-import type { CheerioAPI } from "cheerio";
 import axiosHelper from "../helpers/axios.js";
 const axios = axiosHelper(true);
 import * as cheerio from "cheerio";
 import { getCacheValue, setCacheValue } from "../helpers/redis.js";
+import { parseLetterboxdCsv } from "../helpers/letterboxdCsv.js";
+import {
+  getPageFilms,
+  getFilmsCount,
+  getContentPresence,
+  type PageFilm,
+} from "../helpers/letterboxdListHtml.js";
 
 const cacheTtl = Number(process.env.CACHE_TTL) || 20;
-
-interface FilmData {
-  title: string | null;
-  year: string | null;
-  link: string;
-  posterPath: string | null;
-  poster: string | null;
-  id?: string | null;
-  titleSlug?: string | null;
-}
-
-interface PageFilm {
-  title: string | null;
-  year: string | null;
-  link: string;
-  poster: string | null;
-}
-
-const getFilmData = async (film: ReturnType<CheerioAPI>): Promise<FilmData> => {
-  const title = film.find("img")?.attr("alt") ?? null;
-  const targetLink = film.find("div")?.attr("data-target-link");
-  const titleSlug = (targetLink || film.find("div")?.attr("data-film-slug")) ?? null;
-  const id = film.find("div")?.attr("data-film-id") ?? null;
-  const link = "https://letterboxd.com" + (targetLink ?? "");
-  const posterPath = targetLink ?? null;
-  let year: string | null = null;
-
-  const itemName = film.find("div")?.attr("data-item-name");
-  if (itemName) {
-    const yearMatch = itemName.match(/\((\d{4})\)/);
-    if (yearMatch) year = yearMatch[1];
-  }
-  if (!year && targetLink) {
-    const yearMatch = targetLink.match(/-(\d{4})\/?$/);
-    if (yearMatch) year = yearMatch[1];
-  }
-
-  return { title, year, link, posterPath, poster: null, id, titleSlug };
-};
-
-const getFilmsCount = ($: CheerioAPI): number => {
-  const rawFilmsText = $("h1.section-heading").text();
-  return parseInt(rawFilmsText.replace(/[^0-9]/g, ""), 10) || 0;
-};
-
-const getPageFilms = async ($: CheerioAPI): Promise<PageFilm[]> => {
-  const filmPromises = $(".griditem")
-    .map(async (_i, el) => {
-      const film = $(el);
-      return getFilmData(film);
-    })
-    .get();
-
-  const films = await Promise.allSettled(filmPromises);
-  return films
-    .filter((r): r is PromiseFulfilledResult<FilmData> => r.status === "fulfilled")
-    .map(({ value }) => ({
-      title: value.title,
-      year: value.year,
-      link: value.link,
-      poster: value.poster,
-    }));
-};
 
 const fetchList = async (
   url: string,
@@ -77,6 +20,7 @@ const fetchList = async (
   res: Response,
 ): Promise<void> => {
   try {
+    const baseUrl = url.replace(/\/+$/, "");
     const body = (req.body as { page?: number }) ?? {};
     const page = body.page ?? 1;
     if (page < 1) {
@@ -101,26 +45,60 @@ const fetchList = async (
         console.log(`List for page ${currentPage} found (cached)`);
         filmsPromises = filmsPromises.concat(cachedList);
       } else {
-        const response = await axios.get(`${url}/page/${currentPage}/`);
-        const $ = cheerio.load(response.data);
-
-        const hasFilms = $(".poster-grid ul.grid li").length > 0;
-        if (!hasFilms) {
-          console.log(`Page ${url}/page/${currentPage}/ has no content, stopping pagination.`);
+        const pageUrl = `${baseUrl}/page/${currentPage}/`;
+        const response = await axios.get(pageUrl, {
+          headers: {
+            "User-Agent":
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.5",
+            Referer: "https://letterboxd.com/",
+          },
+        });
+        let $ = cheerio.load(response.data);
+        let pageFilmsPromise = getPageFilms($);
+        let lastHtml: string = response.data;
+        if (pageFilmsPromise.length === 0 && baseUrl.includes("/list/")) {
+          const esiUrl = pageUrl + (pageUrl.includes("?") ? "&" : "?") + "esiAllowFilters=true";
+          try {
+            const esiResponse = await axios.get(esiUrl, {
+              headers: {
+                "User-Agent":
+                  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                Accept:
+                  "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.5",
+                Referer: "https://letterboxd.com/",
+              },
+            });
+            $ = cheerio.load(esiResponse.data);
+            pageFilmsPromise = getPageFilms($);
+            lastHtml = esiResponse.data;
+          } catch (esiErr) {
+            console.warn("ESI retry failed for", esiUrl, (esiErr as Error).message);
+          }
+        }
+        if (pageFilmsPromise.length === 0) {
+          if (baseUrl.includes("/list/")) {
+            const presence = getContentPresence(lastHtml);
+            const parts = Object.entries(presence)
+              .map(([k, v]) => `${k}: ${v}`)
+              .join(", ");
+            console.log(`Page ${pageUrl} has no content (${parts}), stopping pagination.`);
+          } else {
+            console.log(`Page ${pageUrl} has no content, stopping pagination.`);
+          }
           break;
         }
 
         if (!filmsCount) {
           filmsCount = getFilmsCount($);
-          totalPages = Math.ceil(filmsCount / filmsPerPage);
+          totalPages = Math.ceil(filmsCount / filmsPerPage) || 1;
           if (currentPage > totalPages) {
             res.status(404).json({ error: "Invalid list page" });
             return;
           }
         }
-        const pageFilmsPromise = await getPageFilms($);
-
-        if (pageFilmsPromise.length === 0) break;
 
         setCacheValue(cacheKey, pageFilmsPromise, cacheTtl, "list");
         filmsPromises = filmsPromises.concat(pageFilmsPromise);
@@ -165,4 +143,32 @@ export const letterboxdCustomList = async (req: Request, res: Response): Promise
   }
   const cacheKeyPrefix = `customlist:${username ?? ""}_${listType ?? ""}`;
   await fetchList(listUrl, cacheKeyPrefix, req, res);
+};
+
+export const letterboxdListFromCsv = async (req: Request, res: Response): Promise<void> => {
+  const body = (req.body as { csv?: string }) ?? {};
+  const csv = body.csv;
+  if (typeof csv !== "string") {
+    res.status(400).json({ error: "CSV content is required" });
+    return;
+  }
+  try {
+    const rows = parseLetterboxdCsv(csv);
+    const watchlist = rows.map((row) => ({
+      title: row.title,
+      year: row.year,
+      link: row.link || "",
+      posterPath: null as string | null,
+      poster: null as string | null,
+    }));
+    res.status(200).json({
+      message: "List found",
+      watchlist,
+      lastPage: 1,
+      totalPages: 1,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Invalid CSV";
+    res.status(400).json({ error: message });
+  }
 };
