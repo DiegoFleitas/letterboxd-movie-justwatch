@@ -8,7 +8,7 @@
   "scripts": {
     "prepare": "husky || true",
     "typecheck": "tsc --noEmit && cd public && tsc --noEmit",
-    "test": "tsx tests/filterLogic.test.ts && tsx tests/stateTileManagement.test.ts && tsx tests/providerDeduplication.test.ts && tsx tests/loadCanonicalProviders.test.ts && tsx tests/posthog.test.ts && tsx tests/redis.test.ts && tsx tests/testPosterUrlConstruction.test.ts",
+    "test": "tsx tests/filterLogic.test.ts && tsx tests/stateTileManagement.test.ts && tsx tests/providerDeduplication.test.ts && tsx tests/loadCanonicalProviders.test.ts && tsx tests/posthog.test.ts && tsx tests/redis.test.ts && tsx tests/testPosterUrlConstruction.test.ts && tsx tests/letterboxdListUrl.test.ts && tsx tests/letterboxdListCsv.test.ts && tsx tests/letterboxdListScraper.test.ts",
     "test:filter": "tsx tests/filterLogic.test.ts",
     "test:state": "tsx tests/stateTileManagement.test.ts",
     "test:posthog": "tsx tests/posthog.test.ts",
@@ -17,6 +17,7 @@
     "test:poster-flow": "tsx tests/testPosterFlow.test.ts",
     "build:providers": "tsx scripts/buildCanonicalProviders.ts",
     "build:providers:dry-run": "tsx scripts/buildCanonicalProviders.ts --dry-run",
+    "update:letterboxd-fixtures": "tsx scripts/updateLetterboxdFixtures.ts",
     "export-redis": "tsx scripts/export-redis-snapshot.ts",
     "seed-redis": "tsx scripts/seed-redis-from-snapshot.ts",
     "test:e2e": "playwright test",

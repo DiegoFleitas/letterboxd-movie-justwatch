@@ -1,4 +1,5 @@
 import { useRef, useCallback, useEffect } from "react";
+import { parseLetterboxdListUrl } from "../../lib/letterboxdListUrl";
 import { toggleNotice } from "./noticeFunctions";
 import { showError, showBatchErrors } from "./showError";
 import type { MergeData } from "./movieTiles";
@@ -214,6 +215,39 @@ export function useLetterboxdList(
         body: JSON.stringify(data),
       });
       const responseData = (await response.json()) as ListResponse;
+      if (!response.ok) {
+        showError(
+          (responseData.error ?? "Failed to load list") +
+            " You can also paste a Letterboxd CSV export in the same box.",
+        );
+        return;
+      }
+      if ((responseData.watchlist?.length ?? 0) === 0) {
+        showError(
+          "No films found on this list. Try pasting a Letterboxd CSV export in the same box.",
+        );
+        return;
+      }
+      await processList(data, responseData);
+    },
+    [processList],
+  );
+
+  const loadFromCsv = useCallback(
+    async (csvText: string, country: string): Promise<void> => {
+      batchMapRef.current.clear();
+      toggleNotice("Loading list from CSV...");
+      const response = await fetch("/api/letterboxd-list-from-csv", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ csv: csvText }),
+      });
+      const responseData = (await response.json()) as ListResponse;
+      if (!response.ok) {
+        showError(responseData.error ?? "Failed to parse CSV");
+        return;
+      }
+      const data: LoadData = { country, page: 1 };
       await processList(data, responseData);
     },
     [processList],
@@ -221,36 +255,31 @@ export function useLetterboxdList(
 
   const loadLetterboxdList = useCallback(
     async (listUrl: string, country: string): Promise<void> => {
-      if (!listUrl) {
-        showError("Please enter a valid URL");
+      if (!listUrl?.trim()) {
+        showError("Please enter a valid URL or paste CSV");
         return;
       }
-      listUrl = listUrl.split("/page")[0];
-      if (!listUrl.includes("watchlist") && !listUrl.includes("list")) listUrl += "/watchlist";
-      if (!listUrl.endsWith("/")) listUrl += "/";
-      const match = listUrl.match(/https:\/\/letterboxd\.com\/([^/]+)\/(watchlist|list\/[^/]+)\//);
-      if (!match) {
-        showError("Invalid URL format");
+      const parsed = parseLetterboxdListUrl(listUrl);
+      if (parsed) {
+        const data: LoadData = {
+          listUrl: parsed.listUrl,
+          country,
+          username: parsed.username,
+          listType: parsed.listType,
+          page: 1,
+        };
+        batchMapRef.current.clear();
+        toggleNotice(`Scraping ${parsed.listType} for ${parsed.username}...`);
+        if (parsed.listType !== "watchlist") {
+          await loadCustomList(data);
+        } else {
+          await loadWatchlist(data);
+        }
         return;
       }
-      const username = match[1];
-      const listType = match[2].startsWith("list/") ? "custom list" : "watchlist";
-      const data: LoadData = {
-        listUrl: listUrl.trim(),
-        country,
-        username,
-        listType,
-        page: 1,
-      };
-      batchMapRef.current.clear();
-      toggleNotice(`Scraping ${listType} for ${username}...`);
-      if (listType !== "watchlist") {
-        await loadCustomList(data);
-      } else {
-        await loadWatchlist(data);
-      }
+      await loadFromCsv(listUrl.trim(), country);
     },
-    [loadCustomList, loadWatchlist],
+    [loadCustomList, loadWatchlist, loadFromCsv],
   );
 
   useEffect(() => {

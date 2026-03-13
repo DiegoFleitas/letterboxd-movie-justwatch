@@ -215,6 +215,57 @@ test.describe("List form", () => {
     await expect(page.locator("[data-id]").filter({ hasText: firstTitle ?? "" })).toBeVisible();
   });
 
+  test("submit with pasted CSV loads tiles into poster showcase", async ({ page }) => {
+    await page.goto("/");
+    await waitForGeoReady(page);
+
+    const csvResponse = {
+      message: "List found",
+      watchlist: [
+        {
+          title: "Lake Mungo",
+          year: "2008",
+          link: "https://letterboxd.com/film/lake-mungo/",
+          posterPath: null,
+          poster: null,
+        },
+      ],
+      lastPage: 1,
+      totalPages: 1,
+    };
+
+    await page.route("**/api/letterboxd-list-from-csv", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(csvResponse),
+      }),
+    );
+
+    await page.route("**/api/search-movie", (route) => {
+      const body = route.request().postDataJSON() as SearchMovieBody | null;
+      const response = findSearchMovieResponse(body) || {
+        title: body?.title,
+        year: body?.year,
+        error: "No fixture",
+      };
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(response),
+      });
+    });
+
+    await page.getByTestId("tab-list").click();
+    await page.getByTestId("list-url").fill("Title,Year\nLake Mungo,2008");
+    await page.getByTestId("list-submit").click();
+
+    await expect(page.getByTestId("poster-showcase").getByTestId("tile")).toHaveCount(1, {
+      timeout: 10000,
+    });
+    await expect(page.locator("[data-id]").filter({ hasText: "Lake Mungo" })).toBeVisible();
+  });
+
   test("invalid list URL shows error toast and no tiles", async ({ page }) => {
     await page.goto("/");
     await waitForGeoReady(page);
@@ -222,7 +273,9 @@ test.describe("List form", () => {
     await page.getByTestId("list-url").fill("https://example.com/");
     await page.getByTestId("list-submit").click();
 
-    await expect(page.getByText(/Invalid URL format|valid URL/)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/Invalid URL format|valid URL|CSV|header|required/)).toBeVisible({
+      timeout: 5000,
+    });
     await expect(page.getByTestId("poster-showcase").getByTestId("tile")).toHaveCount(0);
   });
 
