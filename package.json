@@ -51,7 +51,7 @@
   },
   "homepage": "https://github.com/fly-examples/movie-justwatch#readme",
   "lint-staged": {
-    "*.{ts,tsx,js,jsx,json,css,md,yml,yaml}": "prettier --write"
+    "*.{ts,tsx,js,jsx,json,css,md,yml,yaml,html}": "prettier --write"
   },
   "pnpm": {
     "overrides": {
