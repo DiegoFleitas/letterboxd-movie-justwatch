@@ -1,0 +1,26 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      FLYIO_REDIS_URL: redis://redis:6379
+      # Default for local Docker runs; override APP_SECRET_KEY (e.g. via .env) for real production
+      APP_SECRET_KEY: ${APP_SECRET_KEY:-docker-compose-dev-secret}
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped

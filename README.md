@@ -21,6 +21,16 @@ Scan any public Letterboxd watchlist and see where each film is streaming in you
 3. `pnpm run dev`
 4. Open `http://localhost:5173`
 
+### Docker Compose
+
+Run the app and Redis with Docker Compose:
+
+```bash
+docker compose up --build
+```
+
+Then open `http://localhost:3000`. To pass API keys (e.g. `OMDB_API_KEY`, `APP_SECRET_KEY`), create a `.env` file in the project root or set them in a `docker-compose.override.yml`; Compose will load `.env` automatically.
+
 ### Key commands
 
 - **Dev**: `pnpm run dev`
