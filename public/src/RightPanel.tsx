@@ -123,13 +123,10 @@ export function RightPanel(): React.ReactElement {
           This site helps you find where to watch <u>Movies</u>, not TV shows. It checks everything
           with JustWatch & TMDB & OMDb API to make sure it&apos;s accurate. If it can&apos;t find
           the movie you want, it won&apos;t suggest random stuff. <br />
-          Oh! &{" "}
-          <i>
-            don&apos;t download from torrent sites because it&apos;s not cool with copyright laws or
-            smt like that. Even if the movie you want to watch is not available in any other way, or
-            if the streaming providers offer it but butcher the movie with{" "}
-            <u>bad dubbing & no subs!!</u>
-          </i>
+          Please don&apos;t use torrent or piracy sites—unauthorized downloads violate copyright and
+          we can&apos;t recommend them. We get it: some titles aren&apos;t legally available
+          anywhere, or only with <u>bad dubbing and no subtitles</u>. Still, stick to legal options
+          when you can.
         </p>
         <details className="jackett-details">
           <summary className="jackett-summary">
