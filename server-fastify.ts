@@ -1,15 +1,16 @@
 import { config as dotenvConfig } from "dotenv";
 dotenvConfig();
+
 import { createServer } from "./server/createServer.js";
 
 const port = Number(process.env.PORT ?? 3000);
 
 async function main() {
   const { port: actualPort, close } = await createServer({
-    framework: "express",
+    framework: "fastify",
   }).start(port);
 
-  console.log(`app listening on port http://localhost:${actualPort}`);
+  console.log(`fastify app listening on port http://localhost:${actualPort}`);
 
   const gracefulShutdown = async () => {
     try {
@@ -26,6 +27,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error("Failed to start server:", err);
+  console.error("Failed to start fastify server:", err);
   process.exit(1);
 });

@@ -1,5 +1,6 @@
 import { config as dotenvConfig } from "dotenv";
 dotenvConfig();
+
 import { createServer } from "./server/createServer.js";
 
 const port = Number(process.env.PORT ?? 3000);
