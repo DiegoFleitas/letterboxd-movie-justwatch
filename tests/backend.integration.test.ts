@@ -42,7 +42,7 @@ for (const framework of frameworks) {
       expect(typeof text).toBe("string");
     });
 
-    it("POST /api/search-movie responds with JSON shape", async () => {
+    it.skipIf(!process.env.MOVIE_DB_API_KEY)("POST /api/search-movie responds with JSON shape", async () => {
       const res = await fetch(`${baseUrl}/api/search-movie`, {
         method: "POST",
         headers: {
