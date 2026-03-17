@@ -5,7 +5,6 @@ import reactPlugin from "eslint-plugin-react";
 import reactHooks from "eslint-plugin-react-hooks";
 import jsxA11y from "eslint-plugin-jsx-a11y";
 import importPlugin from "eslint-plugin-import";
-import prettierPlugin from "eslint-plugin-prettier";
 import eslintConfigPrettier from "eslint-config-prettier";
 
 export default [
@@ -39,14 +38,12 @@ export default [
     plugins: {
       "@typescript-eslint": tseslint,
       import: importPlugin,
-      prettier: prettierPlugin,
     },
     rules: {
       ...js.configs.recommended.rules,
       ...tseslint.configs.recommended.rules,
       ...importPlugin.configs.recommended.rules,
       ...eslintConfigPrettier.rules,
-      "prettier/prettier": "warn",
       // TypeScript already checks for undefined variables.
       "no-undef": "off",
       // TS + module resolution is handled by the TS compiler, so this rule
@@ -72,7 +69,6 @@ export default [
       // "react-hooks": reactHooks,
       "jsx-a11y": jsxA11y,
       import: importPlugin,
-      prettier: prettierPlugin,
     },
     rules: {
       ...jsxA11y.configs.recommended.rules,

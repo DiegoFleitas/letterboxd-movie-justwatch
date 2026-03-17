@@ -8,7 +8,7 @@ services:
       PORT: 3000
       FLYIO_REDIS_URL: redis://redis:6379
       # Default for local Docker runs; override APP_SECRET_KEY (e.g. via .env) for real production
-      APP_SECRET_KEY: ${APP_SECRET_KEY:-docker-compose-dev-secret}
+      APP_SECRET_KEY: ${APP_SECRET_KEY:dev-only-session-secret-do-not-use-in-production!!}
     depends_on:
       redis:
         condition: service_healthy

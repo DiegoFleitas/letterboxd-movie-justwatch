@@ -1,4 +1,4 @@
-import type { Request, Response } from "express";
+import type { HttpHandler } from "../server/httpContext.js";
 import axiosHelper from "../helpers/axios.js";
 const axios = axiosHelper(true);
 import * as cheerio from "cheerio";
@@ -13,12 +13,20 @@ import {
 
 const cacheTtl = Number(process.env.CACHE_TTL) || 20;
 
-const fetchList = async (
-  url: string,
-  cacheKeyPrefix: string,
-  req: Request,
-  res: Response,
-): Promise<void> => {
+const fetchList = async ({
+  url,
+  cacheKeyPrefix,
+  req,
+  res,
+}: {
+  url: string;
+  cacheKeyPrefix: string;
+  req: { body: unknown };
+  res: {
+    status: (code: number) => { json: (payload: unknown) => void };
+    json: (payload: unknown) => void;
+  };
+}): Promise<void> => {
   try {
     const baseUrl = url.replace(/\/+$/, "");
     const body = (req.body as { page?: number }) ?? {};
@@ -123,7 +131,7 @@ const fetchList = async (
   }
 };
 
-export const letterboxdWatchlist = async (req: Request, res: Response): Promise<void> => {
+export const letterboxdWatchlist: HttpHandler = async ({ req, res }) => {
   const body = (req.body as { username?: string; listUrl?: string; listType?: string }) ?? {};
   const { username, listUrl, listType } = body;
   if (!username) {
@@ -131,10 +139,10 @@ export const letterboxdWatchlist = async (req: Request, res: Response): Promise<
     return;
   }
   const cacheKeyPrefix = `watchlist:${username}_${listType ?? ""}`;
-  await fetchList(listUrl ?? "", cacheKeyPrefix, req, res);
+  await fetchList({ url: listUrl ?? "", cacheKeyPrefix, req, res });
 };
 
-export const letterboxdCustomList = async (req: Request, res: Response): Promise<void> => {
+export const letterboxdCustomList: HttpHandler = async ({ req, res }) => {
   const body = (req.body as { username?: string; listUrl?: string; listType?: string }) ?? {};
   const { username, listUrl, listType } = body;
   if (!listUrl) {
@@ -142,10 +150,10 @@ export const letterboxdCustomList = async (req: Request, res: Response): Promise
     return;
   }
   const cacheKeyPrefix = `customlist:${username ?? ""}_${listType ?? ""}`;
-  await fetchList(listUrl, cacheKeyPrefix, req, res);
+  await fetchList({ url: listUrl, cacheKeyPrefix, req, res });
 };
 
-export const letterboxdListFromCsv = async (req: Request, res: Response): Promise<void> => {
+export const letterboxdListFromCsv: HttpHandler = async ({ req, res }) => {
   const body = (req.body as { csv?: string }) ?? {};
   const csv = body.csv;
   if (typeof csv !== "string") {

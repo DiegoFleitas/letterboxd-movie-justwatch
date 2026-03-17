@@ -1,9 +1,4 @@
-/**
- * Unit tests for filter logic
- */
-import { TestSuite, assertEqual, assertArrayLength } from "./testUtils.js";
-
-const suite = new TestSuite("Filter Logic");
+import { describe, it, expect } from "vitest";
 
 const createMockState = () => ({
   movieTiles: {
@@ -48,40 +43,37 @@ function filterMovies(
   return { visible, hidden };
 }
 
-suite.test("Should hide movies with no providers when filter is active", () => {
-  const result = filterMovies(createMockState(), ["Disney Plus"]);
-  assertEqual(result.hidden.includes("2018-MOVIE1"), true);
-});
+describe("filterMovies", () => {
+  it("hides movies with no providers when filter is active", () => {
+    const result = filterMovies(createMockState(), ["Disney Plus"]);
+    expect(result.hidden).toContain("2018-MOVIE1");
+  });
 
-suite.test("Should show movies with matching provider", () => {
-  const result = filterMovies(createMockState(), ["Disney Plus"]);
-  assertEqual(result.visible.includes("2024-MOVIE2"), true);
-  assertEqual(result.visible.includes("2020-MOVIE3"), true);
-});
+  it("shows movies with matching provider", () => {
+    const result = filterMovies(createMockState(), ["Disney Plus"]);
+    expect(result.visible).toEqual(expect.arrayContaining(["2024-MOVIE2", "2020-MOVIE3"]));
+  });
 
-suite.test("Should hide movies without matching provider", () => {
-  const result = filterMovies(createMockState(), ["Disney Plus"]);
-  assertEqual(result.hidden.includes("1990-MOVIE4"), true);
-});
+  it("hides movies without matching provider", () => {
+    const result = filterMovies(createMockState(), ["Disney Plus"]);
+    expect(result.hidden).toContain("1990-MOVIE4");
+  });
 
-suite.test("Should show correct count when filtering by Disney Plus", () => {
-  const result = filterMovies(createMockState(), ["Disney Plus"]);
-  assertArrayLength(result.visible, 2);
-  assertArrayLength(result.hidden, 2);
-});
+  it("returns correct counts when filtering by Disney Plus", () => {
+    const result = filterMovies(createMockState(), ["Disney Plus"]);
+    expect(result.visible).toHaveLength(2);
+    expect(result.hidden).toHaveLength(2);
+  });
 
-suite.test("Should show correct movies when filtering by Netflix", () => {
-  const result = filterMovies(createMockState(), ["Netflix"]);
-  assertEqual(result.visible.includes("2020-MOVIE3"), true);
-  assertEqual(result.visible.includes("1990-MOVIE4"), true);
-  assertArrayLength(result.visible, 2);
-});
+  it("returns correct movies when filtering by Netflix", () => {
+    const result = filterMovies(createMockState(), ["Netflix"]);
+    expect(result.visible).toEqual(expect.arrayContaining(["2020-MOVIE3", "1990-MOVIE4"]));
+    expect(result.visible).toHaveLength(2);
+  });
 
-suite.test("Should handle multiple selected services (OR logic)", () => {
-  const result = filterMovies(createMockState(), ["Disney Plus", "Netflix"]);
-  assertArrayLength(result.visible, 3);
-  assertArrayLength(result.hidden, 1);
+  it("handles multiple selected services (OR logic)", () => {
+    const result = filterMovies(createMockState(), ["Disney Plus", "Netflix"]);
+    expect(result.visible).toHaveLength(3);
+    expect(result.hidden).toHaveLength(1);
+  });
 });
-
-const results = await suite.run();
-process.exit(results.failed > 0 ? 1 : 0);
