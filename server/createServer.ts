@@ -245,32 +245,24 @@ export function createServer(options: { framework: Framework }): CreatedServer {
 
     void app.register(fastifyFormbody);
 
-    app.addHook("onRequest", async (request, reply) => {
+    app.addHook("onRequest", async () => {
       const loggerMiddleware = logging as unknown as (
         req: Request,
         res: Response,
         next: NextFunction,
       ) => void;
       await new Promise<void>((resolve) => {
-        loggerMiddleware(
-          {
-            method: request.method,
-            url: request.url,
-            headers: request.headers,
-          } as unknown as Request,
-          {} as Response,
-          () => resolve(),
-        );
+        loggerMiddleware({} as Request, {} as Response, () => resolve());
       });
     });
 
     const setCacheControlFastify = (handler: ReturnType<typeof adapt>) => {
       return async (
-        request: import("fastify").FastifyRequest,
+        _request: import("fastify").FastifyRequest,
         reply: import("fastify").FastifyReply,
       ) => {
         reply.header("Cache-Control", "public, max-age=3600");
-        await handler(request, reply);
+        await handler({} as never, reply);
       };
     };
 
