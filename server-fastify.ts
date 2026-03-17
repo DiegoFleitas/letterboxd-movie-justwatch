@@ -6,9 +6,7 @@ import { createServer } from "./server/createServer.js";
 const port = Number(process.env.PORT ?? 3000);
 
 async function main() {
-  const { port: actualPort, close } = await createServer({
-    framework: "fastify",
-  }).start(port);
+  const { port: actualPort, close } = await createServer().start(port);
 
   console.log(`fastify app listening on port http://localhost:${actualPort}`);
 

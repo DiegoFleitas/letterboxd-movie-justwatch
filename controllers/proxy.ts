@@ -1,12 +1,12 @@
-import type { Request, Response } from "express";
+import type { HttpHandler } from "../server/httpContext.js";
 import axiosHelper from "../helpers/axios.js";
 import { getCacheValue, setCacheValue } from "../helpers/redis.js";
 
 const axios = axiosHelper();
 const cacheTtl = Number(process.env.CACHE_TTL) || 60;
 
-export const proxy = async (req: Request, res: Response): Promise<void> => {
-  const url = req.originalUrl.replace("/api/proxy/", "");
+export const proxy: HttpHandler = async ({ req, res }) => {
+  const url = (req.url || "").replace("/api/proxy/", "");
   const { method } = req;
   try {
     if (!url) {

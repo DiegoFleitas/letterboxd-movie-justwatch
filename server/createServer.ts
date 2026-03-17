@@ -1,21 +1,12 @@
-import express, {
-  type Application as ExpressApp,
-  type Request,
-  type Response,
-  type NextFunction,
-} from "express";
-import Fastify, { type FastifyInstance } from "fastify";
+import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest } from "fastify";
 import fastifyStatic from "@fastify/static";
 import fastifyCookie from "@fastify/cookie";
 import fastifySession from "@fastify/session";
 import fastifyFormbody from "@fastify/formbody";
-import bodyParser from "body-parser";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { setupExpressErrorHandler } from "posthog-node";
 import { logging } from "diegos-fly-logger/index.mjs";
-import { session } from "../middleware/index.js";
 import {
   searchMovie,
   poster,
@@ -33,23 +24,9 @@ import {
 } from "../helpers/loadCanonicalProviders.js";
 import { getPosthog, shutdownPosthog } from "../lib/posthog.js";
 import { injectPosthogConfig } from "../lib/injectPosthogConfig.js";
-import { createFastifyExpressAdapter } from "./expressAdapter.js";
+import type { HttpHandler, HttpRequestContext, HttpResponseContext } from "./httpContext.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-type Framework = "express" | "fastify";
-
-type AsyncRequestHandler = (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => Promise<void | Response>;
-
-function asyncHandler(fn: AsyncRequestHandler) {
-  return (req: Request, res: Response, next: NextFunction) => {
-    Promise.resolve(fn(req, res, next)).catch(next);
-  };
-}
 
 function loadIndexHtmlWithPosthog(): string | null {
   const distIndexPath = path.join(__dirname, "..", "public", "dist", "index.html");
@@ -61,141 +38,19 @@ function loadIndexHtmlWithPosthog(): string | null {
   return injectPosthogConfig(html, posthogKey, posthogHost, getCanonicalProviderByNames());
 }
 
-function createExpressApp(): ExpressApp {
-  const app = express();
-
-  const cachedIndexHtml = loadIndexHtmlWithPosthog();
-
-  function serveAppWithPosthogConfig(_req: Request, res: Response, next: NextFunction): void {
-    if (!cachedIndexHtml) return next();
-    res.setHeader("Content-Type", "text/html; charset=utf-8");
-    res.send(cachedIndexHtml);
-  }
-
-  app.get("/", serveAppWithPosthogConfig);
-
-  app.get("/movie_placeholder.svg", (_req, res) => {
-    res.sendFile(path.join(__dirname, "..", "public", "movie_placeholder.svg"));
-  });
-
-  app.use(express.static("public/dist"));
-
-  app.use(session);
-
-  app.locals.canonicalProviderMap = getCanonicalProviderMap();
-
-  app.use(logging);
-
-  app.use(bodyParser.urlencoded({ extended: false }));
-  app.use(bodyParser.json());
-
-  app.get("/healthcheck", (_req, res) => {
-    res.type("text/plain").status(200).send("OK");
-  });
-
-  app.get(
-    "/redis-healthcheck",
-    asyncHandler(async (_req, res) => {
-      if (await isHealthy()) {
-        res.type("text/plain").status(200).send("OK");
-      } else {
-        res.type("text/plain").status(500).send("Redis is not healthy");
-      }
-    }),
-  );
-
-  const setCacheControl = (_req: Request, res: Response, next: NextFunction) => {
-    res.setHeader("Cache-Control", "public, max-age=3600");
-    next();
-  };
-
-  app.post("/api/search-movie", setCacheControl, asyncHandler(searchMovie));
-  app.post("/api/poster", setCacheControl, asyncHandler(poster));
-  app.post("/api/letterboxd-watchlist", setCacheControl, asyncHandler(letterboxdWatchlist));
-  app.post("/api/letterboxd-custom-list", setCacheControl, asyncHandler(letterboxdCustomList));
-  app.post("/api/letterboxd-list-from-csv", setCacheControl, asyncHandler(letterboxdListFromCsv));
-  app.post("/api/letterboxd-poster", setCacheControl, asyncHandler(letterboxdPoster));
-  app.post("/api/alternative-search", setCacheControl, asyncHandler(alternativeSearch));
-  app.all("/api/proxy/:url(*)", asyncHandler(proxy));
-
-  app.post(
-    "/api/dev/clear-list-cache",
-    asyncHandler(async (_req, res) => {
-      if (process.env.NODE_ENV === "production") {
-        res.status(404).json({ error: "Not available in production" });
-        return;
-      }
-      const result = await clearCacheByCategory("list");
-      res.json({ ok: true, ...result });
-    }),
-  );
-
-  app.get("*", serveAppWithPosthogConfig);
-
-  const posthog = getPosthog();
-  if (posthog) {
-    setupExpressErrorHandler(posthog, app);
-  }
-
-  app.use((err: unknown, _req: Request, res: Response, next: NextFunction) => {
-    console.error(err);
-    if (res.headersSent) return next(err);
-    res.status(500).json({ error: "Internal Server Error" });
-  });
-
-  return app;
-}
-
 export interface StartedServer {
   port: number;
   close: () => Promise<void>;
 }
 
-export interface CreatedServer<F extends Framework = Framework> {
-  framework: F;
-  app: F extends "express" ? ExpressApp : FastifyInstance;
+export interface CreatedServer {
+  framework: "fastify";
+  app: FastifyInstance;
   start: (port?: number) => Promise<StartedServer>;
 }
 
-export function createServer(options: { framework: Framework }): CreatedServer {
-  if (options.framework === "express") {
-    const app = createExpressApp();
-
-    return {
-      framework: "express",
-      app,
-      async start(portArg?: number): Promise<StartedServer> {
-        const desiredPort = portArg ?? Number(process.env.PORT ?? 3000);
-
-        const server = await new Promise<import("http").Server>((resolve, reject) => {
-          const s = app.listen(desiredPort, () => resolve(s));
-          s.on("error", reject);
-        });
-
-        const address = server.address();
-        const actualPort =
-          typeof address === "object" && address && "port" in address
-            ? (address.port as number)
-            : desiredPort;
-
-        return {
-          port: actualPort,
-          async close() {
-            await new Promise<void>((resolve, reject) => {
-              server.close((err) => {
-                if (err) reject(err);
-                else resolve();
-              });
-            });
-            await disconnectRedis();
-            await shutdownPosthog();
-          },
-        };
-      },
-    };
-  }
-
-  if (options.framework === "fastify") {
+export function createServer(): CreatedServer {
+  {
     const app: FastifyInstance = Fastify({
       logger: true,
     });
@@ -204,7 +59,51 @@ export function createServer(options: { framework: Framework }): CreatedServer {
     (app as unknown as { locals?: { [key: string]: unknown } }).locals = {
       canonicalProviderMap,
     };
-    const adapt = createFastifyExpressAdapter(app);
+
+    const makeFastifyHandler =
+      (handler: HttpHandler) =>
+      async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
+        const locals = ((app as unknown as { locals?: { [key: string]: unknown } }).locals ||
+          {}) as { [key: string]: unknown };
+
+        const reqContext: HttpRequestContext = {
+          body: request.body ?? {},
+          params: (request.params as Record<string, unknown>) ?? {},
+          query: (request.query as Record<string, unknown>) ?? {},
+          headers: (request.headers as Record<string, unknown>) ?? {},
+          method: request.method,
+          url: request.url,
+          cookies: ((request as unknown as { cookies?: Record<string, unknown> }).cookies ??
+            {}) as Record<string, unknown>,
+          session: (request as unknown as { session?: unknown }).session ?? null,
+          appLocals: {
+            canonicalProviderMap: locals.canonicalProviderMap,
+          },
+        };
+
+        const resContext: HttpResponseContext = {
+          status(code: number): HttpResponseContext {
+            reply.code(code);
+            return this;
+          },
+          json(payload: unknown): void {
+            reply.send(payload);
+          },
+          send(payload?: unknown): void {
+            if (payload === undefined) {
+              reply.send();
+            } else {
+              reply.send(payload);
+            }
+          },
+          setHeader(name: string, value: string | number | readonly string[]): HttpResponseContext {
+            reply.header(name, value);
+            return this;
+          },
+        };
+
+        await handler({ req: reqContext, res: resContext });
+      };
 
     const cachedIndexHtml = loadIndexHtmlWithPosthog();
 
@@ -263,15 +162,11 @@ export function createServer(options: { framework: Framework }): CreatedServer {
       });
     });
 
-    const setCacheControlFastify = (handler: ReturnType<typeof adapt>) => {
-      return async (
-        _request: import("fastify").FastifyRequest,
-        reply: import("fastify").FastifyReply,
-      ) => {
+    const setCacheControlFastify = (handler: HttpHandler) =>
+      async (request: FastifyRequest, reply: FastifyReply) => {
         reply.header("Cache-Control", "public, max-age=3600");
-        await handler({} as never, reply);
+        await makeFastifyHandler(handler)(request, reply);
       };
-    };
 
     app.get("/healthcheck", async (_request, reply) => {
       reply.type("text/plain").send("OK");
@@ -285,15 +180,15 @@ export function createServer(options: { framework: Framework }): CreatedServer {
       }
     });
 
-    app.post("/api/search-movie", setCacheControlFastify(adapt(searchMovie)));
-    app.post("/api/poster", setCacheControlFastify(adapt(poster)));
-    app.post("/api/letterboxd-watchlist", setCacheControlFastify(adapt(letterboxdWatchlist)));
-    app.post("/api/letterboxd-custom-list", setCacheControlFastify(adapt(letterboxdCustomList)));
-    app.post("/api/letterboxd-list-from-csv", setCacheControlFastify(adapt(letterboxdListFromCsv)));
-    app.post("/api/letterboxd-poster", setCacheControlFastify(adapt(letterboxdPoster)));
-    app.post("/api/alternative-search", setCacheControlFastify(adapt(alternativeSearch)));
+    app.post("/api/search-movie", setCacheControlFastify(searchMovie));
+    app.post("/api/poster", setCacheControlFastify(poster));
+    app.post("/api/letterboxd-watchlist", setCacheControlFastify(letterboxdWatchlist));
+    app.post("/api/letterboxd-custom-list", setCacheControlFastify(letterboxdCustomList));
+    app.post("/api/letterboxd-list-from-csv", setCacheControlFastify(letterboxdListFromCsv));
+    app.post("/api/letterboxd-poster", setCacheControlFastify(letterboxdPoster));
+    app.post("/api/alternative-search", setCacheControlFastify(alternativeSearch));
 
-    app.all("/api/proxy/*", adapt(proxy));
+    app.all("/api/proxy/*", makeFastifyHandler(proxy));
 
     app.post("/api/dev/clear-list-cache", async (_request, reply) => {
       if (process.env.NODE_ENV === "production") {
@@ -350,6 +245,4 @@ export function createServer(options: { framework: Framework }): CreatedServer {
       },
     };
   }
-
-  throw new Error(`Unsupported framework: ${options.framework}`);
 }
