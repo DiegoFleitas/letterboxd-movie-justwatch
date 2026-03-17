@@ -1,4 +1,4 @@
-import type { Request, Response } from "express";
+import type { HttpHandler } from "../server/httpContext.js";
 import type { AxiosInstance } from "axios";
 import axiosHelper from "../helpers/axios.js";
 import { getCacheValue, setCacheValue } from "../helpers/redis.js";
@@ -76,10 +76,11 @@ interface TMDBResult {
   poster_path?: string | null;
 }
 
-export const searchMovie = async (req: Request, res: Response): Promise<void> => {
-  const title = (req.body as { title?: string; year?: string | number; country?: string }).title;
-  const year = (req.body as { year?: string | number }).year;
-  const countryCode = (req.body as { country?: string }).country;
+export const searchMovie: HttpHandler = async ({ req, res }) => {
+  const body = req.body as { title?: string; year?: string | number; country?: string } | undefined;
+  const title = body?.title;
+  const year = body?.year;
+  const countryCode = body?.country;
   const [, country] = (countryCode || "es_UY").split("_");
   const language = "en";
 
@@ -230,7 +231,8 @@ export const searchMovie = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    const canonicalMap = req.app.locals.canonicalProviderMap ?? {};
+    const canonicalMap =
+      (req.appLocals.canonicalProviderMap as Record<string, unknown> | undefined) ?? {};
     const providers = processOffers(
       movieData.node.offers as JustWatchOffer[],
       movieData.node.content.fullPath,
