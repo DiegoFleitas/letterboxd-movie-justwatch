@@ -17,7 +17,7 @@ Scan any public Letterboxd watchlist and see where each film is streaming in you
 ### Quick start
 
 1. `pnpm install`
-2. `cp .env.example .env` and set at least `OMDB_API_KEY` and `FLYIO_REDIS_URL`.
+2. `cp .env.example .env` and set at least `FLYIO_REDIS_URL`, `OMDB_API_KEY` (posters), and for production **`APP_SECRET_KEY`** (≥32 characters for sessions).
 3. `pnpm run dev`
 4. Open `http://localhost:5173`
 
@@ -43,10 +43,13 @@ Then open `http://localhost:3000`. To pass API keys (e.g. `OMDB_API_KEY`, `APP_S
 
 See `.env.example` for full details. Common variables:
 
+- `APP_SECRET_KEY` – **required in production**; must be **at least 32 characters** (Fastify session). Local `pnpm dev` uses a built-in dev default if unset.
 - `FLYIO_REDIS_URL` – Redis URL (e.g. `redis://localhost:6379`)
-- `OMDB_API_KEY` – required for poster lookups
+- `OMDB_API_KEY` – poster lookups
+- `MOVIE_DB_API_KEY` – TMDb / search; optional locally; enables the extra integration test in CI if set
 - `POSTHOG_KEY` / `POSTHOG_HOST` – optional analytics
 - `JACKETT_API_KEY` / `JACKETT_API_ENDPOINT` – optional alternative search
+- `CACHE_TTL` – optional override for cache durations (seconds)
 
 Redis and snapshot/export details live in `redis/README.md`.
 
