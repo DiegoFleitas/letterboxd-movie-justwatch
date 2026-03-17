@@ -90,16 +90,16 @@ function createExpressApp(): ExpressApp {
   app.use(bodyParser.json());
 
   app.get("/healthcheck", (_req, res) => {
-    res.status(200).send("OK");
+    res.type("text/plain").status(200).send("OK");
   });
 
   app.get(
     "/redis-healthcheck",
     asyncHandler(async (_req, res) => {
       if (await isHealthy()) {
-        res.status(200).send("OK");
+        res.type("text/plain").status(200).send("OK");
       } else {
-        res.status(500).send("Redis is not healthy");
+        res.type("text/plain").status(500).send("Redis is not healthy");
       }
     }),
   );
@@ -153,7 +153,7 @@ export interface StartedServer {
 
 export interface CreatedServer<F extends Framework = Framework> {
   framework: F;
-  app: F extends "express" ? ExpressApp : unknown;
+  app: F extends "express" ? ExpressApp : FastifyInstance;
   start: (port?: number) => Promise<StartedServer>;
 }
 
@@ -223,6 +223,13 @@ export function createServer(options: { framework: Framework }): CreatedServer {
       prefix: "/",
     });
 
+    app.get("/movie_placeholder.svg", async (_request, reply) => {
+      return reply.sendFile(
+        "movie_placeholder.svg",
+        path.join(__dirname, "..", "public"),
+      );
+    });
+
     const appSecretKey = process.env.APP_SECRET_KEY;
     if (!appSecretKey && process.env.NODE_ENV === "production") {
       throw new Error("APP_SECRET_KEY environment variable must be set in production.");
@@ -236,7 +243,7 @@ export function createServer(options: { framework: Framework }): CreatedServer {
     void app.register(fastifySession, {
       secret: sessionSecret,
       cookie: {
-        maxAge: 24 * 60 * 60,
+        maxAge: 24 * 60 * 60 * 1000,
         sameSite: "lax",
         secure: true,
         httpOnly: true,
@@ -288,6 +295,15 @@ export function createServer(options: { framework: Framework }): CreatedServer {
 
     app.all("/api/proxy/*", adapt(proxy));
 
+    app.post("/api/dev/clear-list-cache", async (_request, reply) => {
+      if (process.env.NODE_ENV === "production") {
+        reply.code(404).send({ error: "Not available in production" });
+        return;
+      }
+      const result = await clearCacheByCategory("list");
+      reply.send({ ok: true, ...result });
+    });
+
     const posthog = getPosthog();
     app.setErrorHandler(async (err, _request, reply) => {
       console.error(err);
@@ -332,7 +348,7 @@ export function createServer(options: { framework: Framework }): CreatedServer {
           },
         };
       },
-    } as CreatedServer<"fastify">;
+    };
   }
 
   throw new Error(`Unsupported framework: ${options.framework}`);
