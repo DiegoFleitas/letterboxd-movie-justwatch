@@ -1,4 +1,4 @@
-import type { Request, Response } from "express";
+import type { HttpHandler } from "../server/httpContext.js";
 import axiosHelper from "../helpers/axios.js";
 import { getCacheValue, setCacheValue } from "../helpers/redis.js";
 
@@ -12,8 +12,8 @@ interface JackettResult {
   Details?: string;
 }
 
-export const alternativeSearch = async (req: Request, res: Response): Promise<void> => {
-  const { title, year } = req.body as { title?: string; year?: string | number };
+export const alternativeSearch: HttpHandler = async ({ req, res }) => {
+  const { title, year } = (req.body as { title?: string; year?: string | number }) ?? {};
 
   const jackettKey = process.env.JACKETT_API_KEY;
   const jackettEndpoint = process.env.JACKETT_API_ENDPOINT;

@@ -1,13 +1,13 @@
-import type { Request, Response } from "express";
+import type { HttpHandler } from "../server/httpContext.js";
 import axiosHelper from "../helpers/axios.js";
 import { getCacheValue, setCacheValue } from "../helpers/redis.js";
 
 const axios = axiosHelper();
 const cacheTtl = Number(process.env.CACHE_TTL) || 60;
 
-export const poster = async (req: Request, res: Response): Promise<void> => {
+export const poster: HttpHandler = async ({ req, res }) => {
   const omdbApiKey = process.env.OMDB_API_KEY;
-  let { title, year } = req.body as { title?: string; year?: string | number };
+  let { title, year } = (req.body as { title?: string; year?: string | number }) ?? {};
   const cacheKey = `poster:${title}:${year}`;
   try {
     const cachedPoster = await getCacheValue(cacheKey);

@@ -1,7 +1,7 @@
 /**
  * Tests for provider deduplication: backend processOffers and canonical map builder.
  */
-import { TestSuite, assertEqual, assertArrayLength, assert } from "./testUtils.js";
+import { describe, it, expect } from "vitest";
 import { processOffers } from "../helpers/processOffers.js";
 import {
   buildCanonicalProviderMap,
@@ -12,8 +12,6 @@ import {
   normalizedProviderKey,
   deduplicateProviderList,
 } from "../public/src/providerUtils.js";
-
-const suite = new TestSuite("Provider deduplication");
 
 function makeOffer(
   technicalName: string,
@@ -36,109 +34,108 @@ function makeOffer(
   };
 }
 
-suite.test("processOffers returns one provider per unique id", () => {
-  const offers = [
-    makeOffer("disneyplus", "Disney Plus", "FLATRATE", "https://a.com/1"),
-    makeOffer("disneyplus", "Disney Plus", "FLATRATE", "https://a.com/2"),
-  ];
-  const result = processOffers(offers, "https://fallback.com");
-  assertArrayLength(result, 1);
-  assertEqual(result[0].id, "disneyplus");
-  assertEqual(result[0].name, "Disney Plus");
-  assertEqual(result[0].url, "https://a.com/1");
-});
+describe("Provider deduplication", () => {
+  it("processOffers returns one provider per unique id", () => {
+    const offers = [
+      makeOffer("disneyplus", "Disney Plus", "FLATRATE", "https://a.com/1"),
+      makeOffer("disneyplus", "Disney Plus", "FLATRATE", "https://a.com/2"),
+    ];
+    const result = processOffers(offers, "https://fallback.com");
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("disneyplus");
+    expect(result[0].name).toBe("Disney Plus");
+    expect(result[0].url).toBe("https://a.com/1");
+  });
 
-suite.test("processOffers returns multiple providers for different ids when no map", () => {
-  const offers = [makeOffer("max", "HBO Max"), makeOffer("amazonmax", "HBO Max  Amazon Channel")];
-  const result = processOffers(offers, "https://f.com");
-  assertArrayLength(result, 2);
-  assertEqual(result[0].id, "max");
-  assertEqual(result[1].id, "amazonmax");
-});
+  it("processOffers returns multiple providers for different ids when no map", () => {
+    const offers = [makeOffer("max", "HBO Max"), makeOffer("amazonmax", "HBO Max  Amazon Channel")];
+    const result = processOffers(offers, "https://f.com");
+    expect(result).toHaveLength(2);
+    expect(result[0].id).toBe("max");
+    expect(result[1].id).toBe("amazonmax");
+  });
 
-suite.test("processOffers includes only FLATRATE, FREE, ADS", () => {
-  const offers = [
-    makeOffer("netflix", "Netflix", "FLATRATE"),
-    makeOffer("rent", "Rent", "RENT"),
-    makeOffer("free", "Free", "FREE"),
-  ];
-  const result = processOffers(offers, "https://f.com");
-  assertArrayLength(result, 2);
-  assert(result.some((p) => p.id === "netflix"));
-  assert(result.some((p) => p.id === "free"));
-  assert(!result.some((p) => p.id === "rent"));
-});
+  it("processOffers includes only FLATRATE, FREE, ADS", () => {
+    const offers = [
+      makeOffer("netflix", "Netflix", "FLATRATE"),
+      makeOffer("rent", "Rent", "RENT"),
+      makeOffer("free", "Free", "FREE"),
+    ];
+    const result = processOffers(offers, "https://f.com");
+    expect(result).toHaveLength(2);
+    expect(result.some((p) => p.id === "netflix")).toBe(true);
+    expect(result.some((p) => p.id === "free")).toBe(true);
+    expect(result.some((p) => p.id === "rent")).toBe(false);
+  });
 
-suite.test("processOffers uses fullPath when standardWebURL missing", () => {
-  const offer = makeOffer("plex", "Plex");
-  delete offer.standardWebURL;
-  const result = processOffers([offer], "https://fallback.com/path");
-  assertArrayLength(result, 1);
-  assertEqual(result[0].url, "https://fallback.com/path");
-});
+  it("processOffers uses fullPath when standardWebURL missing", () => {
+    const offer = makeOffer("plex", "Plex");
+    delete offer.standardWebURL;
+    const result = processOffers([offer], "https://fallback.com/path");
+    expect(result).toHaveLength(1);
+    expect(result[0].url).toBe("https://fallback.com/path");
+  });
 
-suite.test("processOffers with canonicalMap merges same brand into one", () => {
-  const offers = [makeOffer("max", "HBO Max"), makeOffer("amazonmax", "HBO Max  Amazon Channel")];
-  const canonicalMap = {
-    max: { id: "max", name: "HBO Max" },
-    amazonmax: { id: "max", name: "HBO Max" },
-  };
-  const result = processOffers(offers, "https://f.com", canonicalMap);
-  assertArrayLength(result, 1);
-  assertEqual(result[0].id, "max");
-  assertEqual(result[0].name, "HBO Max");
-});
+  it("processOffers with canonicalMap merges same brand into one", () => {
+    const offers = [makeOffer("max", "HBO Max"), makeOffer("amazonmax", "HBO Max  Amazon Channel")];
+    const canonicalMap = {
+      max: { id: "max", name: "HBO Max" },
+      amazonmax: { id: "max", name: "HBO Max" },
+    };
+    const result = processOffers(offers, "https://f.com", canonicalMap);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("max");
+    expect(result[0].name).toBe("HBO Max");
+  });
 
-suite.test("processOffers with empty map behaves like no map", () => {
-  const offers = [makeOffer("max", "HBO Max"), makeOffer("amazonmax", "HBO Max  Amazon Channel")];
-  const result = processOffers(offers, "https://f.com", {});
-  assertArrayLength(result, 2);
-});
+  it("processOffers with empty map behaves like no map", () => {
+    const offers = [makeOffer("max", "HBO Max"), makeOffer("amazonmax", "HBO Max  Amazon Channel")];
+    const result = processOffers(offers, "https://f.com", {});
+    expect(result).toHaveLength(2);
+  });
 
-suite.test("buildCanonicalProviderMap maps same brand to one canonical", () => {
-  const packages = [
-    { technicalName: "max", clearName: "HBO Max" },
-    { technicalName: "amazonmax", clearName: "HBO Max  Amazon Channel" },
-  ];
-  const map = buildCanonicalProviderMap(packages);
-  assertEqual(map.max?.id, "max");
-  assertEqual(map.max?.name, "HBO Max");
-  assertEqual(map.amazonmax?.id, "max");
-  assertEqual(map.amazonmax?.name, "HBO Max");
-});
+  it("buildCanonicalProviderMap maps same brand to one canonical", () => {
+    const packages = [
+      { technicalName: "max", clearName: "HBO Max" },
+      { technicalName: "amazonmax", clearName: "HBO Max  Amazon Channel" },
+    ];
+    const map = buildCanonicalProviderMap(packages);
+    expect(map.max?.id).toBe("max");
+    expect(map.max?.name).toBe("HBO Max");
+    expect(map.amazonmax?.id).toBe("max");
+    expect(map.amazonmax?.name).toBe("HBO Max");
+  });
 
-suite.test("buildCanonicalProviderMap handles empty input", () => {
-  const map = buildCanonicalProviderMap([]);
-  assertEqual(Object.keys(map).length, 0);
-});
+  it("buildCanonicalProviderMap handles empty input", () => {
+    const map = buildCanonicalProviderMap([]);
+    expect(Object.keys(map).length).toBe(0);
+  });
 
-suite.test("buildCanonicalProviderMaps returns byClearName for data-driven normalization", () => {
-  const packages = [
-    { technicalName: "max", clearName: "HBO Max" },
-    { technicalName: "amazonmax", clearName: "HBO Max  Amazon Channel" },
-  ];
-  const { byClearName } = buildCanonicalProviderMaps(packages);
-  assertEqual(byClearName["HBO Max"]?.id, "max");
-  assertEqual(byClearName["HBO Max  Amazon Channel"]?.id, "max");
-  assertEqual(byClearName["HBO Max  Amazon Channel"]?.name, "HBO Max");
-});
+  it("buildCanonicalProviderMaps returns byClearName for data-driven normalization", () => {
+    const packages = [
+      { technicalName: "max", clearName: "HBO Max" },
+      { technicalName: "amazonmax", clearName: "HBO Max  Amazon Channel" },
+    ];
+    const { byClearName } = buildCanonicalProviderMaps(packages);
+    expect(byClearName["HBO Max"]?.id).toBe("max");
+    expect(byClearName["HBO Max  Amazon Channel"]?.id).toBe("max");
+    expect(byClearName["HBO Max  Amazon Channel"]?.name).toBe("HBO Max");
+  });
 
-suite.test("tileMatchesProviderFilter exact match", () => {
-  assertEqual(tileMatchesProviderFilter(["HBO Max"], ["HBO Max"]), true);
-  assertEqual(tileMatchesProviderFilter(["HBO Max  Amazon Channel"], ["HBO Max"]), false);
-});
+  it("tileMatchesProviderFilter exact match", () => {
+    expect(tileMatchesProviderFilter(["HBO Max"], ["HBO Max"])).toBe(true);
+    expect(tileMatchesProviderFilter(["HBO Max  Amazon Channel"], ["HBO Max"])).toBe(false);
+  });
 
-suite.test("tileMatchesProviderFilter returns true when no active filters", () => {
-  assertEqual(tileMatchesProviderFilter(["Netflix"], []), true);
-});
+  it("tileMatchesProviderFilter returns true when no active filters", () => {
+    expect(tileMatchesProviderFilter(["Netflix"], [])).toBe(true);
+  });
 
-suite.test("tileMatchesProviderFilter returns false when tile has no providers", () => {
-  assertEqual(tileMatchesProviderFilter([], ["Netflix"]), false);
-});
+  it("tileMatchesProviderFilter returns false when tile has no providers", () => {
+    expect(tileMatchesProviderFilter([], ["Netflix"])).toBe(false);
+  });
 
-suite.test(
-  "normalizedProviderKey uses map when window.__CANONICAL_PROVIDERS_BY_NAME__ is set",
-  () => {
+  it("normalizedProviderKey uses map when window.__CANONICAL_PROVIDERS_BY_NAME__ is set", () => {
     const map = {
       "HBO Max": { id: "max", name: "HBO Max" },
       "HBO Max  Amazon Channel": { id: "max", name: "HBO Max" },
@@ -150,57 +147,54 @@ suite.test(
       }
     ).window = { __CANONICAL_PROVIDERS_BY_NAME__: map };
     try {
-      assertEqual(normalizedProviderKey("HBO Max"), "max");
-      assertEqual(normalizedProviderKey("HBO Max  Amazon Channel"), "max");
-      assertEqual(normalizedProviderKey("Netflix"), "Netflix");
+      expect(normalizedProviderKey("HBO Max")).toBe("max");
+      expect(normalizedProviderKey("HBO Max  Amazon Channel")).toBe("max");
+      expect(normalizedProviderKey("Netflix")).toBe("Netflix");
     } finally {
       (globalThis as { window?: unknown }).window = prev;
     }
-  },
-);
+  });
 
-suite.test("deduplicateProviderList collapses by canonical id when map is set", () => {
-  const map = {
-    "HBO Max": { id: "max", name: "HBO Max" },
-    "HBO Max  Amazon Channel": { id: "max", name: "HBO Max" },
-  };
-  const prev = (globalThis as { window?: unknown }).window;
-  (
-    globalThis as {
-      window?: { __CANONICAL_PROVIDERS_BY_NAME__?: Record<string, { id: string; name: string }> };
+  it("deduplicateProviderList collapses by canonical id when map is set", () => {
+    const map = {
+      "HBO Max": { id: "max", name: "HBO Max" },
+      "HBO Max  Amazon Channel": { id: "max", name: "HBO Max" },
+    };
+    const prev = (globalThis as { window?: unknown }).window;
+    (
+      globalThis as {
+        window?: { __CANONICAL_PROVIDERS_BY_NAME__?: Record<string, { id: string; name: string }> };
+      }
+    ).window = { __CANONICAL_PROVIDERS_BY_NAME__: map };
+    try {
+      const providers = [
+        { id: "max", name: "HBO Max", icon: "https://a" },
+        { id: "amazonmax", name: "HBO Max  Amazon Channel", icon: "https://b" },
+      ];
+      const result = deduplicateProviderList(providers);
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe("max");
+    } finally {
+      (globalThis as { window?: unknown }).window = prev;
     }
-  ).window = { __CANONICAL_PROVIDERS_BY_NAME__: map };
-  try {
-    const providers = [
-      { id: "max", name: "HBO Max", icon: "https://a" },
-      { id: "amazonmax", name: "HBO Max  Amazon Channel", icon: "https://b" },
-    ];
-    const result = deduplicateProviderList(providers);
-    assertArrayLength(result, 1);
-    assertEqual(result[0].id, "max");
-  } finally {
-    (globalThis as { window?: unknown }).window = prev;
-  }
-});
+  });
 
-suite.test("tileMatchesProviderFilter matches by canonical id when map is set", () => {
-  const map = {
-    "HBO Max": { id: "max", name: "HBO Max" },
-    "HBO Max  Amazon Channel": { id: "max", name: "HBO Max" },
-  };
-  const prev = (globalThis as { window?: unknown }).window;
-  (
-    globalThis as {
-      window?: { __CANONICAL_PROVIDERS_BY_NAME__?: Record<string, { id: string; name: string }> };
+  it("tileMatchesProviderFilter matches by canonical id when map is set", () => {
+    const map = {
+      "HBO Max": { id: "max", name: "HBO Max" },
+      "HBO Max  Amazon Channel": { id: "max", name: "HBO Max" },
+    };
+    const prev = (globalThis as { window?: unknown }).window;
+    (
+      globalThis as {
+        window?: { __CANONICAL_PROVIDERS_BY_NAME__?: Record<string, { id: string; name: string }> };
+      }
+    ).window = { __CANONICAL_PROVIDERS_BY_NAME__: map };
+    try {
+      expect(tileMatchesProviderFilter(["HBO Max  Amazon Channel"], ["HBO Max"])).toBe(true);
+      expect(tileMatchesProviderFilter(["HBO Max"], ["HBO Max  Amazon Channel"])).toBe(true);
+    } finally {
+      (globalThis as { window?: unknown }).window = prev;
     }
-  ).window = { __CANONICAL_PROVIDERS_BY_NAME__: map };
-  try {
-    assertEqual(tileMatchesProviderFilter(["HBO Max  Amazon Channel"], ["HBO Max"]), true);
-    assertEqual(tileMatchesProviderFilter(["HBO Max"], ["HBO Max  Amazon Channel"]), true);
-  } finally {
-    (globalThis as { window?: unknown }).window = prev;
-  }
+  });
 });
-
-const results = await suite.run();
-process.exit(results.failed > 0 ? 1 : 0);

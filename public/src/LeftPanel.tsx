@@ -346,26 +346,40 @@ export function LeftPanel(): React.ReactElement {
                 Submit
               </button>
               {import.meta.env?.DEV && (
-                <button
-                  type="button"
-                  className="btn btn-secondary dev-clear-cache"
-                  data-testid="dev-clear-list-cache"
-                  onClick={async () => {
-                    try {
-                      const r = await fetch("/api/dev/clear-list-cache", { method: "POST" });
-                      const data = (await r.json()) as { cleared?: number; error?: string };
-                      if (r.ok) {
-                        window.alert(`Cleared ${data.cleared ?? 0} list cache entries.`);
-                      } else {
-                        window.alert(data.error || "Failed to clear cache");
+                <>
+                  <button
+                    type="button"
+                    className="btn btn-secondary dev-clear-cache"
+                    data-testid="dev-clear-list-cache"
+                    onClick={async () => {
+                      try {
+                        const r = await fetch("/api/dev/clear-list-cache", { method: "POST" });
+                        const data = (await r.json()) as { cleared?: number; error?: string };
+                        if (r.ok) {
+                          window.alert(`Cleared ${data.cleared ?? 0} list cache entries.`);
+                        } else {
+                          window.alert(data.error || "Failed to clear cache");
+                        }
+                      } catch (e) {
+                        window.alert("Failed to clear cache: " + (e as Error).message);
                       }
-                    } catch (e) {
-                      window.alert("Failed to clear cache: " + (e as Error).message);
-                    }
-                  }}
-                >
-                  Clear list cache (dev)
-                </button>
+                    }}
+                  >
+                    Clear list cache (dev)
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    data-testid="dev-load-eibonslam-watchlist"
+                    onClick={() => {
+                      const url = "https://letterboxd.com/eibonslam/watchlist";
+                      setListUrl(url);
+                      loadLetterboxdList?.(url, country);
+                    }}
+                  >
+                    Load eibonslam watchlist (dev)
+                  </button>
+                </>
               )}
             </div>
           </div>

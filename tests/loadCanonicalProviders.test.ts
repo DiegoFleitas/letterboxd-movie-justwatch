@@ -1,7 +1,4 @@
-/**
- * Tests for loadCanonicalProviders
- */
-import { TestSuite, assertEqual, assertTruthy } from "./testUtils.js";
+import { describe, it, expect, beforeEach } from "vitest";
 import {
   getCanonicalProviderMap,
   getCanonicalProviderByNames,
@@ -9,44 +6,39 @@ import {
   _injectForTest,
 } from "../helpers/loadCanonicalProviders.js";
 
-const suite = new TestSuite("Load canonical providers");
-
-suite.test(
-  "getCanonicalProviderMap and getCanonicalProviderByNames return injected new format",
-  () => {
+describe("loadCanonicalProviders", () => {
+  beforeEach(() => {
     _resetCache();
+  });
+
+  it("getCanonicalProviderMap and getCanonicalProviderByNames return injected new format", () => {
     const byTechnicalName = { max: { id: "max", name: "HBO Max" } };
     const byClearName = {
       "HBO Max": { id: "max", name: "HBO Max" },
       "HBO Max  Amazon Channel": { id: "max", name: "HBO Max" },
     };
     _injectForTest({ byTechnicalName, byClearName });
-    assertEqual(getCanonicalProviderMap(), byTechnicalName);
-    assertEqual(getCanonicalProviderByNames(), byClearName);
-    assertEqual(getCanonicalProviderMap().max?.id, "max");
-    assertEqual(getCanonicalProviderByNames()["HBO Max  Amazon Channel"]?.id, "max");
-  },
-);
-
-suite.test("getCanonicalProviderByNames returns empty when only byTechnicalName injected", () => {
-  _resetCache();
-  _injectForTest({
-    byTechnicalName: { netflix: { id: "netflix", name: "Netflix" } },
-    byClearName: {},
+    expect(getCanonicalProviderMap()).toEqual(byTechnicalName);
+    expect(getCanonicalProviderByNames()).toEqual(byClearName);
+    expect(getCanonicalProviderMap().max?.id).toBe("max");
+    expect(getCanonicalProviderByNames()["HBO Max  Amazon Channel"]?.id).toBe("max");
   });
-  assertTruthy(Object.keys(getCanonicalProviderMap()).length === 1);
-  assertEqual(Object.keys(getCanonicalProviderByNames()).length, 0);
-});
 
-suite.test("_resetCache clears cache so next inject takes effect", () => {
-  _resetCache();
-  _injectForTest({ byTechnicalName: { x: { id: "x", name: "X" } }, byClearName: {} });
-  assertTruthy(getCanonicalProviderMap().x != null);
-  assertEqual(getCanonicalProviderMap().x.id, "x");
-  _resetCache();
-  _injectForTest({ byTechnicalName: {}, byClearName: {} });
-  assertEqual(getCanonicalProviderMap().x, undefined);
-});
+  it("getCanonicalProviderByNames returns empty when only byTechnicalName injected", () => {
+    _injectForTest({
+      byTechnicalName: { netflix: { id: "netflix", name: "Netflix" } },
+      byClearName: {},
+    });
+    expect(Object.keys(getCanonicalProviderMap()).length).toBe(1);
+    expect(Object.keys(getCanonicalProviderByNames()).length).toBe(0);
+  });
 
-const results = await suite.run();
-process.exit(results.failed > 0 ? 1 : 0);
+  it("_resetCache clears cache so next inject takes effect", () => {
+    _injectForTest({ byTechnicalName: { x: { id: "x", name: "X" } }, byClearName: {} });
+    expect(getCanonicalProviderMap().x).toBeDefined();
+    expect(getCanonicalProviderMap().x!.id).toBe("x");
+    _resetCache();
+    _injectForTest({ byTechnicalName: {}, byClearName: {} });
+    expect(getCanonicalProviderMap().x).toBeUndefined();
+  });
+});
