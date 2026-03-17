@@ -37,4 +37,9 @@ export default defineConfig({
       },
     },
   },
+  // Vitest inherits vite root: "public" by default and finds no tests there.
+  test: {
+    root: __dirname,
+    include: ["tests/**/*.integration.test.ts"],
+  },
 });

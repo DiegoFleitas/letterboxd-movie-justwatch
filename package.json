@@ -54,7 +54,10 @@
   },
   "homepage": "https://github.com/fly-examples/movie-justwatch#readme",
   "lint-staged": {
-    "*.{ts,tsx}": "eslint --ext .ts,.tsx",
+    "*.{ts,tsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ],
     "*.{js,jsx,json,css,md,yml,yaml,html}": "prettier --write"
   },
   "pnpm": {
@@ -106,7 +109,6 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-jsx-a11y": "^6.10.2",
-    "eslint-plugin-prettier": "^5.5.5",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
     "husky": "^9.1.7",
