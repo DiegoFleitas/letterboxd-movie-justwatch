@@ -6,11 +6,12 @@ const axios = axiosHelper(true);
 const postersTtl = Number(process.env.CACHE_TTL) || 60;
 
 export const letterboxdPoster: HttpHandler = async ({ req, res }) => {
-  const { filmId, filmSlug, cacheBustingKey } = (req.body as {
-    filmId?: string;
-    filmSlug?: string;
-    cacheBustingKey?: string;
-  }) ?? {};
+  const { filmId, filmSlug, cacheBustingKey } =
+    (req.body as {
+      filmId?: string;
+      filmSlug?: string;
+      cacheBustingKey?: string;
+    }) ?? {};
 
   if (!filmId || !filmSlug) {
     res.status(400).json({ error: "Missing filmId or filmSlug" });

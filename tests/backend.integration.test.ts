@@ -63,4 +63,3 @@ describe("backend integration (fastify)", () => {
     },
   );
 });
-

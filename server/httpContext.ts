@@ -27,4 +27,3 @@ export interface HttpHandlerArgs {
 }
 
 export type HttpHandler = (ctx: HttpHandlerArgs) => Promise<void> | void;
-

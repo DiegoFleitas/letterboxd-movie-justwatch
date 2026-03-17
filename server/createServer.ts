@@ -123,10 +123,7 @@ export function createServer(): CreatedServer {
     });
 
     app.get("/movie_placeholder.svg", async (_request, reply) => {
-      return reply.sendFile(
-        "movie_placeholder.svg",
-        path.join(__dirname, "..", "public"),
-      );
+      return reply.sendFile("movie_placeholder.svg", path.join(__dirname, "..", "public"));
     });
 
     const appSecretKey = process.env.APP_SECRET_KEY;
@@ -162,8 +159,8 @@ export function createServer(): CreatedServer {
       });
     });
 
-    const setCacheControlFastify = (handler: HttpHandler) =>
-      async (request: FastifyRequest, reply: FastifyReply) => {
+    const setCacheControlFastify =
+      (handler: HttpHandler) => async (request: FastifyRequest, reply: FastifyReply) => {
         reply.header("Cache-Control", "public, max-age=3600");
         await makeFastifyHandler(handler)(request, reply);
       };
