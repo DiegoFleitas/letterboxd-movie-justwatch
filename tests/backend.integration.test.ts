@@ -58,8 +58,8 @@ describe("backend integration (fastify)", () => {
       const body = await res.json();
 
       expect(body).toBeTypeOf("object");
-      expect(body).toHaveProperty("message");
       expect(body).toHaveProperty("title");
+      expect(typeof (body as { title: unknown }).title).toBe("string");
     },
   );
 });

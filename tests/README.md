@@ -1,91 +1,43 @@
 # Tests
 
-Automated tests for the Letterboxd JustWatch integration.
+Unit and integration tests use **[Vitest](https://vitest.dev/)**. End-to-end tests use **Playwright** (`e2e/`).
 
-## Running Tests
+## Commands
 
-### All Unit Tests
+| Command                                                                           | What it runs                                                                                |
+| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `pnpm test` / `pnpm run test:unit`                                                | All Vitest tests under `tests/**/*.test.ts` (see exclusions in `vitest.config.ts`)          |
+| `pnpm run test:backend`                                                           | Fastify integration tests only                                                              |
+| `pnpm run test:filter`, `test:state`, `test:posthog`, `test:redis`, `test:dedupe` | Single Vitest files                                                                         |
+| `pnpm run test:e2e`                                                               | Playwright (`e2e/app.spec.ts`)                                                              |
+| `pnpm run test:poster-flow`                                                       | Manual script: hits `localhost:3000` (backend must be running); **not** part of `pnpm test` |
 
-```bash
-pnpm test
-```
+Config: root [`vitest.config.ts`](../vitest.config.ts) (Node environment, `APP_SECRET_KEY` for sessions). Poster-flow is excluded from the default Vitest run because it requires a live server.
 
-### Individual Test Suites
+## Layout
 
-```bash
-pnpm run test:filter     # Filter logic tests
-pnpm run test:state      # State management tests
-```
+- **`tests/*.test.ts`** – unit/integration tests (`describe` / `it` / `expect`).
+- **`tests/backend.integration.test.ts`** – Fastify HTTP checks; optional `MOVIE_DB_API_KEY` enables the search-movie case.
+- **`tests/fixtures/`** – HTML/JSON fixtures for scrapers and state tests.
+- **`e2e/app.spec.ts`** – browser E2E (mocked APIs).
 
-## Test Structure
+## Adding tests
 
-### Unit Tests
+1. Add `tests/yourFeature.test.ts` (or match existing naming).
+2. Use Vitest:
 
-- **filterLogic.test.js** - Tests the movie filtering algorithm
-  - Verifies movies are correctly shown/hidden based on streaming provider filters
-  - Tests single and multiple provider selection
-  - No dependencies on DOM or external APIs
+```ts
+import { describe, it, expect } from "vitest";
 
-- **stateTileManagement.test.js** - Tests state/tile ID management
-  - Verifies tile ID generation from title and year
-  - Tests creating, updating, and moving tiles when year changes
-  - Validates data preservation during updates
-
-### E2E Tests
-
-- **e2e/app.spec.js** (Playwright) - Full app flow in the browser
-
-## Test Output
-
-Tests automatically show:
-
-- ✓ Passed tests in green
-- ✗ Failed tests with error messages
-- Total count of passed/failed tests
-
-Example:
-
-```
-  Filter Logic
-    ✓ Should hide movies with no providers when filter is active
-    ✓ Should show movies with matching provider
-    ✓ Should show correct count when filtering by Disney Plus
-```
-
-## Adding New Tests
-
-1. Create a new file: `tests/yourTest.test.js`
-2. Import test utilities:
-
-```javascript
-import { TestSuite, assertEqual, assert } from "./testUtils.js";
-```
-
-3. Create test suite and add tests:
-
-```javascript
-const suite = new TestSuite("Your Feature");
-
-suite.test("Should do something", () => {
-  assertEqual(actual, expected);
+describe("your feature", () => {
+  it("does something", () => {
+    expect(1 + 1).toBe(2);
+  });
 });
-
-await suite.run();
 ```
 
-4. Add to package.json scripts:
+3. Optional: add a script in `package.json`, e.g. `"test:yourfeature": "pnpm exec vitest run tests/yourFeature.test.ts"`.
 
-```json
-"test:yourfeature": "node tests/yourTest.test.js"
-```
+## Legacy `testUtils.ts`
 
-## Test Utilities
-
-Available assertions from `testUtils.js`:
-
-- `assert(condition, message)` - Basic assertion
-- `assertEqual(actual, expected, message)` - Strict equality
-- `assertDeepEqual(actual, expected, message)` - Deep object comparison
-- `assertArrayLength(array, length, message)` - Array length check
-- `assertTruthy(value, message)` - Truthy check
-- `assertFalsy(value, message)` - Falsy check
+`tests/testUtils.ts` (custom `TestSuite` / `assert*`) is **deprecated** for new tests; prefer Vitest. It can remain for any one-off scripts if needed.

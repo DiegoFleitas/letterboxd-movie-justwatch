@@ -34,7 +34,7 @@ Then open `http://localhost:3000`. To pass API keys (e.g. `OMDB_API_KEY`, `APP_S
 ### Key commands
 
 - **Dev**: `pnpm run dev`
-- **Tests**: `pnpm test`, `pnpm run test:e2e`
+- **Tests**: `pnpm test` (Vitest unit/integration), `pnpm run test:e2e` (Playwright). Manual poster checks: `pnpm run test:poster-flow` with backend on port 3000.
 - **Typecheck**: `pnpm run typecheck`
 - **Lint/format**: `pnpm run lint`, `pnpm run format:check`
 - **Deploy (Fly.io)**: `pnpm run fly:deploy`
@@ -55,7 +55,7 @@ Redis and snapshot/export details live in `redis/README.md`.
 
 ### Contributing & license
 
-- Run `pnpm run lint`, `pnpm run typecheck`, and `pnpm test` before opening a PR.
+- Run `pnpm run lint`, `pnpm run typecheck`, and `pnpm test` (Vitest) before opening a PR. See [`tests/README.md`](tests/README.md) for conventions.
 - Licensed under **ISC** (see `package.json`).
 
 ### JustWatch API note
