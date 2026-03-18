@@ -1,5 +1,7 @@
 ## Letterboxd Movie JustWatch
 
+[![Tests](https://github.com/fly-examples/movie-justwatch/actions/workflows/ci.yml/badge.svg)](https://github.com/fly-examples/movie-justwatch/actions)
+
 Scan any **public** Letterboxd watchlist or custom list and see where each film is streaming in your country. Uses **unofficial** JustWatch-style data without recommendation clutter, with optional **Jackett**-backed alternative search.
 
 ### What it does
