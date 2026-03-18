@@ -79,9 +79,13 @@ jobs:
         run: pnpm exec playwright install-deps
 
       - name: Run E2E tests
+        env:
+          DISABLE_REDIS: "1"
         run: |
+          pnpm run build
           pnpm run dev &
           npx wait-on http://localhost:5173 --timeout 120000
+          npx wait-on http://localhost:3000/healthcheck --timeout 60000
           pnpm run test:e2e
 
       - name: Upload Playwright report

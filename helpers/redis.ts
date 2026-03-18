@@ -17,6 +17,10 @@ let redisClient: RedisClientLike | null = null;
 /** Set in tests via _injectRedisClientForTest. When undefined, use real client; when null, no client; when object, use as mock. */
 let _testClient: RedisClientLike | null | undefined = undefined;
 
+/** When true (e.g. CI), skip Redis entirely—local dev should leave this unset and use FLYIO_REDIS_URL. */
+export const isRedisDisabled = (): boolean =>
+  process.env.DISABLE_REDIS === "1" || process.env.DISABLE_REDIS === "true";
+
 export const isHealthy = async (): Promise<boolean> => {
   const client = await getRedisClient();
   if (!client) {
@@ -33,6 +37,9 @@ export const isHealthy = async (): Promise<boolean> => {
 
 const getRedisClient = async (): Promise<RedisClientLike | null> => {
   if (_testClient !== undefined) return _testClient;
+  if (isRedisDisabled()) {
+    return null;
+  }
   if (!redisClient) {
     try {
       const url = process.env.FLYIO_REDIS_URL || "redis://localhost:6379";
