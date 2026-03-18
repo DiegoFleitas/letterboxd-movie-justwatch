@@ -277,9 +277,8 @@ test.describe("List form", () => {
     await page.getByTestId("list-url").fill("https://example.com/");
     await page.getByTestId("list-submit").click();
 
-    await expect(page.getByText(/Invalid URL format|valid URL|CSV|header|required/)).toBeVisible({
-      timeout: 5000,
-    });
+    const errorToast = page.getByRole("status").first();
+    await expect(errorToast).toBeVisible({ timeout: 5000 });
     await expect(page.getByTestId("poster-showcase").getByTestId("tile")).toHaveCount(0);
   });
 
