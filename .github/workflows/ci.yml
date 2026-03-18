@@ -81,6 +81,8 @@ jobs:
       - name: Run E2E tests
         env:
           DISABLE_REDIS: "1"
+          OMDB_API_KEY: ${{ secrets.OMDB_API_KEY }}
+          MOVIE_DB_API_KEY: ${{ secrets.MOVIE_DB_API_KEY }}
         run: |
           pnpm run build
           pnpm run dev &
