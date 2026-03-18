@@ -17,7 +17,12 @@ import {
   alternativeSearch,
   proxy,
 } from "../controllers/index.js";
-import { isHealthy, clearCacheByCategory, disconnectRedis } from "../helpers/redis.js";
+import {
+  isHealthy,
+  clearCacheByCategory,
+  disconnectRedis,
+  isRedisDisabled,
+} from "../helpers/redis.js";
 import {
   getCanonicalProviderMap,
   getCanonicalProviderByNames,
@@ -130,7 +135,8 @@ export function createServer(): CreatedServer {
     if (!appSecretKey && process.env.NODE_ENV === "production") {
       throw new Error("APP_SECRET_KEY environment variable must be set in production.");
     }
-    const sessionSecret = appSecretKey || "dev-secret";
+    /** @fastify/session requires secret length ≥ 32 */
+    const sessionSecret = appSecretKey || "dev-only-session-secret-do-not-use-in-production!!";
 
     void app.register(fastifyCookie, {
       secret: sessionSecret,
@@ -170,6 +176,10 @@ export function createServer(): CreatedServer {
     });
 
     app.get("/redis-healthcheck", async (_request, reply) => {
+      if (isRedisDisabled()) {
+        reply.type("text/plain").code(200).send("OK (Redis disabled)");
+        return;
+      }
       if (await isHealthy()) {
         reply.type("text/plain").code(200).send("OK");
       } else {

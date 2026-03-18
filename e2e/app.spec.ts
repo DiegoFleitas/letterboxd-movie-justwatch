@@ -2,6 +2,9 @@
  * E2E tests are UI-only: drive the app via forms, clicks, and visibility.
  * No window.submitMovieSearch / window.submitLetterboxdList so they stay valid after full React migration.
  * List and search mocks use tests/fixtures/api/*.json for real API response shapes.
+ *
+ * Most `/api/*` calls are intercepted with page.route() — they do not hit Fastify.
+ * For a real API check, see backend-smoke.spec.ts and e2e/README.md.
  */
 import { readFileSync } from "fs";
 import { fileURLToPath } from "url";

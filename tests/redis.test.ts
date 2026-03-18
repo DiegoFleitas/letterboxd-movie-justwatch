@@ -1,7 +1,7 @@
 /**
  * Unit tests for Redis cache helper
  */
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
   getCacheValue,
   setCacheValue,
@@ -217,5 +217,25 @@ describe("Redis cache", () => {
     _resetRedisForTesting();
     _injectRedisClientForTest(null);
     expect(await isHealthy()).toBe(false);
+  });
+
+  describe("DISABLE_REDIS", () => {
+    beforeEach(() => {
+      vi.stubEnv("DISABLE_REDIS", "1");
+      _resetRedisForTesting();
+    });
+
+    afterEach(() => {
+      vi.unstubAllEnvs();
+      _resetRedisForTesting();
+    });
+
+    it("skips Redis; getCacheValue returns null", async () => {
+      expect(await getCacheValue("any-key")).toBe(null);
+    });
+
+    it("isHealthy is false without a client", async () => {
+      expect(await isHealthy()).toBe(false);
+    });
   });
 });
