@@ -34,7 +34,7 @@ Then open `http://localhost:3000`. To pass API keys (e.g. `OMDB_API_KEY`, `APP_S
 ### Key commands
 
 - **Dev**: `pnpm run dev`
-- **Tests**: `pnpm test` (Vitest unit/integration), `pnpm run test:e2e` (Playwright). Manual poster checks: `pnpm run test:poster-flow` with backend on port 3000.
+- **Tests**: `pnpm test` (Vitest unit/integration), `pnpm run test:e2e` (Playwright; run `pnpm run dev` first so Fastify is up—see [`e2e/README.md`](e2e/README.md)). Manual poster checks: `pnpm run test:poster-flow` with backend on port 3000.
 - **Typecheck**: `pnpm run typecheck`
 - **Lint/format**: `pnpm run lint`, `pnpm run format:check`
 - **Deploy (Fly.io)**: `pnpm run fly:deploy`
@@ -44,7 +44,8 @@ Then open `http://localhost:3000`. To pass API keys (e.g. `OMDB_API_KEY`, `APP_S
 See `.env.example` for full details. Common variables:
 
 - `APP_SECRET_KEY` – **required in production**; must be **at least 32 characters** (Fastify session). Local `pnpm dev` uses a built-in dev default if unset.
-- `FLYIO_REDIS_URL` – Redis URL (e.g. `redis://localhost:6379`)
+- `FLYIO_REDIS_URL` – Redis URL (e.g. `redis://localhost:6379`). **Do not set** `DISABLE_REDIS` locally if you want caching against real Redis.
+- `DISABLE_REDIS` – set to `1` or `true` to skip Redis entirely (used in CI; omit locally for normal dev).
 - `OMDB_API_KEY` – poster lookups
 - `MOVIE_DB_API_KEY` – TMDb / search; optional locally; enables the extra integration test in CI if set
 - `POSTHOG_KEY` / `POSTHOG_HOST` – optional analytics
