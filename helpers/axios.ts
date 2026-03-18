@@ -3,8 +3,15 @@ import https from "https";
 
 const instance = axios.create({});
 
+const sanitizeUrl = (url: string | undefined): string => {
+  if (!url) return "";
+  // Redact common API key-style query params to avoid leaking secrets in logs.
+  return url.replace(/((?:api_key|apikey|access_token|token|key)=)([^&]+)/gi, "$1***");
+};
+
 instance.interceptors.request.use((config) => {
-  console.log(`[axios] Sending request to ${config.url}`);
+  const url = typeof config.url === "string" ? config.url : undefined;
+  console.log(`[axios] Sending request to ${sanitizeUrl(url)}`);
   return config;
 });
 
