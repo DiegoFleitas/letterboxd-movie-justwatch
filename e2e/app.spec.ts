@@ -172,6 +172,42 @@ test.describe("Movie form", () => {
       page.getByText(new RegExp(`${req.title}|${(res.error ?? "").substring(0, 25)}`)),
     ).toBeVisible({ timeout: 5000 });
   });
+
+  test("rapid submit clicks only trigger one movie request", async ({ page }) => {
+    await page.goto("/");
+    await waitForGeoReady(page);
+    await expect(page.getByTestId("movie-form")).toBeVisible();
+
+    let requestCount = 0;
+    await page.route("**/api/search-movie", async (route) => {
+      requestCount += 1;
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          title: "Inception",
+          year: "2010",
+          message: "Movie found",
+          movieProviders: [],
+        }),
+      });
+    });
+
+    await page.getByTestId("movie-input").fill("Inception");
+    await page.getByTestId("movie-year").fill("2010");
+
+    const submit = page.getByTestId("movie-submit");
+    await submit.click();
+    await submit.click({ force: true });
+    await submit.click({ force: true });
+    await expect(submit).toBeDisabled();
+    await expect(submit).toHaveText("Searching...");
+
+    await expect
+      .poll(() => requestCount, { timeout: 3000, message: "movie request count should remain 1" })
+      .toBe(1);
+  });
 });
 
 test.describe("List form", () => {
@@ -268,6 +304,43 @@ test.describe("List form", () => {
       timeout: 10000,
     });
     await expect(page.locator("[data-id]").filter({ hasText: "Mystery Train" })).toBeVisible();
+  });
+
+  test("rapid submit clicks only trigger one list request", async ({ page }) => {
+    await page.goto("/");
+    await waitForGeoReady(page);
+    await page.getByTestId("tab-list").click();
+
+    let listRequestCount = 0;
+    await page.route("**/api/letterboxd-watchlist", async (route) => {
+      listRequestCount += 1;
+      await new Promise((resolve) => setTimeout(resolve, 900));
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          message: "List found",
+          watchlist: [],
+          lastPage: 1,
+          totalPages: 1,
+        }),
+      });
+    });
+
+    await page.getByTestId("list-url").fill("https://letterboxd.com/someuser/watchlist/");
+    const submit = page.getByTestId("list-submit");
+    await submit.click();
+    await submit.click({ force: true });
+    await submit.click({ force: true });
+
+    await expect(submit).toBeDisabled();
+    await expect(submit).toHaveText("Submitting...");
+    await expect
+      .poll(() => listRequestCount, {
+        timeout: 3000,
+        message: "list request count should remain 1",
+      })
+      .toBe(1);
   });
 
   test("invalid list URL shows error toast and no tiles", async ({ page }) => {
@@ -479,5 +552,57 @@ test.describe("Alternative search", () => {
     await page.getByTestId("alternative-search-btn").click();
 
     await expect(page.getByText(/Found on Example/)).toBeVisible({ timeout: 5000 });
+  });
+
+  test("rapid clicks only trigger one alternative search request", async ({ page }) => {
+    await page.goto("/");
+    await waitForGeoReady(page);
+
+    await page.route("**/api/search-movie", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          title: "Inception",
+          year: "2010",
+          message: "Available on",
+          movieProviders: [],
+        }),
+      }),
+    );
+
+    await page.getByTestId("movie-input").fill("Inception");
+    await page.getByTestId("movie-year").fill("2010");
+    await page.getByTestId("movie-submit").click();
+    await expect(page.getByTestId("alternative-search-btn")).toBeVisible({ timeout: 3000 });
+
+    let altRequestCount = 0;
+    await page.route("**/api/alternative-search", async (route) => {
+      altRequestCount += 1;
+      await new Promise((resolve) => setTimeout(resolve, 900));
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          text: "Found on Example",
+          url: "https://example.com/torrent",
+          title: "Inception",
+        }),
+      });
+    });
+
+    const altBtn = page.getByTestId("alternative-search-btn");
+    await altBtn.click();
+    await altBtn.click({ force: true });
+    await altBtn.click({ force: true });
+
+    await expect(altBtn).toBeDisabled();
+    await expect(altBtn).toHaveText("Searching...");
+    await expect
+      .poll(() => altRequestCount, {
+        timeout: 3000,
+        message: "alternative request count should remain 1",
+      })
+      .toBe(1);
   });
 });

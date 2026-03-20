@@ -13,13 +13,19 @@ import { mergeTileState } from "./movieTiles";
 import type { TileState } from "./movieTiles";
 import { useLetterboxdList } from "./useLetterboxdList";
 import { useMovieSearch } from "./useMovieSearch";
-import { runAlternativeSearch, searchSubs } from "./alternativeSearch";
+import {
+  runAlternativeSearch as runAlternativeSearchRequest,
+  searchSubs,
+} from "./alternativeSearch";
 
 export interface AppStateValue {
   movieTiles: TileState["movieTiles"];
   streamingProviders: TileState["streamingProviders"];
   notice: string | null;
   showAltSearchButton: boolean;
+  isMovieSearchLoading: boolean;
+  isListLoading: boolean;
+  isAlternativeSearchLoading: boolean;
   setNotice: (msg: string | null) => void;
   setShowAltSearchButton: (show: boolean) => void;
   loadLetterboxdList: (listUrl: string, country: string) => Promise<void>;
@@ -42,6 +48,9 @@ export function AppStateProvider({ children }: { children: ReactNode }): React.R
   const [appData, setAppData] = useState<TileState>(initialAppData);
   const [notice, setNotice] = useState<string | null>(null);
   const [showAltSearchButton, setShowAltSearchButton] = useState(false);
+  const [isMovieSearchLoading, setMovieSearchLoading] = useState(false);
+  const [isListLoading, setListLoading] = useState(false);
+  const [isAlternativeSearchLoading, setAlternativeSearchLoading] = useState(false);
   const loadingToastIdRef = useRef<string | number | null>(null);
 
   const mergeTile = useCallback(
@@ -51,8 +60,12 @@ export function AppStateProvider({ children }: { children: ReactNode }): React.R
     [],
   );
 
-  const loadLetterboxdList = useLetterboxdList(mergeTile);
-  const submitMovieSearch = useMovieSearch(setShowAltSearchButton);
+  const loadLetterboxdList = useLetterboxdList(mergeTile, setListLoading);
+  const submitMovieSearch = useMovieSearch(setShowAltSearchButton, setMovieSearchLoading);
+
+  const runAlternativeSearch = useCallback((title: string, year?: string | number) => {
+    runAlternativeSearchRequest(title, year, { setAlternativeSearchLoading });
+  }, []);
 
   useEffect(() => {
     const impl = getToastImpl();
@@ -79,6 +92,9 @@ export function AppStateProvider({ children }: { children: ReactNode }): React.R
     streamingProviders: appData.streamingProviders,
     notice,
     showAltSearchButton,
+    isMovieSearchLoading,
+    isListLoading,
+    isAlternativeSearchLoading,
     setNotice,
     setShowAltSearchButton,
     loadLetterboxdList,
