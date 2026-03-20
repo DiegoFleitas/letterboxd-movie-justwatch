@@ -17,6 +17,7 @@ public/dist
 /data
 
 .npmrc
+.corepack
 
 # Ignore Playwright test output
 playwright-report/
