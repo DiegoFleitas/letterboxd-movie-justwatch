@@ -45,11 +45,13 @@ type MergeTileFn = (title: string, year: string | number | null, data?: MergeDat
 
 export function useLetterboxdList(
   mergeTile: MergeTileFn | null | undefined,
+  setListLoading?: ((loading: boolean) => void) | null,
 ): (listUrl: string, country: string) => Promise<void> {
   const allPagesLoadedRef = useRef(false);
   const watchlistPageCountRef = useRef(0);
   const scrollListenerRef = useRef<(() => void) | null>(null);
   const isLoadingRef = useRef(false);
+  const isSubmittingListRef = useRef(false);
   const dataRef = useRef<LoadData | null>(null);
   const loadWatchlistRef = useRef<((d: LoadData) => Promise<void>) | null>(null);
   const batchIdRef = useRef(0);
@@ -255,31 +257,44 @@ export function useLetterboxdList(
 
   const loadLetterboxdList = useCallback(
     async (listUrl: string, country: string): Promise<void> => {
+      if (isSubmittingListRef.current) {
+        toggleNotice("Already working on that list...");
+        return;
+      }
+      isSubmittingListRef.current = true;
+      setListLoading?.(true);
       if (!listUrl?.trim()) {
         showError("Please enter a valid URL or paste CSV");
+        isSubmittingListRef.current = false;
+        setListLoading?.(false);
         return;
       }
-      const parsed = parseLetterboxdListUrl(listUrl);
-      if (parsed) {
-        const data: LoadData = {
-          listUrl: parsed.listUrl,
-          country,
-          username: parsed.username,
-          listType: parsed.listType,
-          page: 1,
-        };
-        batchMapRef.current.clear();
-        toggleNotice(`Scraping ${parsed.listType} for ${parsed.username}...`);
-        if (parsed.listType !== "watchlist") {
-          await loadCustomList(data);
-        } else {
-          await loadWatchlist(data);
+      try {
+        const parsed = parseLetterboxdListUrl(listUrl);
+        if (parsed) {
+          const data: LoadData = {
+            listUrl: parsed.listUrl,
+            country,
+            username: parsed.username,
+            listType: parsed.listType,
+            page: 1,
+          };
+          batchMapRef.current.clear();
+          toggleNotice(`Scraping ${parsed.listType} for ${parsed.username}...`);
+          if (parsed.listType !== "watchlist") {
+            await loadCustomList(data);
+          } else {
+            await loadWatchlist(data);
+          }
+          return;
         }
-        return;
+        await loadFromCsv(listUrl.trim(), country);
+      } finally {
+        isSubmittingListRef.current = false;
+        setListLoading?.(false);
       }
-      await loadFromCsv(listUrl.trim(), country);
     },
-    [loadCustomList, loadWatchlist, loadFromCsv],
+    [loadCustomList, loadWatchlist, loadFromCsv, setListLoading],
   );
 
   useEffect(() => {

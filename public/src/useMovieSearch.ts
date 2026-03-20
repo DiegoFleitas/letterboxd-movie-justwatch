@@ -1,11 +1,19 @@
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import { showMessage } from "./showMessage";
 
 export function useMovieSearch(
   setShowAltSearchButton?: ((show: boolean) => void) | null,
+  setMovieSearchLoading?: ((loading: boolean) => void) | null,
 ): (data: { title?: string; year?: string | number; country?: string }) => void {
+  const isInFlightRef = useRef(false);
   const submitMovieSearch = useCallback(
     (data: { title?: string; year?: string | number; country?: string }) => {
+      if (isInFlightRef.current) {
+        showMessage("Already working on that search...");
+        return;
+      }
+      isInFlightRef.current = true;
+      setMovieSearchLoading?.(true);
       fetch("/api/search-movie", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -33,9 +41,13 @@ export function useMovieSearch(
             }
           },
         )
-        .catch((err) => console.error(err));
+        .catch((err) => console.error(err))
+        .finally(() => {
+          isInFlightRef.current = false;
+          setMovieSearchLoading?.(false);
+        });
     },
-    [setShowAltSearchButton],
+    [setShowAltSearchButton, setMovieSearchLoading],
   );
   return submitMovieSearch;
 }

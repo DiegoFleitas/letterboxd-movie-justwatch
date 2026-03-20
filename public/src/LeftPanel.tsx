@@ -49,8 +49,15 @@ function getGenreNames(genreIds: number[] | undefined): string {
 }
 
 export function LeftPanel(): React.ReactElement {
-  const { showAltSearchButton, loadLetterboxdList, submitMovieSearch, runAlternativeSearch } =
-    useAppState();
+  const {
+    showAltSearchButton,
+    loadLetterboxdList,
+    submitMovieSearch,
+    runAlternativeSearch,
+    isMovieSearchLoading,
+    isListLoading,
+    isAlternativeSearchLoading,
+  } = useAppState();
   const [activeTab, setActiveTab] = useState("movie");
   const [country, setCountryState] = useState(() => {
     const stored = getStoredCountryId();
@@ -306,8 +313,13 @@ export function LeftPanel(): React.ReactElement {
             onChange={(e) => setMovieYear(e.target.value)}
           />
           <div className="submit-container">
-            <button type="submit" className="btn btn-primary" data-testid="movie-submit">
-              Search
+            <button
+              type="submit"
+              className="btn btn-primary"
+              data-testid="movie-submit"
+              disabled={isMovieSearchLoading}
+            >
+              {isMovieSearchLoading ? "Searching..." : "Search"}
             </button>
           </div>
           <button
@@ -316,8 +328,9 @@ export function LeftPanel(): React.ReactElement {
             aria-label="Alternative search button"
             data-testid="alternative-search-btn"
             onClick={handleAlternativeSearch}
+            disabled={isAlternativeSearchLoading}
           >
-            Torrent search 🏴‍☠️
+            {isAlternativeSearchLoading ? "Searching..." : "Torrent search 🏴‍☠️"}
           </button>
         </form>
         <form
@@ -342,8 +355,13 @@ export function LeftPanel(): React.ReactElement {
               />
             </div>
             <div className="submit-container">
-              <button type="submit" className="btn btn-primary" data-testid="list-submit">
-                Submit
+              <button
+                type="submit"
+                className="btn btn-primary"
+                data-testid="list-submit"
+                disabled={isListLoading}
+              >
+                {isListLoading ? "Submitting..." : "Submit"}
               </button>
               {import.meta.env?.DEV && (
                 <>
@@ -351,6 +369,7 @@ export function LeftPanel(): React.ReactElement {
                     type="button"
                     className="btn btn-secondary dev-clear-cache"
                     data-testid="dev-clear-list-cache"
+                    disabled={isListLoading}
                     onClick={async () => {
                       try {
                         const r = await fetch("/api/dev/clear-list-cache", { method: "POST" });
@@ -371,6 +390,7 @@ export function LeftPanel(): React.ReactElement {
                     type="button"
                     className="btn btn-secondary"
                     data-testid="dev-load-eibonslam-watchlist"
+                    disabled={isListLoading}
                     onClick={() => {
                       const url = "https://letterboxd.com/eibonslam/watchlist";
                       setListUrl(url);
