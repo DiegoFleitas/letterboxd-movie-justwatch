@@ -2,8 +2,20 @@ import { toggleNotice } from "./noticeFunctions";
 import { showMessage } from "./showMessage";
 import { showError } from "./showError";
 
-export function runAlternativeSearch(title: string, year?: string | number): void {
+let isAlternativeSearchInFlight = false;
+
+export function runAlternativeSearch(
+  title: string,
+  year?: string | number,
+  options?: { setAlternativeSearchLoading?: ((loading: boolean) => void) | null },
+): void {
   if (!title) return;
+  if (isAlternativeSearchInFlight) {
+    showMessage("Already working on torrent search...");
+    return;
+  }
+  isAlternativeSearchInFlight = true;
+  options?.setAlternativeSearchLoading?.(true);
   toggleNotice(`Searching for ${title} (${year})...`);
   fetch("/api/alternative-search", {
     method: "POST",
@@ -17,7 +29,11 @@ export function runAlternativeSearch(title: string, year?: string | number): voi
       else
         showMessage({ text: response.text ?? "", url: response.url, title: response.title }, true);
     })
-    .catch((err) => console.error(err));
+    .catch((err) => console.error(err))
+    .finally(() => {
+      isAlternativeSearchInFlight = false;
+      options?.setAlternativeSearchLoading?.(false);
+    });
 }
 
 export function searchSubs(query: string): void {
