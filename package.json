@@ -87,7 +87,8 @@
     "react-dom": "^19.2.4",
     "react-hot-toast": "^2.6.0",
     "ua-parser-js": "^1.0.34",
-    "uuid": "^9.0.0"
+    "uuid": "^9.0.0",
+    "zod": "4"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
