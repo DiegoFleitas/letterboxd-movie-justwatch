@@ -4,13 +4,13 @@ Unit and integration tests use **[Vitest](https://vitest.dev/)**. End-to-end tes
 
 ## Commands
 
-| Command                                                                           | What it runs                                                                                |
-| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `pnpm test` / `pnpm run test:unit`                                                | All Vitest tests under `tests/**/*.test.ts` (see exclusions in `vitest.config.ts`)          |
-| `pnpm run test:backend`                                                           | Fastify integration tests only                                                              |
-| `pnpm run test:filter`, `test:state`, `test:posthog`, `test:redis`, `test:dedupe` | Single Vitest files                                                                         |
-| `pnpm run test:e2e`                                                               | Playwright (`e2e/app.spec.ts`)                                                              |
-| `pnpm run test:poster-flow`                                                       | Manual script: hits `localhost:3000` (backend must be running); **not** part of `pnpm test` |
+| Command                                                                          | What it runs                                                                                   |
+| -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `bun run test` / `bun run test:unit`                                             | All Vitest tests under `tests/**/*.test.ts` (see exclusions in `vitest.config.ts`)             |
+| `bun run test:backend`                                                           | Fastify integration tests only                                                                 |
+| `bun run test:filter`, `test:state`, `test:posthog`, `test:redis`, `test:dedupe` | Single Vitest files                                                                            |
+| `bun run test:e2e`                                                               | Playwright (`e2e/app.spec.ts`)                                                                 |
+| `bun run test:poster-flow`                                                       | Manual script: hits `localhost:3000` (backend must be running); **not** part of `bun run test` |
 
 Config: root [`vitest.config.ts`](../vitest.config.ts) (Node environment, `APP_SECRET_KEY` for sessions). Poster-flow is excluded from the default Vitest run because it requires a live server.
 
@@ -36,7 +36,7 @@ describe("your feature", () => {
 });
 ```
 
-3. Optional: add a script in `package.json`, e.g. `"test:yourfeature": "pnpm exec vitest run tests/yourFeature.test.ts"`.
+3. Optional: add a script in `package.json`, e.g. `"test:yourfeature": "bunx vitest run tests/yourFeature.test.ts"`.
 
 ## Legacy `testUtils.ts`
 

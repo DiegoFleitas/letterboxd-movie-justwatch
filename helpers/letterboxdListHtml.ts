@@ -118,7 +118,7 @@ export function getPageFilms($: CheerioAPI): PageFilm[] {
   for (const sel of FILM_CONTAINER_SELECTORS) {
     const matched = $(sel);
     if (matched.length > 0) {
-      filmContainers = matched;
+      filmContainers = matched as typeof filmContainers;
       break;
     }
   }

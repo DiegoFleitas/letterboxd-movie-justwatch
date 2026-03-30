@@ -24,10 +24,10 @@ describe("axios logging sanitizer", () => {
         // We only care about the logged URL, not the network response.
       });
 
-    const spy = console.log as unknown as vi.SpyInstance;
+    const spy = vi.mocked(console.log);
     const calls = spy.mock.calls
-      .map((args) => String(args[0]))
-      .filter((msg) => msg.startsWith("[axios] Sending request to "));
+      .map((args: unknown[]) => String(args[0]))
+      .filter((msg: string) => msg.startsWith("[axios] Sending request to "));
 
     expect(calls.length).toBeGreaterThan(0);
     const msg = calls[0];

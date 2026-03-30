@@ -1,2 +1,5 @@
-echo "Running pnpm lint before push..."
-pnpm lint
+#!/usr/bin/env sh
+BUN_INSTALL="${BUN_INSTALL:-$HOME/.bun}"
+export PATH="$BUN_INSTALL/bin:${PATH:-}"
+echo "Running bun lint before push..."
+bun run lint

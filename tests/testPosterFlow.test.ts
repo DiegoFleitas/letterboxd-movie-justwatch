@@ -3,7 +3,7 @@
  * Validates that movies get posters from JustWatch/TMDB APIs.
  * Requires server running on localhost:3000.
  *
- * Run with: pnpm run test:poster-flow (after `pnpm start` or `pnpm run dev` backend)
+ * Run with: bun run test:poster-flow (after `bun run start` or `bun run dev` backend)
  */
 
 import axios from "axios";

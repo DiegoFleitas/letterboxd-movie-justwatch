@@ -6,7 +6,7 @@ playwright-report
 test-results
 .turbo
 .cache
-pnpm-lock.yaml
+bun.lock
 package-lock.json
 
 # Scraped/generated fixture HTML; structure matters for tests, formatting does not
