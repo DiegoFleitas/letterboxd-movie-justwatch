@@ -75,7 +75,7 @@ describe("state tile ID management", () => {
   });
 
   it("creates new tile when it doesn't exist", () => {
-    const state = { movieTiles: {} satisfies Record<string, TileData> };
+    const state: { movieTiles: Record<string, TileData> } = { movieTiles: {} };
     const result = updateMovieTile(state, "Test Movie", "2024", {
       link: "https://letterboxd.com/film/test/",
       movieProviders: [],
