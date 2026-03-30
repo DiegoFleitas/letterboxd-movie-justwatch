@@ -1,0 +1,142 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import type { HttpRequestContext, HttpResponseContext } from "../server/httpContext.js";
+
+const { mockAxiosGet } = vi.hoisted(() => ({
+  mockAxiosGet: vi.fn(),
+}));
+
+vi.mock("../helpers/axios.js", () => ({
+  default: () => ({
+    get: mockAxiosGet,
+    post: vi.fn(),
+  }),
+}));
+
+vi.mock("../helpers/redis.js", () => ({
+  getCacheValue: vi.fn().mockResolvedValue(null),
+  setCacheValue: vi.fn().mockResolvedValue(undefined),
+}));
+
+import { letterboxdWatchlist, letterboxdCustomList } from "../controllers/letterboxdLists.js";
+
+describe("letterboxd list URL validation (SSRF guard)", () => {
+  beforeEach(() => {
+    mockAxiosGet.mockReset();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  function createMockRes() {
+    let statusCode = 0;
+    let jsonBody: unknown;
+    const res: HttpResponseContext = {
+      status(code: number) {
+        statusCode = code;
+        return this;
+      },
+      json(payload: unknown) {
+        jsonBody = payload;
+      },
+      send() {},
+      setHeader() {
+        return this;
+      },
+    };
+    return { res, getStatus: () => statusCode, getJson: () => jsonBody };
+  }
+
+  it("rejects custom list URL on watchlist endpoint before any HTTP fetch", async () => {
+    const req: HttpRequestContext = {
+      body: {
+        username: "someone",
+        listUrl: "https://letterboxd.com/someone/list/my-list/",
+        listType: "custom list",
+      },
+      params: {},
+      query: {},
+      headers: {},
+      method: "POST",
+      url: "/api/letterboxd-watchlist",
+      cookies: {},
+      session: null,
+      appLocals: {},
+    };
+    const { res, getStatus } = createMockRes();
+    await letterboxdWatchlist({ req, res });
+
+    expect(getStatus()).toBe(400);
+    expect(mockAxiosGet).not.toHaveBeenCalled();
+  });
+
+  it("rejects non-Letterboxd listUrl on custom-list endpoint", async () => {
+    const req: HttpRequestContext = {
+      body: {
+        username: "u",
+        listUrl: "https://evil.com/list/",
+        listType: "custom list",
+      },
+      params: {},
+      query: {},
+      headers: {},
+      method: "POST",
+      url: "/api/letterboxd-custom-list",
+      cookies: {},
+      session: null,
+      appLocals: {},
+    };
+    const { res, getStatus, getJson } = createMockRes();
+    await letterboxdCustomList({ req, res });
+
+    expect(getStatus()).toBe(400);
+    expect((getJson() as { error?: string }).error).toBeDefined();
+    expect(mockAxiosGet).not.toHaveBeenCalled();
+  });
+
+  it("rejects watchlist URL on custom-list endpoint", async () => {
+    const req: HttpRequestContext = {
+      body: {
+        username: "someone",
+        listUrl: "https://letterboxd.com/someone/watchlist/",
+        listType: "watchlist",
+      },
+      params: {},
+      query: {},
+      headers: {},
+      method: "POST",
+      url: "/api/letterboxd-custom-list",
+      cookies: {},
+      session: null,
+      appLocals: {},
+    };
+    const { res, getStatus } = createMockRes();
+    await letterboxdCustomList({ req, res });
+
+    expect(getStatus()).toBe(400);
+    expect(mockAxiosGet).not.toHaveBeenCalled();
+  });
+
+  it("rejects username mismatch for watchlist", async () => {
+    const req: HttpRequestContext = {
+      body: {
+        username: "alice",
+        listUrl: "https://letterboxd.com/bob/watchlist/",
+        listType: "watchlist",
+      },
+      params: {},
+      query: {},
+      headers: {},
+      method: "POST",
+      url: "/api/letterboxd-watchlist",
+      cookies: {},
+      session: null,
+      appLocals: {},
+    };
+    const { res, getStatus } = createMockRes();
+    await letterboxdWatchlist({ req, res });
+
+    expect(getStatus()).toBe(400);
+    expect(mockAxiosGet).not.toHaveBeenCalled();
+  });
+});

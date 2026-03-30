@@ -1,35 +1,48 @@
 import type { HttpHandler } from "../server/httpContext.js";
 import axiosHelper from "../helpers/axios.js";
 import { getCacheValue, setCacheValue } from "../helpers/redis.js";
+import { parseAllowedProxyUrl } from "../lib/apiSchemas.js";
 
 const axios = axiosHelper();
 const cacheTtl = Number(process.env.CACHE_TTL) || 60;
+
+export { PROXY_ALLOWED_HOSTNAMES, parseAllowedProxyUrl } from "../lib/apiSchemas.js";
+export type { ParseProxyUrlResult } from "../lib/apiSchemas.js";
+
+function postBodyForAxios(body: unknown): unknown {
+  if (body === null || body === undefined) return undefined;
+  if (typeof body !== "object" || Array.isArray(body)) return body;
+  if (Object.keys(body as Record<string, unknown>).length === 0) return undefined;
+  return body;
+}
 
 export const proxy: HttpHandler = async ({ req, res }) => {
   const url = (req.url || "").replace("/api/proxy/", "");
   const { method } = req;
   try {
-    if (!url) {
-      console.log("No url");
-      res.status(404).json({ message: "Url not found" });
+    const parsed = parseAllowedProxyUrl(url);
+    if (!parsed.ok) {
+      res.status(parsed.status).json({ error: parsed.message });
       return;
     }
+    const targetUrl = parsed.url.toString();
     let response: { status: number; data: unknown };
 
-    const cacheKey = `proxy:${method}:${url}:${JSON.stringify(req.body)}`;
+    const cacheKey = `proxy:${method}:${targetUrl}:${JSON.stringify(req.body)}`;
     const cachedResponse = await getCacheValue(cacheKey);
     if (cachedResponse) {
-      console.log("Response found (cached)");
       res.status(200).json(cachedResponse);
       return;
     }
 
+    const finalUrl = addApiKeyToUrl(targetUrl);
+
     switch (method) {
       case "GET":
-        response = await axios.get(addApiKeyToUrl(url));
+        response = await axios.get(finalUrl);
         break;
       case "POST":
-        response = await axios.post(addApiKeyToUrl(url));
+        response = await axios.post(finalUrl, postBodyForAxios(req.body));
         break;
       default:
         res.status(400).json({ error: "Method not allowed" });
@@ -56,7 +69,5 @@ function addApiKeyToUrl(url: string): string {
     default:
       break;
   }
-  const result = urlObj.toString();
-  console.log(result);
-  return result;
+  return urlObj.toString();
 }

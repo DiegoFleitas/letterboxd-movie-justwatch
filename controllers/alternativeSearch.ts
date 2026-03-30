@@ -1,6 +1,7 @@
 import type { HttpHandler } from "../server/httpContext.js";
 import axiosHelper from "../helpers/axios.js";
 import { getCacheValue, setCacheValue } from "../helpers/redis.js";
+import { alternativeSearchBodySchema, firstZodIssueMessage } from "../lib/apiSchemas.js";
 
 const axios = axiosHelper();
 const cacheTtl = Number(process.env.CACHE_TTL) || 3600;
@@ -13,13 +14,22 @@ interface JackettResult {
 }
 
 export const alternativeSearch: HttpHandler = async ({ req, res }) => {
-  const { title, year } = (req.body as { title?: string; year?: string | number }) ?? {};
+  const parsedBody = alternativeSearchBodySchema.safeParse(req.body ?? {});
+  if (!parsedBody.success) {
+    res.status(400).json({ error: firstZodIssueMessage(parsedBody.error) });
+    return;
+  }
+  const { title, year } = parsedBody.data;
 
   const jackettKey = process.env.JACKETT_API_KEY;
   const jackettEndpoint = process.env.JACKETT_API_ENDPOINT;
+  if (!jackettKey?.trim() || !jackettEndpoint?.trim()) {
+    res.status(503).json({ error: "Alternative search is not configured" });
+    return;
+  }
 
   try {
-    let searchQuery = `${title} ${year}`.replace(/ /g, "+");
+    let searchQuery = `${title}${year != null && year !== "" ? ` ${year}` : ""}`.replace(/ /g, "+");
 
     const cacheKey = `jackett:${searchQuery}:`;
     const cachedResponse = (await getCacheValue(cacheKey)) as

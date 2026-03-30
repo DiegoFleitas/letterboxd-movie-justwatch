@@ -10,6 +10,12 @@ import {
   getContentPresence,
   type PageFilm,
 } from "../helpers/letterboxdListHtml.js";
+import {
+  letterboxdWatchlistBodySchema,
+  letterboxdCustomListBodySchema,
+  letterboxdCsvBodySchema,
+  firstZodIssueMessage,
+} from "../lib/apiSchemas.js";
 
 const cacheTtl = Number(process.env.CACHE_TTL) || 20;
 
@@ -132,34 +138,34 @@ const fetchList = async ({
 };
 
 export const letterboxdWatchlist: HttpHandler = async ({ req, res }) => {
-  const body = (req.body as { username?: string; listUrl?: string; listType?: string }) ?? {};
-  const { username, listUrl, listType } = body;
-  if (!username) {
-    res.status(400).json({ error: "Watchlist file not found" });
+  const parsedBody = letterboxdWatchlistBodySchema.safeParse(req.body ?? {});
+  if (!parsedBody.success) {
+    res.status(400).json({ error: firstZodIssueMessage(parsedBody.error) });
     return;
   }
+  const { username, listType, parsedListUrl, page } = parsedBody.data;
   const cacheKeyPrefix = `watchlist:${username}_${listType ?? ""}`;
-  await fetchList({ url: listUrl ?? "", cacheKeyPrefix, req, res });
+  await fetchList({ url: parsedListUrl, cacheKeyPrefix, req: { body: { page } }, res });
 };
 
 export const letterboxdCustomList: HttpHandler = async ({ req, res }) => {
-  const body = (req.body as { username?: string; listUrl?: string; listType?: string }) ?? {};
-  const { username, listUrl, listType } = body;
-  if (!listUrl) {
-    res.status(400).json({ error: "Custom list URL not found" });
+  const parsedBody = letterboxdCustomListBodySchema.safeParse(req.body ?? {});
+  if (!parsedBody.success) {
+    res.status(400).json({ error: firstZodIssueMessage(parsedBody.error) });
     return;
   }
-  const cacheKeyPrefix = `customlist:${username ?? ""}_${listType ?? ""}`;
-  await fetchList({ url: listUrl, cacheKeyPrefix, req, res });
+  const { username, listType, parsedListUrl, page } = parsedBody.data;
+  const cacheKeyPrefix = `customlist:${username}_${listType ?? ""}`;
+  await fetchList({ url: parsedListUrl, cacheKeyPrefix, req: { body: { page } }, res });
 };
 
 export const letterboxdListFromCsv: HttpHandler = async ({ req, res }) => {
-  const body = (req.body as { csv?: string }) ?? {};
-  const csv = body.csv;
-  if (typeof csv !== "string") {
-    res.status(400).json({ error: "CSV content is required" });
+  const parsedBody = letterboxdCsvBodySchema.safeParse(req.body ?? {});
+  if (!parsedBody.success) {
+    res.status(400).json({ error: firstZodIssueMessage(parsedBody.error) });
     return;
   }
+  const { csv } = parsedBody.data;
   try {
     const rows = parseLetterboxdCsv(csv);
     const watchlist = rows.map((row) => ({
