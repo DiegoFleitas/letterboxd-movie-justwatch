@@ -3,7 +3,7 @@ import type { AxiosInstance } from "axios";
 import axiosHelper from "../helpers/axios.js";
 import { getCacheValue, setCacheValue } from "../helpers/redis.js";
 import { processOffers } from "../helpers/processOffers.js";
-import type { JustWatchOffer } from "../types/index.js";
+import type { CanonicalProviderMap, JustWatchOffer } from "../types/index.js";
 
 const axios = axiosHelper();
 const cacheTtl = Number(process.env.CACHE_TTL) || 3600;
@@ -231,8 +231,8 @@ export const searchMovie: HttpHandler = async ({ req, res }) => {
       return;
     }
 
-    const canonicalMap =
-      (req.appLocals.canonicalProviderMap as Record<string, unknown> | undefined) ?? {};
+    const canonicalMap: CanonicalProviderMap =
+      (req.appLocals.canonicalProviderMap as CanonicalProviderMap | undefined) ?? {};
     const providers = processOffers(
       movieData.node.offers as JustWatchOffer[],
       movieData.node.content.fullPath,

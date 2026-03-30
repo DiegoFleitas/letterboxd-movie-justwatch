@@ -1,17 +1,17 @@
 {
   "folders": [
     {
-      "path": "."
+      "path": ".",
     },
     {
-      "path": "../diegos-fly-logger"
+      "path": "../diegos-fly-logger",
     },
     {
-      "path": "../fly-ops"
+      "path": "../fly-ops",
     },
     {
-      "path": "../flyio-jackett"
-    }
+      "path": "../flyio-jackett",
+    },
   ],
   "settings": {},
 }
