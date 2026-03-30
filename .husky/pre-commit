@@ -1,1 +1,5 @@
-pnpm exec lint-staged
+#!/usr/bin/env sh
+# Git GUIs (e.g. VS Code on Windows) often omit Bun from PATH — same as non-login shells.
+BUN_INSTALL="${BUN_INSTALL:-$HOME/.bun}"
+export PATH="$BUN_INSTALL/bin:${PATH:-}"
+bunx lint-staged

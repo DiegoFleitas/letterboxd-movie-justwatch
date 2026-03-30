@@ -158,7 +158,7 @@ export function createServer(): CreatedServer {
       const loggerMiddleware = logging as unknown as (
         req: Request,
         res: Response,
-        next: NextFunction,
+        next: () => void,
       ) => void;
       await new Promise<void>((resolve) => {
         loggerMiddleware({} as Request, {} as Response, () => resolve());

@@ -1,49 +1,36 @@
 # syntax = docker/dockerfile:1
 
-# Adjust NODE_VERSION as desired
-ARG NODE_VERSION=24
-FROM node:${NODE_VERSION}-slim AS base
+ARG BUN_VERSION=1.3.11
+FROM oven/bun:${BUN_VERSION}-slim AS base
 
-LABEL fly_launch_runtime="Node.js"
+LABEL fly_launch_runtime="Bun"
 
-# Node.js app lives here
 WORKDIR /app
 
-# Set production environment
 ENV NODE_ENV="production"
-
-# Install pnpm
-ARG PNPM_VERSION=10.10.0
-RUN npm install -g pnpm@$PNPM_VERSION
-
 
 # Throw-away build stage to reduce size of final image
 FROM base AS build
 
-# Install packages needed to build node modules
+# Packages needed to build native node modules
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential node-gyp pkg-config python-is-python3
+    apt-get install --no-install-recommends -y build-essential pkg-config python-is-python3 && \
+    rm -rf /var/lib/apt/lists/*
 
-# Install node modules
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile --prod=false
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
 
-# Copy application code
 COPY . .
 
-# Build application
-RUN pnpm run build
+RUN bun run build
 
-# Remove development dependencies (keeps dependencies, including tsx for running server.ts)
-RUN pnpm prune --prod
-
+# Production node_modules only
+RUN rm -rf node_modules && bun install --frozen-lockfile --production
 
 # Final stage for app image
 FROM base
 
-# Copy built application
 COPY --from=build /app /app
 
-# Start the server by default, this can be overwritten at runtime
 EXPOSE 3000
-CMD [ "pnpm", "run", "start" ]
+CMD ["bun", "run", "start"]
