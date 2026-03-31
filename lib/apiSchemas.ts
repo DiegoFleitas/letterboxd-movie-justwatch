@@ -134,7 +134,8 @@ export const letterboxdCustomListBodySchema = z
 export type LetterboxdCustomListBodyOut = z.infer<typeof letterboxdCustomListBodySchema>;
 
 export const letterboxdCsvBodySchema = z.object({
-  csv: z.string({ required_error: "CSV content is required" }).min(1, "CSV content is required"),
+  // `required_error` option isn't available with our Zod typing here; use min() message instead
+  csv: z.string().min(1, "CSV content is required"),
 });
 
 export const alternativeSearchBodySchema = z.object({

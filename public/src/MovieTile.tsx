@@ -1,24 +1,68 @@
-import React from "react";
+import React, { useState } from "react";
+import { motion } from "framer-motion";
 import type { TileData, TileProvider } from "./movieTiles";
+import {
+  POSTER_IMAGE_TRANSFORM_S,
+  POSTER_OVERLAY_OPACITY_S,
+  POSTER_HOVER_TRANSFORM_S,
+  motionTransition,
+} from "./animation/timing";
 
 const JUSTWATCH_PROXY = "https://click.justwatch.com/a?r=";
 
 interface MovieTileProps {
   data: TileData;
+  index?: number;
   onAlternativeSearch?: (data: TileData) => void;
+  suppressAnimations?: boolean;
 }
 
-export function MovieTile({ data, onAlternativeSearch }: MovieTileProps): React.ReactElement {
+export function MovieTile({
+  data,
+  index = 0,
+  onAlternativeSearch,
+  suppressAnimations = false,
+}: MovieTileProps): React.ReactElement {
   const { id, title, year, poster, link, movieProviders = [] } = data;
   const providerNames = movieProviders.map((p: { name: string }) => p.name);
+  const [loaded, setLoaded] = useState(false);
 
   const handleProviderClick = (e: React.MouseEvent | React.KeyboardEvent, url?: string): void => {
     e.preventDefault();
     if (url) window.open(`${JUSTWATCH_PROXY}${url}`, "_blank");
   };
 
+  const staggerDelay = Math.min(index * 0.03, 0.6);
+
+  const motionDivProps = suppressAnimations
+    ? {}
+    : {
+        initial: { opacity: 0, y: 8 },
+        animate: {
+          opacity: 1,
+          y: 0,
+          transition: { ...motionTransition(POSTER_IMAGE_TRANSFORM_S * 0.9), delay: staggerDelay },
+        },
+        exit: { opacity: 0, y: 8, transition: motionTransition(POSTER_OVERLAY_OPACITY_S) },
+      };
+
   return (
-    <div className="poster" data-id={id} data-testid="tile">
+    <motion.div
+      className="poster"
+      data-id={id}
+      data-testid="tile"
+      {...motionDivProps}
+      whileHover={
+        suppressAnimations
+          ? undefined
+          : {
+              y: -8,
+              scale: 1.02,
+              rotate: -0.3,
+              transition: motionTransition(POSTER_HOVER_TRANSFORM_S),
+            }
+      }
+    >
       <a
         href={link}
         className="poster-link"
@@ -29,16 +73,57 @@ export function MovieTile({ data, onAlternativeSearch }: MovieTileProps): React.
       >
         {poster ? (
           <>
-            <img className="spinner" src="spinner-min.svg" alt="Loading..." />
-            <img
-              src={poster}
-              alt={`${title} Poster`}
-              onLoad={(e) => {
-                const parent = (e.target as HTMLImageElement).parentNode;
-                const spinner = parent?.querySelector(".spinner");
-                if (spinner) (spinner as HTMLElement).style.display = "none";
-              }}
-            />
+            {suppressAnimations ? (
+              <div
+                className="spinner"
+                style={{
+                  position: "absolute",
+                  left: 12,
+                  top: 12,
+                  zIndex: 4,
+                  opacity: loaded ? 0 : 1,
+                }}
+                aria-hidden
+              />
+            ) : (
+              <motion.div
+                className="spinner"
+                initial={{ opacity: 1 }}
+                animate={{ opacity: loaded ? 0 : 1 }}
+                transition={motionTransition(0.12)}
+                style={{ position: "absolute", left: 12, top: 12, zIndex: 4 }}
+                aria-hidden
+              />
+            )}
+
+            {suppressAnimations ? (
+              // instant image show when suppressing animations
+              // keep onLoad behavior to mark loaded
+              // use normal img to avoid motion work
+              <img
+                src={poster}
+                alt={`${title} Poster`}
+                style={{ opacity: loaded ? 1 : 0 }}
+                onLoad={() => setLoaded(true)}
+              />
+            ) : (
+              <motion.img
+                src={poster}
+                alt={`${title} Poster`}
+                initial={{ opacity: 0 }}
+                animate={{
+                  opacity: loaded ? 1 : 0,
+                  transition: motionTransition(POSTER_IMAGE_TRANSFORM_S),
+                }}
+                onLoad={() => setLoaded(true)}
+                whileHover={{
+                  scale: 1.03,
+                  y: -2,
+                  rotate: -0.5,
+                  transition: motionTransition(POSTER_HOVER_TRANSFORM_S),
+                }}
+              />
+            )}
           </>
         ) : (
           <div className="poster-skeleton" />
@@ -101,6 +186,6 @@ export function MovieTile({ data, onAlternativeSearch }: MovieTileProps): React.
           </div>
         </div>
       </a>
-    </div>
+    </motion.div>
   );
 }
