@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { INTERACTION_FAST_S, motionTransition , TMDB_DEBOUNCE_MS } from "./animation/timing";
+import { INTERACTION_FAST_S, motionTransition, TMDB_DEBOUNCE_MS } from "./animation/timing";
 import { useAppState } from "./AppStateContext";
 import { countries, generes } from "./consts";
 import { CountrySelector } from "./CountrySelector";
