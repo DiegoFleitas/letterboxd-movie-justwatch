@@ -159,17 +159,9 @@
   display: block;
 }
 
-/* Hover/active micro-interactions */
-.poster:hover {
-  transform: translateY(-8px) scale(1.02) rotate(-0.3deg);
-  box-shadow: var(--shadow-strong);
-}
-.poster:hover img {
-  transform: scale(1.03) translateY(-2px) rotate(-0.5deg);
-}
-.poster:active {
-  transform: translateY(-2px) scale(0.995) rotate(0deg);
-}
+/* Hover/active micro-interactions are handled via Motion (public/src/animation/timing.ts)
+   to keep timing and easing consistent across JS and CSS. The original CSS hover
+   rules were removed to avoid conflicting transforms. */
 
 /* Small asymmetric accent bar */
 .poster::after {

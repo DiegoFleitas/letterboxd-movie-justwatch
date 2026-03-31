@@ -1,6 +1,7 @@
 import { toggleNotice } from "./noticeFunctions";
 import { showMessage } from "./showMessage";
 import { showError } from "./showError";
+import { NOTICE_HOLD_ALT_SEARCH_MS } from "./animation/timing";
 
 let isAlternativeSearchInFlight = false;
 
@@ -24,7 +25,7 @@ export function runAlternativeSearch(
   })
     .then((res) => res.json())
     .then((response: { error?: string; text?: string; url?: string; title?: string }) => {
-      setTimeout(() => toggleNotice(null), 1000);
+      setTimeout(() => toggleNotice(null), NOTICE_HOLD_ALT_SEARCH_MS);
       if (response.error) showError(response.error);
       else
         showMessage({ text: response.text ?? "", url: response.url, title: response.title }, true);

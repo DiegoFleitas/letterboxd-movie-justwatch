@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { INTERACTION_FAST_S, motionTransition , TMDB_DEBOUNCE_MS } from "./animation/timing";
 import { useAppState } from "./AppStateContext";
 import { countries, generes } from "./consts";
 import { CountrySelector } from "./CountrySelector";
@@ -17,7 +19,7 @@ function getStoredCountryId(): string | null {
   return null;
 }
 
-const TMDB_DEBOUNCE_MS = 120;
+// TMDB debounce now provided by animation/timing.ts
 const TMDB_MIN_LENGTH = 2;
 const TMDB_MAX_SUGGESTIONS = 8;
 const MOVIE_SUGGESTIONS_ID = "movie-suggestions";
@@ -166,12 +168,15 @@ export function LeftPanel(): React.ReactElement {
         <CountrySelector value={country} onChange={setCountry} />
       </div>
       <div className="search-tabs">
-        <button
+        <motion.button
           type="button"
           className={`tab-btn ${activeTab === "movie" ? "active" : ""}`}
           id="tab-movie"
           data-testid="tab-movie"
           onClick={() => setActiveTab("movie")}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.995 }}
+          transition={motionTransition(INTERACTION_FAST_S)}
         >
           <span className="tab-btn-icon" aria-hidden>
             <svg
@@ -189,13 +194,16 @@ export function LeftPanel(): React.ReactElement {
             </svg>
           </span>
           Movie
-        </button>
-        <button
+        </motion.button>
+        <motion.button
           type="button"
           className={`tab-btn ${activeTab === "list" ? "active" : ""}`}
           id="tab-list"
           data-testid="tab-list"
           onClick={() => setActiveTab("list")}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.995 }}
+          transition={motionTransition(INTERACTION_FAST_S)}
         >
           <span className="tab-btn-icon" aria-hidden>
             <svg
@@ -217,193 +225,213 @@ export function LeftPanel(): React.ReactElement {
             </svg>
           </span>
           List
-        </button>
+        </motion.button>
       </div>
       <div className="tab-content active-section">
-        <form
-          id="movie-form"
-          className={`tab-pane ${activeTab === "movie" ? "is-active" : ""}`}
-          data-testid="movie-form"
-          onSubmit={handleMovieSubmit}
-        >
-          <h3>Search a specific movie...</h3>
-          <label htmlFor="movie-input">Movie Title:</label>
-          <div ref={typeaheadRef} className="twitter-typeahead">
-            <input
-              ref={movieInputRef}
-              type="text"
-              id="movie-input"
-              role="combobox"
-              aria-autocomplete="list"
-              aria-expanded={suggestionsOpen}
-              aria-controls={MOVIE_SUGGESTIONS_ID}
-              placeholder="Jurassic Park"
-              required
-              data-testid="movie-input"
-              value={movieTitle}
-              onChange={(e) => setMovieTitle(e.target.value)}
-              onFocus={() => suggestions.length > 0 && setSuggestionsOpen(true)}
-              autoComplete="off"
-            />
-            {suggestionsLoading && (
-              <>
-                <span className="typeahead-loading" aria-hidden="true">
-                  …
-                </span>
-                <span className="sr-only" aria-live="polite">
-                  Loading movie suggestions
-                </span>
-              </>
-            )}
-            {suggestionsOpen && suggestions.length > 0 && (
-              <ul
-                id={MOVIE_SUGGESTIONS_ID}
-                className="tt-menu movie-suggestions"
-                role="listbox"
-                aria-label="Movie title suggestions"
-              >
-                {suggestions.map((movie) => (
-                  <li
-                    key={movie.id}
-                    className="tt-suggestion"
-                    onClick={() => pickSuggestion(movie)}
-                    onKeyDown={(e) =>
-                      (e.key === "Enter" || e.key === " ") &&
-                      (e.preventDefault(), pickSuggestion(movie))
-                    }
-                    role="option"
-                    aria-selected={false}
-                    tabIndex={0}
-                  >
-                    {movie.poster_path ? (
-                      <img
-                        src={`https://image.tmdb.org/t/p/w92${movie.poster_path}`}
-                        alt=""
-                        width={44}
-                        height={66}
-                      />
-                    ) : (
-                      <div className="typeahead-poster-placeholder" />
-                    )}
-                    <div>
-                      <span className="title">{movie.title}</span>
-                      {movie.release_date ? (
-                        <span className="meta"> ({movie.release_date.slice(0, 4)})</span>
-                      ) : null}
-                      {movie.genre_ids?.length ? (
-                        <div className="meta">{getGenreNames(movie.genre_ids)}</div>
-                      ) : null}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-          <input type="hidden" id="title" name="title" value={movieTitle} readOnly aria-hidden />
-          <label htmlFor="year">Release year:</label>
-          <input
-            type="text"
-            id="year"
-            name="year"
-            placeholder="1993"
-            required
-            aria-label="Movie release year input"
-            data-testid="movie-year"
-            value={movieYear}
-            onChange={(e) => setMovieYear(e.target.value)}
-          />
-          <div className="submit-container">
-            <button
-              type="submit"
-              className="btn btn-primary"
-              data-testid="movie-submit"
-              disabled={isMovieSearchLoading}
+        <AnimatePresence mode="wait">
+          {activeTab === "movie" ? (
+            <motion.form
+              key="movie"
+              id="movie-form"
+              className={`tab-pane is-active`}
+              data-testid="movie-form"
+              onSubmit={handleMovieSubmit}
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0, transition: motionTransition(INTERACTION_FAST_S) }}
+              exit={{ opacity: 0, x: 8, transition: motionTransition(INTERACTION_FAST_S) }}
             >
-              {isMovieSearchLoading ? "Searching..." : "Search"}
-            </button>
-          </div>
-          <button
-            type="button"
-            className={`alternative-search btn ${showAltSearchButton ? "" : "hide-alternative-search"}`}
-            aria-label="Alternative search button"
-            data-testid="alternative-search-btn"
-            onClick={handleAlternativeSearch}
-            disabled={isAlternativeSearchLoading}
-          >
-            {isAlternativeSearchLoading ? "Searching..." : "Torrent search 🏴‍☠️"}
-          </button>
-        </form>
-        <form
-          id="letterboxd-form"
-          className={`tab-pane ${activeTab === "list" ? "is-active" : ""}`}
-          data-testid="list-form"
-          onSubmit={handleListSubmit}
-        >
-          <h3>...or a Letterboxd list</h3>
-          <div>
-            <div className="url-container">
-              <input
-                id="list-url"
-                name="listUrl"
-                type="text"
-                placeholder="https://letterboxd.com/username/watchlist/"
-                required
-                aria-label="Letterboxd list URL input"
-                data-testid="list-url"
-                value={listUrl}
-                onChange={(e) => setListUrl(e.target.value)}
-              />
-            </div>
-            <div className="submit-container">
-              <button
-                type="submit"
-                className="btn btn-primary"
-                data-testid="list-submit"
-                disabled={isListLoading}
-              >
-                {isListLoading ? "Submitting..." : "Submit"}
-              </button>
-              {import.meta.env?.DEV && (
-                <>
-                  <button
-                    type="button"
-                    className="btn btn-secondary dev-clear-cache"
-                    data-testid="dev-clear-list-cache"
-                    disabled={isListLoading}
-                    onClick={async () => {
-                      try {
-                        const r = await fetch("/api/dev/clear-list-cache", { method: "POST" });
-                        const data = (await r.json()) as { cleared?: number; error?: string };
-                        if (r.ok) {
-                          window.alert(`Cleared ${data.cleared ?? 0} list cache entries.`);
-                        } else {
-                          window.alert(data.error || "Failed to clear cache");
+              <h3>Search a specific movie...</h3>
+              <label htmlFor="movie-input">Movie Title:</label>
+              <div ref={typeaheadRef} className="twitter-typeahead">
+                <input
+                  ref={movieInputRef}
+                  type="text"
+                  id="movie-input"
+                  role="combobox"
+                  aria-autocomplete="list"
+                  aria-expanded={suggestionsOpen}
+                  aria-controls={MOVIE_SUGGESTIONS_ID}
+                  placeholder="Jurassic Park"
+                  required
+                  data-testid="movie-input"
+                  value={movieTitle}
+                  onChange={(e) => setMovieTitle(e.target.value)}
+                  onFocus={() => suggestions.length > 0 && setSuggestionsOpen(true)}
+                  autoComplete="off"
+                />
+                {suggestionsLoading && (
+                  <>
+                    <span className="typeahead-loading" aria-hidden="true">
+                      …
+                    </span>
+                    <span className="sr-only" aria-live="polite">
+                      Loading movie suggestions
+                    </span>
+                  </>
+                )}
+                {suggestionsOpen && suggestions.length > 0 && (
+                  <ul
+                    id={MOVIE_SUGGESTIONS_ID}
+                    className="tt-menu movie-suggestions"
+                    role="listbox"
+                    aria-label="Movie title suggestions"
+                  >
+                    {suggestions.map((movie) => (
+                      <li
+                        key={movie.id}
+                        className="tt-suggestion"
+                        onClick={() => pickSuggestion(movie)}
+                        onKeyDown={(e) =>
+                          (e.key === "Enter" || e.key === " ") &&
+                          (e.preventDefault(), pickSuggestion(movie))
                         }
-                      } catch (e) {
-                        window.alert("Failed to clear cache: " + (e as Error).message);
-                      }
-                    }}
-                  >
-                    Clear list cache (dev)
-                  </button>
+                        role="option"
+                        aria-selected={false}
+                        tabIndex={0}
+                      >
+                        {movie.poster_path ? (
+                          <img
+                            src={`https://image.tmdb.org/t/p/w92${movie.poster_path}`}
+                            alt=""
+                            width={44}
+                            height={66}
+                          />
+                        ) : (
+                          <div className="typeahead-poster-placeholder" />
+                        )}
+                        <div>
+                          <span className="title">{movie.title}</span>
+                          {movie.release_date ? (
+                            <span className="meta"> ({movie.release_date.slice(0, 4)})</span>
+                          ) : null}
+                          {movie.genre_ids?.length ? (
+                            <div className="meta">{getGenreNames(movie.genre_ids)}</div>
+                          ) : null}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <input
+                type="hidden"
+                id="title"
+                name="title"
+                value={movieTitle}
+                readOnly
+                aria-hidden
+              />
+              <label htmlFor="year">Release year:</label>
+              <input
+                type="text"
+                id="year"
+                name="year"
+                placeholder="1993"
+                required
+                aria-label="Movie release year input"
+                data-testid="movie-year"
+                value={movieYear}
+                onChange={(e) => setMovieYear(e.target.value)}
+              />
+              <div className="submit-container">
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  data-testid="movie-submit"
+                  disabled={isMovieSearchLoading}
+                >
+                  {isMovieSearchLoading ? "Searching..." : "Search"}
+                </button>
+              </div>
+              <button
+                type="button"
+                className={`alternative-search btn ${showAltSearchButton ? "" : "hide-alternative-search"}`}
+                aria-label="Alternative search button"
+                data-testid="alternative-search-btn"
+                onClick={handleAlternativeSearch}
+                disabled={isAlternativeSearchLoading}
+              >
+                {isAlternativeSearchLoading ? "Searching..." : "Torrent search 🏴‍☠️"}
+              </button>
+            </motion.form>
+          ) : (
+            <motion.form
+              key="list"
+              id="letterboxd-form"
+              className={`tab-pane is-active`}
+              data-testid="list-form"
+              onSubmit={handleListSubmit}
+              initial={{ opacity: 0, x: 8 }}
+              animate={{ opacity: 1, x: 0, transition: motionTransition(INTERACTION_FAST_S) }}
+              exit={{ opacity: 0, x: -8, transition: motionTransition(INTERACTION_FAST_S) }}
+            >
+              <h3>...or a Letterboxd list</h3>
+              <div>
+                <div className="url-container">
+                  <input
+                    id="list-url"
+                    name="listUrl"
+                    type="text"
+                    placeholder="https://letterboxd.com/username/watchlist/"
+                    required
+                    aria-label="Letterboxd list URL input"
+                    data-testid="list-url"
+                    value={listUrl}
+                    onChange={(e) => setListUrl(e.target.value)}
+                  />
+                </div>
+                <div className="submit-container">
                   <button
-                    type="button"
-                    className="btn btn-secondary"
-                    data-testid="dev-load-eibonslam-watchlist"
+                    type="submit"
+                    className="btn btn-primary"
+                    data-testid="list-submit"
                     disabled={isListLoading}
-                    onClick={() => {
-                      const url = "https://letterboxd.com/eibonslam/watchlist";
-                      setListUrl(url);
-                      loadLetterboxdList?.(url, country);
-                    }}
                   >
-                    Load eibonslam watchlist (dev)
+                    {isListLoading ? "Submitting..." : "Submit"}
                   </button>
-                </>
-              )}
-            </div>
-          </div>
-        </form>
+                  {import.meta.env?.DEV && (
+                    <>
+                      <button
+                        type="button"
+                        className="btn btn-secondary dev-clear-cache"
+                        data-testid="dev-clear-list-cache"
+                        disabled={isListLoading}
+                        onClick={async () => {
+                          try {
+                            const r = await fetch("/api/dev/clear-list-cache", { method: "POST" });
+                            const data = (await r.json()) as { cleared?: number; error?: string };
+                            if (r.ok) {
+                              window.alert(`Cleared ${data.cleared ?? 0} list cache entries.`);
+                            } else {
+                              window.alert(data.error || "Failed to clear cache");
+                            }
+                          } catch (e) {
+                            window.alert("Failed to clear cache: " + (e as Error).message);
+                          }
+                        }}
+                      >
+                        Clear list cache (dev)
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        data-testid="dev-load-eibonslam-watchlist"
+                        disabled={isListLoading}
+                        onClick={() => {
+                          const url = "https://letterboxd.com/eibonslam/watchlist";
+                          setListUrl(url);
+                          loadLetterboxdList?.(url, country);
+                        }}
+                      >
+                        Load eibonslam watchlist (dev)
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </motion.form>
+          )}
+        </AnimatePresence>
       </div>
     </article>
   );

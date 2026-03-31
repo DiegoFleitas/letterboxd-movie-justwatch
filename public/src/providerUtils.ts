@@ -4,7 +4,9 @@
 type CanonicalByNames = Record<string, { id: string; name: string }>;
 
 function getCanonicalByNames(): CanonicalByNames | null | undefined {
-  return typeof window !== "undefined" ? window.__CANONICAL_PROVIDERS_BY_NAME__ : null;
+  if (typeof window === "undefined") return null;
+  const w = window as unknown as { __CANONICAL_PROVIDERS_BY_NAME__?: CanonicalByNames };
+  return w.__CANONICAL_PROVIDERS_BY_NAME__;
 }
 
 export function normalizedProviderKey(name: string | null | undefined): string {

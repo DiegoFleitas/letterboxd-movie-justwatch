@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { setToastImpl } from "./toastApi";
+import { TOAST_DEFAULT_DURATION_MS } from "./animation/timing";
 import { useAppState } from "./AppStateContext";
 
 const toastStyle = {
@@ -12,7 +13,7 @@ const toastStyle = {
 };
 const toastOptions = {
   position: "top-right" as const,
-  duration: 3000,
+  duration: TOAST_DEFAULT_DURATION_MS,
   style: toastStyle,
   className: "app-toast",
   icon: "",

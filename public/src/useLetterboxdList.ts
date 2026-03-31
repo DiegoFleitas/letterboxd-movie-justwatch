@@ -1,4 +1,5 @@
 import { useRef, useCallback, useEffect } from "react";
+import { NOTICE_HOLD_LIST_COMPLETE_MS } from "./animation/timing";
 import { parseLetterboxdListUrl } from "../../lib/letterboxdListUrl";
 import { toggleNotice } from "./noticeFunctions";
 import { showError, showBatchErrors } from "./showError";
@@ -187,7 +188,7 @@ export function useLetterboxdList(
         toggleNotice(null);
       } finally {
         if (allPagesLoadedRef.current) {
-          setTimeout(() => toggleNotice(null), 1500);
+          setTimeout(() => toggleNotice(null), NOTICE_HOLD_LIST_COMPLETE_MS);
         }
       }
     },

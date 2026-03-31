@@ -36,9 +36,11 @@ img.logo {
   border-radius: var(--radius-sm);
   border: 1px solid transparent;
   transition:
-    opacity 0.2s ease,
-    border-color 0.2s ease,
-    transform 0.15s ease;
+    opacity 0.12s ease,
+    border-color 0.12s ease,
+    transform 0.08s ease;
+  will-change: transform;
+  backface-visibility: hidden;
 }
 
 #icons-container-main .streaming-provider-icon img {
@@ -47,6 +49,8 @@ img.logo {
   border-radius: 4px;
   object-fit: contain;
 }
+
+/* Alternative search icon is shown inline with other providers by default. */
 
 .streaming-provider-icon {
   opacity: 0.35;
@@ -61,6 +65,50 @@ img.logo {
   opacity: 1;
   border-color: var(--color-accent-muted);
   box-shadow: 0 0 0 1px var(--color-accent-muted);
+}
+
+/* Motion badge shown when a provider is selected */
+.provider-badge {
+  position: absolute;
+  right: -6px;
+  top: -6px;
+  min-width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 12px;
+  background: var(--color-accent);
+  color: #091017;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  padding: 0 4px;
+}
+
+#icons-container-main .streaming-provider-icon {
+  position: relative;
+}
+
+/* Tooltip for provider icons */
+.provider-tooltip {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(100% + 8px);
+  background: rgba(10, 12, 16, 0.95);
+  color: var(--color-text);
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+  transform-origin: center bottom;
+}
+
+#icons-container-main .streaming-provider-icon:focus-visible .provider-tooltip {
+  opacity: 1;
 }
 
 /* Footer tagline (random message) */
@@ -78,6 +126,9 @@ img.logo {
   font-weight: 400;
   opacity: 0.85;
 }
+
+/* Small toggle to reveal hidden providers */
+/* Removed toggle-related styles; no-op kept for backwards compatibility */
 
 @keyframes float {
   0%,
