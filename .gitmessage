@@ -1,0 +1,11 @@
+# <type>(<scope>): <imperative subject, ~72 chars, no trailing period>
+#
+# Common types: chore, feat, fix, docs, ci, refactor, test
+# Scopes: area of change (e.g. prettier, fly, scripts, deps) — optional but helps git log filters
+#
+# Body (optional): use for non-obvious changes — short bullets for what/why (e.g. why ignore a path).
+# Separate subject and body with a blank line.
+#
+# Conventional Commits: https://www.conventionalcommits.org/
+#
+# Lines starting with # are ignored by git.
