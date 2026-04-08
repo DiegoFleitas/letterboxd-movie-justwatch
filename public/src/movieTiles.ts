@@ -20,6 +20,13 @@ export interface TileState {
   streamingProviders: Record<string, TileProvider & { urls?: string[] }>;
 }
 
+export type SearchTab = "movie" | "list";
+
+export interface TabbedTileState {
+  movie: TileState;
+  list: TileState;
+}
+
 export interface MergeData {
   link?: string;
   poster?: string | null;
@@ -108,6 +115,30 @@ export function mergeTileState(
   }
 
   return { movieTiles: tiles, streamingProviders: providers };
+}
+
+export function createInitialTileState(): TileState {
+  return { movieTiles: {}, streamingProviders: {} };
+}
+
+export function createInitialTabbedTileState(): TabbedTileState {
+  return {
+    movie: createInitialTileState(),
+    list: createInitialTileState(),
+  };
+}
+
+export function mergeTileStateForTab(
+  prev: TabbedTileState,
+  tab: SearchTab,
+  title: string,
+  year: string | number | null,
+  data?: MergeData | null,
+): TabbedTileState {
+  return {
+    ...prev,
+    [tab]: mergeTileState(prev[tab], title, year, data),
+  };
 }
 
 export function getTileProviderNames(tileData: TileData | null | undefined): string[] {
