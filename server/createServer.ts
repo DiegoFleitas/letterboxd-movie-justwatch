@@ -31,6 +31,7 @@ import {
 import { getPosthog, shutdownPosthog } from "../lib/posthog.js";
 import { injectPosthogConfig } from "../lib/injectPosthogConfig.js";
 import type { HttpHandler, HttpRequestContext, HttpResponseContext } from "./httpContext.js";
+import * as Sentry from "@sentry/node";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -60,6 +61,10 @@ export function createServer(): CreatedServer {
     const app: FastifyInstance = Fastify({
       logger: true,
     });
+
+    if (process.env.SENTRY_DSN?.trim()) {
+      Sentry.setupFastifyErrorHandler(app);
+    }
 
     const canonicalProviderMap = getCanonicalProviderMap();
     (app as unknown as { locals?: { [key: string]: unknown } }).locals = {
