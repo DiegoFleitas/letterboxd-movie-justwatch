@@ -13,7 +13,7 @@
         "@sentry/node": "^10.47.0",
         "axios": "^1.7.4",
         "cheerio": "^1.0.0-rc.12",
-        "diegos-fly-logger": "^1.1.1",
+        "diegos-fly-logger": "^2.0.0",
         "dotenv": "^16.0.3",
         "fastify": "^5.0.0",
         "framer-motion": "^12.38.0",
@@ -814,7 +814,7 @@
 
     "detect-node": ["detect-node@2.1.0", "", {}, "sha512-T0NIuQpnTvFDATNuHN5roPwSBG83rFsuO+MXXH9/3N1eFbn4wcPjttvjMLEPWJ0RGUYgQE7cGgS3tNxbqCGM7g=="],
 
-    "diegos-fly-logger": ["diegos-fly-logger@1.1.1", "", { "dependencies": { "dotenv": "^10.0.0", "morgan": "^1.10.0", "ua-parser-js": "^0.7.31" } }, "sha512-v7O7tGRc3nmI8YioX+BHMXYT4BU+vUrrOujk7jvqJUpZTc5eNPyO8w040WSNiu3u1aYqNsLM6wOgcjTozcDzIA=="],
+    "diegos-fly-logger": ["diegos-fly-logger@2.0.0", "", { "dependencies": { "dotenv": "^10.0.0", "morgan": "^1.10.0", "ua-parser-js": "^0.7.31" } }, "sha512-H8BjBhdOynZPsBrrqEc6F2vopyuTM9GQ6KQQ6tcs+kTgRzgEpLe1SnlfNQVHxXvf7oFZHL9PYLbdclNZTm2k4g=="],
 
     "diff": ["diff@8.0.4", "", {}, "sha512-DPi0FmjiSU5EvQV0++GFDOJ9ASQUVFh5kD+OzOnYdi7n3Wpm9hWWGfB/O2blfHcMVTL5WkQXSnRiK9makhrcnw=="],
 
