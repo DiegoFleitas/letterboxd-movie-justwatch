@@ -62,10 +62,6 @@ export function createServer(): CreatedServer {
       logger: true,
     });
 
-    if (process.env.SENTRY_DSN?.trim()) {
-      Sentry.setupFastifyErrorHandler(app);
-    }
-
     const canonicalProviderMap = getCanonicalProviderMap();
     (app as unknown as { locals?: { [key: string]: unknown } }).locals = {
       canonicalProviderMap,
@@ -216,8 +212,13 @@ export function createServer(): CreatedServer {
     });
 
     const posthog = getPosthog();
-    app.setErrorHandler(async (err, _request, reply) => {
+    app.setErrorHandler(async (err, request, reply) => {
       console.error(err);
+      if (Sentry.getClient()) {
+        Sentry.captureException(err, {
+          extra: { method: request.method, url: request.url },
+        });
+      }
       if (posthog) {
         try {
           await posthog.capture({
