@@ -21,8 +21,10 @@ type MergeTileFn = (
 export function buildMovieMergeData(response: MovieSearchResponse): MergeData {
   return {
     poster: response.poster ?? "/movie_placeholder.svg",
-    link: response.link ?? "",
-    movieProviders: response.movieProviders ?? [],
+    ...(response.link !== undefined ? { link: response.link } : {}),
+    ...(response.movieProviders !== undefined
+      ? { movieProviders: response.movieProviders }
+      : {}),
   };
 }
 

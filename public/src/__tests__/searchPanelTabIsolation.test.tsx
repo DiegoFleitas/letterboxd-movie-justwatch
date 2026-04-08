@@ -7,6 +7,8 @@ import { createInitialTabbedTileState, mergeTileStateForTab } from "../movieTile
 import { AppStateProvider, selectActiveTileState } from "../AppStateContext";
 import { LeftPanel } from "../LeftPanel";
 
+const COUNTRY_STORAGE_KEY = "letterboxd-justwatch-country";
+
 describe("search panel tab isolation model", () => {
   it("selects only active-tab posters and preserves inactive tab", () => {
     let state = createInitialTabbedTileState();
@@ -29,6 +31,7 @@ describe("search panel tab isolation model", () => {
   });
 
   it("does not render torrent search button in left panel", async () => {
+    localStorage.setItem(COUNTRY_STORAGE_KEY, "en_US");
     const container = document.createElement("div");
     const root = createRoot(container);
 
@@ -42,5 +45,7 @@ describe("search panel tab isolation model", () => {
 
     expect(container.querySelector('[data-testid="alternative-search-btn"]')).toBeNull();
     expect(container.textContent?.includes("Torrent search")).toBe(false);
+
+    localStorage.removeItem(COUNTRY_STORAGE_KEY);
   });
 });
