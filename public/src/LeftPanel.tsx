@@ -52,15 +52,13 @@ function getGenreNames(genreIds: number[] | undefined): string {
 
 export function LeftPanel(): React.ReactElement {
   const {
-    showAltSearchButton,
     loadLetterboxdList,
     submitMovieSearch,
-    runAlternativeSearch,
+    activeTab,
+    setActiveTab,
     isMovieSearchLoading,
     isListLoading,
-    isAlternativeSearchLoading,
   } = useAppState();
-  const [activeTab, setActiveTab] = useState("movie");
   const [country, setCountryState] = useState(() => {
     const stored = getStoredCountryId();
     return (
@@ -155,11 +153,6 @@ export function LeftPanel(): React.ReactElement {
   const handleListSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
     loadLetterboxdList?.(listUrl.trim(), country);
-  };
-
-  const handleAlternativeSearch = (e: React.FormEvent): void => {
-    e.preventDefault();
-    runAlternativeSearch?.(movieTitle, movieYear);
   };
 
   return (
@@ -343,16 +336,6 @@ export function LeftPanel(): React.ReactElement {
                   {isMovieSearchLoading ? "Searching..." : "Search"}
                 </button>
               </div>
-              <button
-                type="button"
-                className={`alternative-search btn ${showAltSearchButton ? "" : "hide-alternative-search"}`}
-                aria-label="Alternative search button"
-                data-testid="alternative-search-btn"
-                onClick={handleAlternativeSearch}
-                disabled={isAlternativeSearchLoading}
-              >
-                {isAlternativeSearchLoading ? "Searching..." : "Torrent search 🏴‍☠️"}
-              </button>
             </motion.form>
           ) : (
             <motion.form

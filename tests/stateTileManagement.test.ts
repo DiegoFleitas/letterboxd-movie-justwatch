@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
+import { createInitialTabbedTileState, mergeTileStateForTab } from "../public/src/movieTiles.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const letterboxd = JSON.parse(
@@ -163,5 +164,43 @@ describe("state tile ID management", () => {
     expect(newTile.poster).toBe(poster);
     expect((newTile.movieProviders as unknown[]).length).toBe(1);
     expect(newTile.year).toBe(String(newYear));
+  });
+
+  it("keeps list merges isolated from movie tab", () => {
+    let state = createInitialTabbedTileState();
+    state = mergeTileStateForTab(state, "list", "List Movie", "2020", {
+      poster: "https://example.com/list.jpg",
+      link: "https://letterboxd.com/film/list-movie/",
+    });
+
+    expect(Object.keys(state.list.movieTiles)).toHaveLength(1);
+    expect(Object.keys(state.movie.movieTiles)).toHaveLength(0);
+  });
+
+  it("keeps movie merges isolated from list tab", () => {
+    let state = createInitialTabbedTileState();
+    state = mergeTileStateForTab(state, "movie", "Movie Search Film", "2021", {
+      poster: "https://example.com/movie.jpg",
+      link: "https://letterboxd.com/film/movie-search-film/",
+    });
+
+    expect(Object.keys(state.movie.movieTiles)).toHaveLength(1);
+    expect(Object.keys(state.list.movieTiles)).toHaveLength(0);
+  });
+
+  it("accumulates only in the targeted tab", () => {
+    let state = createInitialTabbedTileState();
+    state = mergeTileStateForTab(state, "movie", "First Movie", "2022", {
+      link: "https://letterboxd.com/film/first-movie/",
+    });
+    state = mergeTileStateForTab(state, "movie", "Second Movie", "2023", {
+      link: "https://letterboxd.com/film/second-movie/",
+    });
+    state = mergeTileStateForTab(state, "list", "List Item", "2024", {
+      link: "https://letterboxd.com/film/list-item/",
+    });
+
+    expect(Object.keys(state.movie.movieTiles)).toHaveLength(2);
+    expect(Object.keys(state.list.movieTiles)).toHaveLength(1);
   });
 });
