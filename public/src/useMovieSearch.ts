@@ -22,9 +22,7 @@ export function buildMovieMergeData(response: MovieSearchResponse): MergeData {
   return {
     poster: response.poster ?? "/movie_placeholder.svg",
     ...(response.link !== undefined ? { link: response.link } : {}),
-    ...(response.movieProviders !== undefined
-      ? { movieProviders: response.movieProviders }
-      : {}),
+    ...(response.movieProviders !== undefined ? { movieProviders: response.movieProviders } : {}),
   };
 }
 
