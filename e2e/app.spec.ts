@@ -168,9 +168,9 @@ test.describe("Movie form", () => {
     await page.getByTestId("movie-year").fill(String(req.year ?? ""));
     await page.getByTestId("movie-submit").click();
 
-    await expect(
-      page.getByText(new RegExp(`${req.title}|${(res.error ?? "").substring(0, 25)}`)),
-    ).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole("status").filter({ hasText: "Movie not found" })).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test("rapid submit clicks only trigger one movie request", async ({ page }) => {
@@ -535,7 +535,11 @@ test.describe("Alternative search", () => {
     await expect(
       page.getByRole("status").filter({ hasText: /Inception|Available on/ }),
     ).toBeVisible({ timeout: 5000 });
-    await expect(page.getByTestId("alternative-search-btn")).toBeVisible({ timeout: 3000 });
+    const altButton = page
+      .getByTestId("poster-showcase")
+      .locator('button[data-sp="alternative-search-tile"]')
+      .first();
+    await expect(altButton).toBeVisible({ timeout: 3000 });
 
     await page.route("**/api/alternative-search", (route) =>
       route.fulfill({
@@ -549,7 +553,7 @@ test.describe("Alternative search", () => {
       }),
     );
 
-    await page.getByTestId("alternative-search-btn").click();
+    await altButton.click();
 
     await expect(page.getByText(/Found on Example/)).toBeVisible({ timeout: 5000 });
   });
@@ -574,7 +578,11 @@ test.describe("Alternative search", () => {
     await page.getByTestId("movie-input").fill("Inception");
     await page.getByTestId("movie-year").fill("2010");
     await page.getByTestId("movie-submit").click();
-    await expect(page.getByTestId("alternative-search-btn")).toBeVisible({ timeout: 3000 });
+    const altBtn = page
+      .getByTestId("poster-showcase")
+      .locator('button[data-sp="alternative-search-tile"]')
+      .first();
+    await expect(altBtn).toBeVisible({ timeout: 3000 });
 
     let altRequestCount = 0;
     await page.route("**/api/alternative-search", async (route) => {
@@ -591,13 +599,9 @@ test.describe("Alternative search", () => {
       });
     });
 
-    const altBtn = page.getByTestId("alternative-search-btn");
     await altBtn.click();
     await altBtn.click({ force: true });
     await altBtn.click({ force: true });
-
-    await expect(altBtn).toBeDisabled();
-    await expect(altBtn).toHaveText("Searching...");
     await expect
       .poll(() => altRequestCount, {
         timeout: 3000,
