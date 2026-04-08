@@ -1,6 +1,5 @@
-import { config as dotenvConfig } from "dotenv";
-dotenvConfig();
-
+import "./instrument.js";
+import * as Sentry from "@sentry/node";
 import { createServer } from "./server/createServer.js";
 
 const port = Number(process.env.PORT ?? 3000);
@@ -12,6 +11,9 @@ async function main() {
 
   const gracefulShutdown = async () => {
     try {
+      if (Sentry.getClient()) {
+        await Sentry.close(2000);
+      }
       await close();
       process.exit(0);
     } catch (err) {
@@ -24,7 +26,11 @@ async function main() {
   process.on("SIGINT", gracefulShutdown);
 }
 
-main().catch((err) => {
+main().catch(async (err) => {
   console.error("Failed to start fastify server:", err);
+  if (Sentry.getClient()) {
+    Sentry.captureException(err);
+    await Sentry.close(2000);
+  }
   process.exit(1);
 });

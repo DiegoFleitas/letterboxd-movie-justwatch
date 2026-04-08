@@ -31,6 +31,7 @@ import {
 import { getPosthog, shutdownPosthog } from "../lib/posthog.js";
 import { injectPosthogConfig } from "../lib/injectPosthogConfig.js";
 import type { HttpHandler, HttpRequestContext, HttpResponseContext } from "./httpContext.js";
+import * as Sentry from "@sentry/node";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -211,8 +212,13 @@ export function createServer(): CreatedServer {
     });
 
     const posthog = getPosthog();
-    app.setErrorHandler(async (err, _request, reply) => {
+    app.setErrorHandler(async (err, request, reply) => {
       console.error(err);
+      if (Sentry.getClient()) {
+        Sentry.captureException(err, {
+          extra: { method: request.method, url: request.url },
+        });
+      }
       if (posthog) {
         try {
           await posthog.capture({
