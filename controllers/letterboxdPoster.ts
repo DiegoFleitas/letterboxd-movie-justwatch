@@ -1,8 +1,12 @@
 import type { HttpHandler } from "../server/httpContext.js";
+import * as Sentry from "@sentry/node";
 import axiosHelper from "../helpers/axios.js";
 import { getCacheValue, setCacheValue } from "../helpers/redis.js";
+import { getLetterboxdFetchTimeoutMs } from "../lib/letterboxdFetchTimeout.js";
+import { getRandomScrapeUserAgent } from "../lib/scrapeUserAgent.js";
 
 const axios = axiosHelper(true);
+const letterboxdFetchTimeoutMs = getLetterboxdFetchTimeoutMs();
 const postersTtl = Number(process.env.CACHE_TTL) || 60;
 
 export const letterboxdPoster: HttpHandler = async ({ req, res }) => {
@@ -38,10 +42,11 @@ export const letterboxdPoster: HttpHandler = async ({ req, res }) => {
     const posterUrl = cacheBustingKey ? `${baseUrl}?v=${cacheBustingKey}` : baseUrl;
 
     await axios.get(posterUrl, {
+      timeout: letterboxdFetchTimeoutMs,
       responseType: "arraybuffer",
       headers: {
         Referer: "https://letterboxd.com/",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "User-Agent": getRandomScrapeUserAgent(),
       },
     });
 
@@ -57,6 +62,9 @@ export const letterboxdPoster: HttpHandler = async ({ req, res }) => {
     if (err.response?.status === 403 || err.response?.status === 404) {
       res.status(404).json({ error: "Poster not available", fallback: true });
       return;
+    }
+    if (Sentry.getClient()) {
+      Sentry.captureException(error, { extra: { route: "letterboxd-poster", filmSlug } });
     }
     res.status(500).json({ error: "Internal server error" });
   }

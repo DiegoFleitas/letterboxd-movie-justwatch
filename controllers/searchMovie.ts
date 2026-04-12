@@ -4,6 +4,7 @@ import axiosHelper from "../helpers/axios.js";
 import { getCacheValue, setCacheValue } from "../helpers/redis.js";
 import { processOffers } from "../helpers/processOffers.js";
 import type { CanonicalProviderMap, JustWatchOffer } from "../types/index.js";
+import { getRandomScrapeUserAgent } from "../lib/scrapeUserAgent.js";
 
 const axios = axiosHelper();
 const cacheTtl = Number(process.env.CACHE_TTL) || 3600;
@@ -24,7 +25,7 @@ async function justWatchPost(
         timeout: JUSTWATCH_TIMEOUT_MS,
         headers: {
           "Content-Type": "application/json",
-          "User-Agent": "Letterboxd-Movie-JustWatch/1.0",
+          "User-Agent": getRandomScrapeUserAgent(),
         },
       });
       return res as typeof res & {

@@ -1,7 +1,29 @@
-import axios, { type AxiosInstance } from "axios";
+import axios, { type AxiosInstance, type InternalAxiosRequestConfig } from "axios";
 import https from "https";
 
 const instance = axios.create({});
+
+/** Tracks 429 retries per request chain (see response interceptor). */
+type ConfigWith429Retry = InternalAxiosRequestConfig & {
+  __rateLimitRetryCount?: number;
+};
+
+const getMax429Retries = (): number => {
+  const n = Number(process.env.AXIOS_429_MAX_RETRIES);
+  if (Number.isFinite(n) && n >= 0) {
+    return Math.floor(n);
+  }
+  return 5;
+};
+
+/** Cap wait between 429 retries (seconds) to avoid multi-minute stalls. */
+const max429RetryAfterSeconds = (): number => {
+  const n = Number(process.env.AXIOS_429_MAX_RETRY_AFTER_SECONDS);
+  if (Number.isFinite(n) && n > 0) {
+    return Math.min(Math.floor(n), 120);
+  }
+  return 60;
+};
 
 const sanitizeUrl = (url: string | undefined): string => {
   if (!url) return "";
@@ -22,10 +44,23 @@ instance.interceptors.response.use(
     if (response) {
       (response as Record<string, unknown>).axiosError = error;
       if (response.status === 429) {
-        const retryAfter = Number(response.headers["retry-after"]) || 1;
-        console.log(`[axios] Rate limit exceeded, retrying in ${retryAfter} (s)`);
+        const cfg = config as ConfigWith429Retry;
+        const nextAttempt = (cfg.__rateLimitRetryCount ?? 0) + 1;
+        const maxRetries = getMax429Retries();
+        if (nextAttempt > maxRetries) {
+          console.log(
+            `[axios] Rate limit exceeded, max retries (${maxRetries}) reached; rejecting`,
+          );
+          return Promise.reject(error);
+        }
+        cfg.__rateLimitRetryCount = nextAttempt;
+        const rawRetryAfter = Number(response.headers["retry-after"]) || 1;
+        const retryAfterSec = Math.min(rawRetryAfter, max429RetryAfterSeconds());
+        console.log(
+          `[axios] Rate limit exceeded, retry ${nextAttempt}/${maxRetries} in ${retryAfterSec} (s)`,
+        );
         return new Promise((resolve) => {
-          setTimeout(() => resolve(axios(config)), retryAfter * 1000);
+          setTimeout(() => resolve(axios(cfg)), retryAfterSec * 1000);
         });
       }
     }

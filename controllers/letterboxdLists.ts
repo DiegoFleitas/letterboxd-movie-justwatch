@@ -1,4 +1,5 @@
 import type { HttpHandler } from "../server/httpContext.js";
+import * as Sentry from "@sentry/node";
 import axiosHelper from "../helpers/axios.js";
 const axios = axiosHelper(true);
 import * as cheerio from "cheerio";
@@ -16,8 +17,26 @@ import {
   letterboxdCsvBodySchema,
   firstZodIssueMessage,
 } from "../lib/apiSchemas.js";
+import { getLetterboxdFetchTimeoutMs } from "../lib/letterboxdFetchTimeout.js";
+import { getRandomScrapeUserAgent } from "../lib/scrapeUserAgent.js";
 
 const cacheTtl = Number(process.env.CACHE_TTL) || 20;
+const letterboxdFetchTimeoutMs = getLetterboxdFetchTimeoutMs();
+
+function getLetterboxdListAxiosConfig(): {
+  timeout: number;
+  headers: Record<string, string>;
+} {
+  return {
+    timeout: letterboxdFetchTimeoutMs,
+    headers: {
+      "User-Agent": getRandomScrapeUserAgent(),
+      Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+      "Accept-Language": "en-US,en;q=0.5",
+      Referer: "https://letterboxd.com/",
+    },
+  };
+}
 
 const fetchList = async ({
   url,
@@ -60,31 +79,14 @@ const fetchList = async ({
         filmsPromises = filmsPromises.concat(cachedList);
       } else {
         const pageUrl = `${baseUrl}/page/${currentPage}/`;
-        const response = await axios.get(pageUrl, {
-          headers: {
-            "User-Agent":
-              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-            "Accept-Language": "en-US,en;q=0.5",
-            Referer: "https://letterboxd.com/",
-          },
-        });
+        const response = await axios.get(pageUrl, getLetterboxdListAxiosConfig());
         let $ = cheerio.load(response.data);
         let pageFilmsPromise = getPageFilms($);
         let lastHtml: string = response.data;
         if (pageFilmsPromise.length === 0 && baseUrl.includes("/list/")) {
           const esiUrl = pageUrl + (pageUrl.includes("?") ? "&" : "?") + "esiAllowFilters=true";
           try {
-            const esiResponse = await axios.get(esiUrl, {
-              headers: {
-                "User-Agent":
-                  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                Accept:
-                  "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-                "Accept-Language": "en-US,en;q=0.5",
-                Referer: "https://letterboxd.com/",
-              },
-            });
+            const esiResponse = await axios.get(esiUrl, getLetterboxdListAxiosConfig());
             $ = cheerio.load(esiResponse.data);
             pageFilmsPromise = getPageFilms($);
             lastHtml = esiResponse.data;
@@ -132,6 +134,9 @@ const fetchList = async ({
     if (err?.response?.status === 404) {
       res.status(404).json({ error: "List not found" });
       return;
+    }
+    if (Sentry.getClient()) {
+      Sentry.captureException(error, { extra: { route: "letterboxd-list-fetch" } });
     }
     res.status(500).json({ error: "Internal Server Error" });
   }
