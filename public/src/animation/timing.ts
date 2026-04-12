@@ -3,6 +3,8 @@ export const NOTICE_HOLD_ALT_SEARCH_MS = 1000; // used after alt search complete
 export const NOTICE_HOLD_LIST_COMPLETE_MS = 1500; // used after list fully loads
 export const TOAST_DEFAULT_DURATION_MS = 3000; // default toast duration
 export const TMDB_DEBOUNCE_MS = 120; // input debounce for TMDB searches
+/** After Letterboxd list search completes, wait this long before nudging if tiles/posters look broken */
+export const NO_POSTER_REPORT_DELAY_MS = 45_000;
 
 // Motion durations (seconds) — keep in sync with poster CSS feel
 export const POSTER_HOVER_TRANSFORM_S = 0.28;
