@@ -33,6 +33,24 @@ export interface MergeData {
   movieProviders?: TileProvider[];
 }
 
+const PLACEHOLDER_POSTER = "/movie_placeholder.svg";
+
+export function isPlaceholderPoster(poster: string | null | undefined): boolean {
+  return poster == null || poster === PLACEHOLDER_POSTER;
+}
+
+/** After list load + search, used for GitHub issue prefilling when the UI looks broken */
+export type ListReportSymptom = "no_tiles" | "all_placeholder_posters";
+
+export function classifyListReportSymptom(
+  movieTiles: Record<string, TileData>,
+): ListReportSymptom | null {
+  const entries = Object.values(movieTiles);
+  if (entries.length === 0) return "no_tiles";
+  if (entries.every((t) => isPlaceholderPoster(t.poster))) return "all_placeholder_posters";
+  return null;
+}
+
 export function normalizeId(title: string, year: string | number | null): string {
   return `${year}-${title
     .toUpperCase()
@@ -82,7 +100,7 @@ export function mergeTileState(
       ? (data!.movieProviders ?? [])
       : (existing?.movieProviders ?? []),
     poster:
-      data?.poster && data.poster !== "/movie_placeholder.svg"
+      data?.poster && data.poster !== PLACEHOLDER_POSTER
         ? data.poster
         : data?.poster && !existing?.poster
           ? data.poster

@@ -60,6 +60,11 @@ export function AppStateProvider({ children }: { children: ReactNode }): React.R
   const [isListLoading, setListLoading] = useState(false);
   const [isAlternativeSearchLoading, setAlternativeSearchLoading] = useState(false);
   const loadingToastIdRef = useRef<string | number | null>(null);
+  const listMovieTilesRef = useRef<Record<string, TileData>>({});
+
+  useEffect(() => {
+    listMovieTilesRef.current = tilesByTab.list.movieTiles;
+  }, [tilesByTab.list.movieTiles]);
 
   const mergeTileForTab = useCallback(
     (
@@ -87,7 +92,7 @@ export function AppStateProvider({ children }: { children: ReactNode }): React.R
     [mergeTileForTab],
   );
 
-  const loadLetterboxdList = useLetterboxdList(mergeListTile, setListLoading);
+  const loadLetterboxdList = useLetterboxdList(mergeListTile, setListLoading, listMovieTilesRef);
   const submitMovieSearch = useMovieSearch(
     setShowAltSearchButton,
     setMovieSearchLoading,
