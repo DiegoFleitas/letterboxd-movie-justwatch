@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback, startTransition } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { motionTransition } from "./animation/timing";
 import { useAppState } from "./AppStateContext";
@@ -34,6 +34,8 @@ function getRandomMessage(): string {
   return FOOTER_MESSAGES[Math.floor(Math.random() * FOOTER_MESSAGES.length)];
 }
 
+const PROVIDER_FAST_S = 0.12;
+
 export function RightPanel(): React.ReactElement {
   const {
     movieTiles: tiles,
@@ -48,24 +50,25 @@ export function RightPanel(): React.ReactElement {
   const [suppressAnimations, setSuppressAnimations] = useState(false);
 
   const toggleFilter = (name: string): void => {
-    setActiveFilters((prev) => {
-      const next = prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name];
-      // if we're clearing the last active filter, skip mount/exit animations briefly
-      if (prev.length > 0 && next.length === 0) {
-        setSuppressAnimations(true);
-        // keep suppressed for a short time so the large DOM update doesn't animate
-        setTimeout(() => setSuppressAnimations(false), Math.max(160, PROVIDER_FAST_S * 1000));
-      }
-      return next;
+    startTransition(() => {
+      setActiveFilters((prev) => {
+        const next = prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name];
+        // if we're clearing the last active filter, skip mount/exit animations briefly
+        if (prev.length > 0 && next.length === 0) {
+          setSuppressAnimations(true);
+          // keep suppressed for a short time so the large DOM update doesn't animate
+          setTimeout(() => setSuppressAnimations(false), Math.max(160, PROVIDER_FAST_S * 1000));
+        }
+        return next;
+      });
     });
   };
 
   const toggleAltSearchFilter = (): void => {
-    setAltSearchFilter((prev) => !prev);
+    startTransition(() => {
+      setAltSearchFilter((prev) => !prev);
+    });
   };
-
-  const [focusedProvider, setFocusedProvider] = useState<string | null>(null);
-  const PROVIDER_FAST_S = 0.12;
 
   const tileList = useMemo(() => Object.values(tiles), [tiles]);
   const providerList = useMemo(
@@ -83,9 +86,12 @@ export function RightPanel(): React.ReactElement {
     });
   }, [tileList, activeFilters, altSearchFilter]);
 
-  const handleAlternativeSearch = (tileData: TileData): void => {
-    runAlternativeSearch?.(tileData.title, tileData.year ?? undefined);
-  };
+  const handleAlternativeSearch = useCallback(
+    (tileData: TileData): void => {
+      runAlternativeSearch?.(tileData.title, tileData.year ?? undefined);
+    },
+    [runAlternativeSearch],
+  );
 
   return (
     <>
@@ -108,12 +114,6 @@ export function RightPanel(): React.ReactElement {
                   toggleFilter(provider.name);
                 }
               }}
-              onFocus={() => setFocusedProvider(provider.name)}
-              onBlur={() => setFocusedProvider((prev) => (prev === provider.name ? null : prev))}
-              onMouseEnter={() => setFocusedProvider(provider.name)}
-              onMouseLeave={() =>
-                setFocusedProvider((prev) => (prev === provider.name ? null : prev))
-              }
               initial={"idle"}
               animate={isActive ? "selected" : "idle"}
               whileHover={reduceMotion ? undefined : "hover"}
@@ -126,17 +126,9 @@ export function RightPanel(): React.ReactElement {
               transition={motionTransition(PROVIDER_FAST_S)}
             >
               <img src={provider.icon ?? ""} alt={provider.name} />
-              {/* tooltip (also shown on focus) */}
-              <motion.span
-                className="provider-tooltip"
-                variants={{ idle: { opacity: 0, y: 6 }, hover: { opacity: 1, y: 0 } }}
-                initial="idle"
-                animate={focusedProvider === provider.name ? "hover" : "idle"}
-                aria-hidden
-                transition={motionTransition(PROVIDER_FAST_S)}
-              >
+              <span className="provider-tooltip" aria-hidden>
                 {provider.name}
-              </motion.span>
+              </span>
               {isActive && (
                 <motion.span
                   className="provider-badge"

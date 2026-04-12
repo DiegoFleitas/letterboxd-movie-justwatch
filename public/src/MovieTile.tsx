@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, memo } from "react";
 import { motion } from "framer-motion";
 import type { TileData, TileProvider } from "./movieTiles";
 import {
@@ -17,7 +17,7 @@ interface MovieTileProps {
   suppressAnimations?: boolean;
 }
 
-export function MovieTile({
+export const MovieTile = memo(function MovieTile({
   data,
   index = 0,
   onAlternativeSearch,
@@ -188,4 +188,4 @@ export function MovieTile({
       </a>
     </motion.div>
   );
-}
+});
