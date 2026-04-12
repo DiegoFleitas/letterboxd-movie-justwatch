@@ -24,6 +24,7 @@
         "react-dom": "^19.2.4",
         "react-hot-toast": "^2.6.0",
         "ua-parser-js": "^1.0.34",
+        "user-agents": "^2.1.27",
         "uuid": "^9.0.0",
         "zod": "4",
       },
@@ -1711,6 +1712,8 @@
     "update-notifier": ["update-notifier@2.5.0", "", { "dependencies": { "boxen": "^1.2.1", "chalk": "^2.0.1", "configstore": "^3.0.0", "import-lazy": "^2.1.0", "is-ci": "^1.0.10", "is-installed-globally": "^0.1.0", "is-npm": "^1.0.0", "latest-version": "^3.0.0", "semver-diff": "^2.0.0", "xdg-basedir": "^3.0.0" } }, "sha512-gwMdhgJHGuj/+wHJJs9e6PcCszpxR1b236igrOkUofGhqJuG+amlIKwApH1IW1WWl7ovZxsX49lMBWLxSdm5Dw=="],
 
     "uri-js": ["uri-js@4.4.1", "", { "dependencies": { "punycode": "^2.1.0" } }, "sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg=="],
+
+    "user-agents": ["user-agents@2.1.27", "", {}, "sha512-kwnzfgbmTte27twNGRzYKgF2JAoNZPRcp+a5eyrseyfW9E5uZJ7J0IAWZ49rgg+37CPtLu+3rFoMh2VeaIYbcA=="],
 
     "uuid": ["uuid@9.0.1", "", { "bin": { "uuid": "dist/bin/uuid" } }, "sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA=="],
 
