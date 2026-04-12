@@ -1,7 +1,5 @@
 import type { HttpHandler } from "../server/httpContext.js";
 import * as Sentry from "@sentry/node";
-import axiosHelper from "../helpers/axios.js";
-const axios = axiosHelper(true);
 import * as cheerio from "cheerio";
 import { getCacheValue, setCacheValue } from "../helpers/redis.js";
 import { parseLetterboxdCsv } from "../helpers/letterboxdCsv.js";
@@ -17,26 +15,14 @@ import {
   letterboxdCsvBodySchema,
   firstZodIssueMessage,
 } from "../lib/apiSchemas.js";
-import { getLetterboxdFetchTimeoutMs } from "../lib/letterboxdFetchTimeout.js";
+import {
+  LetterboxdHttpError,
+  buildLetterboxdHtmlRequestHeaders,
+  fetchLetterboxdHtml,
+} from "../lib/letterboxdHttp.js";
 import { getRandomScrapeUserAgent } from "../lib/scrapeUserAgent.js";
 
 const cacheTtl = Number(process.env.CACHE_TTL) || 20;
-const letterboxdFetchTimeoutMs = getLetterboxdFetchTimeoutMs();
-
-function getLetterboxdListAxiosConfig(): {
-  timeout: number;
-  headers: Record<string, string>;
-} {
-  return {
-    timeout: letterboxdFetchTimeoutMs,
-    headers: {
-      "User-Agent": getRandomScrapeUserAgent(),
-      Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-      "Accept-Language": "en-US,en;q=0.5",
-      Referer: "https://letterboxd.com/",
-    },
-  };
-}
 
 const fetchList = async ({
   url,
@@ -79,17 +65,18 @@ const fetchList = async ({
         filmsPromises = filmsPromises.concat(cachedList);
       } else {
         const pageUrl = `${baseUrl}/page/${currentPage}/`;
-        const response = await axios.get(pageUrl, getLetterboxdListAxiosConfig());
-        let $ = cheerio.load(response.data);
+        const listHeaders = buildLetterboxdHtmlRequestHeaders(getRandomScrapeUserAgent());
+        const html = await fetchLetterboxdHtml(pageUrl, listHeaders);
+        let $ = cheerio.load(html);
         let pageFilmsPromise = getPageFilms($);
-        let lastHtml: string = response.data;
+        let lastHtml: string = html;
         if (pageFilmsPromise.length === 0 && baseUrl.includes("/list/")) {
           const esiUrl = pageUrl + (pageUrl.includes("?") ? "&" : "?") + "esiAllowFilters=true";
           try {
-            const esiResponse = await axios.get(esiUrl, getLetterboxdListAxiosConfig());
-            $ = cheerio.load(esiResponse.data);
+            const esiHtml = await fetchLetterboxdHtml(esiUrl, listHeaders);
+            $ = cheerio.load(esiHtml);
             pageFilmsPromise = getPageFilms($);
-            lastHtml = esiResponse.data;
+            lastHtml = esiHtml;
           } catch (esiErr) {
             console.warn("ESI retry failed for", esiUrl, (esiErr as Error).message);
           }
@@ -130,8 +117,7 @@ const fetchList = async ({
     });
   } catch (error) {
     console.error(error);
-    const err = error as { response?: { status?: number } };
-    if (err?.response?.status === 404) {
+    if (error instanceof LetterboxdHttpError && error.status === 404) {
       res.status(404).json({ error: "List not found" });
       return;
     }

@@ -44,7 +44,13 @@ const getRedisClient = async (): Promise<RedisClientLike | null> => {
     try {
       const url = process.env.FLYIO_REDIS_URL || "redis://localhost:6379";
       console.log("[REDIS_OPTIONS]", { url: url.replace(/:[^:@]+@/, ":***@") });
-      const client = new (Redis as unknown as new (url: string) => RedisClientLike)(url);
+      const client = new (Redis as unknown as new (
+        url: string,
+        options?: { commandTimeout?: number; connectTimeout?: number },
+      ) => RedisClientLike)(url, {
+        commandTimeout: 10_000,
+        connectTimeout: 10_000,
+      });
       client.on("error", (...args: unknown[]) => {
         const error = args[0] as Error;
         console.log(`[REDIS_CLIENT_ERROR] ${error}`);
