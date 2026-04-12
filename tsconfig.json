@@ -12,7 +12,7 @@
     "isolatedModules": true,
     "allowJs": false
   },
-  "include": ["**/*.ts", "**/*.tsx"],
+  "include": ["**/*.ts", "**/*.tsx", "**/*.d.ts"],
   "exclude": [
     "node_modules",
     "dist",

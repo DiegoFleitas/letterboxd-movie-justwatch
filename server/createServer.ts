@@ -6,7 +6,6 @@ import fastifyFormbody from "@fastify/formbody";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import type { IncomingMessage, ServerResponse } from "http";
 import { logging } from "diegos-fly-logger/index.mjs";
 import {
   searchMovie,
@@ -157,13 +156,8 @@ export function createServer(): CreatedServer {
     void app.register(fastifyFormbody);
 
     app.addHook("onRequest", async (request, reply) => {
-      const loggerMiddleware = logging as unknown as (
-        req: IncomingMessage,
-        res: ServerResponse,
-        next: (err?: unknown) => void,
-      ) => void;
       await new Promise<void>((resolve, reject) => {
-        loggerMiddleware(request.raw, reply.raw, (err?: unknown) => {
+        logging(request.raw, reply.raw, (err?: unknown) => {
           if (err) reject(err instanceof Error ? err : new Error(String(err)));
           else resolve();
         });
