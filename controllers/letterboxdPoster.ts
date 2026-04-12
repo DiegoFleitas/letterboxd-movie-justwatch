@@ -1,12 +1,13 @@
 import type { HttpHandler } from "../server/httpContext.js";
 import * as Sentry from "@sentry/node";
-import axiosHelper from "../helpers/axios.js";
 import { getCacheValue, setCacheValue } from "../helpers/redis.js";
-import { getLetterboxdFetchTimeoutMs } from "../lib/letterboxdFetchTimeout.js";
+import {
+  LetterboxdHttpError,
+  buildLetterboxdImageRequestHeaders,
+  fetchLetterboxdBinaryOk,
+} from "../lib/letterboxdHttp.js";
 import { getRandomScrapeUserAgent } from "../lib/scrapeUserAgent.js";
 
-const axios = axiosHelper(true);
-const letterboxdFetchTimeoutMs = getLetterboxdFetchTimeoutMs();
 const postersTtl = Number(process.env.CACHE_TTL) || 60;
 
 export const letterboxdPoster: HttpHandler = async ({ req, res }) => {
@@ -41,14 +42,10 @@ export const letterboxdPoster: HttpHandler = async ({ req, res }) => {
     const baseUrl = `https://a.ltrbxd.com/resized/film-poster/${idPath}/${filmId}-${cleanSlug}-0-${POSTER_WIDTH}-0-${POSTER_HEIGHT}-crop.jpg`;
     const posterUrl = cacheBustingKey ? `${baseUrl}?v=${cacheBustingKey}` : baseUrl;
 
-    await axios.get(posterUrl, {
-      timeout: letterboxdFetchTimeoutMs,
-      responseType: "arraybuffer",
-      headers: {
-        Referer: "https://letterboxd.com/",
-        "User-Agent": getRandomScrapeUserAgent(),
-      },
-    });
+    await fetchLetterboxdBinaryOk(
+      posterUrl,
+      buildLetterboxdImageRequestHeaders(getRandomScrapeUserAgent()),
+    );
 
     await setCacheValue(cacheKey, posterUrl, postersTtl);
 
@@ -58,8 +55,7 @@ export const letterboxdPoster: HttpHandler = async ({ req, res }) => {
     });
   } catch (error) {
     console.error(`Failed to fetch poster for ${filmSlug}:`, (error as Error).message);
-    const err = error as { response?: { status?: number } };
-    if (err.response?.status === 403 || err.response?.status === 404) {
+    if (error instanceof LetterboxdHttpError && (error.status === 403 || error.status === 404)) {
       res.status(404).json({ error: "Poster not available", fallback: true });
       return;
     }

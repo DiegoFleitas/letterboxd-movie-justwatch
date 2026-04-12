@@ -7,6 +7,19 @@ import type { MergeData } from "./movieTiles";
 
 const SEARCH_CONCURRENCY = 4;
 
+/** Max wait for list API (server may chain many outbound Letterboxd fetches). */
+const LIST_API_TIMEOUT_MS = 120_000;
+
+function isListFetchTimedOut(e: unknown): boolean {
+  if (e instanceof DOMException) {
+    return e.name === "AbortError" || e.name === "TimeoutError";
+  }
+  if (e instanceof Error && e.name === "TimeoutError") {
+    return true;
+  }
+  return false;
+}
+
 function runWithConcurrency(tasks: (() => Promise<unknown>)[], limit: number): Promise<void> {
   let index = 0;
   function runNext(): Promise<void> {
@@ -197,13 +210,25 @@ export function useLetterboxdList(
 
   const loadWatchlist = useCallback(
     async (data: LoadData): Promise<void> => {
-      const response = await fetch("/api/letterboxd-watchlist", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      const responseData = (await response.json()) as ListResponse;
-      await processList(data, responseData);
+      try {
+        const response = await fetch("/api/letterboxd-watchlist", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+          signal: AbortSignal.timeout(LIST_API_TIMEOUT_MS),
+        });
+        const responseData = (await response.json()) as ListResponse;
+        await processList(data, responseData);
+      } catch (e) {
+        if (isListFetchTimedOut(e)) {
+          showError(
+            "Request timed out while loading the list. Try again or paste a Letterboxd CSV export.",
+          );
+          toggleNotice(null);
+          return;
+        }
+        throw e;
+      }
     },
     [processList],
   );
@@ -212,26 +237,38 @@ export function useLetterboxdList(
 
   const loadCustomList = useCallback(
     async (data: LoadData): Promise<void> => {
-      const response = await fetch("/api/letterboxd-custom-list", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      const responseData = (await response.json()) as ListResponse;
-      if (!response.ok) {
-        showError(
-          (responseData.error ?? "Failed to load list") +
-            " You can also paste a Letterboxd CSV export in the same box.",
-        );
-        return;
+      try {
+        const response = await fetch("/api/letterboxd-custom-list", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+          signal: AbortSignal.timeout(LIST_API_TIMEOUT_MS),
+        });
+        const responseData = (await response.json()) as ListResponse;
+        if (!response.ok) {
+          showError(
+            (responseData.error ?? "Failed to load list") +
+              " You can also paste a Letterboxd CSV export in the same box.",
+          );
+          return;
+        }
+        if ((responseData.watchlist?.length ?? 0) === 0) {
+          showError(
+            "No films found on this list. Try pasting a Letterboxd CSV export in the same box.",
+          );
+          return;
+        }
+        await processList(data, responseData);
+      } catch (e) {
+        if (isListFetchTimedOut(e)) {
+          showError(
+            "Request timed out while loading the list. Try again or paste a Letterboxd CSV export.",
+          );
+          toggleNotice(null);
+          return;
+        }
+        throw e;
       }
-      if ((responseData.watchlist?.length ?? 0) === 0) {
-        showError(
-          "No films found on this list. Try pasting a Letterboxd CSV export in the same box.",
-        );
-        return;
-      }
-      await processList(data, responseData);
     },
     [processList],
   );
@@ -240,18 +277,28 @@ export function useLetterboxdList(
     async (csvText: string, country: string): Promise<void> => {
       batchMapRef.current.clear();
       toggleNotice("Loading list from CSV...");
-      const response = await fetch("/api/letterboxd-list-from-csv", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ csv: csvText }),
-      });
-      const responseData = (await response.json()) as ListResponse;
-      if (!response.ok) {
-        showError(responseData.error ?? "Failed to parse CSV");
-        return;
+      try {
+        const response = await fetch("/api/letterboxd-list-from-csv", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ csv: csvText }),
+          signal: AbortSignal.timeout(LIST_API_TIMEOUT_MS),
+        });
+        const responseData = (await response.json()) as ListResponse;
+        if (!response.ok) {
+          showError(responseData.error ?? "Failed to parse CSV");
+          return;
+        }
+        const data: LoadData = { country, page: 1 };
+        await processList(data, responseData);
+      } catch (e) {
+        if (isListFetchTimedOut(e)) {
+          showError("Request timed out while parsing CSV. Try again with a smaller export.");
+          toggleNotice(null);
+          return;
+        }
+        throw e;
       }
-      const data: LoadData = { country, page: 1 };
-      await processList(data, responseData);
     },
     [processList],
   );
