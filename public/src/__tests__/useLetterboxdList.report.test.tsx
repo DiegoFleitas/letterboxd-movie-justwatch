@@ -34,7 +34,7 @@ vi.mock("../showMessage", () => ({
 function createFetchMock(searchMovieBody: Record<string, unknown>) {
   return vi.fn((input: RequestInfo | URL) => {
     const url = typeof input === "string" ? input : String(input);
-    if (url.includes("letterboxd-list-from-csv")) {
+    if (url.includes("letterboxd-watchlist")) {
       return Promise.resolve({
         ok: true,
         json: () =>
@@ -61,8 +61,7 @@ function createFetchMock(searchMovieBody: Record<string, unknown>) {
   });
 }
 
-const csvSnippet = `LetterboxdURI,Title,Year
-https://letterboxd.com/film/test-film-2020/,Test Film,2020`;
+const watchlistUrl = "https://letterboxd.com/test-user/watchlist/";
 
 describe("useLetterboxdList GitHub nudge (45s timer)", () => {
   const mockedShowMessage = vi.mocked(showMessage);
@@ -99,7 +98,7 @@ describe("useLetterboxdList GitHub nudge (45s timer)", () => {
     });
 
     await act(async () => {
-      await result.current(csvSnippet, "US");
+      await result.current(watchlistUrl, "US");
     });
 
     expect(mockedShowMessage).not.toHaveBeenCalled();
@@ -130,7 +129,7 @@ describe("useLetterboxdList GitHub nudge (45s timer)", () => {
     });
 
     await act(async () => {
-      await result.current(csvSnippet, "US");
+      await result.current(watchlistUrl, "US");
     });
 
     await act(async () => {
@@ -165,7 +164,7 @@ describe("useLetterboxdList GitHub nudge (45s timer)", () => {
     });
 
     await act(async () => {
-      await result.current(csvSnippet, "US");
+      await result.current(watchlistUrl, "US");
     });
 
     await act(async () => {

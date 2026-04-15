@@ -254,58 +254,6 @@ test.describe("List form", () => {
     await expect(page.locator("[data-id]").filter({ hasText: firstTitle ?? "" })).toBeVisible();
   });
 
-  test("submit with pasted CSV loads tiles into poster showcase", async ({ page }) => {
-    await page.goto("/");
-    await waitForGeoReady(page);
-
-    // Use a film whose search-movie fixture has matching year so list + search yield one tile (same id).
-    const csvResponse = {
-      message: "List found",
-      watchlist: [
-        {
-          title: "Mystery Train",
-          year: "1989",
-          link: "https://letterboxd.com/film/mystery-train/",
-          posterPath: null,
-          poster: null,
-        },
-      ],
-      lastPage: 1,
-      totalPages: 1,
-    };
-
-    await page.route("**/api/letterboxd-list-from-csv", (route) =>
-      route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify(csvResponse),
-      }),
-    );
-
-    await page.route("**/api/search-movie", (route) => {
-      const body = route.request().postDataJSON() as SearchMovieBody | null;
-      const response = findSearchMovieResponse(body) || {
-        title: body?.title,
-        year: body?.year,
-        error: "No fixture",
-      };
-      return route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify(response),
-      });
-    });
-
-    await page.getByTestId("tab-list").click();
-    await page.getByTestId("list-url").fill("Title,Year\nMystery Train,1989");
-    await page.getByTestId("list-submit").click();
-
-    await expect(page.getByTestId("poster-showcase").getByTestId("tile")).toHaveCount(1, {
-      timeout: 10000,
-    });
-    await expect(page.locator("[data-id]").filter({ hasText: "Mystery Train" })).toBeVisible();
-  });
-
   test("rapid submit clicks only trigger one list request", async ({ page }) => {
     await page.goto("/");
     await waitForGeoReady(page);

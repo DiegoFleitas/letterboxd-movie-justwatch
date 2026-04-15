@@ -12,7 +12,6 @@ import {
   poster,
   letterboxdWatchlist,
   letterboxdCustomList,
-  letterboxdListFromCsv,
   letterboxdPoster,
   alternativeSearch,
   proxy,
@@ -190,7 +189,6 @@ export function createServer(): CreatedServer {
     app.post("/api/poster", setCacheControlFastify(poster));
     app.post("/api/letterboxd-watchlist", setCacheControlFastify(letterboxdWatchlist));
     app.post("/api/letterboxd-custom-list", setCacheControlFastify(letterboxdCustomList));
-    app.post("/api/letterboxd-list-from-csv", setCacheControlFastify(letterboxdListFromCsv));
     app.post("/api/letterboxd-poster", setCacheControlFastify(letterboxdPoster));
     app.post("/api/alternative-search", setCacheControlFastify(alternativeSearch));
 
