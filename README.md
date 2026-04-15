@@ -45,7 +45,7 @@ Then open **`http://localhost:3000`**. For secrets (`OMDB_API_KEY`, `APP_SECRET_
 | `server/createServer.ts` | Fastify app wiring (routes, static, sessions)                        |
 | `server-fastify.ts`      | Process entrypoint                                                   |
 | `controllers/`           | HTTP handlers (Letterboxd lists, search, posters, proxy, Jackett)    |
-| `helpers/`, `lib/`       | Scraping, CSV, URL helpers                                           |
+| `helpers/`, `lib/`       | Scraping and URL helpers                                             |
 | `scripts/`               | Provider build, Letterboxd fixtures, Redis export/seed               |
 | `tests/`                 | Vitest unit/integration                                              |
 | `e2e/`                   | Playwright (UI mocks + backend smoke)                                |

@@ -2,7 +2,6 @@ import type { HttpHandler } from "../server/httpContext.js";
 import * as Sentry from "@sentry/node";
 import * as cheerio from "cheerio";
 import { getCacheValue, setCacheValue } from "../helpers/redis.js";
-import { parseLetterboxdCsv } from "../helpers/letterboxdCsv.js";
 import {
   getPageFilms,
   getFilmsCount,
@@ -12,7 +11,6 @@ import {
 import {
   letterboxdWatchlistBodySchema,
   letterboxdCustomListBodySchema,
-  letterboxdCsvBodySchema,
   firstZodIssueMessage,
 } from "../lib/apiSchemas.js";
 import {
@@ -148,32 +146,4 @@ export const letterboxdCustomList: HttpHandler = async ({ req, res }) => {
   const { username, listType, parsedListUrl, page } = parsedBody.data;
   const cacheKeyPrefix = `customlist:${username}_${listType ?? ""}`;
   await fetchList({ url: parsedListUrl, cacheKeyPrefix, req: { body: { page } }, res });
-};
-
-export const letterboxdListFromCsv: HttpHandler = async ({ req, res }) => {
-  const parsedBody = letterboxdCsvBodySchema.safeParse(req.body ?? {});
-  if (!parsedBody.success) {
-    res.status(400).json({ error: firstZodIssueMessage(parsedBody.error) });
-    return;
-  }
-  const { csv } = parsedBody.data;
-  try {
-    const rows = parseLetterboxdCsv(csv);
-    const watchlist = rows.map((row) => ({
-      title: row.title,
-      year: row.year,
-      link: row.link || "",
-      posterPath: null as string | null,
-      poster: null as string | null,
-    }));
-    res.status(200).json({
-      message: "List found",
-      watchlist,
-      lastPage: 1,
-      totalPages: 1,
-    });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Invalid CSV";
-    res.status(400).json({ error: message });
-  }
 };

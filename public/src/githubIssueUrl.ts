@@ -4,9 +4,8 @@ import type { ListReportSymptom } from "./movieTiles";
 export interface ListGithubIssueContext {
   symptom: ListReportSymptom;
   country?: string;
-  /** Present when loaded from a Letterboxd URL; omit for CSV */
   listUrl?: string;
-  listSource: "letterboxd_url" | "csv";
+  listSource: "letterboxd_url";
   /** Films on the last processed page (batch) */
   lastBatchFilmCount: number;
   totalPages: number;
@@ -48,7 +47,7 @@ function buildBody(ctx: ListGithubIssueContext): string {
     `- Check ran ${String(NO_POSTER_REPORT_DELAY_MS / 1000)}s after Letterboxd list search completed (last page batch).`,
     `- Page URL: ${ctx.pageUrl}`,
     `- Country: ${ctx.country ?? "(unknown)"}`,
-    `- List source: ${ctx.listSource === "csv" ? "CSV paste" : "Letterboxd URL"}`,
+    "- List source: Letterboxd URL",
   ];
   if (ctx.listUrl) lines.push(`- Letterboxd list URL: ${ctx.listUrl}`);
   lines.push(

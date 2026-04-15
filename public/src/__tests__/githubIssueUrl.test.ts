@@ -40,7 +40,8 @@ describe("buildListGithubIssueUrl", () => {
       {
         symptom: "all_placeholder_posters",
         country: "GB",
-        listSource: "csv",
+        listSource: "letterboxd_url",
+        listUrl: "https://letterboxd.com/user/watchlist/",
         lastBatchFilmCount: 2,
         totalPages: 1,
         lastPage: 1,
@@ -55,8 +56,8 @@ describe("buildListGithubIssueUrl", () => {
     );
     const body = new URL(url).searchParams.get("body") ?? "";
     expect(body).toContain("symptom: all_placeholder_posters");
-    expect(body).toContain("CSV paste");
-    expect(body).not.toContain("Letterboxd list URL");
+    expect(body).toContain("Letterboxd URL");
+    expect(body).toContain("Letterboxd list URL: https://letterboxd.com/user/watchlist/");
   });
 
   it("preserves newlines in body via URLSearchParams", () => {

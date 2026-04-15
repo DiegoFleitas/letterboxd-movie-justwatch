@@ -44,7 +44,7 @@ export function parseLetterboxdListUrl(input: string): ParsedLetterboxdListUrl |
 
 /**
  * Returns true if the input looks like a Letterboxd list URL (before or after normalization).
- * Used to decide whether to treat input as URL or CSV.
+ * Used to decide whether to attempt URL parsing.
  */
 export function isLetterboxdListUrlInput(input: string): boolean {
   const trimmed = input?.trim() ?? "";

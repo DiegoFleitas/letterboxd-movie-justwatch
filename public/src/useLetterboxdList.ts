@@ -104,11 +104,10 @@ export function useLetterboxdList(
         const scheduleListReportNudge = (): void => {
           if (!allPagesLoadedRef.current || watchlist.length === 0 || !listMovieTilesRef) return;
           clearTimeout(noPosterReportTimeoutRef.current);
-          const listSource = data.listUrl ? ("letterboxd_url" as const) : ("csv" as const);
           const meta = {
             country: data.country,
             listUrl: data.listUrl,
-            listSource,
+            listSource: "letterboxd_url" as const,
             lastBatchFilmCount: watchlist.length,
             totalPages,
             lastPage,
@@ -262,7 +261,7 @@ export function useLetterboxdList(
       } catch (e) {
         if (isListFetchTimedOut(e)) {
           showError(
-            "Request timed out while loading the list. Try again or paste a Letterboxd CSV export.",
+            "Request timed out while loading the list. Try again with a valid Letterboxd URL.",
           );
           toggleNotice(null);
           return;
@@ -286,54 +285,19 @@ export function useLetterboxdList(
         });
         const responseData = (await response.json()) as ListResponse;
         if (!response.ok) {
-          showError(
-            (responseData.error ?? "Failed to load list") +
-              " You can also paste a Letterboxd CSV export in the same box.",
-          );
+          showError(responseData.error ?? "Failed to load list");
           return;
         }
         if ((responseData.watchlist?.length ?? 0) === 0) {
-          showError(
-            "No films found on this list. Try pasting a Letterboxd CSV export in the same box.",
-          );
+          showError("No films found on this list.");
           return;
         }
         await processList(data, responseData);
       } catch (e) {
         if (isListFetchTimedOut(e)) {
           showError(
-            "Request timed out while loading the list. Try again or paste a Letterboxd CSV export.",
+            "Request timed out while loading the list. Try again with a valid Letterboxd URL.",
           );
-          toggleNotice(null);
-          return;
-        }
-        throw e;
-      }
-    },
-    [processList],
-  );
-
-  const loadFromCsv = useCallback(
-    async (csvText: string, country: string): Promise<void> => {
-      batchMapRef.current.clear();
-      toggleNotice("Loading list from CSV...");
-      try {
-        const response = await fetch("/api/letterboxd-list-from-csv", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ csv: csvText }),
-          signal: AbortSignal.timeout(LIST_API_TIMEOUT_MS),
-        });
-        const responseData = (await response.json()) as ListResponse;
-        if (!response.ok) {
-          showError(responseData.error ?? "Failed to parse CSV");
-          return;
-        }
-        const data: LoadData = { country, page: 1 };
-        await processList(data, responseData);
-      } catch (e) {
-        if (isListFetchTimedOut(e)) {
-          showError("Request timed out while parsing CSV. Try again with a smaller export.");
           toggleNotice(null);
           return;
         }
@@ -354,7 +318,7 @@ export function useLetterboxdList(
       isSubmittingListRef.current = true;
       setListLoading?.(true);
       if (!listUrl?.trim()) {
-        showError("Please enter a valid URL or paste CSV");
+        showError("Please enter a valid Letterboxd list URL");
         isSubmittingListRef.current = false;
         setListLoading?.(false);
         return;
@@ -378,13 +342,13 @@ export function useLetterboxdList(
           }
           return;
         }
-        await loadFromCsv(listUrl.trim(), country);
+        showError("Invalid Letterboxd list URL. Use a watchlist or custom list URL.");
       } finally {
         isSubmittingListRef.current = false;
         setListLoading?.(false);
       }
     },
-    [loadCustomList, loadWatchlist, loadFromCsv, setListLoading],
+    [loadCustomList, loadWatchlist, setListLoading],
   );
 
   useEffect(() => {

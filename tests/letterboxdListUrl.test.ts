@@ -91,7 +91,7 @@ describe("Letterboxd list URL parsing", () => {
     expect(isLetterboxdListUrlInput("www.letterboxd.com/user/watchlist/")).toBe(true);
   });
 
-  it("isLetterboxdListUrlInput: false for CSV-like content", () => {
+  it("isLetterboxdListUrlInput: false for non-URL text input", () => {
     expect(isLetterboxdListUrlInput("Title,Year\nFoo,2020")).toBe(false);
   });
 
