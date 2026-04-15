@@ -39,16 +39,17 @@ Then open **`http://localhost:3000`**. For secrets (`OMDB_API_KEY`, `APP_SECRET_
 
 ### Project layout (high level)
 
-| Path                     | Role                                                              |
-| ------------------------ | ----------------------------------------------------------------- |
-| `public/`                | Vite root: React app (`src/`), static assets, CSS                 |
-| `server/createServer.ts` | Fastify app wiring (routes, static, sessions)                     |
-| `server-fastify.ts`      | Process entrypoint                                                |
-| `controllers/`           | HTTP handlers (Letterboxd lists, search, posters, proxy, Jackett) |
-| `helpers/`, `lib/`       | Scraping, CSV, URL helpers                                        |
-| `scripts/`               | Provider build, Letterboxd fixtures, Redis export/seed            |
-| `tests/`                 | Vitest unit/integration                                           |
-| `e2e/`                   | Playwright (UI mocks + backend smoke)                             |
+| Path                     | Role                                                                 |
+| ------------------------ | -------------------------------------------------------------------- |
+| `public/`                | Vite root: React app (`src/`), static assets, CSS                    |
+| `server/createServer.ts` | Fastify app wiring (routes, static, sessions)                        |
+| `server-fastify.ts`      | Process entrypoint                                                   |
+| `controllers/`           | HTTP handlers (Letterboxd lists, search, posters, proxy, Jackett)    |
+| `helpers/`, `lib/`       | Scraping, CSV, URL helpers                                           |
+| `scripts/`               | Provider build, Letterboxd fixtures, Redis export/seed               |
+| `tests/`                 | Vitest unit/integration                                              |
+| `e2e/`                   | Playwright (UI mocks + backend smoke)                                |
+| `docs/`                  | Deep dives (e.g. [Sentry + HTTP logging](docs/sentry-and-logger.md)) |
 
 ### Key commands
 
@@ -79,6 +80,7 @@ See **`.env.example`** for the full list. Common variables:
 | `OMDB_API_KEY`                             | Poster lookups                                                                                                                          |
 | `MOVIE_DB_API_KEY`                         | TMDb / search; optional locally; enables extra integration coverage in CI when set                                                      |
 | `POSTHOG_KEY` / `POSTHOG_HOST`             | Optional analytics                                                                                                                      |
+| `SENTRY_DSN` / `SENTRY_*`                  | Optional server-side errors and traces ([`docs/sentry-and-logger.md`](docs/sentry-and-logger.md))                                       |
 | `JACKETT_API_KEY` / `JACKETT_API_ENDPOINT` | Optional alternative search                                                                                                             |
 | `CACHE_TTL`                                | Optional cache TTL override (seconds)                                                                                                   |
 | `PORT`                                     | Backend port (default **3000**)                                                                                                         |
@@ -91,6 +93,7 @@ See **`.env.example`** for the full list. Common variables:
 
 ### Logging and secrets
 
+- **Sentry + access logs**: See [`docs/sentry-and-logger.md`](docs/sentry-and-logger.md) for how `@sentry/node`, `instrument.ts`, and `diegos-fly-logger` fit together (including `SENTRY_CAPTURE_HTTP_5XX` and optional duplicate 5xx signals).
 - HTTP requests are logged via a shared axios helper (`helpers/axios.ts`) that **redacts query parameters such as `api_key`, `apikey`, `access_token`, `token`, and `key`** before printing URLs.
 - Do not log raw environment variables or full external URLs containing credentials; if you add new HTTP clients, either use the existing helper or apply similar redaction.
 

@@ -1,11 +1,26 @@
-import { useRef, useCallback, useEffect } from "react";
-import { NOTICE_HOLD_LIST_COMPLETE_MS } from "./animation/timing";
+import { useRef, useCallback, useEffect, type RefObject } from "react";
+import { NOTICE_HOLD_LIST_COMPLETE_MS, NO_POSTER_REPORT_DELAY_MS } from "./animation/timing";
+import { buildListGithubIssueUrl, listReportToastCopy } from "./githubIssueUrl";
 import { parseLetterboxdListUrl } from "../../lib/letterboxdListUrl";
 import { toggleNotice } from "./noticeFunctions";
 import { showError, showBatchErrors } from "./showError";
-import type { MergeData } from "./movieTiles";
+import { showMessage } from "./showMessage";
+import { classifyListReportSymptom, type MergeData, type TileData } from "./movieTiles";
 
 const SEARCH_CONCURRENCY = 4;
+
+/** Max wait for list API (server may chain many outbound Letterboxd fetches). */
+const LIST_API_TIMEOUT_MS = 120_000;
+
+function isListFetchTimedOut(e: unknown): boolean {
+  if (e instanceof DOMException) {
+    return e.name === "AbortError" || e.name === "TimeoutError";
+  }
+  if (e instanceof Error && e.name === "TimeoutError") {
+    return true;
+  }
+  return false;
+}
 
 function runWithConcurrency(tasks: (() => Promise<unknown>)[], limit: number): Promise<void> {
   let index = 0;
@@ -47,6 +62,7 @@ type MergeTileFn = (title: string, year: string | number | null, data?: MergeDat
 export function useLetterboxdList(
   mergeTile: MergeTileFn | null | undefined,
   setListLoading?: ((loading: boolean) => void) | null,
+  listMovieTilesRef?: RefObject<Record<string, TileData>> | null,
 ): (listUrl: string, country: string) => Promise<void> {
   const allPagesLoadedRef = useRef(false);
   const watchlistPageCountRef = useRef(0);
@@ -66,6 +82,7 @@ export function useLetterboxdList(
       }
     >
   >(new Map());
+  const noPosterReportTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const processList = useCallback(
     async (data: LoadData, responseData: ListResponse): Promise<void> => {
@@ -83,6 +100,40 @@ export function useLetterboxdList(
           completed: 0,
           errors: [],
         });
+
+        const scheduleListReportNudge = (): void => {
+          if (!allPagesLoadedRef.current || watchlist.length === 0 || !listMovieTilesRef) return;
+          clearTimeout(noPosterReportTimeoutRef.current);
+          const listSource = data.listUrl ? ("letterboxd_url" as const) : ("csv" as const);
+          const meta = {
+            country: data.country,
+            listUrl: data.listUrl,
+            listSource,
+            lastBatchFilmCount: watchlist.length,
+            totalPages,
+            lastPage,
+          };
+          noPosterReportTimeoutRef.current = window.setTimeout(() => {
+            noPosterReportTimeoutRef.current = undefined;
+            const tiles = listMovieTilesRef.current;
+            const symptom = classifyListReportSymptom(tiles);
+            if (!symptom) return;
+            const issueUrl = buildListGithubIssueUrl({
+              symptom,
+              country: meta.country,
+              listUrl: meta.listUrl,
+              listSource: meta.listSource,
+              lastBatchFilmCount: meta.lastBatchFilmCount,
+              totalPages: meta.totalPages,
+              lastPage: meta.lastPage,
+              tileCount: Object.keys(tiles).length,
+              pageUrl: window.location.href,
+              userAgent: navigator.userAgent,
+            });
+            showMessage({ text: listReportToastCopy(symptom), url: issueUrl }, true);
+          }, NO_POSTER_REPORT_DELAY_MS);
+        };
+
         for (const element of watchlist) {
           let { title, year, posterPath, poster, link } = element;
           poster = poster || "/movie_placeholder.svg";
@@ -129,6 +180,7 @@ export function useLetterboxdList(
                   if (batch.completed === batch.total) {
                     showBatchErrors(batch.errors);
                     batchMapRef.current.delete(batchId);
+                    scheduleListReportNudge();
                   }
                 },
               )
@@ -139,6 +191,7 @@ export function useLetterboxdList(
                   if (batch.completed === batch.total) {
                     showBatchErrors(batch.errors);
                     batchMapRef.current.delete(batchId);
+                    scheduleListReportNudge();
                   }
                 }
                 console.error(e);
@@ -192,18 +245,30 @@ export function useLetterboxdList(
         }
       }
     },
-    [mergeTile],
+    [mergeTile, listMovieTilesRef],
   );
 
   const loadWatchlist = useCallback(
     async (data: LoadData): Promise<void> => {
-      const response = await fetch("/api/letterboxd-watchlist", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      const responseData = (await response.json()) as ListResponse;
-      await processList(data, responseData);
+      try {
+        const response = await fetch("/api/letterboxd-watchlist", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+          signal: AbortSignal.timeout(LIST_API_TIMEOUT_MS),
+        });
+        const responseData = (await response.json()) as ListResponse;
+        await processList(data, responseData);
+      } catch (e) {
+        if (isListFetchTimedOut(e)) {
+          showError(
+            "Request timed out while loading the list. Try again or paste a Letterboxd CSV export.",
+          );
+          toggleNotice(null);
+          return;
+        }
+        throw e;
+      }
     },
     [processList],
   );
@@ -212,26 +277,38 @@ export function useLetterboxdList(
 
   const loadCustomList = useCallback(
     async (data: LoadData): Promise<void> => {
-      const response = await fetch("/api/letterboxd-custom-list", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      const responseData = (await response.json()) as ListResponse;
-      if (!response.ok) {
-        showError(
-          (responseData.error ?? "Failed to load list") +
-            " You can also paste a Letterboxd CSV export in the same box.",
-        );
-        return;
+      try {
+        const response = await fetch("/api/letterboxd-custom-list", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+          signal: AbortSignal.timeout(LIST_API_TIMEOUT_MS),
+        });
+        const responseData = (await response.json()) as ListResponse;
+        if (!response.ok) {
+          showError(
+            (responseData.error ?? "Failed to load list") +
+              " You can also paste a Letterboxd CSV export in the same box.",
+          );
+          return;
+        }
+        if ((responseData.watchlist?.length ?? 0) === 0) {
+          showError(
+            "No films found on this list. Try pasting a Letterboxd CSV export in the same box.",
+          );
+          return;
+        }
+        await processList(data, responseData);
+      } catch (e) {
+        if (isListFetchTimedOut(e)) {
+          showError(
+            "Request timed out while loading the list. Try again or paste a Letterboxd CSV export.",
+          );
+          toggleNotice(null);
+          return;
+        }
+        throw e;
       }
-      if ((responseData.watchlist?.length ?? 0) === 0) {
-        showError(
-          "No films found on this list. Try pasting a Letterboxd CSV export in the same box.",
-        );
-        return;
-      }
-      await processList(data, responseData);
     },
     [processList],
   );
@@ -240,18 +317,28 @@ export function useLetterboxdList(
     async (csvText: string, country: string): Promise<void> => {
       batchMapRef.current.clear();
       toggleNotice("Loading list from CSV...");
-      const response = await fetch("/api/letterboxd-list-from-csv", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ csv: csvText }),
-      });
-      const responseData = (await response.json()) as ListResponse;
-      if (!response.ok) {
-        showError(responseData.error ?? "Failed to parse CSV");
-        return;
+      try {
+        const response = await fetch("/api/letterboxd-list-from-csv", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ csv: csvText }),
+          signal: AbortSignal.timeout(LIST_API_TIMEOUT_MS),
+        });
+        const responseData = (await response.json()) as ListResponse;
+        if (!response.ok) {
+          showError(responseData.error ?? "Failed to parse CSV");
+          return;
+        }
+        const data: LoadData = { country, page: 1 };
+        await processList(data, responseData);
+      } catch (e) {
+        if (isListFetchTimedOut(e)) {
+          showError("Request timed out while parsing CSV. Try again with a smaller export.");
+          toggleNotice(null);
+          return;
+        }
+        throw e;
       }
-      const data: LoadData = { country, page: 1 };
-      await processList(data, responseData);
     },
     [processList],
   );
@@ -262,6 +349,8 @@ export function useLetterboxdList(
         toggleNotice("Already working on that list...");
         return;
       }
+      clearTimeout(noPosterReportTimeoutRef.current);
+      noPosterReportTimeoutRef.current = undefined;
       isSubmittingListRef.current = true;
       setListLoading?.(true);
       if (!listUrl?.trim()) {
@@ -304,6 +393,8 @@ export function useLetterboxdList(
         window.removeEventListener("scroll", scrollListenerRef.current);
       }
       batchMapRef.current.clear();
+      clearTimeout(noPosterReportTimeoutRef.current);
+      noPosterReportTimeoutRef.current = undefined;
     };
   }, []);
 

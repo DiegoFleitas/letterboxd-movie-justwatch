@@ -1,14 +1,28 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { HttpRequestContext, HttpResponseContext } from "../server/httpContext.js";
 
-const { mockAxiosGet } = vi.hoisted(() => ({
-  mockAxiosGet: vi.fn(),
+const { mockFetchLetterboxdHtml } = vi.hoisted(() => ({
+  mockFetchLetterboxdHtml: vi.fn(),
 }));
 
-vi.mock("../helpers/axios.js", () => ({
-  default: () => ({
-    get: mockAxiosGet,
-    post: vi.fn(),
+vi.mock("../lib/letterboxdHttp.js", () => ({
+  LetterboxdHttpError: class LetterboxdHttpError extends Error {
+    readonly status: number;
+    constructor(message: string, status: number) {
+      super(message);
+      this.name = "LetterboxdHttpError";
+      this.status = status;
+    }
+  },
+  fetchLetterboxdHtml: mockFetchLetterboxdHtml,
+  fetchLetterboxdBinaryOk: vi.fn(),
+  buildLetterboxdHtmlRequestHeaders: (ua: string) => ({
+    "User-Agent": ua,
+    Accept: "text/html,application/xhtml+xml",
+  }),
+  buildLetterboxdImageRequestHeaders: (ua: string) => ({
+    "User-Agent": ua,
+    Accept: "image/*",
   }),
 }));
 
@@ -21,7 +35,7 @@ import { letterboxdWatchlist, letterboxdCustomList } from "../controllers/letter
 
 describe("letterboxd list URL validation (SSRF guard)", () => {
   beforeEach(() => {
-    mockAxiosGet.mockReset();
+    mockFetchLetterboxdHtml.mockReset();
   });
 
   afterEach(() => {
@@ -67,7 +81,7 @@ describe("letterboxd list URL validation (SSRF guard)", () => {
     await letterboxdWatchlist({ req, res });
 
     expect(getStatus()).toBe(400);
-    expect(mockAxiosGet).not.toHaveBeenCalled();
+    expect(mockFetchLetterboxdHtml).not.toHaveBeenCalled();
   });
 
   it("rejects non-Letterboxd listUrl on custom-list endpoint", async () => {
@@ -91,7 +105,7 @@ describe("letterboxd list URL validation (SSRF guard)", () => {
 
     expect(getStatus()).toBe(400);
     expect((getJson() as { error?: string }).error).toBeDefined();
-    expect(mockAxiosGet).not.toHaveBeenCalled();
+    expect(mockFetchLetterboxdHtml).not.toHaveBeenCalled();
   });
 
   it("rejects watchlist URL on custom-list endpoint", async () => {
@@ -114,7 +128,7 @@ describe("letterboxd list URL validation (SSRF guard)", () => {
     await letterboxdCustomList({ req, res });
 
     expect(getStatus()).toBe(400);
-    expect(mockAxiosGet).not.toHaveBeenCalled();
+    expect(mockFetchLetterboxdHtml).not.toHaveBeenCalled();
   });
 
   it("rejects username mismatch for watchlist", async () => {
@@ -137,6 +151,6 @@ describe("letterboxd list URL validation (SSRF guard)", () => {
     await letterboxdWatchlist({ req, res });
 
     expect(getStatus()).toBe(400);
-    expect(mockAxiosGet).not.toHaveBeenCalled();
+    expect(mockFetchLetterboxdHtml).not.toHaveBeenCalled();
   });
 });
