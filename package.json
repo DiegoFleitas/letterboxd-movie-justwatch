@@ -103,7 +103,7 @@
     "@types/react-dom": "^19.2.3",
     "@typescript-eslint/eslint-plugin": "^8.56.1",
     "@typescript-eslint/parser": "^8.56.1",
-    "@vitejs/plugin-react": "^4.3.4",
+    "@vitejs/plugin-react": "^6.0.1",
     "@vitest/ui": "^4.0.18",
     "concurrently": "^8.0.1",
     "eslint": "^9.17.0",
@@ -121,7 +121,7 @@
     "react-devtools": "^5.2.0",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "vite": "^5.4.21",
+    "vite": "8.0.7",
     "vitest": "^4.0.18",
     "wait-on": "^8.0.1"
   }
