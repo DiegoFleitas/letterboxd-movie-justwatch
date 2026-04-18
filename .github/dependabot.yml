@@ -1,0 +1,10 @@
+# Use the Bun ecosystem so version PRs update bun.lock together with package.json.
+# If the org enables Dependabot for npm_and_yarn on this repo, disable or exclude
+# that rule here to avoid PRs that bump package.json without refreshing bun.lock.
+version: 2
+updates:
+  - package-ecosystem: "bun"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
