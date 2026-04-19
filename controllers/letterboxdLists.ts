@@ -50,6 +50,8 @@ const fetchList = async ({
     let totalPages = 1;
     let currentPage = 0;
     let filmsCount = 0;
+    /** When true, {@link filmsCount} / {@link totalPages} came from the page (not default). */
+    let haveFilmTotal = false;
     let filmsPromises: PageFilm[] = [];
     let lastPage: number | null = null;
 
@@ -92,12 +94,16 @@ const fetchList = async ({
           break;
         }
 
-        if (!filmsCount) {
-          filmsCount = getFilmsCount($);
-          totalPages = Math.ceil(filmsCount / filmsPerPage) || 1;
-          if (currentPage > totalPages) {
-            res.status(404).json({ error: "Invalid list page" });
-            return;
+        if (!haveFilmTotal) {
+          const parsedCount = getFilmsCount($);
+          if (parsedCount > 0) {
+            filmsCount = parsedCount;
+            totalPages = Math.ceil(filmsCount / filmsPerPage) || 1;
+            haveFilmTotal = true;
+            if (currentPage > totalPages) {
+              res.status(404).json({ error: "Invalid list page" });
+              return;
+            }
           }
         }
 

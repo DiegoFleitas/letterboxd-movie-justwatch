@@ -132,4 +132,20 @@ describe("Letterboxd list page scraper", () => {
     const $ = cheerio.load(html);
     expect(getFilmsCount($)).toBe(0);
   });
+
+  it("getFilmsCount does not treat year digits in a title as film count", () => {
+    const html = `<h1 class="section-heading">En cartel: 20 años de cine uruguayo en afiches</h1>`;
+    const $ = cheerio.load(html);
+    expect(getFilmsCount($)).toBe(0);
+  });
+
+  it("getFilmsCount reads total from meta description when section heading has no count", () => {
+    const html = `
+      <head>
+        <meta name="description" content="A list of 104 films compiled on Letterboxd, including Foo (1994)." />
+      </head>
+      <body><h1 class="title-1 prettify">En cartel: 20 años de cine uruguayo en afiches</h1></body>`;
+    const $ = cheerio.load(html);
+    expect(getFilmsCount($)).toBe(104);
+  });
 });

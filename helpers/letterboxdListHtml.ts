@@ -139,11 +139,32 @@ export function getPageFilms($: CheerioAPI): PageFilm[] {
 }
 
 /**
- * Get total film count from section heading (e.g. "shoemonger wants to see 20 films").
+ * Parse total film count from visible copy or meta (e.g. "… 20 films", "A list of 104 films").
+ * Avoids stripping all digits from titles like "20 años…" which would yield a bogus count.
+ */
+function parseFilmsCountFromText(text: string): number {
+  const trimmed = text?.trim() ?? "";
+  if (!trimmed) return 0;
+  const filmsWord = trimmed.match(/\b(\d{1,6})\s+films?\b/i);
+  if (filmsWord) return parseInt(filmsWord[1], 10);
+  const listOf = trimmed.match(/\bA list of (\d{1,6}) films\b/i);
+  if (listOf) return parseInt(listOf[1], 10);
+  return 0;
+}
+
+/**
+ * Get total film count from section heading and/or meta description.
  */
 export function getFilmsCount($: CheerioAPI): number {
-  const rawFilmsText = $("h1.section-heading").text();
-  return parseInt(rawFilmsText.replace(/[^0-9]/g, ""), 10) || 0;
+  const fromHeading = parseFilmsCountFromText($("h1.section-heading").text());
+  if (fromHeading > 0) return fromHeading;
+
+  const metaDesc = $('meta[name="description"]').attr("content") ?? "";
+  const fromMeta = parseFilmsCountFromText(metaDesc);
+  if (fromMeta > 0) return fromMeta;
+
+  const ogDesc = $('meta[property="og:description"]').attr("content") ?? "";
+  return parseFilmsCountFromText(ogDesc);
 }
 
 /**
