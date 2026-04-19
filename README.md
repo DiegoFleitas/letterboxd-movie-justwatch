@@ -20,11 +20,11 @@ Scan any **public** Letterboxd watchlist or custom list and see where each film 
 
 ### Prerequisites
 
-- **[Bun](https://bun.sh)** — version pinned in `packageManager` in `package.json` (lockfile: `bun.lock`)
+- **[Bun](https://bun.sh)** — version pinned in `packageManager` in `package.json` (lockfile: `bun.lock`). This repo is Bun-only (no in-repo Node pin).
 
 ### Quick start (local dev)
 
-1. `bun install`
+1. `bun install` — runs the `prepare` script so **Husky** Git hooks install locally. In CI, hooks are skipped (`HUSKY=0`). If hooks are missing after cloning, run `bun run prepare`.
 2. `cp .env.example .env` and set at least **`FLYIO_REDIS_URL`**, **`OMDB_API_KEY`** (posters). For production, set **`APP_SECRET_KEY`** (≥32 characters for sessions).
 3. `bun run dev` — runs Vite on **5173** and Fastify on **3000** (see `concurrently` in `package.json`).
 4. Open **`http://localhost:5173`** (dev UI proxies API traffic to the backend as configured in Vite).
