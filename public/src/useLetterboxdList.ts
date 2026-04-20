@@ -6,7 +6,7 @@ import { toggleNotice } from "./noticeFunctions";
 import { showError, showBatchErrors } from "./showError";
 import { showMessage } from "./showMessage";
 import { classifyListReportSymptom, type MergeData, type TileData } from "./movieTiles";
-import { captureFrontendException, captureFrontendMessage } from "./sentry";
+import { captureFrontendException } from "./sentry";
 
 const SEARCH_CONCURRENCY = 4;
 
@@ -92,10 +92,6 @@ export function useLetterboxdList(
         allPagesLoadedRef.current = lastPage === totalPages;
         watchlistPageCountRef.current = totalPages;
         if (error) {
-          captureFrontendMessage(error, {
-            tags: { source: "api", endpoint: "/api/letterboxd-list" },
-            extra: { listType: data.listType, listUrl: data.listUrl, page: data.page },
-          });
           showError(error);
           return;
         }
@@ -200,7 +196,7 @@ export function useLetterboxdList(
                 }
                 captureFrontendException(e, {
                   tags: { source: "api", endpoint: "/api/search-movie", flow: "list-batch" },
-                  extra: { title, year, country: data.country, listUrl: data.listUrl },
+                  extra: { title, year, country: data.country },
                 });
                 console.error(e);
               });
@@ -247,7 +243,7 @@ export function useLetterboxdList(
       } catch (e) {
         captureFrontendException(e, {
           tags: { source: "frontend", flow: "process-list" },
-          extra: { listType: data.listType, listUrl: data.listUrl, country: data.country },
+          extra: { listType: data.listType, country: data.country },
         });
         console.error(e);
         toggleNotice(null);
@@ -275,7 +271,7 @@ export function useLetterboxdList(
         if (isListFetchTimedOut(e)) {
           captureFrontendException(e, {
             tags: { source: "api", endpoint: "/api/letterboxd-watchlist", reason: "timeout" },
-            extra: { listType: data.listType, listUrl: data.listUrl, page: data.page },
+            extra: { listType: data.listType, page: data.page },
           });
           showError(
             "Request timed out while loading the list. Try again with a valid Letterboxd URL.",
@@ -285,7 +281,7 @@ export function useLetterboxdList(
         }
         captureFrontendException(e, {
           tags: { source: "api", endpoint: "/api/letterboxd-watchlist" },
-          extra: { listType: data.listType, listUrl: data.listUrl, page: data.page },
+          extra: { listType: data.listType, page: data.page },
         });
         throw e;
       }
@@ -306,18 +302,10 @@ export function useLetterboxdList(
         });
         const responseData = (await response.json()) as ListResponse;
         if (!response.ok) {
-          captureFrontendMessage(responseData.error ?? "Failed to load list", {
-            tags: { source: "api", endpoint: "/api/letterboxd-custom-list", reason: "http-error" },
-            extra: { status: response.status, listType: data.listType, listUrl: data.listUrl },
-          });
           showError(responseData.error ?? "Failed to load list");
           return;
         }
         if ((responseData.watchlist?.length ?? 0) === 0) {
-          captureFrontendMessage("No films found on this list.", {
-            tags: { source: "api", endpoint: "/api/letterboxd-custom-list", reason: "empty-list" },
-            extra: { listType: data.listType, listUrl: data.listUrl },
-          });
           showError("No films found on this list.");
           return;
         }
@@ -326,7 +314,7 @@ export function useLetterboxdList(
         if (isListFetchTimedOut(e)) {
           captureFrontendException(e, {
             tags: { source: "api", endpoint: "/api/letterboxd-custom-list", reason: "timeout" },
-            extra: { listType: data.listType, listUrl: data.listUrl, page: data.page },
+            extra: { listType: data.listType, page: data.page },
           });
           showError(
             "Request timed out while loading the list. Try again with a valid Letterboxd URL.",
@@ -336,7 +324,7 @@ export function useLetterboxdList(
         }
         captureFrontendException(e, {
           tags: { source: "api", endpoint: "/api/letterboxd-custom-list" },
-          extra: { listType: data.listType, listUrl: data.listUrl, page: data.page },
+          extra: { listType: data.listType, page: data.page },
         });
         throw e;
       }

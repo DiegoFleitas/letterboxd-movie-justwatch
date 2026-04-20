@@ -26,7 +26,10 @@ if (rootEl) {
     if (params.get("sentryDummyFe") === "1") {
       captureFrontendException(new Error("Dummy FE Sentry error"), {
         tags: { source: "dummy", layer: "frontend" },
-        extra: { query: window.location.search },
+        extra: {
+          sentryDummyFe: params.get("sentryDummyFe") === "1",
+          sentryDummyBe: params.get("sentryDummyBe") === "1",
+        },
       });
     }
     if (params.get("sentryDummyBe") === "1") {

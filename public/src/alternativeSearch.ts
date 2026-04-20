@@ -36,10 +36,6 @@ export function runAlternativeSearch(
     .then((response: { error?: string; text?: string; url?: string; title?: string }) => {
       setTimeout(() => toggleNotice(null), NOTICE_HOLD_ALT_SEARCH_MS);
       if (response.error) {
-        captureFrontendMessage(response.error, {
-          tags: { source: "api", endpoint: "/api/alternative-search", reason: "response-error" },
-          extra: { title, year },
-        });
         showError(response.error);
       } else
         showMessage({ text: response.text ?? "", url: response.url, title: response.title }, true);

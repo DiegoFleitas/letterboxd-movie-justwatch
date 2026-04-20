@@ -63,10 +63,6 @@ export function useMovieSearch(
             mergeTile?.(title, year ?? null, buildMovieMergeData(response));
           }
           if (error) {
-            captureFrontendMessage(error, {
-              tags: { source: "api", endpoint: "/api/search-movie", reason: "response-error" },
-              extra: { title, year, requestTitle: data.title, requestYear: data.year },
-            });
             showMessage(`[${title} (${year})] ${error}`);
           } else {
             const names = (movieProviders ?? []).map((e) => e.name).join(", ");
