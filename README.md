@@ -68,7 +68,7 @@ Then open **`http://localhost:3000`**. For secrets (`OMDB_API_KEY`, `APP_SECRET_
 | `bun run build:providers`                     | Regenerate canonical provider data (`build:providers:dry-run` to preview)                                    |
 | `bun run export-redis` / `bun run seed-redis` | Redis snapshot ([`redis/README.md`](redis/README.md))                                                        |
 | `bun run fly:deploy`                          | Build + Fly.io deploy (`fly:logs`, `fly:ssh`, etc.)                                                          |
-| `bun run fly:deploy:release`                  | Fly.io deploy shortcut (use CI artifact flow for release-aligned sourcemap upload)                           |
+| `bun run fly:deploy:release`                  | Fly.io deploy shortcut                                                                                       |
 
 ### Configuration (environment)
 
@@ -83,7 +83,7 @@ See **`.env.example`** for the full list. Common variables:
 | `MOVIE_DB_API_KEY`                                    | TMDb / search; optional locally; enables extra integration coverage in CI when set                                                      |
 | `POSTHOG_KEY` / `POSTHOG_HOST`                        | Optional analytics                                                                                                                      |
 | `SENTRY_DSN` / `SENTRY_*`                             | Optional FE + BE Sentry config (runtime-injected to browser; see [`docs/sentry-and-logger.md`](docs/sentry-and-logger.md))              |
-| `SENTRY_AUTH_TOKEN` / `SENTRY_ORG` / `SENTRY_PROJECT` | Required for `sentry-cli` sourcemap upload scripts                                                                                      |
+| `SENTRY_AUTH_TOKEN` / `SENTRY_ORG` / `SENTRY_PROJECT` | Required in CI for `sentry-cli` sourcemap upload                                                                                        |
 | `JACKETT_API_KEY` / `JACKETT_API_ENDPOINT`            | Optional alternative search                                                                                                             |
 | `CACHE_TTL`                                           | Optional cache TTL override (seconds)                                                                                                   |
 | `PORT`                                                | Backend port (default **3000**)                                                                                                         |
@@ -97,6 +97,7 @@ See **`.env.example`** for the full list. Common variables:
 ### Logging and secrets
 
 - **Sentry + backend logging**: See [`docs/sentry-and-logger.md`](docs/sentry-and-logger.md) for FE/BE Sentry setup, release alignment (`SENTRY_RELEASE`), and Fastify logging behavior.
+- **Sentry release automation**: `.github/workflows/fly-deploy.yml` builds frontend assets, uploads sourcemaps to Sentry, then deploys to Fly using the same commit SHA as `SENTRY_RELEASE`.
 - HTTP requests are logged via a shared axios helper (`helpers/axios.ts`) that **redacts query parameters such as `api_key`, `apikey`, `access_token`, `token`, and `key`** before printing URLs.
 - Do not log raw environment variables or full external URLs containing credentials; if you add new HTTP clients, either use the existing helper or apply similar redaction.
 

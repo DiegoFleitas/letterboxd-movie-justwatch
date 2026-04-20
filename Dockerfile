@@ -2,12 +2,14 @@
 
 ARG BUN_VERSION=1.3.11
 FROM oven/bun:${BUN_VERSION}-slim AS base
+ARG SENTRY_RELEASE=""
 
 LABEL fly_launch_runtime="Bun"
 
 WORKDIR /app
 
 ENV NODE_ENV="production"
+ENV SENTRY_RELEASE="${SENTRY_RELEASE}"
 
 # Throw-away build stage to reduce size of final image
 FROM base AS build

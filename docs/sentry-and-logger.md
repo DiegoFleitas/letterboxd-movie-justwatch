@@ -61,7 +61,7 @@ Frontend production debugging relies on sourcemaps uploaded to Sentry for the sa
   - `bun run sentry:release:upload-sourcemaps`
   - `bun run sentry:release:finalize`
   - or combined: `bun run sentry:release:frontend`
-- `bun run fly:deploy:release` only deploys. Keep sourcemap upload in CI/staging flow where upload artifacts come from the same build output that gets shipped.
+- CI automation (`.github/workflows/fly-deploy.yml`) runs `build -> sentry:release:frontend -> flyctl deploy` with one release id from commit SHA.
 
 Required env vars for upload:
 
@@ -70,7 +70,15 @@ Required env vars for upload:
 - `SENTRY_PROJECT`
 - `SENTRY_RELEASE`
 
+In GitHub Actions, configure secrets:
+
+- `SENTRY_AUTH_TOKEN`
+- `SENTRY_ORG`
+- `SENTRY_PROJECT`
+- `FLY_API_TOKEN`
+
 Important: `SENTRY_RELEASE` must be the same value used by both backend and frontend runtime init; otherwise uploaded artifacts will not match incoming events.
+The deploy workflow sets `SENTRY_RELEASE` from `${{ github.event.workflow_run.head_sha || github.sha }}` and passes it both to sourcemap upload and Docker build args for runtime alignment.
 
 ## Where exceptions are captured
 
