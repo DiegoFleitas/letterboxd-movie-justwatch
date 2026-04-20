@@ -68,7 +68,7 @@ Then open **`http://localhost:3000`**. For secrets (`OMDB_API_KEY`, `APP_SECRET_
 | `bun run build:providers`                     | Regenerate canonical provider data (`build:providers:dry-run` to preview)                                    |
 | `bun run export-redis` / `bun run seed-redis` | Redis snapshot ([`redis/README.md`](redis/README.md))                                                        |
 | `bun run fly:deploy`                          | Build + Fly.io deploy (`fly:logs`, `fly:ssh`, etc.)                                                          |
-| `bun run fly:deploy:release`                  | Build + upload frontend sourcemaps to Sentry + Fly.io deploy                                                 |
+| `bun run fly:deploy:release`                  | Fly.io deploy shortcut (use CI artifact flow for release-aligned sourcemap upload)                           |
 
 ### Configuration (environment)
 

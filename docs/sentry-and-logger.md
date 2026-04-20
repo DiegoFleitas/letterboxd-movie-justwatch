@@ -30,7 +30,7 @@ This document describes how server-side error reporting and HTTP logging work in
    - `tracesSampleRate`: from `SENTRY_TRACES_SAMPLE_RATE` (clamped 0–1); defaults to **0** in `.env.example` unless you raise it
    - `sendDefaultPii`: only when `SENTRY_SEND_DEFAULT_PII === "true"`
 
-4. **HTTP 5xx capture path** — Application-level exceptions and explicit backend captures go through `Sentry.captureException` in route/error-handler code. There is no extra middleware-level `captureMessage` bridge.
+4. **HTTP 5xx capture path** — Application-level exceptions and explicit backend captures go through `Sentry.captureException` in route/error-handler code. There is no extra middleware-level `captureMessage` bridge or active logger/middleware-level HTTP 5xx capture bridge.
 
 5. **Shutdown** — `server-fastify.ts` calls `Sentry.close(2000)` on SIGTERM/SIGINT when a client exists, and on fatal startup errors after `captureException`.
 
@@ -55,13 +55,13 @@ Using runtime injection keeps one frontend artifact portable across environments
 
 Frontend production debugging relies on sourcemaps uploaded to Sentry for the same release identifier used at runtime.
 
-- Build emits sourcemaps (`vite.config.ts` with `build.sourcemap: true`)
+- Build emits hidden sourcemaps (`vite.config.ts` with `build.sourcemap: "hidden"`), so `.map` artifacts are generated for upload without adding browser-facing `sourceMappingURL` references in JS bundles.
 - Upload workflow is script-driven:
   - `bun run sentry:release:new`
   - `bun run sentry:release:upload-sourcemaps`
   - `bun run sentry:release:finalize`
   - or combined: `bun run sentry:release:frontend`
-- Deploy shortcut including upload: `bun run fly:deploy:release`
+- `bun run fly:deploy:release` only deploys. Keep sourcemap upload in CI/staging flow where upload artifacts come from the same build output that gets shipped.
 
 Required env vars for upload:
 
@@ -131,4 +131,4 @@ flowchart LR
 
 - `instrument.ts` — DSN gating and Sentry options
 - `server/createServer.ts` — Fastify logger configuration and error handler
-- `.env.example` — `SENTRY_*` and logger-related variables
+- `.env.example` — `SENTRY_*` variables for runtime + release workflows

@@ -25,7 +25,7 @@ export default defineConfig({
   root: "public",
   build: {
     outDir: "dist",
-    sourcemap: true,
+    sourcemap: "hidden",
     rollupOptions: {
       input: path.resolve(__dirname, "public", "index.html"),
     },
