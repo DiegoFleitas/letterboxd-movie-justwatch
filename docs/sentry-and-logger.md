@@ -61,6 +61,7 @@ Frontend production debugging relies on sourcemaps uploaded to Sentry for the sa
   - `bun run sentry:release:upload-sourcemaps`
   - `bun run sentry:release:finalize`
   - or combined: `bun run sentry:release:frontend`
+- CLI command note: this repo uploads sourcemaps with `sentry-cli sourcemaps upload` (invoked as `bunx @sentry/cli sourcemaps upload ...`).
 - CI automation (`.github/workflows/fly-deploy.yml`) runs `build -> sentry:release:frontend -> flyctl deploy` with one release id from commit SHA, and deploy reuses that exact prebuilt `public/dist` output (it does not rebuild frontend assets when `public/dist` already exists).
 
 Required env vars for upload:
