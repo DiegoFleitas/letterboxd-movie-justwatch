@@ -21,7 +21,7 @@ function PostHogWindowRef(): null {
 const rootEl = document.getElementById("root");
 if (rootEl) {
   initFrontendSentry();
-  if (import.meta.env.DEV && typeof window !== "undefined") {
+  if (typeof window !== "undefined") {
     const params = new URLSearchParams(window.location.search);
     if (params.get("sentryDummyFe") === "1") {
       captureFrontendException(new Error("Dummy FE Sentry error"), {
