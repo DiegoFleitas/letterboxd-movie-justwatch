@@ -196,7 +196,7 @@ export function useLetterboxdList(
                 }
                 captureFrontendException(e, {
                   tags: { source: "api", endpoint: "/api/search-movie", flow: "list-batch" },
-                  extra: { title, year, country: data.country },
+                  extra: { title, year, country: data.country, listUrl: data.listUrl },
                 });
                 console.error(e);
               });
@@ -243,7 +243,7 @@ export function useLetterboxdList(
       } catch (e) {
         captureFrontendException(e, {
           tags: { source: "frontend", flow: "process-list" },
-          extra: { listType: data.listType, country: data.country },
+          extra: { listType: data.listType, listUrl: data.listUrl, country: data.country },
         });
         console.error(e);
         toggleNotice(null);
@@ -271,7 +271,7 @@ export function useLetterboxdList(
         if (isListFetchTimedOut(e)) {
           captureFrontendException(e, {
             tags: { source: "api", endpoint: "/api/letterboxd-watchlist", reason: "timeout" },
-            extra: { listType: data.listType, page: data.page },
+            extra: { listType: data.listType, listUrl: data.listUrl, page: data.page },
           });
           showError(
             "Request timed out while loading the list. Try again with a valid Letterboxd URL.",
@@ -281,7 +281,7 @@ export function useLetterboxdList(
         }
         captureFrontendException(e, {
           tags: { source: "api", endpoint: "/api/letterboxd-watchlist" },
-          extra: { listType: data.listType, page: data.page },
+          extra: { listType: data.listType, listUrl: data.listUrl, page: data.page },
         });
         throw e;
       }
@@ -314,7 +314,7 @@ export function useLetterboxdList(
         if (isListFetchTimedOut(e)) {
           captureFrontendException(e, {
             tags: { source: "api", endpoint: "/api/letterboxd-custom-list", reason: "timeout" },
-            extra: { listType: data.listType, page: data.page },
+            extra: { listType: data.listType, listUrl: data.listUrl, page: data.page },
           });
           showError(
             "Request timed out while loading the list. Try again with a valid Letterboxd URL.",
@@ -324,7 +324,7 @@ export function useLetterboxdList(
         }
         captureFrontendException(e, {
           tags: { source: "api", endpoint: "/api/letterboxd-custom-list" },
-          extra: { listType: data.listType, page: data.page },
+          extra: { listType: data.listType, listUrl: data.listUrl, page: data.page },
         });
         throw e;
       }

@@ -1,25 +1,7 @@
 import { getToastImpl } from "./toastApi";
 import { plainText } from "./showMessage";
-import { captureFrontendMessage } from "./sentry";
-
-export interface ShowErrorOptions {
-  reportToSentry?: boolean;
-  sentryContext?: {
-    tags?: Record<string, string>;
-    extra?: Record<string, unknown>;
-    fingerprint?: string[];
-  };
-}
-
-export const showError = (error: unknown, options?: ShowErrorOptions): void => {
+export const showError = (error: unknown): void => {
   const message = plainText(typeof error === "string" ? error : String(error));
-  if (options?.reportToSentry) {
-    captureFrontendMessage(message, {
-      tags: { source: "toast", kind: "error", ...(options.sentryContext?.tags ?? {}) },
-      extra: options.sentryContext?.extra,
-      fingerprint: options.sentryContext?.fingerprint ?? ["toast-error"],
-    });
-  }
   const impl = getToastImpl();
   if (impl?.error) {
     impl.error(message);
