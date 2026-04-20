@@ -6,7 +6,6 @@ import fastifyFormbody from "@fastify/formbody";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { logging } from "diegos-fly-logger/index.mjs";
 import {
   searchMovie,
   poster,
@@ -159,15 +158,6 @@ export function createServer(): CreatedServer {
     });
 
     void app.register(fastifyFormbody);
-
-    app.addHook("onRequest", async (request, reply) => {
-      await new Promise<void>((resolve, reject) => {
-        logging(request.raw, reply.raw, (err?: unknown) => {
-          if (err) reject(err instanceof Error ? err : new Error(String(err)));
-          else resolve();
-        });
-      });
-    });
 
     const setCacheControlFastify =
       (handler: HttpHandler) => async (request: FastifyRequest, reply: FastifyReply) => {
