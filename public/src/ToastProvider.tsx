@@ -2,7 +2,6 @@ import React, { useEffect } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { setToastImpl } from "./toastApi";
 import { TOAST_DEFAULT_DURATION_MS } from "./animation/timing";
-import { useAppState } from "./AppStateContext";
 import { WaitCue } from "./WaitCue";
 
 const toastStyle = {
@@ -22,8 +21,6 @@ const toastOptions = {
 };
 
 export function ToastProvider({ children }: { children: React.ReactNode }): React.ReactElement {
-  const { searchSubs: openSubsSearch } = useAppState();
-
   useEffect(() => {
     setToastImpl({
       success: (msg: string) => toast.success(String(msg ?? ""), toastOptions),
@@ -41,7 +38,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }): Reac
         }),
       dismissLoading: (id: string) => toast.dismiss(id),
       messageWithLink: (
-        data: { url?: string; text?: string; title?: string; error?: string } | string | null,
+        data:
+          | { url?: string; text?: string; title?: string; year?: string | number; error?: string }
+          | string
+          | null,
       ) => {
         if (!data || typeof data !== "object" || (data as { error?: string }).error) {
           const d = data as { text?: string; error?: string } | undefined;
@@ -51,16 +51,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }): Reac
         }
         const url = data.url;
         const text = data.text ?? "";
-        const title = data.title;
         toast.custom(
           () => (
             <a
               href={url || "#"}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={() => {
-                if (openSubsSearch && title) openSubsSearch(title);
-              }}
               className="app-toast-link"
             >
               {text}
@@ -71,7 +67,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }): Reac
       },
     });
     return () => setToastImpl(null);
-  }, [openSubsSearch]);
+  }, []);
 
   return (
     <>

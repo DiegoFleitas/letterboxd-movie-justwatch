@@ -40,9 +40,7 @@ export function showMessage(messageData: string | MessageWithLink, isHTML = fals
   }
   const m = messageData as MessageWithLink;
   const toastOptions: Record<string, unknown> = {
-    message: isHTML
-      ? `<a href="${m.url}" target="_blank" onclick="searchSubs('${m.title}')">${m.text}</a>`
-      : messageData,
+    message: isHTML ? `<a href="${m.url}" target="_blank">${m.text}</a>` : messageData,
     theme: "light",
     layout: 1,
     progressBar: false,

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
+import { useAppState } from "./AppStateContext";
 import { letterboxdFilmUrlOrSearchUrl, type TileData, type TileProvider } from "./movieTiles";
 import {
   POSTER_IMAGE_TRANSFORM_S,
@@ -36,6 +37,7 @@ export function MovieTile({
     tmdbLink ? "TMDB" : null,
     imdbLink ? "IMDb" : null,
   ].filter(Boolean);
+  const { searchSubs } = useAppState();
   const providerNames = movieProviders.map((p: { name: string }) => p.name);
   const [loaded, setLoaded] = useState(false);
 
@@ -49,14 +51,14 @@ export function MovieTile({
   const motionDivProps = suppressAnimations
     ? {}
     : {
-        initial: { opacity: 0, y: 8 },
-        animate: {
-          opacity: 1,
-          y: 0,
-          transition: { ...motionTransition(POSTER_IMAGE_TRANSFORM_S * 0.9), delay: staggerDelay },
-        },
-        exit: { opacity: 0, y: 8, transition: motionTransition(POSTER_OVERLAY_OPACITY_S) },
-      };
+      initial: { opacity: 0, y: 8 },
+      animate: {
+        opacity: 1,
+        y: 0,
+        transition: { ...motionTransition(POSTER_IMAGE_TRANSFORM_S * 0.9), delay: staggerDelay },
+      },
+      exit: { opacity: 0, y: 8, transition: motionTransition(POSTER_OVERLAY_OPACITY_S) },
+    };
 
   return (
     <motion.div
@@ -68,11 +70,11 @@ export function MovieTile({
         suppressAnimations
           ? undefined
           : {
-              y: -8,
-              scale: 1.02,
-              rotate: -0.3,
-              transition: motionTransition(POSTER_HOVER_TRANSFORM_S),
-            }
+            y: -8,
+            scale: 1.02,
+            rotate: -0.3,
+            transition: motionTransition(POSTER_HOVER_TRANSFORM_S),
+          }
       }
     >
       {showExternalLinks ? (
@@ -263,6 +265,28 @@ export function MovieTile({
             </button>
           </div>
         </div>
+      </div>
+      <div className="poster-subs-btn-wrap">
+        <button
+          type="button"
+          className="poster-subs-btn"
+          title="Search subtitles (SubDL)"
+          aria-label={`Search subtitles for ${title}`}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            searchSubs(title, year ?? undefined);
+          }}
+        >
+          <img
+            className="poster-subs-btn-icon"
+            src="/subdl-icon.png"
+            width={22}
+            height={22}
+            alt=""
+            decoding="async"
+          />
+        </button>
       </div>
     </motion.div>
   );
