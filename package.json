@@ -76,6 +76,7 @@
     "@fastify/static": "^9.1.1",
     "@posthog/react": "^1.9.0",
     "@sentry/node": "^10.49.0",
+    "@sentry/react": "^10.49.0",
     "axios": "^1.15.0",
     "cheerio": "^1.0.0-rc.12",
     "diegos-fly-logger": "^2.0.0",

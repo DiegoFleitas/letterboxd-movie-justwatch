@@ -203,6 +203,25 @@ export function createServer(): CreatedServer {
       reply.send({ ok: true, ...result });
     });
 
+    app.get("/api/sentry-test", async (request, reply) => {
+      if (process.env.NODE_ENV === "production") {
+        reply.code(404).send({ error: "Not available in production" });
+        return;
+      }
+      const mode = ((request.query as { mode?: string })?.mode ?? "throw").toLowerCase();
+      if (mode === "response") {
+        const err = new Error("Dummy BE Sentry test response error");
+        if (Sentry.getClient()) {
+          Sentry.captureException(err, {
+            extra: { endpoint: "/api/sentry-test", mode, method: request.method, url: request.url },
+          });
+        }
+        reply.code(500).send({ error: "Dummy backend response error for Sentry testing" });
+        return;
+      }
+      throw new Error("Dummy BE Sentry test throw");
+    });
+
     const posthog = getPosthog();
     app.setErrorHandler(async (err, request, reply) => {
       console.error(err);

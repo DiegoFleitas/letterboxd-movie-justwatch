@@ -1,10 +1,10 @@
 import { getToastImpl } from "./toastApi";
 import { plainText } from "./showMessage";
-
 export const showError = (error: unknown): void => {
+  const message = plainText(typeof error === "string" ? error : String(error));
   const impl = getToastImpl();
   if (impl?.error) {
-    impl.error(plainText(typeof error === "string" ? error : String(error)));
+    impl.error(message);
     return;
   }
   if (typeof (globalThis as { iziToast?: unknown }).iziToast === "undefined") return;
