@@ -13,7 +13,6 @@ node_modules
 .env.*
 
 # Build output and logs
-public/dist
 *.log
 playwright-report
 

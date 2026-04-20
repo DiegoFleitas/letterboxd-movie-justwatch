@@ -24,7 +24,9 @@ RUN bun install --frozen-lockfile
 
 COPY . .
 
-RUN bun run build
+# Reuse prebuilt frontend artifacts when present (CI sourcemap flow),
+# otherwise build them inside the image for local/manual deploys.
+RUN if [ ! -d public/dist ]; then bun run build; fi
 
 # Production node_modules only
 RUN rm -rf node_modules && bun install --frozen-lockfile --production
