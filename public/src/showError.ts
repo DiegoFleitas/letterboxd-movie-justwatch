@@ -1,10 +1,16 @@
 import { getToastImpl } from "./toastApi";
 import { plainText } from "./showMessage";
+import { captureFrontendMessage } from "./sentry";
 
 export const showError = (error: unknown): void => {
+  const message = plainText(typeof error === "string" ? error : String(error));
+  captureFrontendMessage(message, {
+    tags: { source: "toast", kind: "error" },
+    fingerprint: ["toast-error", message],
+  });
   const impl = getToastImpl();
   if (impl?.error) {
-    impl.error(plainText(typeof error === "string" ? error : String(error)));
+    impl.error(message);
     return;
   }
   if (typeof (globalThis as { iziToast?: unknown }).iziToast === "undefined") return;

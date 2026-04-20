@@ -2,6 +2,7 @@ import { toggleNotice } from "./noticeFunctions";
 import { showMessage } from "./showMessage";
 import { showError } from "./showError";
 import { NOTICE_HOLD_ALT_SEARCH_MS } from "./animation/timing";
+import { captureFrontendException, captureFrontendMessage } from "./sentry";
 
 let isAlternativeSearchInFlight = false;
 
@@ -23,14 +24,33 @@ export function runAlternativeSearch(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ title, year }),
   })
-    .then((res) => res.json())
+    .then((res) => {
+      if (res.status >= 500) {
+        captureFrontendMessage("alternative-search upstream error", {
+          tags: { source: "api", endpoint: "/api/alternative-search", reason: "http-5xx" },
+          extra: { status: res.status, title, year },
+        });
+      }
+      return res.json();
+    })
     .then((response: { error?: string; text?: string; url?: string; title?: string }) => {
       setTimeout(() => toggleNotice(null), NOTICE_HOLD_ALT_SEARCH_MS);
-      if (response.error) showError(response.error);
-      else
+      if (response.error) {
+        captureFrontendMessage(response.error, {
+          tags: { source: "api", endpoint: "/api/alternative-search", reason: "response-error" },
+          extra: { title, year },
+        });
+        showError(response.error);
+      } else
         showMessage({ text: response.text ?? "", url: response.url, title: response.title }, true);
     })
-    .catch((err) => console.error(err))
+    .catch((err) => {
+      captureFrontendException(err, {
+        tags: { source: "api", endpoint: "/api/alternative-search" },
+        extra: { title, year },
+      });
+      console.error(err);
+    })
     .finally(() => {
       isAlternativeSearchInFlight = false;
       options?.setAlternativeSearchLoading?.(false);

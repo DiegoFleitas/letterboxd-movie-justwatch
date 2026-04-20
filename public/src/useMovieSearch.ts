@@ -1,6 +1,7 @@
 import { useCallback, useRef } from "react";
 import { showMessage } from "./showMessage";
 import type { MergeData } from "./movieTiles";
+import { captureFrontendException, captureFrontendMessage } from "./sentry";
 
 export interface MovieSearchResponse {
   error?: string;
@@ -47,7 +48,13 @@ export function useMovieSearch(
       })
         .then((response) => {
           setShowAltSearchButton?.(true);
-          if (response.status === 502) console.error(response);
+          if (response.status >= 500) {
+            captureFrontendMessage("search-movie upstream error", {
+              tags: { source: "api", endpoint: "/api/search-movie", reason: "http-5xx" },
+              extra: { status: response.status, title: data.title, year: data.year },
+            });
+            console.error(response);
+          }
           return response.json();
         })
         .then((response: MovieSearchResponse) => {
@@ -56,13 +63,23 @@ export function useMovieSearch(
             mergeTile?.(title, year ?? null, buildMovieMergeData(response));
           }
           if (error) {
+            captureFrontendMessage(error, {
+              tags: { source: "api", endpoint: "/api/search-movie", reason: "response-error" },
+              extra: { title, year, requestTitle: data.title, requestYear: data.year },
+            });
             showMessage(`[${title} (${year})] ${error}`);
           } else {
             const names = (movieProviders ?? []).map((e) => e.name).join(", ");
             showMessage(`[${title} (${year})] ${message ?? ""}: ${names}`);
           }
         })
-        .catch((err) => console.error(err))
+        .catch((err) => {
+          captureFrontendException(err, {
+            tags: { source: "api", endpoint: "/api/search-movie" },
+            extra: { title: data.title, year: data.year, country: data.country },
+          });
+          console.error(err);
+        })
         .finally(() => {
           isInFlightRef.current = false;
           setMovieSearchLoading?.(false);

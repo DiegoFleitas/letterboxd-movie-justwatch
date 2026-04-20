@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import { useEffect } from "react";
 import { PostHogProvider, usePostHog } from "@posthog/react";
 import { App } from "./App";
+import { captureFrontendException, initFrontendSentry } from "./sentry";
 
 function PostHogWindowRef(): null {
   const posthog = usePostHog();
@@ -19,6 +20,26 @@ function PostHogWindowRef(): null {
 
 const rootEl = document.getElementById("root");
 if (rootEl) {
+  initFrontendSentry();
+  if (import.meta.env.DEV && typeof window !== "undefined") {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("sentryDummyFe") === "1") {
+      captureFrontendException(new Error("Dummy FE Sentry error"), {
+        tags: { source: "dummy", layer: "frontend" },
+        extra: { query: window.location.search },
+      });
+    }
+    if (params.get("sentryDummyBe") === "1") {
+      fetch("/api/sentry-test?mode=throw")
+        .then(() => {})
+        .catch((err: unknown) => {
+          captureFrontendException(err, {
+            tags: { source: "dummy", layer: "frontend", endpoint: "/api/sentry-test" },
+          });
+        });
+    }
+  }
+
   const key =
     (typeof window !== "undefined" && window.__POSTHOG_KEY__) ||
     import.meta.env.VITE_PUBLIC_POSTHOG_KEY;
