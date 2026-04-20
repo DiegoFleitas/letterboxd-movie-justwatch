@@ -27,7 +27,7 @@ import {
   getCanonicalProviderByNames,
 } from "../helpers/loadCanonicalProviders.js";
 import { getPosthog, shutdownPosthog } from "../lib/posthog.js";
-import { injectPosthogConfig } from "../lib/injectPosthogConfig.js";
+import { injectRuntimeConfig } from "../lib/injectRuntimeConfig.js";
 import type { HttpHandler, HttpRequestContext, HttpResponseContext } from "./httpContext.js";
 import * as Sentry from "@sentry/node";
 
@@ -40,7 +40,13 @@ function loadIndexHtmlWithPosthog(): string | null {
   const posthogKey = process.env.POSTHOG_KEY || "";
   const posthogHost = process.env.POSTHOG_HOST || "https://us.i.posthog.com";
   const html = fs.readFileSync(distIndexPath, "utf8");
-  return injectPosthogConfig(html, posthogKey, posthogHost, getCanonicalProviderByNames());
+  return injectRuntimeConfig(html, posthogKey, posthogHost, getCanonicalProviderByNames(), {
+    dsn: process.env.SENTRY_DSN || "",
+    release: process.env.SENTRY_RELEASE || "",
+    tracesSampleRate: process.env.SENTRY_TRACES_SAMPLE_RATE || "",
+    sendDefaultPii: process.env.SENTRY_SEND_DEFAULT_PII || "",
+    environment: process.env.NODE_ENV || "",
+  });
 }
 
 export interface StartedServer {

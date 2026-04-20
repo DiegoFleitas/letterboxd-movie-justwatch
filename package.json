@@ -13,7 +13,7 @@
     "test:backend": "bunx vitest run tests/backend.integration.test.ts",
     "test:filter": "bunx vitest run tests/filterLogic.test.ts",
     "test:state": "bunx vitest run tests/stateTileManagement.test.ts",
-    "test:posthog": "bunx vitest run tests/posthog.test.ts",
+    "test:posthog": "bunx vitest run tests/runtimeConfig.test.ts",
     "test:redis": "bunx vitest run tests/redis.test.ts",
     "test:dedupe": "bunx vitest run tests/providerDeduplication.test.ts",
     "test:poster-flow": "bun tests/testPosterFlow.test.ts",

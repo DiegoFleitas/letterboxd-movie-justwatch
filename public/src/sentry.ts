@@ -13,16 +13,37 @@ function parseSampleRate(value: string | undefined, fallback: number): number {
   return Math.min(Math.max(parsed, 0), 1);
 }
 
-const dsn = import.meta.env.VITE_SENTRY_DSN?.trim();
+function getRuntimeString(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
 
 export function initFrontendSentry(): void {
+  const dsn =
+    getRuntimeString(window.__SENTRY_DSN__) || getRuntimeString(import.meta.env.VITE_SENTRY_DSN);
   if (!dsn) return;
+
+  const environment =
+    getRuntimeString(window.__SENTRY_ENVIRONMENT__) ||
+    getRuntimeString(import.meta.env.MODE) ||
+    "development";
+  const release =
+    getRuntimeString(window.__SENTRY_RELEASE__) ||
+    getRuntimeString(import.meta.env.VITE_SENTRY_RELEASE);
+  const tracesSampleRate = parseSampleRate(
+    getRuntimeString(window.__SENTRY_TRACES_SAMPLE_RATE__) ||
+      getRuntimeString(import.meta.env.VITE_SENTRY_TRACES_SAMPLE_RATE),
+    0,
+  );
+  const sendDefaultPii =
+    getRuntimeString(window.__SENTRY_SEND_DEFAULT_PII__) === "true" ||
+    import.meta.env.VITE_SENTRY_SEND_DEFAULT_PII === "true";
+
   Sentry.init({
     dsn,
-    environment: import.meta.env.MODE ?? "development",
-    release: import.meta.env.VITE_SENTRY_RELEASE,
-    tracesSampleRate: parseSampleRate(import.meta.env.VITE_SENTRY_TRACES_SAMPLE_RATE, 0),
-    sendDefaultPii: import.meta.env.VITE_SENTRY_SEND_DEFAULT_PII === "true",
+    environment,
+    release,
+    tracesSampleRate,
+    sendDefaultPii,
     integrations: [Sentry.browserTracingIntegration()],
     tracePropagationTargets: [/^\//, "localhost", "127.0.0.1"],
   });
