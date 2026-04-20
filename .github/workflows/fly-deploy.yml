@@ -37,6 +37,11 @@ jobs:
         run: echo "Deploying release ${SENTRY_RELEASE}"
       - name: Build frontend for sourcemap upload
         run: bun run build
+      - name: Verify Sentry CLI compatibility
+        run: |
+          which sentry-cli || true
+          bunx @sentry/cli --version
+          bunx @sentry/cli sourcemaps upload --help
       - name: Upload frontend sourcemaps to Sentry
         run: bun run sentry:release:frontend
         env:
