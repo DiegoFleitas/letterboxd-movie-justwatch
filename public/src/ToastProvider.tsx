@@ -3,6 +3,7 @@ import toast, { Toaster } from "react-hot-toast";
 import { setToastImpl } from "./toastApi";
 import { TOAST_DEFAULT_DURATION_MS } from "./animation/timing";
 import { useAppState } from "./AppStateContext";
+import { WaitCue } from "./WaitCue";
 
 const toastStyle = {
   background: "#10161d",
@@ -36,6 +37,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }): Reac
         toast.loading(msg ?? "Please wait...", {
           position: "top-right",
           style: toastStyle,
+          icon: <WaitCue size="xs" />,
         }),
       dismissLoading: (id: string) => toast.dismiss(id),
       messageWithLink: (

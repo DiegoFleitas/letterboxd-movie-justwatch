@@ -5,6 +5,8 @@ import { useAppState } from "./AppStateContext";
 import { countries, generes } from "./consts";
 import { CountrySelector } from "./CountrySelector";
 import { fetchCountryFromIp } from "./countryGeo";
+import { SimpleWaitDots } from "./SimpleWaitDots";
+import { WaitCue } from "./WaitCue";
 
 const COUNTRY_STORAGE_KEY = "letterboxd-justwatch-country";
 const FALLBACK_COUNTRY_ID = "en_US";
@@ -235,7 +237,10 @@ export function LeftPanel(): React.ReactElement {
             >
               <h3>Search a specific movie...</h3>
               <label htmlFor="movie-input">Movie Title:</label>
-              <div ref={typeaheadRef} className="twitter-typeahead">
+              <div
+                ref={typeaheadRef}
+                className={`twitter-typeahead${suggestionsLoading ? " twitter-typeahead--loading" : ""}`}
+              >
                 <input
                   ref={movieInputRef}
                   type="text"
@@ -255,7 +260,7 @@ export function LeftPanel(): React.ReactElement {
                 {suggestionsLoading && (
                   <>
                     <span className="typeahead-loading" aria-hidden="true">
-                      …
+                      <SimpleWaitDots variant="muted" />
                     </span>
                     <span className="sr-only" aria-live="polite">
                       Loading movie suggestions
@@ -329,11 +334,18 @@ export function LeftPanel(): React.ReactElement {
               <div className="submit-container">
                 <button
                   type="submit"
-                  className="btn btn-primary"
+                  className={`btn btn-primary${isMovieSearchLoading ? " btn-with-wait" : ""}`}
                   data-testid="movie-submit"
                   disabled={isMovieSearchLoading}
                 >
-                  {isMovieSearchLoading ? "Searching..." : "Search"}
+                  {isMovieSearchLoading ? (
+                    <>
+                      <SimpleWaitDots variant="on-accent" />
+                      Searching...
+                    </>
+                  ) : (
+                    "Search"
+                  )}
                 </button>
               </div>
             </motion.form>
@@ -366,11 +378,18 @@ export function LeftPanel(): React.ReactElement {
                 <div className="submit-container">
                   <button
                     type="submit"
-                    className="btn btn-primary"
+                    className={`btn btn-primary${isListLoading ? " btn-with-wait" : ""}`}
                     data-testid="list-submit"
                     disabled={isListLoading}
                   >
-                    {isListLoading ? "Submitting..." : "Submit"}
+                    {isListLoading ? (
+                      <>
+                        <WaitCue size="sm" />
+                        Submitting...
+                      </>
+                    ) : (
+                      "Submit"
+                    )}
                   </button>
                   {import.meta.env?.DEV && (
                     <>
