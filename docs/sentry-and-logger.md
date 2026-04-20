@@ -4,7 +4,9 @@ This document describes how server-side error reporting and HTTP logging work in
 
 ## Scope
 
-- **Sentry**: Server-only via `@sentry/node`. There is no browser/React Sentry SDK here; client-side product analytics use PostHog when configured.
+- **Sentry**:
+  - Backend via `@sentry/node` (`instrument.ts`, Fastify handlers)
+  - Frontend via `@sentry/react` (`public/src/sentry.ts`) with runtime config injected into `window.__SENTRY_*__`
 - **`diegos-fly-logger`**: npm package (v2; source lives in the [`diegos-fly-logger`](https://github.com/DiegoFleitas/diegos-fly-logger) repository). It provides structured JSON access logs and an optional path into Sentry for HTTP 5xx responses.
 
 ## Dependencies
@@ -12,7 +14,9 @@ This document describes how server-side error reporting and HTTP logging work in
 | Package             | Role                                                                                                                                            |
 | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
 | `@sentry/node`      | `Sentry.init`, `captureException`, `fastifyIntegration`, graceful shutdown via `Sentry.close`                                                   |
+| `@sentry/react`     | Browser error capture and tracing in frontend (`Sentry.init`, `captureException`, `captureMessage`)                                             |
 | `diegos-fly-logger` | Morgan-based `logging` middleware; JSON one-line logs; optional dynamic `import("@sentry/node")` and `captureMessage` for HTTP 5xx when enabled |
+| `@sentry/cli`       | Release/sourcemap upload in deploy flow (`sentry-cli releases ...`)                                                                             |
 
 ## Sentry initialization and lifecycle
 
@@ -30,6 +34,44 @@ This document describes how server-side error reporting and HTTP logging work in
 4. **HTTP 5xx flag for the logger** — When a DSN is set, `instrument.ts` sets `process.env.SENTRY_CAPTURE_HTTP_5XX = "true"` if that variable is unset or empty. That turns on middleware-level reporting of HTTP 5xx in `diegos-fly-logger`. Set `SENTRY_CAPTURE_HTTP_5XX=false` explicitly to keep Sentry initialized but skip those captures.
 
 5. **Shutdown** — `server-fastify.ts` calls `Sentry.close(2000)` on SIGTERM/SIGINT when a client exists, and on fatal startup errors after `captureException`.
+
+## Frontend Sentry runtime config
+
+Frontend Sentry is initialized in `public/src/sentry.ts`. Configuration is resolved in this order:
+
+1. Runtime globals injected into HTML (`window.__SENTRY_*__`) by `lib/injectRuntimeConfig.ts` from server env in `server/createServer.ts`
+2. Vite build-time fallback (`import.meta.env.VITE_SENTRY_*`)
+
+Primary fields:
+
+- `SENTRY_DSN`
+- `SENTRY_RELEASE`
+- `SENTRY_TRACES_SAMPLE_RATE`
+- `SENTRY_SEND_DEFAULT_PII`
+- `NODE_ENV` (as frontend environment fallback via injected runtime value)
+
+Using runtime injection keeps one frontend artifact portable across environments without rebuilding for DSN/release changes.
+
+## Sourcemaps and release alignment
+
+Frontend production debugging relies on sourcemaps uploaded to Sentry for the same release identifier used at runtime.
+
+- Build emits sourcemaps (`vite.config.ts` with `build.sourcemap: true`)
+- Upload workflow is script-driven:
+  - `bun run sentry:release:new`
+  - `bun run sentry:release:upload-sourcemaps`
+  - `bun run sentry:release:finalize`
+  - or combined: `bun run sentry:release:frontend`
+- Deploy shortcut including upload: `bun run fly:deploy:release`
+
+Required env vars for upload:
+
+- `SENTRY_AUTH_TOKEN`
+- `SENTRY_ORG`
+- `SENTRY_PROJECT`
+- `SENTRY_RELEASE`
+
+Important: `SENTRY_RELEASE` must be the same value used by both backend and frontend runtime init; otherwise uploaded artifacts will not match incoming events.
 
 ## Where exceptions are captured
 
