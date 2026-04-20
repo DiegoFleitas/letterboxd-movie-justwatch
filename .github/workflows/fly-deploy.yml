@@ -20,8 +20,32 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.11
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Determine release id
+        run: |
+          if [ -n "${{ github.event.workflow_run.head_sha }}" ]; then
+            echo "SENTRY_RELEASE=${{ github.event.workflow_run.head_sha }}" >> "$GITHUB_ENV"
+          else
+            echo "SENTRY_RELEASE=${{ github.sha }}" >> "$GITHUB_ENV"
+          fi
+      - name: Show release id
+        run: echo "Deploying release ${SENTRY_RELEASE}"
+      - name: Build frontend for sourcemap upload
+        run: bun run build
+      - name: Upload frontend sourcemaps to Sentry
+        run: bun run sentry:release:frontend
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+          SENTRY_RELEASE: ${{ env.SENTRY_RELEASE }}
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      - run: flyctl deploy --remote-only
+      - run: flyctl deploy --remote-only --build-arg SENTRY_RELEASE="${SENTRY_RELEASE}"
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          SENTRY_RELEASE: ${{ env.SENTRY_RELEASE }}

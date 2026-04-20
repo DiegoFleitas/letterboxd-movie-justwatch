@@ -2,12 +2,14 @@
 
 ARG BUN_VERSION=1.3.11
 FROM oven/bun:${BUN_VERSION}-slim AS base
+ARG SENTRY_RELEASE=""
 
 LABEL fly_launch_runtime="Bun"
 
 WORKDIR /app
 
 ENV NODE_ENV="production"
+ENV SENTRY_RELEASE="${SENTRY_RELEASE}"
 
 # Throw-away build stage to reduce size of final image
 FROM base AS build
@@ -22,7 +24,9 @@ RUN bun install --frozen-lockfile
 
 COPY . .
 
-RUN bun run build
+# Reuse prebuilt frontend artifacts when present (CI sourcemap flow),
+# otherwise build them inside the image for local/manual deploys.
+RUN if [ ! -d public/dist ]; then bun run build; fi
 
 # Production node_modules only
 RUN rm -rf node_modules && bun install --frozen-lockfile --production

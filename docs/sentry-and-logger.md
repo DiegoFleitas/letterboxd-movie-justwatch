@@ -1,18 +1,21 @@
-# Sentry integration and `diegos-fly-logger`
+# Sentry integration and Fastify logging
 
 This document describes how server-side error reporting and HTTP logging work in this repo.
 
 ## Scope
 
-- **Sentry**: Server-only via `@sentry/node`. There is no browser/React Sentry SDK here; client-side product analytics use PostHog when configured.
-- **`diegos-fly-logger`**: npm package (v2; source lives in the [`diegos-fly-logger`](https://github.com/DiegoFleitas/diegos-fly-logger) repository). It provides structured JSON access logs and an optional path into Sentry for HTTP 5xx responses.
+- **Sentry**:
+  - Backend via `@sentry/node` (`instrument.ts`, Fastify handlers)
+  - Frontend via `@sentry/react` (`public/src/sentry.ts`) with runtime config injected into `window.__SENTRY_*__`
+- **Fastify logger**: request/response logging through Fastify's built-in logger (`logger: true` in `server/createServer.ts`).
 
 ## Dependencies
 
-| Package             | Role                                                                                                                                            |
-| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `@sentry/node`      | `Sentry.init`, `captureException`, `fastifyIntegration`, graceful shutdown via `Sentry.close`                                                   |
-| `diegos-fly-logger` | Morgan-based `logging` middleware; JSON one-line logs; optional dynamic `import("@sentry/node")` and `captureMessage` for HTTP 5xx when enabled |
+| Package         | Role                                                                                                |
+| --------------- | --------------------------------------------------------------------------------------------------- |
+| `@sentry/node`  | `Sentry.init`, `captureException`, `fastifyIntegration`, graceful shutdown via `Sentry.close`       |
+| `@sentry/react` | Browser error capture and tracing in frontend (`Sentry.init`, `captureException`, `captureMessage`) |
+| `@sentry/cli`   | Release/sourcemap upload in deploy flow (`sentry-cli releases ...`)                                 |
 
 ## Sentry initialization and lifecycle
 
@@ -27,9 +30,55 @@ This document describes how server-side error reporting and HTTP logging work in
    - `tracesSampleRate`: from `SENTRY_TRACES_SAMPLE_RATE` (clamped 0–1); defaults to **0** in `.env.example` unless you raise it
    - `sendDefaultPii`: only when `SENTRY_SEND_DEFAULT_PII === "true"`
 
-4. **HTTP 5xx flag for the logger** — When a DSN is set, `instrument.ts` sets `process.env.SENTRY_CAPTURE_HTTP_5XX = "true"` if that variable is unset or empty. That turns on middleware-level reporting of HTTP 5xx in `diegos-fly-logger`. Set `SENTRY_CAPTURE_HTTP_5XX=false` explicitly to keep Sentry initialized but skip those captures.
+4. **HTTP 5xx capture path** — Application-level exceptions and explicit backend captures go through `Sentry.captureException` in route/error-handler code. There is no extra middleware-level `captureMessage` bridge or active logger/middleware-level HTTP 5xx capture bridge.
 
 5. **Shutdown** — `server-fastify.ts` calls `Sentry.close(2000)` on SIGTERM/SIGINT when a client exists, and on fatal startup errors after `captureException`.
+
+## Frontend Sentry runtime config
+
+Frontend Sentry is initialized in `public/src/sentry.ts`. Configuration is resolved in this order:
+
+1. Runtime globals injected into HTML (`window.__SENTRY_*__`) by `lib/injectRuntimeConfig.ts` from server env in `server/createServer.ts`
+2. Vite build-time fallback (`import.meta.env.VITE_SENTRY_*`)
+
+Primary fields:
+
+- `SENTRY_DSN`
+- `SENTRY_RELEASE`
+- `SENTRY_TRACES_SAMPLE_RATE`
+- `SENTRY_SEND_DEFAULT_PII`
+- `NODE_ENV` (as frontend environment fallback via injected runtime value)
+
+Using runtime injection keeps one frontend artifact portable across environments without rebuilding for DSN/release changes.
+
+## Sourcemaps and release alignment
+
+Frontend production debugging relies on sourcemaps uploaded to Sentry for the same release identifier used at runtime.
+
+- Build emits hidden sourcemaps (`vite.config.ts` with `build.sourcemap: "hidden"`), so `.map` artifacts are generated for upload without adding browser-facing `sourceMappingURL` references in JS bundles.
+- Upload workflow is script-driven:
+  - `bun run sentry:release:new`
+  - `bun run sentry:release:upload-sourcemaps`
+  - `bun run sentry:release:finalize`
+  - or combined: `bun run sentry:release:frontend`
+- CI automation (`.github/workflows/fly-deploy.yml`) runs `build -> sentry:release:frontend -> flyctl deploy` with one release id from commit SHA, and deploy reuses that exact prebuilt `public/dist` output (it does not rebuild frontend assets when `public/dist` already exists).
+
+Required env vars for upload:
+
+- `SENTRY_AUTH_TOKEN`
+- `SENTRY_ORG`
+- `SENTRY_PROJECT`
+- `SENTRY_RELEASE`
+
+In GitHub Actions, configure secrets:
+
+- `SENTRY_AUTH_TOKEN`
+- `SENTRY_ORG`
+- `SENTRY_PROJECT`
+- `FLY_API_TOKEN`
+
+Important: `SENTRY_RELEASE` must be the same value used by both backend and frontend runtime init; otherwise uploaded artifacts will not match incoming events.
+The deploy workflow sets `SENTRY_RELEASE` from `${{ github.event.workflow_run.head_sha || github.sha }}` and passes it both to sourcemap upload and Docker build args for runtime alignment.
 
 ## Where exceptions are captured
 
@@ -42,15 +91,15 @@ This document describes how server-side error reporting and HTTP logging work in
 
 Most captures are guarded with `if (Sentry.getClient())` so behavior is safe when Sentry is disabled.
 
-## `diegos-fly-logger` in this app
+## Fastify logging in this app
 
-- **Wiring** — `server/createServer.ts` imports `logging` from `diegos-fly-logger/index.mjs` and runs it on Fastify’s `onRequest` hook using the raw Node `IncomingMessage` / `ServerResponse` (`request.raw`, `reply.raw`).
+- **Wiring** — `server/createServer.ts` creates the app with `logger: true`.
 
-- **Output** — Morgan custom `"json"` format: one JSON object per line (Loki/Grafana friendly). Fields are documented in the [`diegos-fly-logger` README](https://github.com/DiegoFleitas/diegos-fly-logger/blob/main/README.md).
+- **Output** — Pino-formatted JSON logs from Fastify request lifecycle logging.
 
-- **Sentry bridge** — When `SENTRY_CAPTURE_HTTP_5XX === "true"`, responses with status `>= 500` trigger a lazy `import("@sentry/node")` and `captureMessage` with the access-line message, level `error`, and tags/extra (method, service, environment, status, url, request id, response time). This is **message**-based reporting for HTTP-level 5xx, distinct from `captureException` unless the same request also throws into the Fastify error handler.
+- **Sentry bridge** — There is no logger-triggered Sentry message capture for HTTP 5xx. Sentry reporting is handled by explicit `captureException` calls.
 
-- **Fastify’s own logger** — The Fastify app is created with `logger: true`; `diegos-fly-logger` adds structured access lines in addition to Fastify logging.
+- **Access logging model** — One logging system (Fastify/Pino) handles request logging instead of dual logging layers.
 
 ## Flow (conceptual)
 
@@ -62,33 +111,32 @@ flowchart LR
     instrument --> fastify
   end
   subgraph request [Per request]
-    morgan[diegos-fly-logger morgan JSON]
+    requestLog[Fastify request logs]
     routes[Controllers and routes]
     errHandler[setErrorHandler]
-    morgan --> routes
+    requestLog --> routes
     routes --> errHandler
   end
   subgraph sentry [Sentry]
     capEx[captureException]
-    capMsg[captureMessage 5xx]
     fastifyInt[fastifyIntegration traces]
   end
   instrument --> fastifyInt
   errHandler --> capEx
   routes --> capEx
-  morgan --> capMsg
+  %% no logger-to-Sentry message bridge
 ```
 
 ## Tradeoffs
 
-1. **Two Sentry surfaces** — Application code uses `captureException`; the logger may also send `captureMessage` for HTTP 5xx when enabled. A single 5xx can appear as both an exception event and a message, depending on how the response is produced.
+1. **Single Sentry surface** — Application code uses `captureException`; logs are operational telemetry and do not independently emit Sentry messages.
 
-2. **Logger and `@sentry/node`** — The logger does not list `@sentry/node` as a required dependency; it dynamic-imports when the flag is on. This app always installs `@sentry/node`, so that import succeeds when enabled.
+2. **Simpler dependency graph** — No external request-logging package or dynamic SDK import path for HTTP logging.
 
 3. **Traces** — With default `SENTRY_TRACES_SAMPLE_RATE=0`, performance traces are minimal unless you raise the rate deliberately in production.
 
 ## Related files
 
 - `instrument.ts` — DSN gating and Sentry options
-- `server/createServer.ts` — Logger hook and error handler
-- `.env.example` — `SENTRY_*` and logger-related variables
+- `server/createServer.ts` — Fastify logger configuration and error handler
+- `.env.example` — `SENTRY_*` variables for runtime + release workflows
