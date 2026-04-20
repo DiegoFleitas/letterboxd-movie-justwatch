@@ -96,7 +96,7 @@ See **`.env.example`** for the full list. Common variables:
 
 ### Logging and secrets
 
-- **Sentry + access logs**: See [`docs/sentry-and-logger.md`](docs/sentry-and-logger.md) for FE/BE Sentry setup, release alignment (`SENTRY_RELEASE`), and HTTP logging behavior.
+- **Sentry + backend logging**: See [`docs/sentry-and-logger.md`](docs/sentry-and-logger.md) for FE/BE Sentry setup, release alignment (`SENTRY_RELEASE`), and Fastify logging behavior.
 - HTTP requests are logged via a shared axios helper (`helpers/axios.ts`) that **redacts query parameters such as `api_key`, `apikey`, `access_token`, `token`, and `key`** before printing URLs.
 - Do not log raw environment variables or full external URLs containing credentials; if you add new HTTP clients, either use the existing helper or apply similar redaction.
 

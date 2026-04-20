@@ -85,7 +85,6 @@
     "@sentry/react": "^10.49.0",
     "axios": "^1.15.0",
     "cheerio": "^1.0.0-rc.12",
-    "diegos-fly-logger": "^2.0.0",
     "dotenv": "^17.4.2",
     "fastify": "^5.8.5",
     "framer-motion": "^12.38.0",
