@@ -7,6 +7,7 @@ import {
   POSTER_HOVER_TRANSFORM_S,
   motionTransition,
 } from "./animation/timing";
+import { WaitCue } from "./WaitCue";
 
 const JUSTWATCH_PROXY = "https://click.justwatch.com/a?r=";
 
@@ -84,7 +85,9 @@ export function MovieTile({
                   opacity: loaded ? 0 : 1,
                 }}
                 aria-hidden
-              />
+              >
+                {!loaded ? <WaitCue size="md" className="wait-cue--on-poster" /> : null}
+              </div>
             ) : (
               <motion.div
                 className="spinner"
@@ -93,7 +96,9 @@ export function MovieTile({
                 transition={motionTransition(0.12)}
                 style={{ position: "absolute", left: 12, top: 12, zIndex: 4 }}
                 aria-hidden
-              />
+              >
+                {!loaded ? <WaitCue size="md" className="wait-cue--on-poster" /> : null}
+              </motion.div>
             )}
 
             {suppressAnimations ? (

@@ -5,6 +5,7 @@ import { useAppState } from "./AppStateContext";
 import { getTileProviderNames } from "./movieTiles";
 import type { TileData } from "./movieTiles";
 import { MovieTile } from "./MovieTile";
+import { WaitCue } from "./WaitCue";
 import {
   deduplicateProviderList,
   tileMatchesProviderFilter,
@@ -40,6 +41,7 @@ export function RightPanel(): React.ReactElement {
     streamingProviders: providers,
     runAlternativeSearch,
     showAltSearchButton,
+    isAlternativeSearchLoading,
   } = useAppState();
   const reduceMotion = useReducedMotion();
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
@@ -89,6 +91,12 @@ export function RightPanel(): React.ReactElement {
 
   return (
     <>
+      {isAlternativeSearchLoading ? (
+        <div className="activity-strip" role="status" aria-live="polite">
+          <WaitCue size="sm" />
+          <span>Searching alternate sources...</span>
+        </div>
+      ) : null}
       <div id="icons-container-main" data-testid="provider-icons">
         {providerList.map((provider: ProviderLike) => {
           const isActive = activeFilters.includes(provider.name);

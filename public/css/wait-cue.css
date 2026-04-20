@@ -1,0 +1,189 @@
+/* Simple dots — movie search typeahead / submit (tight vertical space; opacity-only) */
+
+.simple-wait-dots {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 5px;
+  flex: 0 0 auto;
+  width: auto;
+  max-width: max-content;
+  flex-shrink: 0;
+  align-self: center;
+  line-height: 0;
+}
+
+.simple-wait-dots__dot {
+  display: block;
+  flex: 0 0 auto;
+  width: 5px;
+  height: 5px;
+  min-width: 5px;
+  min-height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: simple-wait-fade 1s ease-in-out infinite;
+}
+
+.simple-wait-dots__dot:nth-child(2) {
+  animation-delay: 0.18s;
+}
+
+.simple-wait-dots__dot:nth-child(3) {
+  animation-delay: 0.36s;
+}
+
+@keyframes simple-wait-fade {
+  0%,
+  100% {
+    opacity: 0.28;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.simple-wait-dots--muted {
+  color: var(--color-text-muted);
+}
+
+.simple-wait-dots--on-accent {
+  color: var(--color-bg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .simple-wait-dots__dot {
+    animation: none;
+    opacity: 0.72;
+  }
+}
+
+/* Purposeful wait / loading motion — transform + opacity only; respects reduced motion */
+
+.wait-cue {
+  display: inline-flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 3px;
+  flex-shrink: 0;
+  vertical-align: middle;
+  line-height: 0;
+}
+
+.wait-cue__bar {
+  display: block;
+  width: var(--wait-bar-w, 4px);
+  height: var(--wait-bar-h, 14px);
+  border-radius: 2px;
+  background: currentColor;
+  transform-origin: bottom center;
+  will-change: transform, opacity;
+  animation: wait-cue-breathe 0.85s cubic-bezier(0.25, 1, 0.5, 1) infinite;
+}
+
+.wait-cue__bar:nth-child(2) {
+  animation-delay: 0.12s;
+}
+
+.wait-cue__bar:nth-child(3) {
+  animation-delay: 0.24s;
+}
+
+@keyframes wait-cue-breathe {
+  0%,
+  100% {
+    transform: scaleY(0.38);
+    opacity: 0.45;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+/* Size presets */
+.wait-cue--xs {
+  color: var(--color-accent);
+  gap: 2px;
+  --wait-bar-w: 3px;
+  --wait-bar-h: 11px;
+}
+
+.wait-cue--xs .wait-cue__bar {
+  border-radius: 1.5px;
+}
+
+.wait-cue--sm {
+  color: var(--color-text-muted);
+  gap: 3px;
+  --wait-bar-w: 4px;
+  --wait-bar-h: 15px;
+}
+
+.wait-cue--md {
+  color: var(--color-accent-soft);
+  gap: 4px;
+  --wait-bar-w: 5px;
+  --wait-bar-h: 22px;
+}
+
+.wait-cue--on-poster {
+  color: #f0f4f8;
+  padding: 6px 9px;
+  border-radius: var(--radius-md);
+  background: rgba(0, 0, 0, 0.52);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(6px);
+}
+
+/* No motion: keep a calm, readable state */
+.wait-cue--static .wait-cue__bar {
+  animation: none;
+  transform: scaleY(0.72);
+  opacity: 0.85;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wait-cue .wait-cue__bar {
+    animation: none;
+    transform: scaleY(0.72);
+    opacity: 0.85;
+  }
+}
+
+/* Submit buttons: center label + cue */
+button[type="submit"].btn-with-wait {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-wrap: nowrap;
+}
+
+/* Beat .left-panel .submit-container > button { display: block } while loading */
+.left-panel .submit-container > button[type="submit"].btn-with-wait {
+  display: inline-flex;
+}
+
+button[type="submit"].btn-with-wait .wait-cue {
+  color: var(--color-bg);
+}
+
+.activity-strip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  margin: 0 0 0.65rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: var(--color-surface-elevated);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-soft);
+}
+
+.activity-strip .wait-cue {
+  color: var(--color-accent);
+}
