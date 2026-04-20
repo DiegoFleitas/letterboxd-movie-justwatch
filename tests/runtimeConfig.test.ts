@@ -1,12 +1,12 @@
 /**
- * Unit tests for PostHog integration
+ * Unit tests for runtime frontend config injection and usage.
  */
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { getPosthog, _resetPosthogForTesting } from "../lib/posthog.js";
-import { injectPosthogConfig } from "../lib/injectPosthogConfig.js";
+import { injectRuntimeConfig } from "../lib/injectRuntimeConfig.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -26,7 +26,7 @@ afterEach(() => {
   else delete process.env.POSTHOG_HOST;
 });
 
-describe("PostHog", () => {
+describe("Runtime config + PostHog", () => {
   it("getPosthog returns null when POSTHOG_KEY is unset", () => {
     _resetPosthogForTesting();
     delete process.env.POSTHOG_KEY;
@@ -66,54 +66,70 @@ describe("PostHog", () => {
     expect(getPosthog()).toBeFalsy();
   });
 
-  it("injectPosthogConfig injects key and host into HTML", () => {
+  it("injectRuntimeConfig injects PostHog key and host into HTML", () => {
     const html = "<!DOCTYPE html><html><head></head><body></body></html>";
     const key = "phc_prod_abc123";
     const host = "https://eu.i.posthog.com";
-    const result = injectPosthogConfig(html, key, host);
+    const result = injectRuntimeConfig(html, key, host);
     expect(result).toContain("window.__POSTHOG_KEY__");
     expect(result).toContain("window.__POSTHOG_HOST__");
     expect(result).toContain(key);
     expect(result).toContain(host);
   });
 
-  it("injectPosthogConfig escapes key so HTML is safe", () => {
+  it("injectRuntimeConfig injects Sentry globals into HTML", () => {
+    const html = "<!DOCTYPE html><html><head></head><body></body></html>";
+    const result = injectRuntimeConfig(html, "phc_key", "https://us.i.posthog.com", null, {
+      dsn: "https://foo@example.ingest.sentry.io/1",
+      release: "r1",
+      tracesSampleRate: "0.5",
+      sendDefaultPii: "true",
+      environment: "production",
+    });
+    expect(result).toContain("window.__SENTRY_DSN__");
+    expect(result).toContain("window.__SENTRY_RELEASE__");
+    expect(result).toContain("window.__SENTRY_TRACES_SAMPLE_RATE__");
+    expect(result).toContain("window.__SENTRY_SEND_DEFAULT_PII__");
+    expect(result).toContain("window.__SENTRY_ENVIRONMENT__");
+  });
+
+  it("injectRuntimeConfig escapes key so HTML is safe", () => {
     const html = "<!DOCTYPE html><html><head></head><body></body></html>";
     const key = 'phc_"quoted"';
-    const result = injectPosthogConfig(html, key, "https://us.i.posthog.com");
+    const result = injectRuntimeConfig(html, key, "https://us.i.posthog.com");
     expect(result).toContain("__POSTHOG_KEY__");
     expect(result).toContain("phc_");
   });
 
-  it("injectPosthogConfig prevents </script> injection in key", () => {
+  it("injectRuntimeConfig prevents </script> injection in key", () => {
     const html = "<!DOCTYPE html><html><head></head><body></body></html>";
     const maliciousKey = "phc_</script><script>alert(1)</script>";
-    const result = injectPosthogConfig(html, maliciousKey, "https://us.i.posthog.com");
+    const result = injectRuntimeConfig(html, maliciousKey, "https://us.i.posthog.com");
     expect(result).not.toContain("</script><script>");
   });
 
-  it("injectPosthogConfig matches </HEAD> (case-insensitive)", () => {
+  it("injectRuntimeConfig matches </HEAD> (case-insensitive)", () => {
     const htmlUpper = "<!DOCTYPE html><html><HEAD></HEAD><body></body></html>";
-    const result = injectPosthogConfig(htmlUpper, "phc_test", "https://us.i.posthog.com");
+    const result = injectRuntimeConfig(htmlUpper, "phc_test", "https://us.i.posthog.com");
     expect(result).toContain("window.__POSTHOG_KEY__");
   });
 
-  it("injectPosthogConfig injects canonicalByNames when provided", () => {
+  it("injectRuntimeConfig injects canonicalByNames when provided", () => {
     const html = "<!DOCTYPE html><html><head></head><body></body></html>";
     const canonicalByNames = { "HBO Max": { id: "max", name: "HBO Max" } };
-    const result = injectPosthogConfig(html, "", "https://us.i.posthog.com", canonicalByNames);
+    const result = injectRuntimeConfig(html, "", "https://us.i.posthog.com", canonicalByNames);
     expect(result).toContain("window.__CANONICAL_PROVIDERS_BY_NAME__");
     expect(result).toContain('"max"');
   });
 
-  it("injectPosthogConfig does not inject canonical when 4th arg is null/undefined", () => {
+  it("injectRuntimeConfig does not inject canonical when 4th arg is null/undefined", () => {
     const html = "<!DOCTYPE html><html><head></head><body></body></html>";
-    const result = injectPosthogConfig(html, "k", "https://us.i.posthog.com", null);
+    const result = injectRuntimeConfig(html, "k", "https://us.i.posthog.com", null);
     expect(result).toContain("__POSTHOG_KEY__");
     expect(result).not.toContain("__CANONICAL_PROVIDERS_BY_NAME__");
   });
 
-  it("frontend main.tsx reads runtime config (window.__POSTHOG_KEY__) so Fly secrets work", () => {
+  it("frontend main.tsx reads runtime PostHog globals with VITE fallback", () => {
     const mainPath = path.join(__dirname, "..", "public", "src", "main.tsx");
     const source = fs.readFileSync(mainPath, "utf8");
     expect(source).toContain("window.__POSTHOG_KEY__");
@@ -122,5 +138,16 @@ describe("PostHog", () => {
     expect(/api_host:\s*host/.test(source)).toBe(true);
     expect(source).toContain("VITE_PUBLIC_POSTHOG_KEY");
     expect(source).toContain("VITE_PUBLIC_POSTHOG_HOST");
+  });
+
+  it("frontend sentry.ts reads runtime Sentry globals with VITE fallback", () => {
+    const sentryPath = path.join(__dirname, "..", "public", "src", "sentry.ts");
+    const source = fs.readFileSync(sentryPath, "utf8");
+    expect(source).toContain("window.__SENTRY_DSN__");
+    expect(source).toContain("window.__SENTRY_RELEASE__");
+    expect(source).toContain("window.__SENTRY_TRACES_SAMPLE_RATE__");
+    expect(source).toContain("window.__SENTRY_SEND_DEFAULT_PII__");
+    expect(source).toContain("window.__SENTRY_ENVIRONMENT__");
+    expect(source).toContain("VITE_SENTRY_DSN");
   });
 });

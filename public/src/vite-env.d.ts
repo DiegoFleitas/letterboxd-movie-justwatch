@@ -4,6 +4,11 @@ declare global {
   interface Window {
     __POSTHOG_KEY__?: string;
     __POSTHOG_HOST__?: string;
+    __SENTRY_DSN__?: string;
+    __SENTRY_RELEASE__?: string;
+    __SENTRY_TRACES_SAMPLE_RATE__?: string;
+    __SENTRY_SEND_DEFAULT_PII__?: string;
+    __SENTRY_ENVIRONMENT__?: string;
     __CANONICAL_PROVIDERS_BY_NAME__?: Record<string, { id: string; name: string }>;
   }
 }
