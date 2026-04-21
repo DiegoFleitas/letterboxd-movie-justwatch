@@ -19,4 +19,16 @@ describe("buildOpenSubtitlesBrowseUrl", () => {
       "https://www.opensubtitles.com/en/search/sublanguageid-all/moviename-The%20Big%20Lebowski%201998",
     );
   });
+
+  it("uses title-only moviename when year is absent", () => {
+    expect(buildOpenSubtitlesBrowseUrl("Solaris")).toBe(
+      "https://www.opensubtitles.com/en/search/sublanguageid-all/moviename-Solaris",
+    );
+  });
+
+  it("uses imdb when link uses www.imdb.com", () => {
+    expect(
+      buildOpenSubtitlesBrowseUrl("x", undefined, "http://www.imdb.com/title/tt0816692/"),
+    ).toBe("https://www.opensubtitles.com/en/search/sublanguageid-all/imdbid-816692");
+  });
 });
