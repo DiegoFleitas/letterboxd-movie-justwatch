@@ -22,6 +22,8 @@ export interface MovieTileData {
   title: string;
   year: string | number | null;
   link: string;
+  imdbLink?: string;
+  tmdbLink?: string;
   movieProviders: MovieProvider[];
   poster: string | null;
 }
@@ -40,6 +42,9 @@ export interface SearchMovieResponse {
   title: string;
   year?: string | number | null;
   poster?: string | null;
+  link?: string;
+  imdbLink?: string;
+  tmdbLink?: string;
   movieProviders?: MovieProvider[];
 }
 

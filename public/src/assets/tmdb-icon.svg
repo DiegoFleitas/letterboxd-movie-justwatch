@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
+  <rect x="2" y="2" width="20" height="20" rx="5" fill="currentColor" />
+  <path
+    d="M6 8.1h5.6v1.2H9.9V16H7.7V9.3H6V8.1zm6.2 0h5.8v1.2h-1.8V16H14V9.3h-1.8V8.1z"
+    fill="#0b1014"
+  />
+</svg>

@@ -8,6 +8,10 @@ import {
   motionTransition,
 } from "./animation/timing";
 import alternativeSearchIcon from "./assets/alternative-search.svg";
+import imdbIcon from "./assets/imdb-icon.svg";
+import letterboxdIcon from "./assets/letterboxd-icon.svg";
+import tmdbIcon from "./assets/tmdb-icon.svg";
+import { openLetterboxdSearch } from "./letterboxdSearch";
 import { WaitCue } from "./WaitCue";
 
 const JUSTWATCH_PROXY = "https://click.justwatch.com/a?r=";
@@ -25,7 +29,7 @@ export function MovieTile({
   onAlternativeSearch,
   suppressAnimations = false,
 }: MovieTileProps): React.ReactElement {
-  const { id, title, year, poster, link, movieProviders = [] } = data;
+  const { id, title, year, poster, link, imdbLink, tmdbLink, movieProviders = [] } = data;
   const providerNames = movieProviders.map((p: { name: string }) => p.name);
   const [loaded, setLoaded] = useState(false);
 
@@ -65,14 +69,33 @@ export function MovieTile({
             }
       }
     >
-      <a
-        href={link}
-        className="poster-link"
-        target="_blank"
-        rel="noopener noreferrer"
-        tabIndex={0}
-        aria-label={`${title} (${year})`}
+      <button
+        type="button"
+        className="poster-letterboxd-btn"
+        title={`Search “${title}” on Letterboxd${year != null && year !== "" ? ` (${year})` : ""}`}
+        aria-label={`Search ${title}${year != null && year !== "" ? ` (${year})` : ""} on Letterboxd`}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (link) {
+            window.open(link, "_blank", "noopener,noreferrer");
+            return;
+          }
+          openLetterboxdSearch(title, year);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === " ") e.stopPropagation();
+        }}
       >
+        <img
+          src={letterboxdIcon}
+          alt=""
+          width={22}
+          height={22}
+          className="poster-letterboxd-btn__icon"
+        />
+      </button>
+      <div className="poster-body">
         {poster ? (
           <>
             {suppressAnimations ? (
@@ -185,9 +208,41 @@ export function MovieTile({
             >
               <img className="tile-icons" src={alternativeSearchIcon} alt="Alternative search" />
             </button>
+            {imdbLink ? (
+              <button
+                type="button"
+                className="tile-icon-btn tile-icon-btn--alt-search"
+                data-sp="imdb-link-tile"
+                title="Open IMDb page"
+                aria-label={`Open ${title} on IMDb`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  window.open(imdbLink, "_blank", "noopener,noreferrer");
+                }}
+              >
+                <img className="tile-icons" src={imdbIcon} alt="IMDb" />
+              </button>
+            ) : null}
+            {tmdbLink ? (
+              <button
+                type="button"
+                className="tile-icon-btn tile-icon-btn--alt-search"
+                data-sp="tmdb-link-tile"
+                title="Open TMDB page"
+                aria-label={`Open ${title} on TMDB`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  window.open(tmdbLink, "_blank", "noopener,noreferrer");
+                }}
+              >
+                <img className="tile-icons" src={tmdbIcon} alt="TMDB" />
+              </button>
+            ) : null}
           </div>
         </div>
-      </a>
+      </div>
     </motion.div>
   );
 }

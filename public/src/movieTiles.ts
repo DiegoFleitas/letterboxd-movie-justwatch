@@ -1,4 +1,4 @@
-import { getPublicAssetPath } from "./assetPath";
+import { getPublicAssetPath } from "./assetPath.js";
 
 export interface TileProvider {
   id: string;
@@ -13,6 +13,8 @@ export interface TileData {
   title: string;
   year?: string | number | null;
   link: string;
+  imdbLink?: string;
+  tmdbLink?: string;
   movieProviders: TileProvider[];
   poster?: string | null;
 }
@@ -31,6 +33,8 @@ export interface TabbedTileState {
 
 export interface MergeData {
   link?: string;
+  imdbLink?: string;
+  tmdbLink?: string;
   poster?: string | null;
   movieProviders?: TileProvider[];
 }
@@ -64,6 +68,14 @@ export function normalizeId(title: string, year: string | number | null): string
     .toUpperCase()
     .replace(/ /g, "-")
     .replace(/[^A-Z0-9]/g, "")}`;
+}
+
+/** Letterboxd list entries often use root-relative paths; keep absolute URLs for consumers. */
+export function normalizeLetterboxdFilmLink(link: string): string {
+  if (!link) return "";
+  if (link.startsWith("http://") || link.startsWith("https://")) return link;
+  if (link.startsWith("//")) return `https:${link}`;
+  return `https://letterboxd.com${link.startsWith("/") ? link : `/${link}`}`;
 }
 
 export function mergeTileState(
@@ -101,11 +113,14 @@ export function mergeTileState(
   const existing = tiles[existingId];
   const incomingPoster = normalizePosterPath(data?.poster);
   const existingPoster = normalizePosterPath(existing?.poster);
+  const rawLink = data?.link ?? existing?.link ?? "";
   const tileData: TileData = {
     id: existingId,
     title,
     year: existing?.year ?? year ?? undefined,
-    link: data?.link ?? existing?.link ?? "",
+    link: rawLink ? normalizeLetterboxdFilmLink(rawLink) : "",
+    imdbLink: data?.imdbLink ?? existing?.imdbLink,
+    tmdbLink: data?.tmdbLink ?? existing?.tmdbLink,
     movieProviders: Object.prototype.hasOwnProperty.call(data ?? {}, "movieProviders")
       ? (data!.movieProviders ?? [])
       : (existing?.movieProviders ?? []),
@@ -116,7 +131,7 @@ export function mergeTileState(
           ? incomingPoster
           : (existingPoster ?? null),
   };
-  if (data?.link && !tileData.link) tileData.link = data.link;
+  if (data?.link && !tileData.link) tileData.link = normalizeLetterboxdFilmLink(data.link);
   if (!tileData.year) tileData.year = year;
 
   tiles[existingId] = tileData;

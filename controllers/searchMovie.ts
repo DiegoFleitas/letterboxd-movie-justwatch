@@ -64,10 +64,20 @@ interface JustWatchOfferEdge {
       title: string;
       originalReleaseYear?: number | string;
       posterUrl?: string | null;
-      externalIds?: { tmdbId?: string | number };
+      externalIds?: { tmdbId?: string | number; imdbId?: string | number };
     };
     offers?: JustWatchOffer[];
   };
+}
+
+function buildImdbLink(imdbId: string | number | null | undefined): string | undefined {
+  if (!imdbId) return undefined;
+  return `https://www.letterboxd.com/imdb/${String(imdbId)}`;
+}
+
+function buildTmdbLink(tmdbId: string | number | null | undefined): string | undefined {
+  if (!tmdbId) return undefined;
+  return `https://www.themoviedb.org/movie/${String(tmdbId)}/`;
 }
 
 interface TMDBResult {
@@ -123,6 +133,7 @@ export const searchMovie: HttpHandler = async ({ req, res }) => {
     }
 
     const tmdbId = movieDbData.id;
+    const tmdbLink = buildTmdbLink(tmdbId);
     const tmdbPoster = movieDbData.poster_path
       ? `https://image.tmdb.org/t/p/w500${movieDbData.poster_path}`
       : null;
@@ -192,6 +203,7 @@ export const searchMovie: HttpHandler = async ({ req, res }) => {
         title: movieDbData.title || title,
         year: movieDbData.release_date?.substring(0, 4) || year,
         poster: tmdbPoster,
+        ...(tmdbLink ? { tmdbLink } : {}),
       };
       await setCacheValue(cacheKey, response, CACHE_TTL_UNAVAILABLE, "list");
       res.json(response);
@@ -209,6 +221,7 @@ export const searchMovie: HttpHandler = async ({ req, res }) => {
         title: movieDbData.title || title,
         year: movieDbData.release_date?.substring(0, 4) || year,
         poster: tmdbPoster,
+        ...(tmdbLink ? { tmdbLink } : {}),
       };
       await setCacheValue(cacheKey, response, cacheTtl, "list");
       res.json(response);
@@ -218,12 +231,18 @@ export const searchMovie: HttpHandler = async ({ req, res }) => {
     const poster = movieData.node.content.posterUrl
       ? `https://images.justwatch.com${movieData.node.content.posterUrl.replace("{profile}", "s592").replace("{format}", "jpg")}`
       : tmdbPoster;
+    const imdbId = movieData.node.content.externalIds?.imdbId;
+    const imdbLink = buildImdbLink(imdbId);
+    const letterboxdFallbackLink = imdbLink;
 
     const noStreamingServicesResponse = {
       error: `No streaming services offering this movie on your country (${country})\n\nNothing on streaming? Try Alternative search on the film tile.`,
       title: movieData.node.content.title,
       year: movieData.node.content.originalReleaseYear,
       poster,
+      ...(letterboxdFallbackLink ? { link: letterboxdFallbackLink } : {}),
+      ...(imdbLink ? { imdbLink } : {}),
+      ...(tmdbLink ? { tmdbLink } : {}),
     };
 
     if (!movieData.node.offers || !movieData.node.offers.length) {
@@ -252,6 +271,9 @@ export const searchMovie: HttpHandler = async ({ req, res }) => {
       title: movieData.node.content.title,
       year: movieData.node.content.originalReleaseYear,
       poster,
+      ...(letterboxdFallbackLink ? { link: letterboxdFallbackLink } : {}),
+      ...(imdbLink ? { imdbLink } : {}),
+      ...(tmdbLink ? { tmdbLink } : {}),
     };
 
     await setCacheValue(cacheKey, responsePayload, cacheTtl, "list");
