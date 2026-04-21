@@ -1,0 +1,102 @@
+/* Design system: cinema/watchlist — Syne (modern fest / arts identity), Outfit (geometric UI) */
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap");
+
+:root {
+  /* Typography */
+  --display-font: "Syne", system-ui, sans-serif;
+  --ui-font: "Outfit", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* Core palette — tinted neutrals (warm blue-grey), not pure black */
+  --color-bg: #0a0e14;
+  --color-bg-alt: #141b24;
+  --color-surface: #111820;
+  --color-surface-elevated: #1a222d;
+
+  --color-text: #f0f2f5;
+  --color-text-muted: #8b9aaa;
+  --color-text-subtle: #5c6b78;
+
+  /* Accent — warm amber/coral for CTAs and highlights (cinematic) */
+  --color-accent: #e89b4a;
+  --color-accent-2: #d97a3d;
+  --color-accent-soft: #f0b878;
+  --color-accent-muted: rgba(232, 155, 74, 0.2);
+
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-border-strong: rgba(232, 155, 74, 0.35);
+
+  /* Torrent/alt search — distinct but on-brand (darker, bordered) */
+  --color-alt-action-bg: #0d1117;
+  --color-alt-action-border: rgba(139, 154, 170, 0.4);
+
+  /* Shadows and radii */
+  --radius-lg: 14px;
+  --radius-md: 10px;
+  --radius-sm: 6px;
+  --shadow-soft: 0 10px 30px rgba(2, 6, 12, 0.5);
+  --shadow-strong: 0 24px 56px rgba(2, 6, 12, 0.65);
+  --shadow-glow: 0 0 24px rgba(232, 155, 74, 0.12);
+
+  --grain: 0.04;
+
+  /* Type scale — fluid, fest-poster friendly */
+  --type-h1: clamp(1.45rem, 1.05rem + 1.75vw, 2.1rem);
+  --type-h2: clamp(1.18rem, 1rem + 0.85vw, 1.48rem);
+  --type-h3: clamp(1.02rem, 0.93rem + 0.5vw, 1.2rem);
+}
+
+/* Apply UI font everywhere */
+html,
+body {
+  font-family: var(--ui-font);
+}
+
+/* Display headings — Syne, tight tracking; sizes are defaults except .poster-title (see poster.css) */
+h1,
+h2,
+h3,
+.poster-title {
+  font-family: var(--display-font);
+}
+
+h1 {
+  font-size: var(--type-h1);
+  font-weight: 800;
+  line-height: 1.06;
+  letter-spacing: -0.042em;
+}
+
+h2 {
+  font-size: var(--type-h2);
+  font-weight: 700;
+  line-height: 1.14;
+  letter-spacing: -0.038em;
+}
+
+h3 {
+  font-size: var(--type-h3);
+  font-weight: 700;
+  line-height: 1.22;
+  letter-spacing: -0.032em;
+}
+
+/* Page-level atmosphere — warm vignette */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(1400px 700px at 15% 10%, rgba(217, 122, 61, 0.07), transparent 12%),
+    radial-gradient(1000px 500px at 85% 85%, rgba(232, 155, 74, 0.05), transparent 10%);
+  mix-blend-mode: overlay;
+  z-index: 0;
+}
+
+.grain-overlay {
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}

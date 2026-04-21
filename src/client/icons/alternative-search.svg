@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+  <!-- Open-top tray (U bracket) + centered download arrow — classic inbox glyph -->
+  <path
+    d="M5.5 15v5.5h13v-5.5"
+    stroke="#8b9aaa"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M12 3.5v8M9 11.5l3 3 3-3"
+    stroke="#8b9aaa"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" aria-hidden="true">
+  <!-- Black tile + lime disc + caption bars — matches OpenSubtitles’ classic favicon look (nominative) -->
+  <rect width="32" height="32" rx="7" fill="#0f0f0f"/>
+  <circle cx="16" cy="15" r="9.35" fill="#D4E632"/>
+  <path
+    fill="#0f0f0f"
+    d="M9.4 11.05h13.2v1.55H9.4v-1.55zm0 3.2h13.2v1.55H9.4v-1.55zm0 3.2h8.35v1.55H9.4v-1.55z"
+  />
+</svg>

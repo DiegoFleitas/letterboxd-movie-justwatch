@@ -1,0 +1,89 @@
+/* Utility classes and miscellaneous styles */
+.spoiler {
+  color: black;
+  background-color: black;
+  border-radius: var(--radius-lg);
+  padding: 0.5rem 0;
+}
+.spoiler:hover {
+  color: white;
+}
+
+/* Collapsible "What's Alternative search?" — disclosure styled as a small chip */
+.jackett-details {
+  max-width: 480px;
+  margin: 1.25rem auto 0;
+  text-align: center;
+}
+
+.jackett-summary {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-elevated);
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border: 1px solid var(--color-border);
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+  list-style: none;
+}
+
+.jackett-summary::-webkit-details-marker {
+  display: none;
+}
+
+.jackett-summary:focus,
+.jackett-summary:hover {
+  background: var(--color-bg-alt);
+  color: var(--color-accent-soft);
+  border-color: var(--color-accent-muted);
+}
+
+.jackett-body {
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  color: var(--color-text-subtle);
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  text-align: left;
+  max-width: 100%;
+}
+
+.list-group-item {
+  border: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+}
+.list-group-item:hover {
+  background-color: #242a30;
+  color: #999;
+}
+.list-group-item img {
+  margin-right: 10px;
+}
+.list-group-item div {
+  flex: 1;
+}
+.username-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+}
+.submit-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  margin: 2.5rem 0 1.5rem 0;
+}

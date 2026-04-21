@@ -1,0 +1,37 @@
+/* Skeleton loader for poster cards */
+.poster-skeleton {
+  width: 100%;
+  aspect-ratio: 2/3;
+  background: linear-gradient(
+    90deg,
+    var(--color-surface) 25%,
+    var(--color-surface-elevated) 50%,
+    var(--color-surface) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.2s infinite linear;
+  border-radius: var(--radius-md);
+  margin-bottom: 0.5rem;
+  display: block;
+}
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+.spinner {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 48px;
+  height: 48px;
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0.95;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
