@@ -1,10 +1,10 @@
-/* Design system: cinema/watchlist — warm, distinctive, non-generic */
-@import url("https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Karla:wght@400;500;600;700&display=swap");
+/* Design system: cinema/watchlist — Syne (modern fest / arts identity), Outfit (geometric UI) */
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap");
 
 :root {
   /* Typography */
-  --display-font: "Merriweather", Georgia, serif;
-  --ui-font: "Karla", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --display-font: "Syne", system-ui, sans-serif;
+  --ui-font: "Outfit", system-ui, -apple-system, "Segoe UI", sans-serif;
 
   /* Core palette — tinted neutrals (warm blue-grey), not pure black */
   --color-bg: #0a0e14;
@@ -38,6 +38,11 @@
   --shadow-glow: 0 0 24px rgba(232, 155, 74, 0.12);
 
   --grain: 0.04;
+
+  /* Type scale — fluid, fest-poster friendly */
+  --type-h1: clamp(1.45rem, 1.05rem + 1.75vw, 2.1rem);
+  --type-h2: clamp(1.18rem, 1rem + 0.85vw, 1.48rem);
+  --type-h3: clamp(1.02rem, 0.93rem + 0.5vw, 1.2rem);
 }
 
 /* Apply UI font everywhere */
@@ -46,13 +51,33 @@ body {
   font-family: var(--ui-font);
 }
 
-/* Display headings */
+/* Display headings — Syne, tight tracking; sizes are defaults except .poster-title (see poster.css) */
 h1,
 h2,
 h3,
 .poster-title {
   font-family: var(--display-font);
-  letter-spacing: -0.02em;
+}
+
+h1 {
+  font-size: var(--type-h1);
+  font-weight: 800;
+  line-height: 1.06;
+  letter-spacing: -0.042em;
+}
+
+h2 {
+  font-size: var(--type-h2);
+  font-weight: 700;
+  line-height: 1.14;
+  letter-spacing: -0.038em;
+}
+
+h3 {
+  font-size: var(--type-h3);
+  font-weight: 700;
+  line-height: 1.22;
+  letter-spacing: -0.032em;
 }
 
 /* Page-level atmosphere — warm vignette */

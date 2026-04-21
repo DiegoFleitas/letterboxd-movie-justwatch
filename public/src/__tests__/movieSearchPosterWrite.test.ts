@@ -40,4 +40,21 @@ describe("movie search poster write mapping", () => {
     const data = buildMovieMergeData(response);
     expect(data.poster).toBe(PLACEHOLDER_POSTER);
   });
+
+  it("maps imdbLink and tmdbLink from search response into merge payload", () => {
+    const response: MovieSearchResponse = {
+      title: "Rashomon",
+      year: "1950",
+      link: "https://letterboxd.com/imdb/tt0042876",
+      imdbLink: "https://www.imdb.com/title/tt0042876/",
+      tmdbLink: "https://www.themoviedb.org/movie/548/",
+      poster: "https://image.tmdb.org/t/p/w500/poster.jpg",
+    };
+
+    const data = buildMovieMergeData(response);
+
+    expect(data.link).toBe("https://letterboxd.com/imdb/tt0042876");
+    expect(data.imdbLink).toBe("https://www.imdb.com/title/tt0042876/");
+    expect(data.tmdbLink).toBe("https://www.themoviedb.org/movie/548/");
+  });
 });

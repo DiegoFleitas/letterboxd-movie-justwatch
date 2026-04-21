@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import type { TileData, TileProvider } from "./movieTiles";
+import { letterboxdFilmUrlOrSearchUrl, type TileData, type TileProvider } from "./movieTiles";
 import {
   POSTER_IMAGE_TRANSFORM_S,
   POSTER_OVERLAY_OPACITY_S,
@@ -8,6 +8,9 @@ import {
   motionTransition,
 } from "./animation/timing";
 import alternativeSearchIcon from "./assets/alternative-search.svg";
+import imdbIcon from "./assets/imdb-icon.svg";
+import letterboxdIcon from "./assets/letterboxd-icon.svg";
+import tmdbIcon from "./assets/tmdb-icon.svg";
 import { WaitCue } from "./WaitCue";
 
 const JUSTWATCH_PROXY = "https://click.justwatch.com/a?r=";
@@ -25,7 +28,14 @@ export function MovieTile({
   onAlternativeSearch,
   suppressAnimations = false,
 }: MovieTileProps): React.ReactElement {
-  const { id, title, year, poster, link, movieProviders = [] } = data;
+  const { id, title, year, poster, link, imdbLink, tmdbLink, movieProviders = [] } = data;
+  const hasLetterboxdFilmLink = Boolean(link?.trim());
+  const showExternalLinks = Boolean(imdbLink || tmdbLink || hasLetterboxdFilmLink);
+  const availableExternalLinks = [
+    hasLetterboxdFilmLink ? "Letterboxd" : null,
+    tmdbLink ? "TMDB" : null,
+    imdbLink ? "IMDb" : null,
+  ].filter(Boolean);
   const providerNames = movieProviders.map((p: { name: string }) => p.name);
   const [loaded, setLoaded] = useState(false);
 
@@ -65,14 +75,80 @@ export function MovieTile({
             }
       }
     >
-      <a
-        href={link}
-        className="poster-link"
-        target="_blank"
-        rel="noopener noreferrer"
-        tabIndex={0}
-        aria-label={`${title} (${year})`}
-      >
+      {showExternalLinks ? (
+        <div
+          className="poster-external-stack"
+          role="group"
+          aria-label={`${title}${year != null && year !== "" ? ` (${year})` : ""} — ${availableExternalLinks.join(", ")}`}
+        >
+          <button
+            type="button"
+            className="poster-external-btn"
+            data-sp="letterboxd-link-tile"
+            title={
+              hasLetterboxdFilmLink ? "Open Letterboxd film page" : "Search this film on Letterboxd"
+            }
+            aria-label={
+              hasLetterboxdFilmLink
+                ? `Open ${title} on Letterboxd`
+                : `Search ${title}${year != null && year !== "" ? ` (${year})` : ""} on Letterboxd`
+            }
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              window.open(
+                letterboxdFilmUrlOrSearchUrl(link, title, year),
+                "_blank",
+                "noopener,noreferrer",
+              );
+            }}
+            onKeyDown={(e) => {
+              if (e.key === " ") e.stopPropagation();
+            }}
+          >
+            <img src={letterboxdIcon} alt="" className="poster-external-btn__icon" />
+          </button>
+          {tmdbLink ? (
+            <button
+              type="button"
+              className="poster-external-btn"
+              data-sp="tmdb-link-tile"
+              title="Open TMDB page"
+              aria-label={`Open ${title} on TMDB`}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                window.open(tmdbLink, "_blank", "noopener,noreferrer");
+              }}
+              onKeyDown={(e) => {
+                if (e.key === " ") e.stopPropagation();
+              }}
+            >
+              <img src={tmdbIcon} alt="" className="poster-external-btn__icon" />
+            </button>
+          ) : null}
+          {imdbLink ? (
+            <button
+              type="button"
+              className="poster-external-btn"
+              data-sp="imdb-link-tile"
+              title="Open IMDb page"
+              aria-label={`Open ${title} on IMDb`}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                window.open(imdbLink, "_blank", "noopener,noreferrer");
+              }}
+              onKeyDown={(e) => {
+                if (e.key === " ") e.stopPropagation();
+              }}
+            >
+              <img src={imdbIcon} alt="" className="poster-external-btn__icon" />
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+      <div className="poster-body">
         {poster ? (
           <>
             {suppressAnimations ? (
@@ -187,7 +263,7 @@ export function MovieTile({
             </button>
           </div>
         </div>
-      </a>
+      </div>
     </motion.div>
   );
 }

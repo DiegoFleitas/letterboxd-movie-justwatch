@@ -62,12 +62,8 @@ select:focus {
 }
 #movie-form h3,
 #letterboxd-form h3 {
-  font-family: var(--display-font);
-  font-size: 1.125rem;
-  font-weight: 700;
   color: var(--color-text);
   margin: 0 0 1rem;
-  letter-spacing: -0.01em;
 }
 
 #movie-form input[type="text"],

@@ -10,6 +10,8 @@ export interface MovieSearchResponse {
   message?: string;
   poster?: string;
   link?: string;
+  imdbLink?: string;
+  tmdbLink?: string;
   movieProviders?: { id: string; name: string; icon?: string; url: string }[];
 }
 
@@ -24,6 +26,8 @@ export function buildMovieMergeData(response: MovieSearchResponse): MergeData {
   return {
     poster: normalizedPoster ?? PLACEHOLDER_POSTER,
     ...(response.link !== undefined ? { link: response.link } : {}),
+    ...(response.imdbLink !== undefined ? { imdbLink: response.imdbLink } : {}),
+    ...(response.tmdbLink !== undefined ? { tmdbLink: response.tmdbLink } : {}),
     ...(response.movieProviders !== undefined ? { movieProviders: response.movieProviders } : {}),
   };
 }
