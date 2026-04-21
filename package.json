@@ -96,7 +96,6 @@
     "react-hot-toast": "^2.6.0",
     "ua-parser-js": "^2.0.9",
     "user-agents": "^2.1.36",
-    "uuid": "^14.0.0",
     "zod": "4"
   },
   "devDependencies": {
