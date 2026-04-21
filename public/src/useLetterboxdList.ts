@@ -8,6 +8,7 @@ import { showMessage } from "./showMessage";
 import {
   PLACEHOLDER_POSTER,
   classifyListReportSymptom,
+  normalizePosterPath,
   type MergeData,
   type TileData,
 } from "./movieTiles";
@@ -141,7 +142,7 @@ export function useLetterboxdList(
 
         for (const element of watchlist) {
           let { title, year, posterPath, poster, link } = element;
-          poster = poster || PLACEHOLDER_POSTER;
+          poster = normalizePosterPath(poster) || PLACEHOLDER_POSTER;
           mergeTile?.(title ?? "", year ?? null, { poster, link });
           if (posterPath) {
             fetch(`https://letterboxd.com${posterPath}poster/std/230/`)

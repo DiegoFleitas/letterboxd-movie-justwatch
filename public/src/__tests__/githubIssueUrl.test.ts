@@ -3,7 +3,9 @@ import { buildListGithubIssueUrl, listReportToastCopy } from "../githubIssueUrl"
 import {
   classifyListReportSymptom,
   isPlaceholderPoster,
+  LEGACY_PLACEHOLDER_POSTER,
   PLACEHOLDER_POSTER,
+  normalizePosterPath,
   mergeTileState,
   createInitialTileState,
 } from "../movieTiles";
@@ -80,7 +82,12 @@ describe("isPlaceholderPoster & classifyListReportSymptom", () => {
     expect(isPlaceholderPoster(null)).toBe(true);
     expect(isPlaceholderPoster(undefined)).toBe(true);
     expect(isPlaceholderPoster(PLACEHOLDER_POSTER)).toBe(true);
+    expect(isPlaceholderPoster(LEGACY_PLACEHOLDER_POSTER)).toBe(true);
     expect(isPlaceholderPoster("https://example.com/p.jpg")).toBe(false);
+  });
+
+  it("normalizes legacy placeholder to BASE_URL-aware placeholder", () => {
+    expect(normalizePosterPath(LEGACY_PLACEHOLDER_POSTER)).toBe(PLACEHOLDER_POSTER);
   });
 
   it("classifies empty tiles as no_tiles", () => {

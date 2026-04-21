@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { buildMovieMergeData, type MovieSearchResponse } from "../useMovieSearch";
-import { PLACEHOLDER_POSTER } from "../movieTiles";
+import { LEGACY_PLACEHOLDER_POSTER, PLACEHOLDER_POSTER } from "../movieTiles";
 
 describe("movie search poster write mapping", () => {
   it("maps movie search response to tile merge payload", () => {
@@ -24,6 +24,17 @@ describe("movie search poster write mapping", () => {
       title: "Unknown Movie",
       year: "2025",
       link: "https://letterboxd.com/film/unknown-movie/",
+    };
+
+    const data = buildMovieMergeData(response);
+    expect(data.poster).toBe(PLACEHOLDER_POSTER);
+  });
+
+  it("normalizes legacy placeholder poster to BASE_URL-aware placeholder", () => {
+    const response: MovieSearchResponse = {
+      title: "Legacy Placeholder",
+      year: "2025",
+      poster: LEGACY_PLACEHOLDER_POSTER,
     };
 
     const data = buildMovieMergeData(response);

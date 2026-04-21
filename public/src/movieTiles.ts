@@ -36,9 +36,15 @@ export interface MergeData {
 }
 
 export const PLACEHOLDER_POSTER = getPublicAssetPath("movie_placeholder.svg");
+export const LEGACY_PLACEHOLDER_POSTER = "/movie_placeholder.svg";
+
+export function normalizePosterPath(poster: string | null | undefined): string | null | undefined {
+  if (poster === LEGACY_PLACEHOLDER_POSTER) return PLACEHOLDER_POSTER;
+  return poster;
+}
 
 export function isPlaceholderPoster(poster: string | null | undefined): boolean {
-  return poster == null || poster === PLACEHOLDER_POSTER;
+  return poster == null || poster === PLACEHOLDER_POSTER || poster === LEGACY_PLACEHOLDER_POSTER;
 }
 
 /** After list load + search, used for GitHub issue prefilling when the UI looks broken */
@@ -93,6 +99,8 @@ export function mergeTileState(
   }
 
   const existing = tiles[existingId];
+  const incomingPoster = normalizePosterPath(data?.poster);
+  const existingPoster = normalizePosterPath(existing?.poster);
   const tileData: TileData = {
     id: existingId,
     title,
@@ -102,11 +110,11 @@ export function mergeTileState(
       ? (data!.movieProviders ?? [])
       : (existing?.movieProviders ?? []),
     poster:
-      data?.poster && data.poster !== PLACEHOLDER_POSTER
-        ? data.poster
-        : data?.poster && !existing?.poster
-          ? data.poster
-          : (existing?.poster ?? null),
+      incomingPoster && !isPlaceholderPoster(incomingPoster)
+        ? incomingPoster
+        : incomingPoster && !existingPoster
+          ? incomingPoster
+          : (existingPoster ?? null),
   };
   if (data?.link && !tileData.link) tileData.link = data.link;
   if (!tileData.year) tileData.year = year;
