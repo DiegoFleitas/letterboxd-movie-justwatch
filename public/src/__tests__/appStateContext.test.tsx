@@ -2,7 +2,7 @@
 import React from "react";
 import { describe, it, expect } from "vitest";
 import { createRoot } from "react-dom/client";
-import { act } from "react-dom/test-utils";
+import { act } from "@testing-library/react";
 import { AppStateProvider, useAppState } from "../AppStateContext";
 
 function Probe(): React.ReactElement {
