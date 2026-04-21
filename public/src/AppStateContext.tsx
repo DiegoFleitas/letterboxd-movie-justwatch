@@ -55,7 +55,12 @@ export function AppStateProvider({ children }: { children: ReactNode }): React.R
   const [tilesByTab, setTilesByTab] = useState<TabbedTileState>(createInitialTabbedTileState);
   const [activeTab, setActiveTab] = useState<SearchTab>("movie");
   const [notice, setNotice] = useState<string | null>(null);
-  const [showAltSearchButton, setShowAltSearchButton] = useState(false);
+  const [showAltSearchButtonByTab, setShowAltSearchButtonByTab] = useState<
+    Record<SearchTab, boolean>
+  >({
+    movie: false,
+    list: false,
+  });
   const [isMovieSearchLoading, setMovieSearchLoading] = useState(false);
   const [isListLoading, setListLoading] = useState(false);
   const [isAlternativeSearchLoading, setAlternativeSearchLoading] = useState(false);
@@ -92,9 +97,25 @@ export function AppStateProvider({ children }: { children: ReactNode }): React.R
     [mergeTileForTab],
   );
 
-  const loadLetterboxdList = useLetterboxdList(mergeListTile, setListLoading, listMovieTilesRef);
+  const loadLetterboxdListRaw = useLetterboxdList(mergeListTile, setListLoading, listMovieTilesRef);
+  const loadLetterboxdList = useCallback(
+    async (listUrl: string, country: string) => {
+      setShowAltSearchButtonByTab((prev) => ({ ...prev, list: true }));
+      await loadLetterboxdListRaw(listUrl, country);
+    },
+    [loadLetterboxdListRaw],
+  );
+  const setShowAltSearchButton = useCallback(
+    (show: boolean) => {
+      setShowAltSearchButtonByTab((prev) => ({ ...prev, [activeTab]: show }));
+    },
+    [activeTab],
+  );
+  const setMovieAltSearchButton = useCallback((show: boolean) => {
+    setShowAltSearchButtonByTab((prev) => ({ ...prev, movie: show }));
+  }, []);
   const submitMovieSearch = useMovieSearch(
-    setShowAltSearchButton,
+    setMovieAltSearchButton,
     setMovieSearchLoading,
     mergeMovieTile,
   );
@@ -128,7 +149,7 @@ export function AppStateProvider({ children }: { children: ReactNode }): React.R
     streamingProviders: selectActiveTileState(tilesByTab, activeTab).streamingProviders,
     activeTab,
     notice,
-    showAltSearchButton,
+    showAltSearchButton: showAltSearchButtonByTab[activeTab],
     isMovieSearchLoading,
     isListLoading,
     isAlternativeSearchLoading,
