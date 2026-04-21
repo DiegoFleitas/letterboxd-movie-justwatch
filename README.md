@@ -1,33 +1,84 @@
-## Letterboxd Movie JustWatch
+# Letterboxd Movie JustWatch
 
-[![Tests](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/actions/workflows/ci.yml)
+<div align="center">
 
-Scan any **public** Letterboxd watchlist or custom list and see where each film is streaming in your country. Uses **unofficial** JustWatch-style data without recommendation clutter, with optional **Jackett**-backed alternative search.
+<img
+  src="docs/images/github-banner.png"
+  alt="Letterboxd watchlists mapped to streaming availability"
+  width="800"
+  style="max-width: min(920px, 100%); height: auto; border-radius: 12px; box-shadow: 0 12px 40px rgba(15, 23, 42, 0.22);"
+/>
 
-### What it does
+<br />
 
-- **Watchlists**: Paste a Letterboxd watchlist or list URL; the app scrapes/fetches titles and resolves streaming availability per film.
-- **Per-country availability**: Choose a country and see which services carry each title there.
-- **Caching**: Redis-backed cache to reduce repeat calls to external APIs (see [`redis/README.md`](redis/README.md) for CLI, export/seed).
-- **Alternative search**: Optional Jackett integration for harder-to-find titles.
+[![CI](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/actions/workflows/ci.yml)
 
-### Tech stack
+**Scan public Letterboxd watchlists and custom lists, then see where each title streams in your country—without JustWatch’s recommendation layer.**
 
-- **Frontend**: React 19 + Vite (`public/`)
-- **Backend**: **Bun** + **Fastify** (TypeScript; `bun server-fastify.ts` in production) — `server-fastify.ts` / `server/createServer.ts`.
-- **Data**: Cheerio (Letterboxd), axios, ioredis, sessions via Fastify
-- **Quality**: Vitest, Playwright, ESLint, Prettier, Husky
+[Features](#features) · [Quick start](#quick-start) · [Documentation](#documentation)
 
-### Prerequisites
+</div>
 
-- **[Bun](https://bun.sh)** — version pinned in `packageManager` in `package.json` (lockfile: `bun.lock`). This repo is Bun-only (no in-repo Node pin).
+---
 
-### Quick start (local dev)
+## Overview
 
-1. `bun install` — runs the `prepare` script so **Husky** Git hooks install locally. If hooks are missing after cloning, run `bun run prepare`.
-2. `cp .env.example .env` and set at least **`FLYIO_REDIS_URL`**, **`OMDB_API_KEY`** (posters). For production, set **`APP_SECRET_KEY`** (≥32 characters for sessions).
-3. `bun run dev` — runs Vite on **5173** and Fastify on **3000** (see `concurrently` in `package.json`).
-4. Open **`http://localhost:5173`** (dev UI proxies API traffic to the backend as configured in Vite).
+This application connects **Letterboxd** lists to **streaming availability** for a country you choose. It uses **unofficial** JustWatch-style data for lean, title-focused results (no extra recommendation UI). Optional **Jackett** integration helps surface harder-to-find titles through an alternative search path.
+
+| Aspect         | Detail                                                                       |
+| -------------- | ---------------------------------------------------------------------------- |
+| **Input**      | Public Letterboxd watchlist or custom list URL                               |
+| **Output**     | Per-title streaming providers for the selected country                       |
+| **Caching**    | Redis-backed cache to limit repeat external requests                         |
+| **Operations** | CI on GitHub Actions; deploy to **Fly.io** with Sentry-ready frontend builds |
+
+## Features
+
+| Capability             | Details                                                                                                            |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| **Lists**              | Paste a Letterboxd watchlist or list URL; titles are resolved from Letterboxd.                                     |
+| **Country-aware**      | Pick a country to see which services carry each film there.                                                        |
+| **Caching**            | Redis reduces load on upstream calls—see [`redis/README.md`](redis/README.md) for CLI, export, and seed workflows. |
+| **Alternative search** | Optional Jackett integration for titles that are difficult to match.                                               |
+
+## Tech stack
+
+| Area            | Stack                                                                    |
+| --------------- | ------------------------------------------------------------------------ |
+| **Frontend**    | React 19, Vite (`public/`)                                               |
+| **Backend**     | Bun, Fastify, TypeScript (`server-fastify.ts`, `server/createServer.ts`) |
+| **Data & HTTP** | Cheerio (Letterboxd), axios, ioredis; sessions via Fastify               |
+| **Quality**     | Vitest, Playwright, ESLint, Prettier, Husky                              |
+
+## Prerequisites
+
+- **[Bun](https://bun.sh)** — version is pinned via `packageManager` in `package.json` (lockfile: `bun.lock`). This repository targets Bun only; there is no in-repo Node version pin.
+
+## Quick start
+
+1. Install dependencies (installs Husky via `prepare`):
+
+   ```bash
+   bun install
+   ```
+
+   If Git hooks are missing after cloning, run `bun run prepare`.
+
+2. Copy environment defaults and set required values:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   At minimum, configure **`FLYIO_REDIS_URL`** and **`OMDB_API_KEY`** (posters). For production, set **`APP_SECRET_KEY`** (≥ 32 characters for sessions). See the **[Configuration](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki/Configuration)** wiki page for the full variable list.
+
+3. Start the development servers (Vite on **5173**, Fastify on **3000**—see `concurrently` in `package.json`):
+
+   ```bash
+   bun run dev
+   ```
+
+4. Open **`http://localhost:5173`**. The dev UI proxies API traffic to the backend per Vite configuration.
 
 ### Docker Compose
 
@@ -35,77 +86,39 @@ Scan any **public** Letterboxd watchlist or custom list and see where each film 
 docker compose up --build
 ```
 
-Then open **`http://localhost:3000`**. For secrets (`OMDB_API_KEY`, `APP_SECRET_KEY`, etc.), use a root `.env` or `docker-compose.override.yml`; Compose loads `.env` automatically.
+Then open **`http://localhost:3000`**. Provide secrets (`OMDB_API_KEY`, `APP_SECRET_KEY`, and others) via a root `.env` or `docker-compose.override.yml`; Compose loads `.env` automatically.
 
 ### Production deploy (Fly.io)
 
-Deploys are driven by **GitHub Actions** ([`.github/workflows/fly-deploy.yml`](.github/workflows/fly-deploy.yml)): after **CI** succeeds on `main` or `master`, or when you run that workflow manually (**workflow_dispatch**). The job runs `bun run build` (for Sentry sourcemaps), `bun run sentry:release:frontend`, then `flyctl deploy --remote-only` with `SENTRY_RELEASE` from the commit. The `bun run fly:*` entries below are optional CLI helpers (logs, SSH, or an ad hoc `flyctl deploy`).
+Deployments run from **GitHub Actions** ([`.github/workflows/fly-deploy.yml`](.github/workflows/fly-deploy.yml)): after **CI** succeeds on `main` or `master`, or when the workflow is triggered manually (**workflow_dispatch**). The job runs `bun run build` (for Sentry source maps), `bun run sentry:release:frontend`, then `flyctl deploy --remote-only` with `SENTRY_RELEASE` from the commit.
 
-### Project layout (high level)
+The `bun run fly:*` scripts are optional helpers for logs, SSH, or ad hoc `flyctl deploy` from your machine.
 
-| Path                     | Role                                                                 |
-| ------------------------ | -------------------------------------------------------------------- |
-| `public/`                | Vite root: React app (`src/`), static assets, CSS                    |
-| `server/createServer.ts` | Fastify app wiring (routes, static, sessions)                        |
-| `server-fastify.ts`      | Process entrypoint                                                   |
-| `controllers/`           | HTTP handlers (Letterboxd lists, search, posters, proxy, Jackett)    |
-| `helpers/`, `lib/`       | Scraping and URL helpers                                             |
-| `scripts/`               | Provider build, Letterboxd fixtures, Redis export/seed               |
-| `tests/`                 | Vitest unit/integration                                              |
-| `e2e/`                   | Playwright (UI mocks + backend smoke)                                |
-| `docs/`                  | Deep dives (e.g. [Sentry + HTTP logging](docs/sentry-and-logger.md)) |
+## Documentation
 
-### Key commands
+Operational detail (scripts, environment, layout, observability, branding) lives in the **[GitHub Wiki](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki)**. Source Markdown for those pages is in **[`docs/wiki/`](docs/wiki/)** so changes can be reviewed in pull requests; see [`docs/wiki/README.md`](docs/wiki/README.md) for how to sync the wiki git repository.
 
-| Command                                                   | Purpose                                                                                                      |
-| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `bun run dev`                                             | Vite + Fastify together                                                                                      |
-| `bun run fe:dev` / `bun run be:dev`                       | Frontend or backend only                                                                                     |
-| `bun run start`                                           | Production-style: `bun server-fastify.ts`                                                                    |
-| `bun run build`                                           | Vite production build → `dist/`                                                                              |
-| `bun run sentry:release:frontend`                         | Create/finalize Sentry release and upload frontend sourcemaps (`public/dist/assets`)                         |
-| `bun run test`                                            | All Vitest tests ([`tests/README.md`](tests/README.md))                                                      |
-| `bun run test:e2e`                                        | Playwright — run **`bun run dev`** first so backend is up for smoke tests ([`e2e/README.md`](e2e/README.md)) |
-| `bun run test:poster-flow`                                | Manual poster checks against **localhost:3000** (not part of `bun run test`)                                 |
-| `bun run typecheck`                                       | TypeScript (root + `public/`)                                                                                |
-| `bun run lint` / `bun run format:check`                   | ESLint / Prettier                                                                                            |
-| `bun run build:providers`                                 | Regenerate canonical provider data (`build:providers:dry-run` to preview)                                    |
-| `bun run export-redis` / `bun run seed-redis`             | Redis snapshot ([`redis/README.md`](redis/README.md))                                                        |
-| `bun run fly:deploy` / `fly:deploy:release`               | Optional: `flyctl deploy` from your machine (production normally uses **Actions**; see above)                |
-| `bun run fly:deploy:with-local-build`                     | Optional: local `vite build` first (fail fast), then `flyctl deploy`                                         |
-| `bun run fly:logs` / `fly:stop` / `fly:start` / `fly:ssh` | Fly app helpers                                                                                              |
+| Topic                              | Wiki                                                                                                   |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Bun scripts                        | [Commands](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki/Commands)                   |
+| Environment variables              | [Configuration](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki/Configuration)         |
+| Sentry, Fastify logging, redaction | [Sentry and logger](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki/Sentry-and-logger) |
+| Observability overview             | [Observability](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki/Observability)         |
+| Paths and folders                  | [Repository layout](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki/Repository-layout) |
+| README banner and social preview   | [Branding](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki/Branding)                   |
 
-### Configuration (environment)
+## Contributing
 
-See **`.env.example`** for the full list. Common variables:
+Before opening a pull request, run:
 
-| Variable                                              | Notes                                                                                                                                   |
-| ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `APP_SECRET_KEY`                                      | **Required in production**; ≥32 chars (Fastify session). Local `bun run dev` can use a dev default if unset.                            |
-| `FLYIO_REDIS_URL`                                     | e.g. `redis://localhost:6379`. Omit or avoid pointing production deploys at local Redis ([`redis/README.md`](redis/README.md) gotchas). |
-| `DISABLE_REDIS`                                       | `1` / `true` skips Redis (typical in CI).                                                                                               |
-| `OMDB_API_KEY`                                        | Poster lookups                                                                                                                          |
-| `MOVIE_DB_API_KEY`                                    | TMDb / search; optional locally; enables extra integration coverage in CI when set                                                      |
-| `POSTHOG_KEY` / `POSTHOG_HOST`                        | Optional analytics                                                                                                                      |
-| `SENTRY_DSN` / `SENTRY_*`                             | Optional FE + BE Sentry config (runtime-injected to browser; see [`docs/sentry-and-logger.md`](docs/sentry-and-logger.md))              |
-| `SENTRY_AUTH_TOKEN` / `SENTRY_ORG` / `SENTRY_PROJECT` | Required in CI for `sentry-cli` sourcemap upload                                                                                        |
-| `JACKETT_API_KEY` / `JACKETT_API_ENDPOINT`            | Optional alternative search                                                                                                             |
-| `CACHE_TTL`                                           | Optional cache TTL override (seconds)                                                                                                   |
-| `PORT`                                                | Backend port (default **3000**)                                                                                                         |
-| `E2E_API_BASE_URL`                                    | Playwright backend smoke base URL (default `http://127.0.0.1:3000`)                                                                     |
+```bash
+bun run lint && bun run typecheck && bun run test
+```
 
-### Contributing & license
+End-to-end details: [`e2e/README.md`](e2e/README.md).
 
-- Before a PR: `bun run lint`, `bun run typecheck`, and `bun run test`. E2E details: [`e2e/README.md`](e2e/README.md).
-- **License**: ISC (see `package.json`).
+**License:** ISC (see `package.json`).
 
-### Logging and secrets
+## JustWatch data notice
 
-- **Sentry + backend logging**: See [`docs/sentry-and-logger.md`](docs/sentry-and-logger.md) for FE/BE Sentry setup, release alignment (`SENTRY_RELEASE`), and Fastify logging behavior.
-- **Sentry release automation**: `.github/workflows/fly-deploy.yml` builds frontend assets, uploads sourcemaps to Sentry, then deploys to Fly using the same commit SHA as `SENTRY_RELEASE`.
-- HTTP requests are logged via a shared axios helper (`helpers/axios.ts`) that **redacts query parameters such as `api_key`, `apikey`, `access_token`, `token`, and `key`** before printing URLs.
-- Do not log raw environment variables or full external URLs containing credentials; if you add new HTTP clients, either use the existing helper or apply similar redaction.
-
-### JustWatch API note
-
-This project uses **unofficial** JustWatch-related endpoints for **non-commercial, personal** use only. For commercial use or official data, contact JustWatch. Endpoints may change or stop working at any time; use at your own risk.
+This project uses **unofficial** JustWatch-related endpoints for **non-commercial, personal** use only. For commercial use or official data, contact JustWatch. Endpoints may change or stop working without notice; use at your own risk.
