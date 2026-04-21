@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
-  <!-- Letterboxd-inspired 3-circle badge for small-size recognizability -->
-  <rect x="2" y="2" width="20" height="20" rx="5" fill="#1f2b38" />
-  <circle cx="9.2" cy="12" r="4.2" fill="#f27405" />
-  <circle cx="12" cy="12" r="4.2" fill="#00a65a" />
-  <circle cx="14.8" cy="12" r="4.2" fill="#40bcf4" />
-</svg>
