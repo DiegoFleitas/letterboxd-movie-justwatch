@@ -1,4 +1,4 @@
-import type { CanonicalProviderMap, MovieProvider, JustWatchOffer } from "../types/index.js";
+import type { CanonicalProviderMap, MovieProvider, JustWatchOffer } from "./types/index.js";
 
 export function processOffers(
   offers: JustWatchOffer[],

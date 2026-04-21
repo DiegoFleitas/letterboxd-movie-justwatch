@@ -1,4 +1,4 @@
-import type { CanonicalProviderMap } from "../types/index.js";
+import type { CanonicalProviderMap } from "./types/index.js";
 
 interface PackageItem {
   technicalName: string;

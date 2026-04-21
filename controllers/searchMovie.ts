@@ -3,7 +3,7 @@ import type { AxiosInstance } from "axios";
 import axiosHelper from "../lib/axios.js";
 import { getCacheValue, setCacheValue } from "../lib/redis.js";
 import { processOffers } from "../lib/processOffers.js";
-import type { CanonicalProviderMap, JustWatchOffer } from "../types/index.js";
+import type { CanonicalProviderMap, JustWatchOffer } from "../lib/types/index.js";
 import { getRandomScrapeUserAgent } from "../lib/scrapeUserAgent.js";
 import { buildLetterboxdStableFilmLink } from "../lib/letterboxdStableFilmLink.js";
 

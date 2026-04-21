@@ -21,6 +21,19 @@ Config: root [`vitest.config.ts`](../vitest.config.ts) (Node environment, `APP_S
 - **`tests/fixtures/`** – HTML/JSON fixtures for scrapers and state tests.
 - **`e2e/app.spec.ts`** – browser E2E (mocked APIs).
 
+## Cross-layer imports from public src
+
+A few Vitest files **import modules from the Vite app** on purpose so logic stays single-sourced:
+
+| Test file                       | Imports                                          |
+| ------------------------------- | ------------------------------------------------ |
+| `stateTileManagement.test.ts`   | `public/src/movieTiles` (tab/tile state helpers) |
+| `providerDeduplication.test.ts` | `public/src/providerUtils`                       |
+
+If you rename or move those modules, run **`bun run test`** and the **frontend** test suite (`public/src/__tests__/`) together—they exercise the same code from different runners.
+
+The browser bundle only imports **`lib/letterboxdListUrl`** from repo `lib/` today; avoid adding more `../../lib/*` imports from `public/src/` without a dedicated small helper module so coupling and bundle size stay predictable.
+
 ## Adding tests
 
 1. Add `tests/yourFeature.test.ts` (or match existing naming).
