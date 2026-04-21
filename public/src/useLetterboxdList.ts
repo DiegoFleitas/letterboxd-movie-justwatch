@@ -5,7 +5,13 @@ import { parseLetterboxdListUrl } from "../../lib/letterboxdListUrl";
 import { toggleNotice } from "./noticeFunctions";
 import { showError, showBatchErrors } from "./showError";
 import { showMessage } from "./showMessage";
-import { classifyListReportSymptom, type MergeData, type TileData } from "./movieTiles";
+import {
+  PLACEHOLDER_POSTER,
+  classifyListReportSymptom,
+  normalizePosterPath,
+  type MergeData,
+  type TileData,
+} from "./movieTiles";
 import { captureFrontendException } from "./sentry";
 
 const SEARCH_CONCURRENCY = 4;
@@ -136,7 +142,7 @@ export function useLetterboxdList(
 
         for (const element of watchlist) {
           let { title, year, posterPath, poster, link } = element;
-          poster = poster || "/movie_placeholder.svg";
+          poster = normalizePosterPath(poster) || PLACEHOLDER_POSTER;
           mergeTile?.(title ?? "", year ?? null, { poster, link });
           if (posterPath) {
             fetch(`https://letterboxd.com${posterPath}poster/std/230/`)

@@ -4,6 +4,7 @@ import { act, renderHook } from "@testing-library/react";
 import { useCallback, useRef } from "react";
 import { useLetterboxdList } from "../useLetterboxdList";
 import {
+  PLACEHOLDER_POSTER,
   mergeTileState,
   createInitialTileState,
   type MergeData,
@@ -72,7 +73,7 @@ describe("useLetterboxdList GitHub nudge (45s timer)", () => {
     globalThis.fetch = createFetchMock({
       title: "Test Film",
       year: 2020,
-      poster: "/movie_placeholder.svg",
+      poster: PLACEHOLDER_POSTER,
       link: "https://letterboxd.com/film/test-film-2020/",
       movieProviders: [],
     }) as unknown as typeof globalThis.fetch;
