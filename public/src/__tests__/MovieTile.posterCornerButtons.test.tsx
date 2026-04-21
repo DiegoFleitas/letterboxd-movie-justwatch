@@ -35,12 +35,12 @@ describe("MovieTile poster corner subtitle buttons", () => {
   it("renders SubDL and OpenSubtitles when no other external links exist", async () => {
     const container = document.createElement("div");
     const root = createRoot(container);
-    const tileData: TileData = {
+    const tileData = {
       id: "tile-2",
       title: "Obscure",
       year: "2020",
       movieProviders: [],
-    };
+    } as unknown as TileData;
 
     await act(async () => {
       root.render(

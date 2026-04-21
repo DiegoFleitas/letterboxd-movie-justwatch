@@ -26,7 +26,7 @@ vi.mock("../lib/letterboxdHttp.js", () => ({
   }),
 }));
 
-vi.mock("../helpers/redis.js", () => ({
+vi.mock("../lib/redis.js", () => ({
   getCacheValue: vi.fn().mockResolvedValue(null),
   setCacheValue: vi.fn().mockResolvedValue(undefined),
 }));

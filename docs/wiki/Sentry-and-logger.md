@@ -104,7 +104,7 @@ Most captures are guarded with `if (Sentry.getClient())` so behavior is safe whe
 
 ## Safe HTTP logging (axios)
 
-HTTP logging goes through a shared axios helper (`helpers/axios.ts`) that **redacts** query parameters such as `api_key`, `apikey`, `access_token`, `token`, and `key` before URLs are printed.
+HTTP logging goes through a shared axios helper (`lib/axios.ts`) that **redacts** query parameters such as `api_key`, `apikey`, `access_token`, `token`, and `key` before URLs are printed.
 
 Do not log raw environment variables or full external URLs that contain credentials. If you add new HTTP clients, use the existing helper or apply equivalent redaction.
 

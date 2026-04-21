@@ -8,14 +8,14 @@ const { mockGet, mockPost, mockGetCache, mockSetCache } = vi.hoisted(() => ({
   mockSetCache: vi.fn(),
 }));
 
-vi.mock("../helpers/axios.js", () => ({
+vi.mock("../lib/axios.js", () => ({
   default: () => ({
     get: mockGet,
     post: mockPost,
   }),
 }));
 
-vi.mock("../helpers/redis.js", () => ({
+vi.mock("../lib/redis.js", () => ({
   getCacheValue: (...args: unknown[]) => mockGetCache(...args),
   setCacheValue: (...args: unknown[]) => mockSetCache(...args),
 }));

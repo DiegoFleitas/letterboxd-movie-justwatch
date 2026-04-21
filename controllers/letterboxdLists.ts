@@ -1,13 +1,13 @@
 import type { HttpHandler } from "../server/httpContext.js";
 import * as Sentry from "@sentry/node";
 import * as cheerio from "cheerio";
-import { getCacheValue, setCacheValue } from "../helpers/redis.js";
+import { getCacheValue, setCacheValue } from "../lib/redis.js";
 import {
   getPageFilms,
   getFilmsCount,
   getContentPresence,
   type PageFilm,
-} from "../helpers/letterboxdListHtml.js";
+} from "../lib/letterboxdListHtml.js";
 import {
   letterboxdWatchlistBodySchema,
   letterboxdCustomListBodySchema,

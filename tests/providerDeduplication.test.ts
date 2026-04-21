@@ -2,11 +2,11 @@
  * Tests for provider deduplication: backend processOffers and canonical map builder.
  */
 import { describe, it, expect } from "vitest";
-import { processOffers } from "../helpers/processOffers.js";
+import { processOffers } from "../lib/processOffers.js";
 import {
   buildCanonicalProviderMap,
   buildCanonicalProviderMaps,
-} from "../helpers/canonicalProviders.js";
+} from "../lib/canonicalProviders.js";
 import {
   tileMatchesProviderFilter,
   normalizedProviderKey,

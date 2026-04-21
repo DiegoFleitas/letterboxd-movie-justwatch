@@ -11,7 +11,7 @@ import {
   extractGridHtml,
   getContentPresence,
   getFilmsCount,
-} from "../helpers/letterboxdListHtml.js";
+} from "../lib/letterboxdListHtml.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const fixturesDir = join(__dirname, "fixtures");

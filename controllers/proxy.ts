@@ -1,6 +1,6 @@
 import type { HttpHandler } from "../server/httpContext.js";
-import axiosHelper from "../helpers/axios.js";
-import { getCacheValue, setCacheValue } from "../helpers/redis.js";
+import axiosHelper from "../lib/axios.js";
+import { getCacheValue, setCacheValue } from "../lib/redis.js";
 import { parseAllowedProxyUrl } from "../lib/apiSchemas.js";
 
 const axios = axiosHelper();

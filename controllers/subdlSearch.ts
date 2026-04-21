@@ -1,5 +1,5 @@
 import type { HttpHandler } from "../server/httpContext.js";
-import axiosHelper from "../helpers/axios.js";
+import axiosHelper from "../lib/axios.js";
 import { alternativeSearchBodySchema, firstZodIssueMessage } from "../lib/apiSchemas.js";
 import { pickSubdlBrowseUrl, type SubdlResponse } from "../lib/subdlBrowseUrl.js";
 

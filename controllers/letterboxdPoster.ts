@@ -1,6 +1,6 @@
 import type { HttpHandler } from "../server/httpContext.js";
 import * as Sentry from "@sentry/node";
-import { getCacheValue, setCacheValue } from "../helpers/redis.js";
+import { getCacheValue, setCacheValue } from "../lib/redis.js";
 import {
   LetterboxdHttpError,
   buildLetterboxdImageRequestHeaders,

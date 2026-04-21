@@ -1,4 +1,4 @@
-import { getPublicAssetPath } from "./assetPath";
+import { getPublicAssetPath } from "./assetPath.js";
 
 export interface TileProvider {
   id: string;

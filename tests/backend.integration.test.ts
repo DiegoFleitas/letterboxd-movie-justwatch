@@ -1,8 +1,8 @@
 import { describe, it, beforeAll, afterAll, expect } from "vitest";
 import { createServer } from "../server/createServer.js";
-import { _injectRedisClientForTest, _resetRedisForTesting } from "../helpers/redis.js";
+import { _injectRedisClientForTest, _resetRedisForTesting } from "../lib/redis.js";
 
-/** In-memory Redis so CI does not need a real server (matches RedisClientLike in helpers/redis). */
+/** In-memory Redis so CI does not need a real server (matches RedisClientLike in lib/redis). */
 function createInMemoryRedisMock() {
   const store = new Map<string, string>();
   const sets = new Map<string, Set<string>>();

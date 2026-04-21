@@ -16,16 +16,11 @@ import {
   subdlSearch,
   proxy,
 } from "../controllers/index.js";
-import {
-  isHealthy,
-  clearCacheByCategory,
-  disconnectRedis,
-  isRedisDisabled,
-} from "../helpers/redis.js";
+import { isHealthy, clearCacheByCategory, disconnectRedis, isRedisDisabled } from "../lib/redis.js";
 import {
   getCanonicalProviderMap,
   getCanonicalProviderByNames,
-} from "../helpers/loadCanonicalProviders.js";
+} from "../lib/loadCanonicalProviders.js";
 import { getPosthog, shutdownPosthog } from "../lib/posthog.js";
 import { injectRuntimeConfig } from "../lib/injectRuntimeConfig.js";
 import type { HttpHandler, HttpRequestContext, HttpResponseContext } from "./httpContext.js";

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import createAxios from "../helpers/axios.js";
+import createAxios from "../lib/axios.js";
 
 describe("axios logging sanitizer", () => {
   const originalLog = console.log;

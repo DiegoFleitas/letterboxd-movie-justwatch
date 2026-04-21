@@ -6,7 +6,7 @@
 | `server/createServer.ts` | Fastify wiring: routes, static files, sessions                                                                                                                |
 | `server-fastify.ts`      | Process entrypoint                                                                                                                                            |
 | `controllers/`           | HTTP handlers (lists, search, posters, proxy, Jackett)                                                                                                        |
-| `helpers/`, `lib/`       | Scraping and URL helpers                                                                                                                                      |
+| `lib/`                   | Shared backend utilities (axios, Redis, Letterboxd scraping, canonical providers, schemas, PostHog)                                                           |
 | `scripts/`               | Provider build, Letterboxd fixtures, Redis export/seed                                                                                                        |
 | `tests/`                 | Vitest unit and integration tests                                                                                                                             |
 | `e2e/`                   | Playwright (UI mocks + backend smoke)                                                                                                                         |
