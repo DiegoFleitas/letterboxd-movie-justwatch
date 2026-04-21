@@ -1,4 +1,5 @@
 import { getToastImpl } from "./toastApi";
+import { escapeHtml, sanitizeHrefForToast } from "./htmlSafeForToast";
 
 export const queuedMessages: unknown[] = [];
 
@@ -41,7 +42,7 @@ export function showMessage(messageData: string | MessageWithLink, isHTML = fals
   const m = messageData as MessageWithLink;
   const toastOptions: Record<string, unknown> = {
     message: isHTML
-      ? `<a href="${m.url}" target="_blank" onclick="searchSubs('${m.title}')">${m.text}</a>`
+      ? `<a href="${sanitizeHrefForToast(m.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(m.text)}</a>`
       : messageData,
     theme: "light",
     layout: 1,

@@ -13,6 +13,7 @@ import {
   letterboxdCustomList,
   letterboxdPoster,
   alternativeSearch,
+  subdlSearch,
   proxy,
 } from "../controllers/index.js";
 import {
@@ -187,6 +188,7 @@ export function createServer(): CreatedServer {
     app.post("/api/letterboxd-custom-list", setCacheControlFastify(letterboxdCustomList));
     app.post("/api/letterboxd-poster", setCacheControlFastify(letterboxdPoster));
     app.post("/api/alternative-search", setCacheControlFastify(alternativeSearch));
+    app.post("/api/subdl-search", setCacheControlFastify(subdlSearch));
 
     app.all("/api/proxy/*", makeFastifyHandler(proxy));
 

@@ -33,7 +33,7 @@ export interface AppStateValue {
   loadLetterboxdList: (listUrl: string, country: string) => Promise<void>;
   submitMovieSearch: (data: { title?: string; year?: string | number; country?: string }) => void;
   runAlternativeSearch: (title: string, year?: string | number) => void;
-  searchSubs: (query: string) => void;
+  searchSubs: (query: string, year?: string | number) => void;
 }
 
 const AppStateContext = createContext<AppStateValue | null>(null);

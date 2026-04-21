@@ -53,7 +53,27 @@ export function runAlternativeSearch(
     });
 }
 
-export function searchSubs(query: string): void {
-  const url = `https://subdl.com/search?query=${encodeURIComponent(query)}`;
-  window.open(url, "_blank");
+export function searchSubs(query: string, year?: string | number): void {
+  if (!query) return;
+  fetch("/api/subdl-search", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title: query, year }),
+  })
+    .then((res) => res.json())
+    .then((response: { error?: string; url?: string }) => {
+      if (response.error || !response.url) {
+        showError(response.error || "No subtitles found.");
+        return;
+      }
+      window.open(response.url, "_blank", "noopener,noreferrer");
+    })
+    .catch((err) => {
+      captureFrontendException(err, {
+        tags: { source: "api", endpoint: "/api/subdl-search" },
+        extra: { query, year },
+      });
+      console.error(err);
+      showError("Failed to search subtitles.");
+    });
 }

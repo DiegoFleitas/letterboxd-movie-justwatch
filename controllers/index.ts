@@ -3,6 +3,7 @@ import { poster } from "./poster.js";
 import { letterboxdWatchlist, letterboxdCustomList } from "./letterboxdLists.js";
 import { letterboxdPoster } from "./letterboxdPoster.js";
 import { alternativeSearch } from "./alternativeSearch.js";
+import { subdlSearch } from "./subdlSearch.js";
 import { proxy } from "./proxy.js";
 
 export {
@@ -12,5 +13,6 @@ export {
   letterboxdCustomList,
   letterboxdPoster,
   alternativeSearch,
+  subdlSearch,
   proxy,
 };

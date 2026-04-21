@@ -5,6 +5,7 @@ import { getCacheValue, setCacheValue } from "../helpers/redis.js";
 import { processOffers } from "../helpers/processOffers.js";
 import type { CanonicalProviderMap, JustWatchOffer } from "../types/index.js";
 import { getRandomScrapeUserAgent } from "../lib/scrapeUserAgent.js";
+import { buildLetterboxdStableFilmLink } from "../lib/letterboxdStableFilmLink.js";
 
 const axios = axiosHelper();
 const cacheTtl = Number(process.env.CACHE_TTL) || 3600;
@@ -75,16 +76,6 @@ function buildImdbLink(imdbId: string | number | null | undefined): string | und
   const id = String(imdbId).trim();
   if (!id) return undefined;
   return `https://www.imdb.com/title/${id}/`;
-}
-
-/** Letterboxd resolves this to the film page when we have no `/film/slug/` URL. */
-function buildLetterboxdImdbBridgeLink(
-  imdbId: string | number | null | undefined,
-): string | undefined {
-  if (!imdbId) return undefined;
-  const id = String(imdbId).trim();
-  if (!id) return undefined;
-  return `https://letterboxd.com/imdb/${id}`;
 }
 
 function buildTmdbLink(tmdbId: string | number | null | undefined): string | undefined {
@@ -209,11 +200,13 @@ export const searchMovie: HttpHandler = async ({ req, res }) => {
       });
     } catch (error) {
       console.error(`JustWatch API error for ${title}:`, (error as Error).message);
+      const letterboxdStableLink = buildLetterboxdStableFilmLink(undefined, tmdbId);
       const response = {
         error: "JustWatch API unavailable",
         title: movieDbData.title || title,
         year: movieDbData.release_date?.substring(0, 4) || year,
         poster: tmdbPoster,
+        ...(letterboxdStableLink ? { link: letterboxdStableLink } : {}),
         ...(tmdbLink ? { tmdbLink } : {}),
       };
       await setCacheValue(cacheKey, response, CACHE_TTL_UNAVAILABLE, "list");
@@ -227,11 +220,13 @@ export const searchMovie: HttpHandler = async ({ req, res }) => {
     );
 
     if (!movieData) {
+      const letterboxdStableLink = buildLetterboxdStableFilmLink(undefined, tmdbId);
       const response = {
         error: "Movie not found in JustWatch",
         title: movieDbData.title || title,
         year: movieDbData.release_date?.substring(0, 4) || year,
         poster: tmdbPoster,
+        ...(letterboxdStableLink ? { link: letterboxdStableLink } : {}),
         ...(tmdbLink ? { tmdbLink } : {}),
       };
       await setCacheValue(cacheKey, response, cacheTtl, "list");
@@ -244,7 +239,7 @@ export const searchMovie: HttpHandler = async ({ req, res }) => {
       : tmdbPoster;
     const imdbId = movieData.node.content.externalIds?.imdbId;
     const imdbLink = buildImdbLink(imdbId);
-    const letterboxdFallbackLink = buildLetterboxdImdbBridgeLink(imdbId);
+    const letterboxdFallbackLink = buildLetterboxdStableFilmLink(imdbId, tmdbId);
 
     const noStreamingServicesResponse = {
       error: `No streaming services offering this movie on your country (${country})\n\nNothing on streaming? Try Alternative search on the film tile.`,

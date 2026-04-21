@@ -43,7 +43,7 @@
   transform-origin: 50% 60%;
 }
 
-/* Top-right: TMDB + IMDb column — same reveal as former Letterboxd control (touch: partly visible) */
+/* Top-right: Letterboxd / TMDB / IMDb / SubDL / OpenSubtitles column — reveal on hover (touch: partly visible) */
 .poster-external-stack {
   position: absolute;
   top: 10px;
