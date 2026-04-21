@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createRoot } from "react-dom/client";
 import { act } from "@testing-library/react";
 import { createInitialTabbedTileState, mergeTileStateForTab } from "../movieTiles";
-import { AppStateProvider, selectActiveTileState , useAppState } from "../AppStateContext";
+import { AppStateProvider, selectActiveTileState, useAppState } from "../AppStateContext";
 import { LeftPanel } from "../LeftPanel";
 import { RightPanel } from "../RightPanel";
 
