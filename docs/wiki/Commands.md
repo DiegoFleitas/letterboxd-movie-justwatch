@@ -1,0 +1,21 @@
+# Commands
+
+Bun scripts from `package.json`. Run from the repository root.
+
+| Command                                                   | Purpose                                                                                                                                                                        |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `bun run dev`                                             | Vite + Fastify together                                                                                                                                                        |
+| `bun run fe:dev` / `bun run be:dev`                       | Frontend or backend only                                                                                                                                                       |
+| `bun run start`                                           | Production-style: `bun server-fastify.ts`                                                                                                                                      |
+| `bun run build`                                           | Vite production build → `dist/`                                                                                                                                                |
+| `bun run sentry:release:frontend`                         | Create/finalize Sentry release and upload frontend source maps (`public/dist/assets`)                                                                                          |
+| `bun run test`                                            | All Vitest tests ([`tests/README.md`](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/blob/master/tests/README.md))                                                 |
+| `bun run test:e2e`                                        | Playwright — run **`bun run dev`** first so the backend is available ([`e2e/README.md`](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/blob/master/e2e/README.md)) |
+| `bun run test:poster-flow`                                | Manual poster checks against **localhost:3000** (not part of `bun run test`)                                                                                                   |
+| `bun run typecheck`                                       | TypeScript (root + `public/`)                                                                                                                                                  |
+| `bun run lint` / `bun run format:check`                   | ESLint / Prettier                                                                                                                                                              |
+| `bun run build:providers`                                 | Regenerate canonical provider data (`build:providers:dry-run` to preview)                                                                                                      |
+| `bun run export-redis` / `bun run seed-redis`             | Redis snapshot ([`redis/README.md`](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/blob/master/redis/README.md))                                                   |
+| `bun run fly:deploy` / `fly:deploy:release`               | Optional local `flyctl deploy` (production normally uses GitHub Actions)                                                                                                       |
+| `bun run fly:deploy:with-local-build`                     | Optional: `vite build` first, then `flyctl deploy`                                                                                                                             |
+| `bun run fly:logs` / `fly:stop` / `fly:start` / `fly:ssh` | Fly.io helpers                                                                                                                                                                 |
