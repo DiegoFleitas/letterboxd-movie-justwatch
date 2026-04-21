@@ -13,7 +13,7 @@ export default [
       "node_modules",
       "dist",
       "build",
-      "public/dist",
+      "src/client/dist",
       "playwright-report",
       "test-results",
       ".turbo",
@@ -53,7 +53,7 @@ export default [
     },
   },
   {
-    files: ["public/src/**/*.{ts,tsx}"],
+    files: ["src/client/src/**/*.{ts,tsx}"],
     languageOptions: {
       globals: {
         window: "readonly",
