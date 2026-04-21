@@ -2,8 +2,8 @@
  * Fetch live Letterboxd list/watchlist HTML and update test fixture files.
  * Run when Letterboxd changes their markup so tests stay aligned with real pages.
  *
- * Usage: pnpm run update:letterboxd-fixtures
- *   Or:  tsx scripts/updateLetterboxdFixtures.ts [watchlist-url] [list-url]
+ * Usage: bun run update:letterboxd-fixtures
+ *   Or:  bun scripts/updateLetterboxdFixtures.ts [watchlist-url] [list-url]
  *
  * Defaults: shoemonger/watchlist (page 1), eibonslam/list/pelis-uru-cinemateca-gratis (page 1, with esiAllowFilters for fragment).
  */
@@ -71,7 +71,7 @@ async function main(): Promise<void> {
     listHtml || '<ul class="poster-list"><li class="listitem poster-container"></li></ul>',
   );
 
-  console.log("Done. Run tests to ensure parser still works: pnpm test");
+  console.log("Done. Run tests to ensure parser still works: bun run test");
 }
 
 main().catch((err) => {
