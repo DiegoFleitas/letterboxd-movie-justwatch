@@ -29,6 +29,23 @@ describe("pickSubdlBrowseUrl", () => {
     expect(pickSubdlBrowseUrl(data)).toBe("https://subdl.com/subtitle/sd99/foo");
   });
 
+  it("accepts absolute https://www.subdl.com browse URL", () => {
+    const data: SubdlResponse = {
+      status: true,
+      subtitles: [{ subtitle_link: "https://www.subdl.com/subtitle/sd99/foo" }],
+    };
+    expect(pickSubdlBrowseUrl(data)).toBe("https://www.subdl.com/subtitle/sd99/foo");
+  });
+
+  it("rejects attacker-controlled hostnames that contain subdl.com as a substring", () => {
+    const data: SubdlResponse = {
+      status: true,
+      subtitles: [{ subtitle_link: "https://subdl.com.evil.com/subtitle/sd99/foo" }],
+      results: [{ name: "Die Hard", sd_id: 12345 }],
+    };
+    expect(pickSubdlBrowseUrl(data)).toBe("https://subdl.com/subtitle/sd12345/die-hard");
+  });
+
   it("falls back to film page from results when subtitles have no browse URL", () => {
     const data: SubdlResponse = {
       status: true,
@@ -45,6 +62,15 @@ describe("pickSubdlBrowseUrl", () => {
       results: [{ name: "Fish & Chips: L'Été", sd_id: 1 }],
     };
     expect(pickSubdlBrowseUrl(data)).toBe("https://subdl.com/subtitle/sd1/fish-and-chips-lete");
+  });
+
+  it("strips both straight and curly apostrophes in slugs", () => {
+    const data: SubdlResponse = {
+      status: true,
+      subtitles: [],
+      results: [{ name: "Schindler’s List", sd_id: 7 }],
+    };
+    expect(pickSubdlBrowseUrl(data)).toBe("https://subdl.com/subtitle/sd7/schindlers-list");
   });
 
   it("normalizes sd_id string with sd prefix", () => {

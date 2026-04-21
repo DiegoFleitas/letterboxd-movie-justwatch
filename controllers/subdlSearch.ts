@@ -21,19 +21,20 @@ export const subdlSearch: HttpHandler = async ({ req, res }) => {
   }
 
   const { title, year } = parsedBody.data;
-  const params = new URLSearchParams({
+  const params: Record<string, string> = {
     api_key: subdlApiKey,
     film_name: title,
     type: "movie",
     languages: (process.env.SUBDL_LANGUAGES || "EN").trim(),
     subs_per_page: "25",
-  });
+  };
   if (year != null && String(year).trim() !== "") {
-    params.set("year", String(year));
+    params.year = String(year);
   }
 
   try {
-    const { data } = await axios.get<SubdlResponse>(`${subdlEndpoint}?${params.toString()}`, {
+    const { data } = await axios.get<SubdlResponse>(subdlEndpoint, {
+      params,
       timeout: 15000,
     });
     const url = pickSubdlBrowseUrl(data);
@@ -43,7 +44,17 @@ export const subdlSearch: HttpHandler = async ({ req, res }) => {
     }
     res.status(200).json({ url, title, year });
   } catch (error) {
-    console.error(error);
+    const axiosError = error as {
+      message?: string;
+      code?: string;
+      response?: { status?: number; statusText?: string };
+    };
+    console.error("[subdlSearch] Request failed", {
+      message: axiosError?.message || "Unknown error",
+      code: axiosError?.code,
+      status: axiosError?.response?.status,
+      statusText: axiosError?.response?.statusText,
+    });
     res.status(500).json({ error: "Internal Server Error" });
   }
 };

@@ -21,18 +21,22 @@ export interface SubdlResponse {
 }
 
 const ZIP_PATH_RE = /\.zip(?:\?|$)/i;
-
-function isDlHost(url: string): boolean {
-  return /dl\.subdl\.com/i.test(url);
-}
+const ALLOWED_SUBDL_HOSTS = new Set(["subdl.com", "www.subdl.com"]);
 
 /** Prefer https://subdl.com pages; never return dl.subdl.com or raw .zip downloads. */
 function absoluteBrowseUrl(raw: string): string | null {
   const t = raw.trim();
   if (!t) return null;
   if (/^https?:\/\//i.test(t)) {
-    if (isDlHost(t) || ZIP_PATH_RE.test(t)) return null;
-    return t;
+    try {
+      const parsed = new URL(t);
+      const host = parsed.hostname.toLowerCase();
+      if (!ALLOWED_SUBDL_HOSTS.has(host)) return null;
+      if (ZIP_PATH_RE.test(`${parsed.pathname}${parsed.search}`)) return null;
+      return parsed.toString();
+    } catch {
+      return null;
+    }
   }
   if (t.startsWith("/")) {
     if (ZIP_PATH_RE.test(t)) return null;
@@ -46,7 +50,7 @@ function subtitleBrowseUrlFromFields(s: SubdlSubtitle): string | null {
   for (const raw of ordered) {
     if (typeof raw !== "string") continue;
     const abs = absoluteBrowseUrl(raw);
-    if (abs && /subdl\.com/i.test(abs) && !isDlHost(abs)) return abs;
+    if (abs) return abs;
   }
   return null;
 }
@@ -65,7 +69,7 @@ function slugifySubdlTitle(name: string): string {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/&/g, "and")
-    .replace(/['']/g, "");
+    .replace(/['\u2019]/g, "");
   const slug = ascii
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
