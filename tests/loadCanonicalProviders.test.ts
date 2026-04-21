@@ -4,7 +4,7 @@ import {
   getCanonicalProviderByNames,
   _resetCache,
   _injectForTest,
-} from "../lib/loadCanonicalProviders.js";
+} from "@server/lib/loadCanonicalProviders.js";
 
 describe("loadCanonicalProviders", () => {
   beforeEach(() => {

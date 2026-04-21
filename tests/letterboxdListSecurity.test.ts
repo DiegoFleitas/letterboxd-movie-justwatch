@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import type { HttpRequestContext, HttpResponseContext } from "../server/httpContext.js";
+import type { HttpRequestContext, HttpResponseContext } from "@server/httpContext.js";
 
 const { mockFetchLetterboxdHtml } = vi.hoisted(() => ({
   mockFetchLetterboxdHtml: vi.fn(),
 }));
 
-vi.mock("../lib/letterboxdHttp.js", () => ({
+vi.mock("@server/lib/letterboxdHttp.js", () => ({
   LetterboxdHttpError: class LetterboxdHttpError extends Error {
     readonly status: number;
     constructor(message: string, status: number) {
@@ -26,12 +26,12 @@ vi.mock("../lib/letterboxdHttp.js", () => ({
   }),
 }));
 
-vi.mock("../lib/redis.js", () => ({
+vi.mock("@server/lib/redis.js", () => ({
   getCacheValue: vi.fn().mockResolvedValue(null),
   setCacheValue: vi.fn().mockResolvedValue(undefined),
 }));
 
-import { letterboxdWatchlist, letterboxdCustomList } from "../controllers/letterboxdLists.js";
+import { letterboxdWatchlist, letterboxdCustomList } from "@server/controllers/letterboxdLists.js";
 
 describe("letterboxd list URL validation (SSRF guard)", () => {
   beforeEach(() => {

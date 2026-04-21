@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import type { HttpRequestContext, HttpResponseContext } from "../server/httpContext.js";
+import type { HttpRequestContext, HttpResponseContext } from "@server/httpContext.js";
 
 const { mockGet, mockPost, mockGetCache, mockSetCache } = vi.hoisted(() => ({
   mockGet: vi.fn(),
@@ -8,19 +8,19 @@ const { mockGet, mockPost, mockGetCache, mockSetCache } = vi.hoisted(() => ({
   mockSetCache: vi.fn(),
 }));
 
-vi.mock("../lib/axios.js", () => ({
+vi.mock("@server/lib/axios.js", () => ({
   default: () => ({
     get: mockGet,
     post: mockPost,
   }),
 }));
 
-vi.mock("../lib/redis.js", () => ({
+vi.mock("@server/lib/redis.js", () => ({
   getCacheValue: (...args: unknown[]) => mockGetCache(...args),
   setCacheValue: (...args: unknown[]) => mockSetCache(...args),
 }));
 
-import { parseAllowedProxyUrl, PROXY_ALLOWED_HOSTNAMES, proxy } from "../controllers/proxy.js";
+import { parseAllowedProxyUrl, PROXY_ALLOWED_HOSTNAMES, proxy } from "@server/controllers/proxy.js";
 
 describe("parseAllowedProxyUrl", () => {
   it("allows HTTPS TMDb and OMDB hosts", () => {

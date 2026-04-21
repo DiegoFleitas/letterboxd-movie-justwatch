@@ -10,7 +10,7 @@ import {
   disconnectRedis,
   _resetRedisForTesting,
   _injectRedisClientForTest,
-} from "../lib/redis.js";
+} from "@server/lib/redis.js";
 
 function createMockClient(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   const calls = {
