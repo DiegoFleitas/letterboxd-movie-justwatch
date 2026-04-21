@@ -168,7 +168,7 @@ export function MovieTile({
             </div>
             <button
               type="button"
-              className="tile-icon-btn"
+              className="tile-icon-btn tile-icon-btn--alt-search"
               data-sp="alternative-search-tile"
               title="Alternative search"
               onClick={(e) => {
@@ -184,7 +184,7 @@ export function MovieTile({
             >
               <img
                 className="tile-icons"
-                src="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏴‍☠️</text></svg>"
+                src="/icons/alternative-search.svg"
                 alt="Alternative search"
               />
             </button>

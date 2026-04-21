@@ -16,7 +16,7 @@ const FOOTER_MESSAGES = [
   "Star me on GitHub!",
   "Try uBlock Origin!",
   "Use magnet links!",
-  "Click pirate flags!",
+  "Try alternative search!",
   "Watch 'The Thing'!",
   "Watch 'Kill Bill: Vol. 1'!",
   "Watch 'Raiders of the Lost Ark'!",
@@ -161,7 +161,9 @@ export function RightPanel(): React.ReactElement {
         })}
         {showAltSearchButton ? (
           <motion.div
-            className={`streaming-provider-icon ${altSearchFilter ? "active" : ""}`}
+            className={`streaming-provider-icon streaming-provider-icon--alt-search ${
+              altSearchFilter ? "active" : ""
+            }`}
             data-sp="alternative search"
             title="Alternative search"
             onClick={toggleAltSearchFilter}
@@ -181,10 +183,7 @@ export function RightPanel(): React.ReactElement {
             variants={{ idle: { scale: 1, y: 0 }, selected: { scale: 1.04, y: -0.8 } }}
             transition={motionTransition(PROVIDER_FAST_S)}
           >
-            <img
-              src="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏴‍☠️</text></svg>"
-              alt="alternative Search"
-            />
+            <img src="/icons/alternative-search.svg" alt="Alternative search" />
           </motion.div>
         ) : null}
       </div>
@@ -224,9 +223,7 @@ export function RightPanel(): React.ReactElement {
           when you can.
         </p>
         <details className="jackett-details">
-          <summary className="jackett-summary">
-            Why pirate flags? <span className="icons">🏴‍☠️</span>
-          </summary>
+          <summary className="jackett-summary">What&apos;s Alternative search?</summary>
           <div className="jackett-body">
             It uses Jackett API to search for torrents on 1337x, RARBG, etc.
           </div>

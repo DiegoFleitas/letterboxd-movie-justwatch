@@ -389,7 +389,7 @@ test.describe("List form", () => {
       timeout: 10000,
     });
     await expect(
-      page.getByRole("status").filter({ hasText: /A Ghost Story|No streaming|pirate flags/ }),
+      page.getByRole("status").filter({ hasText: /A Ghost Story|No streaming|alternative search/ }),
     ).toBeVisible({ timeout: 5000 });
   });
 });
