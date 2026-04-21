@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
+import { useAppState } from "./AppStateContext";
+import { getPublicAssetPath } from "./assetPath";
 import { letterboxdFilmUrlOrSearchUrl, type TileData, type TileProvider } from "./movieTiles";
+import { buildOpenSubtitlesBrowseUrl } from "./opensubtitlesUrl";
 import {
   POSTER_IMAGE_TRANSFORM_S,
   POSTER_OVERLAY_OPACITY_S,
@@ -11,6 +14,7 @@ import alternativeSearchIcon from "./assets/alternative-search.svg";
 import imdbIcon from "./assets/imdb-icon.svg";
 import letterboxdIcon from "./assets/letterboxd-icon.svg";
 import tmdbIcon from "./assets/tmdb-icon.svg";
+import openSubtitlesIcon from "./assets/opensubtitles-icon.svg";
 import { WaitCue } from "./WaitCue";
 
 const JUSTWATCH_PROXY = "https://click.justwatch.com/a?r=";
@@ -35,7 +39,10 @@ export function MovieTile({
     hasLetterboxdFilmLink ? "Letterboxd" : null,
     tmdbLink ? "TMDB" : null,
     imdbLink ? "IMDb" : null,
+    "SubDL",
+    "OpenSubtitles",
   ].filter(Boolean);
+  const { searchSubs } = useAppState();
   const providerNames = movieProviders.map((p: { name: string }) => p.name);
   const [loaded, setLoaded] = useState(false);
 
@@ -75,79 +82,128 @@ export function MovieTile({
             }
       }
     >
-      {showExternalLinks ? (
-        <div
-          className="poster-external-stack"
-          role="group"
-          aria-label={`${title}${year != null && year !== "" ? ` (${year})` : ""} — ${availableExternalLinks.join(", ")}`}
+      <div
+        className="poster-external-stack"
+        role="group"
+        aria-label={`${title}${year != null && year !== "" ? ` (${year})` : ""} — ${availableExternalLinks.join(", ")}`}
+      >
+        {showExternalLinks ? (
+          <>
+            <button
+              type="button"
+              className="poster-external-btn"
+              data-sp="letterboxd-link-tile"
+              title={
+                hasLetterboxdFilmLink
+                  ? "Open Letterboxd film page"
+                  : "Search this film on Letterboxd"
+              }
+              aria-label={
+                hasLetterboxdFilmLink
+                  ? `Open ${title} on Letterboxd`
+                  : `Search ${title}${year != null && year !== "" ? ` (${year})` : ""} on Letterboxd`
+              }
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                window.open(
+                  letterboxdFilmUrlOrSearchUrl(link, title, year),
+                  "_blank",
+                  "noopener,noreferrer",
+                );
+              }}
+              onKeyDown={(e) => {
+                if (e.key === " ") e.stopPropagation();
+              }}
+            >
+              <img src={letterboxdIcon} alt="" className="poster-external-btn__icon" />
+            </button>
+            {tmdbLink ? (
+              <button
+                type="button"
+                className="poster-external-btn"
+                data-sp="tmdb-link-tile"
+                title="Open TMDB page"
+                aria-label={`Open ${title} on TMDB`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  window.open(tmdbLink, "_blank", "noopener,noreferrer");
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === " ") e.stopPropagation();
+                }}
+              >
+                <img src={tmdbIcon} alt="" className="poster-external-btn__icon" />
+              </button>
+            ) : null}
+            {imdbLink ? (
+              <button
+                type="button"
+                className="poster-external-btn"
+                data-sp="imdb-link-tile"
+                title="Open IMDb page"
+                aria-label={`Open ${title} on IMDb`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  window.open(imdbLink, "_blank", "noopener,noreferrer");
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === " ") e.stopPropagation();
+                }}
+              >
+                <img src={imdbIcon} alt="" className="poster-external-btn__icon" />
+              </button>
+            ) : null}
+          </>
+        ) : null}
+        <button
+          type="button"
+          className="poster-external-btn"
+          data-sp="subdl-link-tile"
+          title="Open subtitles on SubDL (website)"
+          aria-label={`Open SubDL subtitle page for ${title}`}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            searchSubs(title, year ?? undefined);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === " ") e.stopPropagation();
+          }}
         >
-          <button
-            type="button"
-            className="poster-external-btn"
-            data-sp="letterboxd-link-tile"
-            title={
-              hasLetterboxdFilmLink ? "Open Letterboxd film page" : "Search this film on Letterboxd"
-            }
-            aria-label={
-              hasLetterboxdFilmLink
-                ? `Open ${title} on Letterboxd`
-                : `Search ${title}${year != null && year !== "" ? ` (${year})` : ""} on Letterboxd`
-            }
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              window.open(
-                letterboxdFilmUrlOrSearchUrl(link, title, year),
-                "_blank",
-                "noopener,noreferrer",
-              );
-            }}
-            onKeyDown={(e) => {
-              if (e.key === " ") e.stopPropagation();
-            }}
-          >
-            <img src={letterboxdIcon} alt="" className="poster-external-btn__icon" />
-          </button>
-          {tmdbLink ? (
-            <button
-              type="button"
-              className="poster-external-btn"
-              data-sp="tmdb-link-tile"
-              title="Open TMDB page"
-              aria-label={`Open ${title} on TMDB`}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                window.open(tmdbLink, "_blank", "noopener,noreferrer");
-              }}
-              onKeyDown={(e) => {
-                if (e.key === " ") e.stopPropagation();
-              }}
-            >
-              <img src={tmdbIcon} alt="" className="poster-external-btn__icon" />
-            </button>
-          ) : null}
-          {imdbLink ? (
-            <button
-              type="button"
-              className="poster-external-btn"
-              data-sp="imdb-link-tile"
-              title="Open IMDb page"
-              aria-label={`Open ${title} on IMDb`}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                window.open(imdbLink, "_blank", "noopener,noreferrer");
-              }}
-              onKeyDown={(e) => {
-                if (e.key === " ") e.stopPropagation();
-              }}
-            >
-              <img src={imdbIcon} alt="" className="poster-external-btn__icon" />
-            </button>
-          ) : null}
-        </div>
-      ) : null}
+          <img
+            src={getPublicAssetPath("subdl-icon.png")}
+            alt=""
+            className="poster-external-btn__icon"
+            width={28}
+            height={28}
+            decoding="async"
+          />
+        </button>
+        <button
+          type="button"
+          className="poster-external-btn"
+          data-sp="opensubtitles-link-tile"
+          title="Search subtitles on OpenSubtitles"
+          aria-label={`Open OpenSubtitles search for ${title}`}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            window.open(
+              buildOpenSubtitlesBrowseUrl(title, year ?? undefined, imdbLink),
+              "_blank",
+              "noopener,noreferrer",
+            );
+          }}
+          onKeyDown={(e) => {
+            if (e.key === " ") e.stopPropagation();
+          }}
+        >
+          <img src={openSubtitlesIcon} alt="" className="poster-external-btn__icon" />
+        </button>
+      </div>
       <div className="poster-body">
         {poster ? (
           <>

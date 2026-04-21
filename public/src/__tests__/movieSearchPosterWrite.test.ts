@@ -57,4 +57,17 @@ describe("movie search poster write mapping", () => {
     expect(data.imdbLink).toBe("https://www.imdb.com/title/tt0042876/");
     expect(data.tmdbLink).toBe("https://www.themoviedb.org/movie/548/");
   });
+
+  it("maps Letterboxd TMDB bridge link from search response", () => {
+    const response: MovieSearchResponse = {
+      title: "Some Film",
+      year: "2022",
+      link: "https://letterboxd.com/tmdb/12345",
+      tmdbLink: "https://www.themoviedb.org/movie/12345/",
+    };
+
+    const data = buildMovieMergeData(response);
+
+    expect(data.link).toBe("https://letterboxd.com/tmdb/12345");
+  });
 });
