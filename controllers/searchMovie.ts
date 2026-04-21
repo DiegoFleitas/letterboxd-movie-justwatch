@@ -115,7 +115,6 @@ export const searchMovie: HttpHandler = async ({ req, res }) => {
         error: "Movie not found (TMDB)",
         title,
         year,
-        poster: "/movie_placeholder.svg",
       };
       await setCacheValue(cacheKey, response, cacheTtl, "list");
       res.json(response);
