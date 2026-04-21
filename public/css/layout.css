@@ -24,51 +24,75 @@
 @media (min-width: 1024px) {
   .wrapper {
     grid-template-columns: 340px 1fr;
+    gap: 0;
     height: 100vh;
     min-height: 100vh;
+  }
+
+  .left-panel {
+    border-right: 1px solid var(--color-border);
+    padding-right: 1.5rem;
   }
 }
 
 .left-panel {
   min-width: 0;
   max-width: 340px;
-  background: var(--color-surface);
+  background: transparent;
   padding: 1.5rem 1.25rem 1.25rem;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   align-items: stretch;
   z-index: 2;
-  overflow: hidden;
-  border-radius: var(--radius-lg);
+  overflow-x: hidden;
+  overflow-y: visible;
+  border-radius: 0;
   position: relative;
 }
 
-.left-panel::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 100% 80% at 50% 100%, var(--color-accent-muted), transparent 50%),
-    radial-gradient(ellipse 80% 60% at 50% -20%, rgba(255, 255, 255, 0.04), transparent 45%);
-  mix-blend-mode: overlay;
-  pointer-events: none;
+/* Fest program masthead — lives inside left panel article */
+.panel-masthead {
+  position: relative;
+  z-index: 2;
+  margin: 0 0 1.1rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.panel-masthead__eyebrow {
+  margin: 0 0 0.4rem;
+  font-family: var(--ui-font);
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 1.35;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--color-text-subtle);
+}
+
+.panel-masthead__title {
+  margin: 0;
+  font-family: var(--display-font);
+  font-size: clamp(1.28rem, 1rem + 1.35vw, 1.72rem);
+  font-weight: 800;
+  line-height: 1.04;
+  letter-spacing: -0.045em;
+  color: var(--color-text);
 }
 
 .right-panel {
   min-width: 0;
-  background:
-    radial-gradient(ellipse 120% 80% at 50% 0%, var(--color-bg-alt) 0%, transparent 50%),
-    var(--color-bg);
+  background: transparent;
   padding: 2rem 2.5rem 2.5rem;
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
   overflow-y: auto;
-  border-radius: var(--radius-lg);
+  border-radius: 0;
   position: relative;
 }
-@media (max-width: 1024px) {
+@media (max-width: 1023px) {
   .left-panel {
     max-width: 100vw;
     min-width: 0;

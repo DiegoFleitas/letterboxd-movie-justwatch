@@ -159,6 +159,10 @@ export function LeftPanel(): React.ReactElement {
 
   return (
     <article>
+      <header className="panel-masthead">
+        <p className="panel-masthead__eyebrow">Letterboxd · streaming by country</p>
+        <h1 className="panel-masthead__title">Movie JustWatch</h1>
+      </header>
       <div className="country-selector-container global-country-selector">
         <CountrySelector value={country} onChange={setCountry} />
       </div>
