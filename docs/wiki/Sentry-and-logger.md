@@ -5,9 +5,9 @@ This document describes how server-side error reporting and HTTP logging work in
 ## Scope
 
 - **Sentry**:
-  - Backend via `@sentry/node` (`instrument.ts`, Fastify handlers)
-  - Frontend via `@sentry/react` (`public/src/sentry.ts`) with runtime config injected into `window.__SENTRY_*__`
-- **Fastify logger**: request/response logging through Fastify's built-in logger (`logger: true` in `server/createServer.ts`).
+  - Backend via `@sentry/node` (`src/server/instrument.ts`, Fastify handlers)
+  - Frontend via `@sentry/react` (`src/client/src/sentry.ts`) with runtime config injected into `window.__SENTRY_*__`
+- **Fastify logger**: request/response logging through Fastify's built-in logger (`logger: true` in `src/server/createServer.ts`).
 
 ## Dependencies
 
@@ -19,9 +19,9 @@ This document describes how server-side error reporting and HTTP logging work in
 
 ## Sentry initialization and lifecycle
 
-1. **Entry order** — `server-fastify.ts` imports `./instrument.js` **first**, so environment loading and `Sentry.init` run before the Fastify server is created.
+1. **Entry order** — `src/server/main.ts` imports `./instrument.js` **first**, so environment loading and `Sentry.init` run before the Fastify server is created.
 
-2. **Conditional init** — `instrument.ts` only calls `Sentry.init` when `SENTRY_DSN` is non-empty after trim. With no DSN, the SDK is not initialized and `Sentry.getClient()` checks elsewhere stay false.
+2. **Conditional init** — `src/server/instrument.ts` only calls `Sentry.init` when `SENTRY_DSN` is non-empty after trim. With no DSN, the SDK is not initialized and `Sentry.getClient()` checks elsewhere stay false.
 
 3. **Configuration** (see `.env.example`):
    - `environment`: `NODE_ENV` (default `development`)
@@ -32,13 +32,13 @@ This document describes how server-side error reporting and HTTP logging work in
 
 4. **HTTP 5xx capture path** — Application-level exceptions and explicit backend captures go through `Sentry.captureException` in route/error-handler code. There is no extra middleware-level `captureMessage` bridge or active logger/middleware-level HTTP 5xx capture bridge.
 
-5. **Shutdown** — `server-fastify.ts` calls `Sentry.close(2000)` on SIGTERM/SIGINT when a client exists, and on fatal startup errors after `captureException`.
+5. **Shutdown** — `src/server/main.ts` calls `Sentry.close(2000)` on SIGTERM/SIGINT when a client exists, and on fatal startup errors after `captureException`.
 
 ## Frontend Sentry runtime config
 
-Frontend Sentry is initialized in `public/src/sentry.ts`. Configuration is resolved in this order:
+Frontend Sentry is initialized in `src/client/src/sentry.ts`. Configuration is resolved in this order:
 
-1. Runtime globals injected into HTML (`window.__SENTRY_*__`) by `lib/injectRuntimeConfig.ts` from server env in `server/createServer.ts`
+1. Runtime globals injected into HTML (`window.__SENTRY_*__`) by `src/server/lib/injectRuntimeConfig.ts` from server env in `src/server/createServer.ts`
 2. Vite build-time fallback (`import.meta.env.VITE_SENTRY_*`)
 
 Primary fields:
@@ -62,7 +62,7 @@ Frontend production debugging relies on sourcemaps uploaded to Sentry for the sa
   - `bun run sentry:release:finalize`
   - or combined: `bun run sentry:release:frontend`
 - CLI command note: this repo uploads sourcemaps with `sentry-cli sourcemaps upload` (invoked as `bunx @sentry/cli sourcemaps upload ...`).
-- CI automation (`.github/workflows/fly-deploy.yml`) runs `build -> sentry:release:frontend -> flyctl deploy` with one release id from commit SHA. Sourcemaps come from the runner’s `public/dist` after `vite build`; the Docker image runs a clean `vite build` again (see `Dockerfile` and `.dockerignore`), so the shipped UI cannot lag behind source because of a stale bundled `public/dist` in the deploy context. With the same commit and toolchain, output filenames and hashes match the runner build used for Sentry.
+- CI automation (`.github/workflows/fly-deploy.yml`) runs `build -> sentry:release:frontend -> flyctl deploy` with one release id from commit SHA. Sourcemaps come from the runner’s `src/client/dist` after `vite build`; the Docker image runs a clean `vite build` again (see `Dockerfile` and `.dockerignore`), so the shipped UI cannot lag behind source because of a stale bundled `src/client/dist` in the deploy context. With the same commit and toolchain, output filenames and hashes match the runner build used for Sentry.
 
 Required env vars for upload:
 
@@ -83,18 +83,18 @@ The deploy workflow sets `SENTRY_RELEASE` from `${{ github.event.workflow_run.he
 
 ## Where exceptions are captured
 
-| Location                                     | Behavior                                                                                                  |
-| -------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `server/createServer.ts` (`setErrorHandler`) | `captureException` with `extra: { method, url }`; also sends a subset to PostHog when configured          |
-| `controllers/letterboxdLists.ts`             | In `fetchList` catch (non-404 paths): `captureException` with `extra: { route: "letterboxd-list-fetch" }` |
-| `controllers/letterboxdPoster.ts`            | On errors other than 403/404: `captureException` with `extra: { route: "letterboxd-poster", filmSlug }`   |
-| `server-fastify.ts`                          | Top-level `main().catch`: `captureException` for startup failure                                          |
+| Location                                         | Behavior                                                                                                  |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| `src/server/createServer.ts` (`setErrorHandler`) | `captureException` with `extra: { method, url }`; also sends a subset to PostHog when configured          |
+| `src/server/controllers/letterboxdLists.ts`      | In `fetchList` catch (non-404 paths): `captureException` with `extra: { route: "letterboxd-list-fetch" }` |
+| `src/server/controllers/letterboxdPoster.ts`     | On errors other than 403/404: `captureException` with `extra: { route: "letterboxd-poster", filmSlug }`   |
+| `src/server/main.ts`                             | Top-level `main().catch`: `captureException` for startup failure                                          |
 
 Most captures are guarded with `if (Sentry.getClient())` so behavior is safe when Sentry is disabled.
 
 ## Fastify logging in this app
 
-- **Wiring** — `server/createServer.ts` creates the app with `logger: true`.
+- **Wiring** — `src/server/createServer.ts` creates the app with `logger: true`.
 
 - **Output** — Pino-formatted JSON logs from Fastify request lifecycle logging.
 
@@ -104,7 +104,7 @@ Most captures are guarded with `if (Sentry.getClient())` so behavior is safe whe
 
 ## Safe HTTP logging (axios)
 
-HTTP logging goes through a shared axios helper (`lib/axios.ts`) that **redacts** query parameters such as `api_key`, `apikey`, `access_token`, `token`, and `key` before URLs are printed.
+HTTP logging goes through a shared axios helper (`src/server/lib/axios.ts`) that **redacts** query parameters such as `api_key`, `apikey`, `access_token`, `token`, and `key` before URLs are printed.
 
 Do not log raw environment variables or full external URLs that contain credentials. If you add new HTTP clients, use the existing helper or apply equivalent redaction.
 
@@ -113,7 +113,7 @@ Do not log raw environment variables or full external URLs that contain credenti
 ```mermaid
 flowchart LR
   subgraph boot [Boot]
-    instrument[instrument.ts Sentry.init]
+    instrument[src/server/instrument.ts Sentry.init]
     fastify[createServer Fastify]
     instrument --> fastify
   end
@@ -144,6 +144,6 @@ flowchart LR
 
 ## Related files
 
-- `instrument.ts` — DSN gating and Sentry options
-- `server/createServer.ts` — Fastify logger configuration and error handler
+- `src/server/instrument.ts` — DSN gating and Sentry options
+- `src/server/createServer.ts` — Fastify logger configuration and error handler
 - `.env.example` — `SENTRY_*` variables for runtime + release workflows

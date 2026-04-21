@@ -9,7 +9,7 @@
 
 ## API URL for smoke tests
 
-- Default: **`http://127.0.0.1:3000`** (same as `PORT` default in `server-fastify.ts`).
+- Default: **`http://127.0.0.1:3000`** (same as `PORT` default in `src/server/main.ts`).
 - Override: set **`E2E_API_BASE_URL`** (no trailing slash), e.g. `http://127.0.0.1:3001`.
 
 Playwright’s `webServer` only waits on **5173** (Vite). The backend must be listening on the smoke base URL—locally run `bun run dev` (fe + be) before `bun run test:e2e`.
