@@ -3,6 +3,7 @@ import { buildListGithubIssueUrl, listReportToastCopy } from "../githubIssueUrl"
 import {
   classifyListReportSymptom,
   isPlaceholderPoster,
+  PLACEHOLDER_POSTER,
   mergeTileState,
   createInitialTileState,
 } from "../movieTiles";
@@ -78,7 +79,7 @@ describe("isPlaceholderPoster & classifyListReportSymptom", () => {
   it("treats null and placeholder path as placeholder", () => {
     expect(isPlaceholderPoster(null)).toBe(true);
     expect(isPlaceholderPoster(undefined)).toBe(true);
-    expect(isPlaceholderPoster("/movie_placeholder.svg")).toBe(true);
+    expect(isPlaceholderPoster(PLACEHOLDER_POSTER)).toBe(true);
     expect(isPlaceholderPoster("https://example.com/p.jpg")).toBe(false);
   });
 
@@ -88,7 +89,7 @@ describe("isPlaceholderPoster & classifyListReportSymptom", () => {
 
   it("classifies all-placeholder as all_placeholder_posters", () => {
     const state = mergeTileState(createInitialTileState(), "Foo", 2020, {
-      poster: "/movie_placeholder.svg",
+      poster: PLACEHOLDER_POSTER,
       link: "https://letterboxd.com/film/foo/",
     });
     expect(classifyListReportSymptom(state.movieTiles)).toBe("all_placeholder_posters");

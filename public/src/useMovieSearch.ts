@@ -1,6 +1,6 @@
 import { useCallback, useRef } from "react";
 import { showMessage } from "./showMessage";
-import type { MergeData } from "./movieTiles";
+import { PLACEHOLDER_POSTER, type MergeData } from "./movieTiles";
 import { captureFrontendException, captureFrontendMessage } from "./sentry";
 
 export interface MovieSearchResponse {
@@ -21,7 +21,7 @@ type MergeTileFn = (
 
 export function buildMovieMergeData(response: MovieSearchResponse): MergeData {
   return {
-    poster: response.poster ?? "/movie_placeholder.svg",
+    poster: response.poster ?? PLACEHOLDER_POSTER,
     ...(response.link !== undefined ? { link: response.link } : {}),
     ...(response.movieProviders !== undefined ? { movieProviders: response.movieProviders } : {}),
   };

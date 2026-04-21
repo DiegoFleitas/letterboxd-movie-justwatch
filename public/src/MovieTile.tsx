@@ -7,6 +7,7 @@ import {
   POSTER_HOVER_TRANSFORM_S,
   motionTransition,
 } from "./animation/timing";
+import { getPublicAssetPath } from "./assetPath";
 import { WaitCue } from "./WaitCue";
 
 const JUSTWATCH_PROXY = "https://click.justwatch.com/a?r=";
@@ -24,6 +25,7 @@ export function MovieTile({
   onAlternativeSearch,
   suppressAnimations = false,
 }: MovieTileProps): React.ReactElement {
+  const alternativeSearchIcon = getPublicAssetPath("icons/alternative-search.svg");
   const { id, title, year, poster, link, movieProviders = [] } = data;
   const providerNames = movieProviders.map((p: { name: string }) => p.name);
   const [loaded, setLoaded] = useState(false);
@@ -182,11 +184,7 @@ export function MovieTile({
                 }
               }}
             >
-              <img
-                className="tile-icons"
-                src="/icons/alternative-search.svg"
-                alt="Alternative search"
-              />
+              <img className="tile-icons" src={alternativeSearchIcon} alt="Alternative search" />
             </button>
           </div>
         </div>

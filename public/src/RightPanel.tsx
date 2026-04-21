@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { motionTransition } from "./animation/timing";
 import { useAppState } from "./AppStateContext";
+import { getPublicAssetPath } from "./assetPath";
 import { getTileProviderNames } from "./movieTiles";
 import type { TileData } from "./movieTiles";
 import { MovieTile } from "./MovieTile";
@@ -36,6 +37,7 @@ function getRandomMessage(): string {
 }
 
 export function RightPanel(): React.ReactElement {
+  const alternativeSearchIcon = getPublicAssetPath("icons/alternative-search.svg");
   const {
     movieTiles: tiles,
     streamingProviders: providers,
@@ -183,7 +185,7 @@ export function RightPanel(): React.ReactElement {
             variants={{ idle: { scale: 1, y: 0 }, selected: { scale: 1.04, y: -0.8 } }}
             transition={motionTransition(PROVIDER_FAST_S)}
           >
-            <img src="/icons/alternative-search.svg" alt="Alternative search" />
+            <img src={alternativeSearchIcon} alt="Alternative search" />
           </motion.div>
         ) : null}
       </div>

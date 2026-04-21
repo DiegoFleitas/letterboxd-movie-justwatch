@@ -1,3 +1,5 @@
+import { getPublicAssetPath } from "./assetPath";
+
 export interface TileProvider {
   id: string;
   name: string;
@@ -33,7 +35,7 @@ export interface MergeData {
   movieProviders?: TileProvider[];
 }
 
-const PLACEHOLDER_POSTER = "/movie_placeholder.svg";
+export const PLACEHOLDER_POSTER = getPublicAssetPath("movie_placeholder.svg");
 
 export function isPlaceholderPoster(poster: string | null | undefined): boolean {
   return poster == null || poster === PLACEHOLDER_POSTER;
