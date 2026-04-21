@@ -1,4 +1,4 @@
-import { getPublicAssetPath } from "./assetPath.js";
+import { getPublicAssetPath } from "./assetPath";
 
 export interface TileProvider {
   id: string;
@@ -98,11 +98,7 @@ export function mergeTileState(
 ): TileState {
   const { movieTiles: prevTiles, streamingProviders: prevProviders } = prev;
   const id = normalizeId(title, year);
-  const linkToMatch = data?.link
-    ? data.link.startsWith("http")
-      ? data.link
-      : `https://letterboxd.com${data.link}`
-    : null;
+  const linkToMatch = data?.link?.trim() ? normalizeLetterboxdFilmLink(data.link.trim()) : null;
 
   let existingId = id;
   const tiles = { ...prevTiles };

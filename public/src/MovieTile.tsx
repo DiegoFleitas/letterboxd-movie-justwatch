@@ -31,6 +31,11 @@ export function MovieTile({
   const { id, title, year, poster, link, imdbLink, tmdbLink, movieProviders = [] } = data;
   const hasLetterboxdFilmLink = Boolean(link?.trim());
   const showExternalLinks = Boolean(imdbLink || tmdbLink || hasLetterboxdFilmLink);
+  const availableExternalLinks = [
+    hasLetterboxdFilmLink ? "Letterboxd" : null,
+    tmdbLink ? "TMDB" : null,
+    imdbLink ? "IMDb" : null,
+  ].filter(Boolean);
   const providerNames = movieProviders.map((p: { name: string }) => p.name);
   const [loaded, setLoaded] = useState(false);
 
@@ -74,7 +79,7 @@ export function MovieTile({
         <div
           className="poster-external-stack"
           role="group"
-          aria-label={`${title}${year != null && year !== "" ? ` (${year})` : ""} — Letterboxd, TMDB, and IMDb`}
+          aria-label={`${title}${year != null && year !== "" ? ` (${year})` : ""} — ${availableExternalLinks.join(", ")}`}
         >
           <button
             type="button"

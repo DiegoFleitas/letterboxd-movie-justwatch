@@ -93,4 +93,21 @@ describe("mergeTileState link and external refs", () => {
     expect(tile?.imdbLink).toBe("https://www.imdb.com/title/tt11111111/");
     expect(tile?.tmdbLink).toBe("https://www.themoviedb.org/movie/999/");
   });
+
+  it("matches existing tile when incoming link has no leading slash", () => {
+    const seeded = mergeTileState(createInitialTileState(), "Foo", "1999", {
+      link: "/film/foo/",
+      poster: null,
+      movieProviders: [],
+    });
+
+    const next = mergeTileState(seeded, "Foo", "1999", {
+      link: "film/foo/",
+      poster: null,
+      movieProviders: [],
+    });
+
+    expect(Object.keys(next.movieTiles)).toHaveLength(1);
+    expect(next.movieTiles["1999-FOO"]?.link).toBe("https://letterboxd.com/film/foo/");
+  });
 });
