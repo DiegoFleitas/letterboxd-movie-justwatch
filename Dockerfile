@@ -24,9 +24,9 @@ RUN bun install --frozen-lockfile
 
 COPY . .
 
-# Reuse prebuilt frontend artifacts when present (CI sourcemap flow),
-# otherwise build them inside the image for local/manual deploys.
-RUN if [ ! -d public/dist ]; then bun run build; fi
+# Always build the SPA in the image. Prevents shipping a stale `public/dist`
+# from the deploy context; CI still builds on the runner for Sentry uploads first.
+RUN rm -rf public/dist && bun run build
 
 # Production node_modules only
 RUN rm -rf node_modules && bun install --frozen-lockfile --production

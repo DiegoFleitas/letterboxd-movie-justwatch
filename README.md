@@ -37,6 +37,10 @@ docker compose up --build
 
 Then open **`http://localhost:3000`**. For secrets (`OMDB_API_KEY`, `APP_SECRET_KEY`, etc.), use a root `.env` or `docker-compose.override.yml`; Compose loads `.env` automatically.
 
+### Production deploy (Fly.io)
+
+Deploys are driven by **GitHub Actions** ([`.github/workflows/fly-deploy.yml`](.github/workflows/fly-deploy.yml)): after **CI** succeeds on `main` or `master`, or when you run that workflow manually (**workflow_dispatch**). The job runs `bun run build` (for Sentry sourcemaps), `bun run sentry:release:frontend`, then `flyctl deploy --remote-only` with `SENTRY_RELEASE` from the commit. The `bun run fly:*` entries below are optional CLI helpers (logs, SSH, or an ad hoc `flyctl deploy`).
+
 ### Project layout (high level)
 
 | Path                     | Role                                                                 |
@@ -53,22 +57,23 @@ Then open **`http://localhost:3000`**. For secrets (`OMDB_API_KEY`, `APP_SECRET_
 
 ### Key commands
 
-| Command                                       | Purpose                                                                                                      |
-| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `bun run dev`                                 | Vite + Fastify together                                                                                      |
-| `bun run fe:dev` / `bun run be:dev`           | Frontend or backend only                                                                                     |
-| `bun run start`                               | Production-style: `bun server-fastify.ts`                                                                    |
-| `bun run build`                               | Vite production build → `dist/`                                                                              |
-| `bun run sentry:release:frontend`             | Create/finalize Sentry release and upload frontend sourcemaps (`public/dist/assets`)                         |
-| `bun run test`                                | All Vitest tests ([`tests/README.md`](tests/README.md))                                                      |
-| `bun run test:e2e`                            | Playwright — run **`bun run dev`** first so backend is up for smoke tests ([`e2e/README.md`](e2e/README.md)) |
-| `bun run test:poster-flow`                    | Manual poster checks against **localhost:3000** (not part of `bun run test`)                                 |
-| `bun run typecheck`                           | TypeScript (root + `public/`)                                                                                |
-| `bun run lint` / `bun run format:check`       | ESLint / Prettier                                                                                            |
-| `bun run build:providers`                     | Regenerate canonical provider data (`build:providers:dry-run` to preview)                                    |
-| `bun run export-redis` / `bun run seed-redis` | Redis snapshot ([`redis/README.md`](redis/README.md))                                                        |
-| `bun run fly:deploy`                          | Build + Fly.io deploy (`fly:logs`, `fly:ssh`, etc.)                                                          |
-| `bun run fly:deploy:release`                  | Fly.io deploy shortcut                                                                                       |
+| Command                                                   | Purpose                                                                                                      |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `bun run dev`                                             | Vite + Fastify together                                                                                      |
+| `bun run fe:dev` / `bun run be:dev`                       | Frontend or backend only                                                                                     |
+| `bun run start`                                           | Production-style: `bun server-fastify.ts`                                                                    |
+| `bun run build`                                           | Vite production build → `dist/`                                                                              |
+| `bun run sentry:release:frontend`                         | Create/finalize Sentry release and upload frontend sourcemaps (`public/dist/assets`)                         |
+| `bun run test`                                            | All Vitest tests ([`tests/README.md`](tests/README.md))                                                      |
+| `bun run test:e2e`                                        | Playwright — run **`bun run dev`** first so backend is up for smoke tests ([`e2e/README.md`](e2e/README.md)) |
+| `bun run test:poster-flow`                                | Manual poster checks against **localhost:3000** (not part of `bun run test`)                                 |
+| `bun run typecheck`                                       | TypeScript (root + `public/`)                                                                                |
+| `bun run lint` / `bun run format:check`                   | ESLint / Prettier                                                                                            |
+| `bun run build:providers`                                 | Regenerate canonical provider data (`build:providers:dry-run` to preview)                                    |
+| `bun run export-redis` / `bun run seed-redis`             | Redis snapshot ([`redis/README.md`](redis/README.md))                                                        |
+| `bun run fly:deploy` / `fly:deploy:release`               | Optional: `flyctl deploy` from your machine (production normally uses **Actions**; see above)                |
+| `bun run fly:deploy:with-local-build`                     | Optional: local `vite build` first (fail fast), then `flyctl deploy`                                         |
+| `bun run fly:logs` / `fly:stop` / `fly:start` / `fly:ssh` | Fly app helpers                                                                                              |
 
 ### Configuration (environment)
 
