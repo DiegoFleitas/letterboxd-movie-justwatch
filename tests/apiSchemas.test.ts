@@ -4,7 +4,7 @@ import {
   letterboxdWatchlistBodySchema,
   alternativeSearchBodySchema,
   firstZodIssueMessage,
-} from "../lib/apiSchemas.js";
+} from "@server/lib/apiSchemas.js";
 
 describe("apiSchemas (zod)", () => {
   it("parseAllowedProxyUrl matches proxy security rules", () => {

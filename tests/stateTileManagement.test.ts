@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
-import { createInitialTabbedTileState, mergeTileStateForTab } from "../public/src/movieTiles.js";
+import { createInitialTabbedTileState, mergeTileStateForTab } from "@/movieTiles";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const letterboxd = JSON.parse(

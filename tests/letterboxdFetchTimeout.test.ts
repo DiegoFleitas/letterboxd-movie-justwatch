@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { getLetterboxdFetchTimeoutMs } from "../lib/letterboxdFetchTimeout.js";
+import { getLetterboxdFetchTimeoutMs } from "@server/lib/letterboxdFetchTimeout.js";
 
 describe("getLetterboxdFetchTimeoutMs", () => {
   const prev = process.env.LETTERBOXD_FETCH_TIMEOUT_MS;

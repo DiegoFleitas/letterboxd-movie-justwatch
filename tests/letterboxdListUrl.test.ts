@@ -2,7 +2,7 @@
  * Unit tests for Letterboxd list URL parsing (watchlist and custom list).
  */
 import { describe, it, expect } from "vitest";
-import { parseLetterboxdListUrl, isLetterboxdListUrlInput } from "../lib/letterboxdListUrl.js";
+import { parseLetterboxdListUrl, isLetterboxdListUrlInput } from "@server/lib/letterboxdListUrl.js";
 
 describe("Letterboxd list URL parsing", () => {
   it("valid watchlist URL with trailing slash", () => {

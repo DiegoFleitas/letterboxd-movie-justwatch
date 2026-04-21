@@ -1,7 +1,7 @@
 node_modules
 dist
 build
-public/dist
+src/client/dist
 playwright-report
 test-results
 .turbo

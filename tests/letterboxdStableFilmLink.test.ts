@@ -3,7 +3,7 @@ import {
   buildLetterboxdImdbBridgeLink,
   buildLetterboxdStableFilmLink,
   buildLetterboxdTmdbBridgeLink,
-} from "../lib/letterboxdStableFilmLink.js";
+} from "@server/lib/letterboxdStableFilmLink.js";
 
 describe("buildLetterboxdImdbBridgeLink", () => {
   it("returns undefined for empty input", () => {

@@ -5,12 +5,18 @@ import { defineConfig } from "vitest/config";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "src/client/src"),
+      "@server": path.resolve(__dirname, "src/server"),
+    },
+  },
   test: {
     root: __dirname,
     include: [
       "tests/**/*.test.ts",
-      "public/src/__tests__/**/*.test.ts",
-      "public/src/__tests__/**/*.test.tsx",
+      "src/client/src/__tests__/**/*.test.ts",
+      "src/client/src/__tests__/**/*.test.tsx",
     ],
     exclude: ["**/node_modules/**", "tests/testPosterFlow.test.ts"],
     environment: "node",

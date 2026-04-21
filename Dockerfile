@@ -24,9 +24,9 @@ RUN bun install --frozen-lockfile
 
 COPY . .
 
-# Always build the SPA in the image. Prevents shipping a stale `public/dist`
+# Always build the SPA in the image. Prevents shipping a stale `src/client/dist`
 # from the deploy context; CI still builds on the runner for Sentry uploads first.
-RUN rm -rf public/dist && bun run build
+RUN rm -rf src/client/dist && bun run build
 
 # Production node_modules only
 RUN rm -rf node_modules && bun install --frozen-lockfile --production

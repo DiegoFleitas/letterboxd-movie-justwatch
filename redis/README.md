@@ -50,7 +50,7 @@ You can export the app's Redis cache to a JSON file and later restore it (e.g. t
 
 - Set `FLYIO_REDIS_URL` (and `FLY_APP_NAME` if your app uses a custom namespace).
 - Run: `bun run export-redis`
-- Snapshot is written to `data/redis-snapshot.json` (or set `REDIS_SNAPSHOT_PATH`).
+- Snapshot is written to `resources/data/redis-snapshot.json` (or set `REDIS_SNAPSHOT_PATH`).
 
 **Seed** (restore into a Redis instance):
 
@@ -58,7 +58,7 @@ You can export the app's Redis cache to a JSON file and later restore it (e.g. t
 - Run: `bun run seed-redis`
 - Keys and sets from the snapshot file are restored; existing keys are overwritten.
 
-The snapshot file can be large. The `data/` directory is gitignored by default; you can commit the file if you want to share the cache state.
+The snapshot file can be large. You can commit it under `resources/data/` if you want to share the cache state, or keep it local only.
 
 ## Gotchas
 
