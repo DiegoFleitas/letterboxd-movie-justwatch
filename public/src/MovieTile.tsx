@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useAppState } from "./AppStateContext";
+import { getPublicAssetPath } from "./assetPath";
 import { letterboxdFilmUrlOrSearchUrl, type TileData, type TileProvider } from "./movieTiles";
 import { buildOpenSubtitlesBrowseUrl } from "./opensubtitlesUrl";
 import {
@@ -173,7 +174,7 @@ export function MovieTile({
           }}
         >
           <img
-            src="/subdl-icon.png"
+            src={getPublicAssetPath("subdl-icon.png")}
             alt=""
             className="poster-external-btn__icon"
             width={28}

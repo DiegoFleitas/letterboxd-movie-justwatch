@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { setToastImpl } from "./toastApi";
+import { sanitizeHrefForToast } from "./htmlSafeForToast";
 import { TOAST_DEFAULT_DURATION_MS } from "./animation/timing";
 import { WaitCue } from "./WaitCue";
 
@@ -54,7 +55,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }): Reac
         toast.custom(
           () => (
             <a
-              href={url || "#"}
+              href={sanitizeHrefForToast(url)}
               target="_blank"
               rel="noopener noreferrer"
               className="app-toast-link"
