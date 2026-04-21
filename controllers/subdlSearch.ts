@@ -14,43 +14,85 @@ interface SubdlSubtitle {
   release_id?: number | string;
 }
 
+interface SubdlMovieResult {
+  name?: string;
+  sd_id?: number | string;
+}
+
 interface SubdlResponse {
   status?: boolean;
   error?: string;
+  results?: SubdlMovieResult[];
   subtitles?: SubdlSubtitle[];
 }
 
 const subdlEndpoint = "https://api.subdl.com/api/v1/subtitles";
 
-function resolveSubdlUrl(subtitle: SubdlSubtitle): string | null {
-  if (subtitle.url) {
-    if (/^https?:\/\//i.test(subtitle.url)) return subtitle.url;
-    if (subtitle.url.startsWith("/subtitle/")) return `https://dl.subdl.com${subtitle.url}`;
-    if (subtitle.url.startsWith("/")) return `https://subdl.com${subtitle.url}`;
-  }
-  if (subtitle.download_link) {
-    if (/^https?:\/\//i.test(subtitle.download_link)) return subtitle.download_link;
-    if (subtitle.download_link.startsWith("/subtitle/"))
-      return `https://dl.subdl.com${subtitle.download_link}`;
-    if (subtitle.download_link.startsWith("/")) return `https://subdl.com${subtitle.download_link}`;
-  }
-  if (subtitle.subtitle_link) {
-    if (/^https?:\/\//i.test(subtitle.subtitle_link)) return subtitle.subtitle_link;
-    if (subtitle.subtitle_link.startsWith("/subtitle/"))
-      return `https://dl.subdl.com${subtitle.subtitle_link}`;
-    if (subtitle.subtitle_link.startsWith("/")) return `https://subdl.com${subtitle.subtitle_link}`;
-  }
-  if (subtitle.subtitlePage) {
-    if (/^https?:\/\//i.test(subtitle.subtitlePage)) return subtitle.subtitlePage;
-    if (subtitle.subtitlePage.startsWith("/")) return `https://subdl.com${subtitle.subtitlePage}`;
-  }
+const ZIP_PATH_RE = /\.zip(?:\?|$)/i;
 
-  const sid = subtitle.sd_id ?? subtitle.subtitle_id;
-  const rid = subtitle.release_id;
-  if (sid != null && rid != null) {
-    return `https://dl.subdl.com/subtitle/${sid}-${rid}.zip`;
+function isDlHost(url: string): boolean {
+  return /dl\.subdl\.com/i.test(url);
+}
+
+/** Prefer https://subdl.com pages; never return dl.subdl.com or raw .zip downloads. */
+function absoluteBrowseUrl(raw: string): string | null {
+  const t = raw.trim();
+  if (!t) return null;
+  if (/^https?:\/\//i.test(t)) {
+    if (isDlHost(t) || ZIP_PATH_RE.test(t)) return null;
+    return t;
+  }
+  if (t.startsWith("/")) {
+    if (ZIP_PATH_RE.test(t)) return null;
+    return `https://subdl.com${t}`;
   }
   return null;
+}
+
+function subtitleBrowseUrlFromFields(s: SubdlSubtitle): string | null {
+  const ordered = [s.subtitlePage, s.subtitle_link, s.url, s.download_link];
+  for (const raw of ordered) {
+    if (typeof raw !== "string") continue;
+    const abs = absoluteBrowseUrl(raw);
+    if (abs && /subdl\.com/i.test(abs) && !isDlHost(abs)) return abs;
+  }
+  return null;
+}
+
+function pickFirstSubtitleBrowseUrl(subtitles: SubdlSubtitle[] | undefined): string | null {
+  if (!subtitles?.length) return null;
+  for (const s of subtitles) {
+    const u = subtitleBrowseUrlFromFields(s);
+    if (u) return u;
+  }
+  return null;
+}
+
+function slugifySubdlTitle(name: string): string {
+  const ascii = name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/&/g, "and")
+    .replace(/['']/g, "");
+  const slug = ascii
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return slug || "movie";
+}
+
+function filmSubtitleBrowseUrl(film: SubdlMovieResult | undefined): string | null {
+  const name = film?.name?.trim();
+  if (!name || film?.sd_id == null) return null;
+  const id = String(film.sd_id).replace(/^sd/i, "");
+  if (!/^\d+$/.test(id)) return null;
+  const slug = slugifySubdlTitle(name);
+  return `https://subdl.com/subtitle/sd${id}/${slug}`;
+}
+
+function pickBrowseUrl(data: SubdlResponse | undefined): string | null {
+  if (!data) return null;
+  return pickFirstSubtitleBrowseUrl(data.subtitles) ?? filmSubtitleBrowseUrl(data.results?.[0]);
 }
 
 export const subdlSearch: HttpHandler = async ({ req, res }) => {
@@ -72,7 +114,7 @@ export const subdlSearch: HttpHandler = async ({ req, res }) => {
     film_name: title,
     type: "movie",
     languages: (process.env.SUBDL_LANGUAGES || "EN").trim(),
-    subs_per_page: "1",
+    subs_per_page: "25",
   });
   if (year != null && String(year).trim() !== "") {
     params.set("year", String(year));
@@ -82,8 +124,7 @@ export const subdlSearch: HttpHandler = async ({ req, res }) => {
     const { data } = await axios.get<SubdlResponse>(`${subdlEndpoint}?${params.toString()}`, {
       timeout: 15000,
     });
-    const first = data?.subtitles?.[0];
-    const url = first ? resolveSubdlUrl(first) : null;
+    const url = pickBrowseUrl(data);
     if (!data?.status || !url) {
       res.status(404).json({ error: data?.error || "No subtitles found." });
       return;

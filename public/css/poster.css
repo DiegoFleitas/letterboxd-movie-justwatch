@@ -43,7 +43,7 @@
   transform-origin: 50% 60%;
 }
 
-/* Top-right: TMDB + IMDb column — same reveal as former Letterboxd control (touch: partly visible) */
+/* Top-right: Letterboxd / TMDB / IMDb / SubDL column — reveal on hover (touch: partly visible) */
 .poster-external-stack {
   position: absolute;
   top: 10px;
@@ -309,57 +309,4 @@
   border-radius: 4px;
   z-index: 3;
   opacity: 0.95;
-}
-
-/* Subtitles (SubDL): explicit control on poster; revealed on hover / keyboard focus */
-.poster-subs-btn-wrap {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  z-index: 5;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.18s ease;
-}
-.poster:hover .poster-subs-btn-wrap,
-.poster:focus-within .poster-subs-btn-wrap {
-  opacity: 1;
-  pointer-events: auto;
-}
-@media (hover: none) {
-  .poster-subs-btn-wrap {
-    opacity: 0.92;
-    pointer-events: auto;
-  }
-}
-.poster-subs-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  margin: 0;
-  border-radius: 10px;
-  cursor: pointer;
-  color: #e8f4f8;
-  background: rgba(8, 12, 18, 0.72);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  transition:
-    background 0.15s ease,
-    transform 0.12s ease;
-}
-.poster-subs-btn:hover {
-  background: rgba(16, 24, 34, 0.9);
-}
-.poster-subs-btn:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
-}
-.poster-subs-btn-icon {
-  display: block;
-  width: 22px;
-  height: 22px;
-  object-fit: contain;
 }
