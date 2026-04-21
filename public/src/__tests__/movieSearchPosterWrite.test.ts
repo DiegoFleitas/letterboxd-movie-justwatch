@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { buildMovieMergeData, type MovieSearchResponse } from "../useMovieSearch";
+import { LEGACY_PLACEHOLDER_POSTER, PLACEHOLDER_POSTER } from "../movieTiles";
 
 describe("movie search poster write mapping", () => {
   it("maps movie search response to tile merge payload", () => {
@@ -26,6 +27,17 @@ describe("movie search poster write mapping", () => {
     };
 
     const data = buildMovieMergeData(response);
-    expect(data.poster).toBe("/movie_placeholder.svg");
+    expect(data.poster).toBe(PLACEHOLDER_POSTER);
+  });
+
+  it("normalizes legacy placeholder poster to BASE_URL-aware placeholder", () => {
+    const response: MovieSearchResponse = {
+      title: "Legacy Placeholder",
+      year: "2025",
+      poster: LEGACY_PLACEHOLDER_POSTER,
+    };
+
+    const data = buildMovieMergeData(response);
+    expect(data.poster).toBe(PLACEHOLDER_POSTER);
   });
 });
