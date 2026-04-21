@@ -220,7 +220,7 @@ export const searchMovie: HttpHandler = async ({ req, res }) => {
       : tmdbPoster;
 
     const noStreamingServicesResponse = {
-      error: `No streaming services offering this movie on your country (${country})\n\npssst! try clicking pirate flags like these 🏴‍☠️`,
+      error: `No streaming services offering this movie on your country (${country})\n\nNothing on streaming? Try Alternative search on the film tile — a second pass through other sources when your server has Jackett configured.`,
       title: movieData.node.content.title,
       year: movieData.node.content.originalReleaseYear,
       poster,

@@ -9,7 +9,7 @@
   color: white;
 }
 
-/* Collapsible "Why pirate flags?" — disclosure styled as a small chip */
+/* Collapsible "What's Alternative search?" — disclosure styled as a small chip */
 .jackett-details {
   max-width: 480px;
   margin: 1.25rem auto 0;
@@ -58,9 +58,6 @@
   max-width: 100%;
 }
 
-.jackett-summary .icons {
-  font-size: 1em;
-}
 .list-group-item {
   border: none;
   list-style: none;

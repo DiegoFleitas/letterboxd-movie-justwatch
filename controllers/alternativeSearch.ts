@@ -70,7 +70,7 @@ export const alternativeSearch: HttpHandler = async ({ req, res }) => {
     if (bestResult) {
       console.log(bestResult);
       const response = {
-        message: "🏴‍☠️",
+        message: "Alternative search result",
         text: `[${bestResult.Tracker}] ${bestResult.Title} - ${bestResult.Details}`,
         url: bestResult.Details,
         query: searchQuery,
