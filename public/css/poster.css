@@ -197,12 +197,12 @@
 }
 .poster-title {
   margin: 0 0 0.2rem 0;
-  font-size: 1.1rem;
-  font-weight: 700;
+  font-size: clamp(0.95rem, 0.82rem + 0.45vw, 1.12rem);
+  font-weight: 800;
   color: var(--color-accent-soft);
   text-align: left;
-  letter-spacing: 0.01em;
-  line-height: 1.25;
+  letter-spacing: -0.02em;
+  line-height: 1.22;
   z-index: 2;
 }
 .poster-release-date {
