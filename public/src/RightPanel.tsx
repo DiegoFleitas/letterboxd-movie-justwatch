@@ -2,7 +2,7 @@ import React, { useState, useMemo } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { motionTransition } from "./animation/timing";
 import { useAppState } from "./AppStateContext";
-import { getPublicAssetPath } from "./assetPath";
+import alternativeSearchIcon from "./assets/alternative-search.svg";
 import { getTileProviderNames } from "./movieTiles";
 import type { TileData } from "./movieTiles";
 import { MovieTile } from "./MovieTile";
@@ -37,7 +37,6 @@ function getRandomMessage(): string {
 }
 
 export function RightPanel(): React.ReactElement {
-  const alternativeSearchIcon = getPublicAssetPath("icons/alternative-search.svg");
   const {
     movieTiles: tiles,
     streamingProviders: providers,
