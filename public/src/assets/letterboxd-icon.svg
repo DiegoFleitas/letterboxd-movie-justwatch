@@ -1,6 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
-  <path
-    fill="currentColor"
-    d="M8.29 16.752V7.2H6.546V16.8h5.464v-1.44H8.29zm11.46 0V7.2h-1.724V16.8h5.47v-1.44h-3.746z"
-  />
+  <!-- Letterboxd-inspired 3-circle badge for small-size recognizability -->
+  <rect x="2" y="2" width="20" height="20" rx="5" fill="#1f2b38" />
+  <circle cx="9.2" cy="12" r="4.2" fill="#f27405" />
+  <circle cx="12" cy="12" r="4.2" fill="#00a65a" />
+  <circle cx="14.8" cy="12" r="4.2" fill="#40bcf4" />
 </svg>

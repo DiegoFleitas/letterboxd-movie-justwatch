@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { createInitialTileState, mergeTileState, normalizeLetterboxdFilmLink } from "../movieTiles";
+import {
+  createInitialTileState,
+  letterboxdFilmUrlOrSearchUrl,
+  mergeTileState,
+  normalizeLetterboxdFilmLink,
+} from "../movieTiles";
 
 describe("normalizeLetterboxdFilmLink", () => {
   it("returns empty string for empty input", () => {
@@ -29,6 +34,26 @@ describe("normalizeLetterboxdFilmLink", () => {
   });
 });
 
+describe("letterboxdFilmUrlOrSearchUrl", () => {
+  it("uses normalized film URL when link is set", () => {
+    expect(letterboxdFilmUrlOrSearchUrl("/film/foo/", "Ignored", "1999")).toBe(
+      "https://letterboxd.com/film/foo/",
+    );
+  });
+
+  it("uses Letterboxd search when link is empty", () => {
+    expect(letterboxdFilmUrlOrSearchUrl("", "The Matrix", "1999")).toBe(
+      "https://letterboxd.com/search/The%20Matrix%201999/",
+    );
+  });
+
+  it("omits year from search query when year is empty", () => {
+    expect(letterboxdFilmUrlOrSearchUrl("", "Solyaris", "")).toBe(
+      "https://letterboxd.com/search/Solyaris/",
+    );
+  });
+});
+
 describe("mergeTileState link and external refs", () => {
   it("stores normalized absolute Letterboxd link from relative path", () => {
     const next = mergeTileState(createInitialTileState(), "Rashomon", "1950", {
@@ -42,20 +67,20 @@ describe("mergeTileState link and external refs", () => {
   it("merges imdbLink and tmdbLink from API payload", () => {
     const next = mergeTileState(createInitialTileState(), "Test", "2020", {
       link: "https://letterboxd.com/film/test/",
-      imdbLink: "https://www.letterboxd.com/imdb/tt0042876",
+      imdbLink: "https://www.imdb.com/title/tt0042876/",
       tmdbLink: "https://www.themoviedb.org/movie/548/",
       poster: null,
       movieProviders: [],
     });
     const tile = next.movieTiles["2020-TEST"];
-    expect(tile?.imdbLink).toBe("https://www.letterboxd.com/imdb/tt0042876");
+    expect(tile?.imdbLink).toBe("https://www.imdb.com/title/tt0042876/");
     expect(tile?.tmdbLink).toBe("https://www.themoviedb.org/movie/548/");
   });
 
   it("preserves existing imdbLink and tmdbLink when merge omits them", () => {
     const seeded = mergeTileState(createInitialTileState(), "Keep", "2021", {
       link: "https://letterboxd.com/film/keep/",
-      imdbLink: "https://www.letterboxd.com/imdb/tt11111111",
+      imdbLink: "https://www.imdb.com/title/tt11111111/",
       tmdbLink: "https://www.themoviedb.org/movie/999/",
       poster: null,
       movieProviders: [],
@@ -65,7 +90,7 @@ describe("mergeTileState link and external refs", () => {
       movieProviders: [{ id: "nfx", name: "Netflix", url: "https://example.com/watch" }],
     });
     const tile = next.movieTiles["2021-KEEP"];
-    expect(tile?.imdbLink).toBe("https://www.letterboxd.com/imdb/tt11111111");
+    expect(tile?.imdbLink).toBe("https://www.imdb.com/title/tt11111111/");
     expect(tile?.tmdbLink).toBe("https://www.themoviedb.org/movie/999/");
   });
 });

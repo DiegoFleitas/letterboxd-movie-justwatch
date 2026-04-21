@@ -78,6 +78,18 @@ export function normalizeLetterboxdFilmLink(link: string): string {
   return `https://letterboxd.com${link.startsWith("/") ? link : `/${link}`}`;
 }
 
+/** Film page when `link` is set; otherwise Letterboxd title search. */
+export function letterboxdFilmUrlOrSearchUrl(
+  link: string,
+  title: string,
+  year?: string | number | null,
+): string {
+  const trimmed = link?.trim() ?? "";
+  if (trimmed) return normalizeLetterboxdFilmLink(trimmed);
+  const q = year != null && year !== "" ? `${title} ${year}` : title;
+  return `https://letterboxd.com/search/${encodeURIComponent(q)}/`;
+}
+
 export function mergeTileState(
   prev: TileState,
   title: string,

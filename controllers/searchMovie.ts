@@ -72,7 +72,19 @@ interface JustWatchOfferEdge {
 
 function buildImdbLink(imdbId: string | number | null | undefined): string | undefined {
   if (!imdbId) return undefined;
-  return `https://www.letterboxd.com/imdb/${String(imdbId)}`;
+  const id = String(imdbId).trim();
+  if (!id) return undefined;
+  return `https://www.imdb.com/title/${id}/`;
+}
+
+/** Letterboxd resolves this to the film page when we have no `/film/slug/` URL. */
+function buildLetterboxdImdbBridgeLink(
+  imdbId: string | number | null | undefined,
+): string | undefined {
+  if (!imdbId) return undefined;
+  const id = String(imdbId).trim();
+  if (!id) return undefined;
+  return `https://letterboxd.com/imdb/${id}`;
 }
 
 function buildTmdbLink(tmdbId: string | number | null | undefined): string | undefined {
@@ -233,7 +245,7 @@ export const searchMovie: HttpHandler = async ({ req, res }) => {
       : tmdbPoster;
     const imdbId = movieData.node.content.externalIds?.imdbId;
     const imdbLink = buildImdbLink(imdbId);
-    const letterboxdFallbackLink = imdbLink;
+    const letterboxdFallbackLink = buildLetterboxdImdbBridgeLink(imdbId);
 
     const noStreamingServicesResponse = {
       error: `No streaming services offering this movie on your country (${country})\n\nNothing on streaming? Try Alternative search on the film tile.`,
