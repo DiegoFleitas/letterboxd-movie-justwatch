@@ -124,11 +124,13 @@ describe("search panel tab isolation model", () => {
   });
 
   it("shows alternative search icon on list after a list search", async () => {
+    let listLoadPromise: Promise<void> | null = null;
+
     function Setup(): React.ReactElement {
       const { setActiveTab, loadLetterboxdList } = useAppState();
       React.useEffect(() => {
         setActiveTab("list");
-        void loadLetterboxdList("https://letterboxd.com/test-user/watchlist/", "US");
+        listLoadPromise = loadLetterboxdList("https://letterboxd.com/test-user/watchlist/", "US");
       }, [loadLetterboxdList, setActiveTab]);
       return <RightPanel />;
     }
@@ -142,6 +144,8 @@ describe("search panel tab isolation model", () => {
           <Setup />
         </AppStateProvider>,
       );
+      await Promise.resolve();
+      await listLoadPromise;
       await Promise.resolve();
     });
 
