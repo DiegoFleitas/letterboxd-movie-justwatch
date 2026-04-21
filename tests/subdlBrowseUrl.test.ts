@@ -73,6 +73,15 @@ describe("pickSubdlBrowseUrl", () => {
     expect(pickSubdlBrowseUrl(data)).toBe("https://subdl.com/subtitle/sd7/schindlers-list");
   });
 
+  it("strips left single quotation marks in slugs", () => {
+    const data: SubdlResponse = {
+      status: true,
+      subtitles: [],
+      results: [{ name: "L‘Avventura", sd_id: 9 }],
+    };
+    expect(pickSubdlBrowseUrl(data)).toBe("https://subdl.com/subtitle/sd9/lavventura");
+  });
+
   it("normalizes sd_id string with sd prefix", () => {
     const data: SubdlResponse = {
       status: true,

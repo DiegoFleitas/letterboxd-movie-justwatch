@@ -69,7 +69,7 @@ function slugifySubdlTitle(name: string): string {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/&/g, "and")
-    .replace(/['\u2019]/g, "");
+    .replace(/[\u0027\u2018\u2019\u02BC]/g, "");
   const slug = ascii
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
