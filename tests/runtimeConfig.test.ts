@@ -5,8 +5,8 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { getPosthog, _resetPosthogForTesting } from "../lib/posthog.js";
-import { injectRuntimeConfig } from "../lib/injectRuntimeConfig.js";
+import { getPosthog, _resetPosthogForTesting } from "@server/lib/posthog.js";
+import { injectRuntimeConfig } from "@server/lib/injectRuntimeConfig.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -130,7 +130,7 @@ describe("Runtime config + PostHog", () => {
   });
 
   it("frontend main.tsx reads runtime PostHog globals with VITE fallback", () => {
-    const mainPath = path.join(__dirname, "..", "public", "src", "main.tsx");
+    const mainPath = path.join(__dirname, "..", "src", "client", "src", "main.tsx");
     const source = fs.readFileSync(mainPath, "utf8");
     expect(source).toContain("window.__POSTHOG_KEY__");
     expect(source).toContain("window.__POSTHOG_HOST__");
@@ -141,7 +141,7 @@ describe("Runtime config + PostHog", () => {
   });
 
   it("frontend sentry.ts reads runtime Sentry globals with VITE fallback", () => {
-    const sentryPath = path.join(__dirname, "..", "public", "src", "sentry.ts");
+    const sentryPath = path.join(__dirname, "..", "src", "client", "src", "sentry.ts");
     const source = fs.readFileSync(sentryPath, "utf8");
     expect(source).toContain("window.__SENTRY_DSN__");
     expect(source).toContain("window.__SENTRY_RELEASE__");

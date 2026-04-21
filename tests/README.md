@@ -14,12 +14,27 @@ Unit and integration tests use **[Vitest](https://vitest.dev/)**. End-to-end tes
 
 Config: root [`vitest.config.ts`](../vitest.config.ts) (Node environment, `APP_SECRET_KEY` for sessions). Poster-flow is excluded from the default Vitest run because it requires a live server.
 
+**Path aliases** (see root [`tsconfig.json`](../tsconfig.json) and Vitest `resolve.alias`): `@server/…` → `src/server/…`, `@/…` → `src/client/src/…`. Prefer these over long `../src/...` chains in new tests.
+
 ## Layout
 
 - **`tests/*.test.ts`** – unit/integration tests (`describe` / `it` / `expect`).
 - **`tests/backend.integration.test.ts`** – Fastify HTTP checks; optional `MOVIE_DB_API_KEY` enables the search-movie case.
 - **`tests/fixtures/`** – HTML/JSON fixtures for scrapers and state tests.
 - **`e2e/app.spec.ts`** – browser E2E (mocked APIs).
+
+## Cross-layer imports from client src
+
+A few Vitest files **import modules from the Vite app** on purpose so logic stays single-sourced:
+
+| Test file                       | Imports (see `@/` alias)                |
+| ------------------------------- | --------------------------------------- |
+| `stateTileManagement.test.ts`   | `@/movieTiles` (tab/tile state helpers) |
+| `providerDeduplication.test.ts` | `@/providerUtils`                       |
+
+If you rename or move those modules, run **`bun run test`** and the **frontend** test suite (`src/client/src/__tests__/`) together—they exercise the same code from different runners.
+
+The browser bundle only imports **`@server/lib/letterboxdListUrl`** (via `useLetterboxdList.ts`) today; avoid adding more cross-layer imports from the client app without a dedicated small helper module so coupling and bundle size stay predictable.
 
 ## Adding tests
 

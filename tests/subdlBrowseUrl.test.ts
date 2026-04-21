@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { pickSubdlBrowseUrl, type SubdlResponse } from "../lib/subdlBrowseUrl.js";
+import { pickSubdlBrowseUrl, type SubdlResponse } from "@server/lib/subdlBrowseUrl.js";
 
 describe("pickSubdlBrowseUrl", () => {
   it("prefers subtitlePage as relative path on subdl.com", () => {

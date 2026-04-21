@@ -3,7 +3,7 @@ import {
   LetterboxdHttpError,
   buildLetterboxdHtmlRequestHeaders,
   buildLetterboxdImageRequestHeaders,
-} from "../lib/letterboxdHttp.js";
+} from "@server/lib/letterboxdHttp.js";
 
 describe("LetterboxdHttpError", () => {
   it("exposes HTTP status", () => {

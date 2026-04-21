@@ -22,12 +22,18 @@ function stripDevToolsScript() {
 
 export default defineConfig({
   plugins: [stripDevToolsScript(), react()],
-  root: "public",
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "src/client/src"),
+      "@server": path.resolve(__dirname, "src/server"),
+    },
+  },
+  root: "src/client",
   build: {
     outDir: "dist",
     sourcemap: "hidden",
     rollupOptions: {
-      input: path.resolve(__dirname, "public", "index.html"),
+      input: path.resolve(__dirname, "src", "client", "index.html"),
     },
   },
   server: {

@@ -1,5 +1,9 @@
 {
   "compilerOptions": {
+    "paths": {
+      "@server/*": ["./src/server/*"],
+      "@/*": ["./src/client/src/*"]
+    },
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
@@ -16,8 +20,8 @@
   "exclude": [
     "node_modules",
     "dist",
-    "public/dist",
-    "public/src",
+    "src/client/dist",
+    "src/client/src",
     "test-results",
     "playwright-report"
   ]

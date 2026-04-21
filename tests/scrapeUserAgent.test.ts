@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { getRandomScrapeUserAgent } from "../lib/scrapeUserAgent.js";
+import { getRandomScrapeUserAgent } from "@server/lib/scrapeUserAgent.js";
 
 describe("getRandomScrapeUserAgent", () => {
   const prev = process.env.SCRAPER_USER_AGENT;

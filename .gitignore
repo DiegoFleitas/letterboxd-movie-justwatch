@@ -3,7 +3,7 @@
 .pnpm-store
 
 # production build files
-public/dist
+src/client/dist
 
 # local env files
 .env
@@ -13,8 +13,9 @@ public/dist
 
 # misc
 *.log
-/scripts
-/data
+# Large optional Redis dump (canonical JSON stays tracked)
+/resources/data/redis-snapshot.json
+
 
 .npmrc
 .corepack
