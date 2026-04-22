@@ -17,6 +17,19 @@ import {
   runAlternativeSearch as runAlternativeSearchRequest,
   searchSubs,
 } from "./alternativeSearch";
+import { countries } from "./consts";
+
+const FALLBACK_COUNTRY_ID = "en_US";
+
+function defaultCountryId(): string {
+  return countries.find((c) => c.id === FALLBACK_COUNTRY_ID)?.id ?? countries[0]?.id ?? "";
+}
+
+/** Lets dev tools sync the list URL field and read the live country selector value from LeftPanel. */
+export interface ListFormDevBridge {
+  setListUrl: (url: string) => void;
+  getCountryId: () => string;
+}
 
 export interface AppStateValue {
   movieTiles: Record<string, TileData>;
@@ -31,6 +44,9 @@ export interface AppStateValue {
   setNotice: (msg: string | null) => void;
   setShowAltSearchButton: (show: boolean) => void;
   loadLetterboxdList: (listUrl: string, country: string) => Promise<void>;
+  /** Dev: updates the list URL input (when LeftPanel is mounted) then loads the list. */
+  loadLetterboxdListWithSyncedUrl: (listUrl: string) => void;
+  registerListFormDevBridge: (bridge: ListFormDevBridge | null) => void;
   submitMovieSearch: (data: { title?: string; year?: string | number; country?: string }) => void;
   runAlternativeSearch: (title: string, year?: string | number) => void;
   searchSubs: (query: string, year?: string | number) => void;
@@ -66,6 +82,7 @@ export function AppStateProvider({ children }: { children: ReactNode }): React.R
   const [isAlternativeSearchLoading, setAlternativeSearchLoading] = useState(false);
   const loadingToastIdRef = useRef<string | number | null>(null);
   const listMovieTilesRef = useRef<Record<string, TileData>>({});
+  const listFormDevBridgeRef = useRef<ListFormDevBridge | null>(null);
 
   useEffect(() => {
     listMovieTilesRef.current = tilesByTab.list.movieTiles;
@@ -104,6 +121,19 @@ export function AppStateProvider({ children }: { children: ReactNode }): React.R
       await loadLetterboxdListRaw(listUrl, country);
     },
     [loadLetterboxdListRaw],
+  );
+
+  const registerListFormDevBridge = useCallback((bridge: ListFormDevBridge | null) => {
+    listFormDevBridgeRef.current = bridge;
+  }, []);
+
+  const loadLetterboxdListWithSyncedUrl = useCallback(
+    (listUrl: string) => {
+      listFormDevBridgeRef.current?.setListUrl(listUrl);
+      const country = listFormDevBridgeRef.current?.getCountryId() ?? defaultCountryId();
+      void loadLetterboxdList(listUrl, country);
+    },
+    [loadLetterboxdList],
   );
   const setShowAltSearchButton = useCallback(
     (show: boolean) => {
@@ -157,6 +187,8 @@ export function AppStateProvider({ children }: { children: ReactNode }): React.R
     setNotice,
     setShowAltSearchButton,
     loadLetterboxdList,
+    loadLetterboxdListWithSyncedUrl,
+    registerListFormDevBridge,
     submitMovieSearch,
     runAlternativeSearch,
     searchSubs,
