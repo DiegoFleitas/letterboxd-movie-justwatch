@@ -2,6 +2,7 @@ import { useCallback, useRef } from "react";
 import { showMessage } from "./showMessage";
 import { PLACEHOLDER_POSTER, normalizePosterPath, type MergeData } from "./movieTiles";
 import { captureFrontendException, captureFrontendMessage } from "./sentry";
+import { SafeJsonResponseError, safeJsonResponse } from "./safeJsonResponse";
 
 export interface MovieSearchResponse {
   error?: string;
@@ -60,7 +61,7 @@ export function useMovieSearch(
             });
             console.error(response);
           }
-          return response.json();
+          return safeJsonResponse<MovieSearchResponse>(response);
         })
         .then((response: MovieSearchResponse) => {
           const { error, title, year, message, movieProviders } = response;
@@ -75,6 +76,22 @@ export function useMovieSearch(
           }
         })
         .catch((err) => {
+          if (err instanceof SafeJsonResponseError) {
+            captureFrontendMessage("search-movie parse failure", {
+              tags: {
+                source: "api",
+                endpoint: "/api/search-movie",
+                reason: err.kind,
+              },
+              extra: {
+                status: err.status,
+                bodySnippet: err.bodySnippet,
+                title: data.title,
+                year: data.year,
+                country: data.country,
+              },
+            });
+          }
           captureFrontendException(err, {
             tags: { source: "api", endpoint: "/api/search-movie" },
             extra: { title: data.title, year: data.year, country: data.country },

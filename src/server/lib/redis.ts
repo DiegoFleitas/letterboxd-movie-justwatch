@@ -83,7 +83,8 @@ export const getCacheValue = async (key: string): Promise<unknown> => {
     try {
       return value !== null ? JSON.parse(value) : value;
     } catch {
-      return value;
+      console.log(`[REDIS_INVALID_JSON] ${hashedKey} (${key})`);
+      return null;
     }
   } catch (error) {
     console.log(`[REDIS_GET_ERROR] (${key}) ${error}`);

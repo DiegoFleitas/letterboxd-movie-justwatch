@@ -90,6 +90,10 @@ interface TMDBResult {
   poster_path?: string | null;
 }
 
+function isObjectLike(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 export const searchMovie: HttpHandler = async ({ req, res }) => {
   const body = req.body as { title?: string; year?: string | number; country?: string } | undefined;
   const title = body?.title;
@@ -108,9 +112,9 @@ export const searchMovie: HttpHandler = async ({ req, res }) => {
     const cacheKey = `search-movie:${title}:${year}:${country}`;
     const cachedResponse = await getCacheValue(cacheKey);
 
-    if (cachedResponse) {
+    if (isObjectLike(cachedResponse)) {
       console.log("Response found (cached)");
-      res.json(cachedResponse as object);
+      res.json(cachedResponse);
       return;
     }
 
