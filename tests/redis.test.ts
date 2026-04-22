@@ -108,6 +108,12 @@ describe("Redis cache", () => {
     expect(await getCacheValue("somekey")).toEqual(data);
   });
 
+  it("getCacheValue returns null when cached payload is invalid JSON", async () => {
+    const mock = createMockClient({ get: () => Promise.resolve("not-json") });
+    _injectRedisClientForTest(mock as never);
+    expect(await getCacheValue("invalid-json")).toBeNull();
+  });
+
   it("getCacheValue returns null when get throws", async () => {
     const mock = createMockClient({ get: () => Promise.reject(new Error("timeout")) });
     _injectRedisClientForTest(mock as never);
