@@ -13,6 +13,7 @@ import {
   type TileData,
 } from "./movieTiles";
 import { captureFrontendException } from "./sentry";
+import { safeJsonResponse } from "./safeJsonResponse";
 
 const SEARCH_CONCURRENCY = 4;
 
@@ -163,33 +164,33 @@ export function useLetterboxdList(
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(movieData),
             })
-              .then((r) => r.json())
-              .then(
-                (response: {
+              .then((r) =>
+                safeJsonResponse<{
                   error?: string;
                   title?: string;
                   year?: string | number;
                   poster?: string;
                   link?: string;
                   movieProviders?: unknown[];
-                }) => {
-                  const { error: err, title: t, year: y, poster: p, link: l } = response;
-                  const batch = batchMapRef.current.get(batchId);
-                  if (!batch) return;
-                  batch.completed++;
-                  if (err) {
-                    batch.errors.push({ title: t ?? "", year: y ?? "", message: err });
-                    mergeTile?.(t ?? "", y ?? null, { poster: p, link: l, movieProviders: [] });
-                  } else {
-                    mergeTile?.(t ?? "", y ?? null, { ...response, link: l } as MergeData);
-                  }
-                  if (batch.completed === batch.total) {
-                    showBatchErrors(batch.errors);
-                    batchMapRef.current.delete(batchId);
-                    scheduleListReportNudge();
-                  }
-                },
+                }>(r),
               )
+              .then((response) => {
+                const { error: err, title: t, year: y, poster: p, link: l } = response;
+                const batch = batchMapRef.current.get(batchId);
+                if (!batch) return;
+                batch.completed++;
+                if (err) {
+                  batch.errors.push({ title: t ?? "", year: y ?? "", message: err });
+                  mergeTile?.(t ?? "", y ?? null, { poster: p, link: l, movieProviders: [] });
+                } else {
+                  mergeTile?.(t ?? "", y ?? null, { ...response, link: l } as MergeData);
+                }
+                if (batch.completed === batch.total) {
+                  showBatchErrors(batch.errors);
+                  batchMapRef.current.delete(batchId);
+                  scheduleListReportNudge();
+                }
+              })
               .catch((e) => {
                 const batch = batchMapRef.current.get(batchId);
                 if (batch) {
