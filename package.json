@@ -74,7 +74,8 @@
     "on-headers": ">=1.1.0",
     "diff": ">=8.0.3",
     "esbuild": ">=0.25.0",
-    "electron": ">=35.7.5"
+    "electron": ">=35.7.5",
+    "axios": ">=1.15.2"
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.2",
