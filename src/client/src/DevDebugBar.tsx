@@ -127,12 +127,12 @@ export function DevDebugBar(): React.ReactElement | null {
           onClick={() =>
             void devPostAlert(
               `${DEV_HTTP_API_PREFIX}/refresh-local-seed`,
-              (data) => data.stdout?.trim() || "Local Redis seed data refreshed.",
-              "Failed to refresh local Redis seed data",
+              (data) => data.stdout?.trim() || "Redis snapshot refreshed.",
+              "Failed to refresh Redis snapshot",
             )
           }
         >
-          Refresh local dev seed data (dev)
+          Refresh Redis snapshot (dev)
         </button>
       </div>
     </div>

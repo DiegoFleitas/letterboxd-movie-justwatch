@@ -27,7 +27,7 @@ export function isLocalRedisTarget(redisUrl: string): boolean {
 }
 
 export function getEffectiveRedisUrlForDevGuard(): string {
-  return process.env.FLYIO_REDIS_URL || "redis://localhost:6379";
+  return process.env.SEED_REDIS_URL || process.env.FLYIO_REDIS_URL || "redis://localhost:6379";
 }
 
 export type DevApiGuardFailure =

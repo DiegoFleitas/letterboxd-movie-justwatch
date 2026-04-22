@@ -77,11 +77,20 @@ export function registerDevHttpRoutes(app: FastifyInstance): void {
           const { stdout, stderr } = await exec("bun run seed:refresh:local", {
             cwd: process.cwd(),
           });
-          reply.send({ ok: true, stdout, stderr });
+          reply.send({
+            ok: true,
+            message:
+              "Refreshed/exported the local Redis snapshot file and validated it. This command does not re-seed Redis.",
+            stdout,
+            stderr,
+          });
         } catch (error) {
           const err = error as { stdout?: string; stderr?: string; message?: string };
           reply.code(500).send({
-            error: err.stderr || err.message || "Failed to refresh local Redis seed data",
+            error:
+              err.stderr ||
+              err.message ||
+              "Failed to refresh/export and validate the local Redis snapshot file",
             stdout: err.stdout || "",
             stderr: err.stderr || "",
           });

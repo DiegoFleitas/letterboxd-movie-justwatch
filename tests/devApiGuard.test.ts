@@ -59,6 +59,15 @@ describe("devApiGuard", () => {
       expect(getDevApiGuardFailure()).toBeNull();
     });
 
+    it("uses SEED_REDIS_URL first when determining effective Redis URL", () => {
+      vi.stubEnv("NODE_ENV", "development");
+      vi.stubEnv("DISABLE_REDIS", "");
+      vi.stubEnv("SEED_REDIS_URL", "redis://remote.example.com:6379");
+      vi.stubEnv("FLYIO_REDIS_URL", "redis://localhost:6379");
+      expect(getEffectiveRedisUrlForDevGuard()).toBe("redis://remote.example.com:6379");
+      expect(getDevApiGuardFailure()?.code).toBe("non_local_redis");
+    });
+
     it("returns null for development + docker compose redis hostname", () => {
       vi.stubEnv("NODE_ENV", "development");
       vi.stubEnv("FLYIO_REDIS_URL", "redis://redis:6379");

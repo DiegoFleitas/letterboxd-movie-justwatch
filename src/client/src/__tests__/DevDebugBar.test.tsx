@@ -60,6 +60,7 @@ describe("DevDebugBar", () => {
     expect(bar).not.toBeNull();
     expect(bar?.getAttribute("role")).toBe("region");
     expect(bar?.getAttribute("aria-label")).toBe("Development tools");
+    expect(bar?.textContent).toContain("Refresh Redis snapshot (dev)");
     expect(document.body.classList.contains("has-dev-debug-bar")).toBe(true);
 
     await act(async () => {
