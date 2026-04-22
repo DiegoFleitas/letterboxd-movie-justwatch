@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import rateLimit from "@fastify/rate-limit";
 import { exec as execCallback } from "node:child_process";
 import { promisify } from "node:util";
 import { DEV_HTTP_API_PREFIX } from "../devHttpApiPrefix.js";
@@ -13,6 +14,12 @@ export function registerDevHttpRoutes(app: FastifyInstance): void {
 
   void app.register(
     async (dev) => {
+      await dev.register(rateLimit, {
+        max: 15,
+        timeWindow: "1 minute",
+        hook: "onRequest",
+      });
+
       dev.post("/clear-list-cache", async (_request, reply) => {
         if (!devRedisApisAllowedOrReply(reply)) return;
         const result = await clearCacheByCategory("list");

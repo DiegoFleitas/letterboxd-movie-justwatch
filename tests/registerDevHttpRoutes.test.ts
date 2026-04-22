@@ -16,4 +16,20 @@ describe("registerDevHttpRoutes", () => {
     expect(res.statusCode).toBe(404);
     await app.close();
   });
+
+  it("rate-limits dev routes (429 after max requests in the window)", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubEnv("DISABLE_REDIS", "1");
+    const app = Fastify({ logger: false });
+    registerDevHttpRoutes(app);
+    await app.ready();
+    let lastStatus = 0;
+    for (let i = 0; i < 20; i++) {
+      const res = await app.inject({ method: "POST", url: "/api/dev/clear-list-cache" });
+      lastStatus = res.statusCode;
+      if (res.statusCode === 429) break;
+    }
+    expect(lastStatus).toBe(429);
+    await app.close();
+  });
 });
