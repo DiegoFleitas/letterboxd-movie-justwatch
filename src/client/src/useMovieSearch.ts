@@ -3,6 +3,7 @@ import { showMessage } from "./showMessage";
 import { PLACEHOLDER_POSTER, normalizePosterPath, type MergeData } from "./movieTiles";
 import { captureFrontendException, captureFrontendMessage } from "./sentry";
 import { SafeJsonResponseError, safeJsonResponse } from "./safeJsonResponse";
+import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from "@server/httpStatusCodes";
 
 export interface MovieSearchResponse {
   error?: string;
@@ -54,7 +55,7 @@ export function useMovieSearch(
       })
         .then((response) => {
           setShowAltSearchButton?.(true);
-          if (response.status >= 500) {
+          if (response.status >= HTTP_STATUS_INTERNAL_SERVER_ERROR) {
             captureFrontendMessage("search-movie upstream error", {
               tags: { source: "api", endpoint: "/api/search-movie", reason: "http-5xx" },
               extra: { status: response.status, title: data.title, year: data.year },

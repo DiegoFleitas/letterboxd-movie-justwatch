@@ -1,6 +1,11 @@
 import type { HttpHandler } from "../httpContext.js";
 import axiosHelper from "../lib/axios.js";
 import { getCacheValue, setCacheValue } from "../lib/redis.js";
+import {
+  HTTP_STATUS_INTERNAL_SERVER_ERROR,
+  HTTP_STATUS_NOT_FOUND,
+  HTTP_STATUS_OK,
+} from "../httpStatusCodes.js";
 
 const axios = axiosHelper();
 const cacheTtl = Number(process.env.CACHE_TTL) || 60;
@@ -13,7 +18,7 @@ export const poster: HttpHandler = async ({ req, res }) => {
     const cachedPoster = await getCacheValue(cacheKey);
     if (cachedPoster) {
       console.log("Poster found (cached)");
-      res.status(200).json({
+      res.status(HTTP_STATUS_OK).json({
         message: "Poster found",
         poster: cachedPoster,
       });
@@ -22,7 +27,7 @@ export const poster: HttpHandler = async ({ req, res }) => {
 
     if (!title) {
       console.log("No movie title");
-      res.status(404).json({ error: "Movie not found" });
+      res.status(HTTP_STATUS_NOT_FOUND).json({ error: "Movie not found" });
       return;
     }
 
@@ -41,7 +46,7 @@ export const poster: HttpHandler = async ({ req, res }) => {
     if (!response || !data || data.Error) {
       const errorMessage = data?.Error || "Movie not found";
       console.log("Movie not found", errorMessage);
-      res.status(404).json({ error: errorMessage });
+      res.status(HTTP_STATUS_NOT_FOUND).json({ error: errorMessage });
       return;
     }
 
@@ -50,17 +55,17 @@ export const poster: HttpHandler = async ({ req, res }) => {
     const released = data.Released;
     if (!posterUrl) {
       console.log(`Poster not found for ${title} (${respYear}) release status: ${released}`);
-      res.status(404).json({ error: "Poster not found" });
+      res.status(HTTP_STATUS_NOT_FOUND).json({ error: "Poster not found" });
       return;
     }
 
     await setCacheValue(cacheKey, posterUrl, cacheTtl);
-    res.status(200).json({
+    res.status(HTTP_STATUS_OK).json({
       message: "Poster found",
       poster: posterUrl,
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: "Internal Server Error" });
   }
 };

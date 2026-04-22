@@ -6,6 +6,10 @@ import { processOffers } from "../lib/processOffers.js";
 import type { CanonicalProviderMap, JustWatchOffer } from "../lib/types/index.js";
 import { getRandomScrapeUserAgent } from "../lib/scrapeUserAgent.js";
 import { buildLetterboxdStableFilmLink } from "../lib/letterboxdStableFilmLink.js";
+import {
+  HTTP_STATUS_INTERNAL_SERVER_ERROR,
+  HTTP_STATUS_TOO_MANY_REQUESTS,
+} from "../httpStatusCodes.js";
 
 const axios = axiosHelper();
 const cacheTtl = Number(process.env.CACHE_TTL) || 3600;
@@ -37,8 +41,9 @@ async function justWatchPost(
       const e = err as { response?: { status?: number }; code?: string; message?: string };
       const isRetryable =
         !e.response ||
-        (e.response.status !== undefined && e.response.status >= 500) ||
-        e.response.status === 429 ||
+        (e.response.status !== undefined &&
+          e.response.status >= HTTP_STATUS_INTERNAL_SERVER_ERROR) ||
+        e.response.status === HTTP_STATUS_TOO_MANY_REQUESTS ||
         e.code === "ECONNABORTED" ||
         e.code === "ETIMEDOUT" ||
         e.code === "ENOTFOUND" ||
@@ -290,6 +295,10 @@ export const searchMovie: HttpHandler = async ({ req, res }) => {
     res.json(responsePayload);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Internal Server Error", title, year });
+    res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
+      error: "Internal Server Error",
+      title,
+      year,
+    });
   }
 };
