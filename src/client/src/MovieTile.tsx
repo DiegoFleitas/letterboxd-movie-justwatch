@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useAppState } from "./AppStateContext";
-import { getPublicAssetPath } from "./assetPath";
 import { letterboxdFilmUrlOrSearchUrl, type TileData, type TileProvider } from "./movieTiles";
 import { buildOpenSubtitlesBrowseUrl } from "./opensubtitlesUrl";
 import {
@@ -15,6 +14,7 @@ import imdbIcon from "./assets/imdb-icon.svg";
 import letterboxdIcon from "./assets/letterboxd-icon.svg";
 import tmdbIcon from "./assets/tmdb-icon.svg";
 import openSubtitlesIcon from "./assets/opensubtitles-icon.svg";
+import subdlIcon from "./assets/subdl-icon.svg";
 import { WaitCue } from "./WaitCue";
 
 const JUSTWATCH_PROXY = "https://click.justwatch.com/a?r=";
@@ -174,7 +174,7 @@ export function MovieTile({
           }}
         >
           <img
-            src={getPublicAssetPath("subdl-icon.png")}
+            src={subdlIcon}
             alt=""
             className="poster-external-btn__icon"
             width={28}

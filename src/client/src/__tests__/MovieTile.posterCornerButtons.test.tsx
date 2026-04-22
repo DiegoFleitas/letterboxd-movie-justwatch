@@ -30,6 +30,12 @@ describe("MovieTile poster corner subtitle buttons", () => {
 
     expect(container.querySelector('[data-sp="subdl-link-tile"]')).not.toBeNull();
     expect(container.querySelector('[data-sp="opensubtitles-link-tile"]')).not.toBeNull();
+    const subdlIcon = container.querySelector(
+      '[data-sp="subdl-link-tile"] img',
+    ) as HTMLImageElement | null;
+    const subdlIconSrc = subdlIcon?.getAttribute("src") ?? "";
+    expect(subdlIconSrc).toContain("subdl-icon.svg");
+    expect(subdlIconSrc.length).toBeGreaterThan(0);
   });
 
   it("renders SubDL and OpenSubtitles when no other external links exist", async () => {
