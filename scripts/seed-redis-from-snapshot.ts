@@ -15,6 +15,25 @@ const snapshotPath =
   path.join(__dirname, "..", "resources", "data", "redis-snapshot.json");
 const url = process.env.SEED_REDIS_URL || process.env.FLYIO_REDIS_URL || "redis://localhost:6379";
 
+function assertLocalRedisTarget(redisUrl: string): void {
+  if (process.env.ALLOW_NON_LOCAL_REDIS === "1" || process.env.ALLOW_NON_LOCAL_REDIS === "true")
+    return;
+  const allowedHosts = new Set(["localhost", "127.0.0.1", "::1", "redis"]);
+  let host: string;
+  try {
+    host = new URL(redisUrl).hostname;
+  } catch {
+    throw new Error(
+      `Invalid Redis URL: ${redisUrl}. Set ALLOW_NON_LOCAL_REDIS=1 or ALLOW_NON_LOCAL_REDIS=true if you intentionally need a non-local target.`,
+    );
+  }
+  if (!allowedHosts.has(host)) {
+    throw new Error(
+      `Refusing non-local Redis host "${host}" for local-dev seed refresh. Set ALLOW_NON_LOCAL_REDIS=1 or ALLOW_NON_LOCAL_REDIS=true to override.`,
+    );
+  }
+}
+
 async function seedFromSnapshot(): Promise<void> {
   if (!fs.existsSync(snapshotPath)) {
     console.error(`Snapshot not found: ${snapshotPath}`);
@@ -30,6 +49,7 @@ async function seedFromSnapshot(): Promise<void> {
   const redis = new (Redis as any)(url, { maxRetriesPerRequest: 1 });
 
   try {
+    assertLocalRedisTarget(url);
     for (const { key, ttlSeconds, value } of keys) {
       if (ttlSeconds != null && ttlSeconds > 0) {
         await redis.set(key, value, "EX", ttlSeconds);

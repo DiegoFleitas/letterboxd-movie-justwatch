@@ -88,6 +88,52 @@ docker compose up --build
 
 Then open **`http://localhost:3000`**. Provide secrets (`OMDB_API_KEY`, `APP_SECRET_KEY`, and others) via a root `.env` or `docker-compose.override.yml`; Compose loads `.env` automatically.
 
+## Refresh local dev seed data
+
+This snapshot workflow is for **local development seeding only**. It is not intended for production backup or migration.
+
+Default snapshot path: `resources/data/redis-snapshot.json`.
+
+Prerequisites:
+
+- Local Redis reachable (`FLYIO_REDIS_URL` defaults to `redis://localhost:6379` when unset)
+- `FLY_APP_NAME` set when you want to control key prefix filtering (defaults to `app`)
+
+Commands:
+
+```bash
+# 1) Export from local Redis to snapshot file
+bun run export-redis
+
+# 2) Validate snapshot schema
+bun run seed:validate
+
+# 3) Seed local Redis from snapshot
+bun run seed-redis
+```
+
+One-shot refresh (export + validate):
+
+```bash
+bun run seed:refresh:local
+```
+
+Expected success output for export + validate includes:
+
+- `Exported <n> keys and <m> sets to .../resources/data/redis-snapshot.json`
+- `[redis-snapshot-validate] OK path=... keys=<n> sets=<m>`
+
+Expected success output for seeding includes:
+
+- `Restored <n> keys and <m> sets to Redis`
+
+Common failure modes:
+
+- Redis unavailable: verify local Redis is running and `FLYIO_REDIS_URL` points to local dev Redis.
+- Non-local Redis blocked: scripts reject non-local hosts by default; set `ALLOW_NON_LOCAL_REDIS=1` only when intentionally overriding.
+- Empty export: confirm keys use the expected `FLY_APP_NAME` prefix.
+- Snapshot validation failure: regenerate with `bun run export-redis` and re-run `bun run seed:validate`.
+
 ### Production deploy (Fly.io)
 
 Deployments run from **GitHub Actions** ([`.github/workflows/fly-deploy.yml`](.github/workflows/fly-deploy.yml)): after **CI** succeeds on `main` or `master`, or when the workflow is triggered manually (**workflow_dispatch**). The job runs `bun run build` (for Sentry source maps), `bun run sentry:release:frontend`, then `flyctl deploy --remote-only` with `SENTRY_RELEASE` from the commit.

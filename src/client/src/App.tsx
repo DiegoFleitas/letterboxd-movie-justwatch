@@ -2,6 +2,7 @@ import type { ReactElement } from "react";
 import { ErrorBoundary } from "@sentry/react";
 import { ToastProvider } from "./ToastProvider";
 import { AppStateProvider } from "./AppStateContext";
+import { DevDebugBar } from "./DevDebugBar";
 import { LeftPanel } from "./LeftPanel";
 import { RightPanel } from "./RightPanel";
 
@@ -18,6 +19,7 @@ export function App(): ReactElement {
               <RightPanel />
             </main>
           </div>
+          <DevDebugBar />
         </ToastProvider>
       </AppStateProvider>
     </ErrorBoundary>
