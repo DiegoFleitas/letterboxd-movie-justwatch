@@ -16,7 +16,8 @@ import {
   subdlSearch,
   proxy,
 } from "./controllers/index.js";
-import { isHealthy, clearCacheByCategory, disconnectRedis, isRedisDisabled } from "./lib/redis.js";
+import { isHealthy, disconnectRedis, isRedisDisabled } from "./lib/redis.js";
+import { registerDevHttpRoutes } from "./registerDevHttpRoutes.js";
 import {
   getCanonicalProviderMap,
   getCanonicalProviderByNames,
@@ -187,14 +188,7 @@ export function createServer(): CreatedServer {
 
     app.all("/api/proxy/*", makeFastifyHandler(proxy));
 
-    app.post("/api/dev/clear-list-cache", async (_request, reply) => {
-      if (process.env.NODE_ENV === "production") {
-        reply.code(404).send({ error: "Not available in production" });
-        return;
-      }
-      const result = await clearCacheByCategory("list");
-      reply.send({ ok: true, ...result });
-    });
+    registerDevHttpRoutes(app);
 
     app.get("/api/sentry-test", async (request, reply) => {
       const mode = ((request.query as { mode?: string })?.mode ?? "throw").toLowerCase();

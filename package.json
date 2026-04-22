@@ -22,6 +22,8 @@
     "update:letterboxd-fixtures": "bun scripts/updateLetterboxdFixtures.ts",
     "export-redis": "bun scripts/export-redis-snapshot.ts",
     "seed-redis": "bun scripts/seed-redis-from-snapshot.ts",
+    "seed:validate": "bun scripts/validate-redis-snapshot.ts",
+    "seed:refresh:local": "bun run export-redis && bun run seed:validate",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "lint": "eslint . --ext .ts,.tsx",

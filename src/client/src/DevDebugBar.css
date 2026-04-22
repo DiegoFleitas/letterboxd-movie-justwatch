@@ -1,0 +1,49 @@
+.debug-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 80;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  padding: 0.5rem 0.75rem calc(0.5rem + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-bg) 92%, var(--color-surface-elevated));
+  backdrop-filter: blur(8px);
+  box-sizing: border-box;
+}
+
+.debug-bar__label {
+  flex: 0 0 auto;
+  font-family: var(--ui-font);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-subtle);
+  margin-right: 0.25rem;
+}
+
+.debug-bar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Undo global .btn full-width inside the bar */
+.debug-bar .btn {
+  width: auto;
+  min-width: 0;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}

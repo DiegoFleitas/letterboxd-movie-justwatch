@@ -152,3 +152,14 @@ hr {
   background-color: #ccc;
   margin: 0;
 }
+
+/* Dev debug bar fixed at viewport bottom — keep main content scrollable above it */
+body.has-dev-debug-bar .wrapper {
+  padding-bottom: 6.5rem;
+}
+
+@media (max-width: 767px) {
+  body.has-dev-debug-bar .wrapper {
+    padding-bottom: 8.5rem;
+  }
+}

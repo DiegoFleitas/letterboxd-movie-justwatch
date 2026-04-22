@@ -2,7 +2,8 @@
   "compilerOptions": {
     "paths": {
       "@/*": ["./src/*"],
-      "@server/*": ["../server/*"]
+      "@server/*": ["../server/*"],
+      "@devHttpApiPrefix": ["../devHttpApiPrefix.ts"]
     },
     "target": "ES2022",
     "module": "ESNext",
