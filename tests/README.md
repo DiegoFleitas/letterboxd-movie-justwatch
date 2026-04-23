@@ -52,7 +52,3 @@ describe("your feature", () => {
 ```
 
 3. Optional: add a script in `package.json`, e.g. `"test:yourfeature": "bunx vitest run tests/yourFeature.test.ts"`.
-
-## Legacy `testUtils.ts`
-
-`tests/testUtils.ts` (custom `TestSuite` / `assert*`) is **deprecated** for new tests; prefer Vitest. It can remain for any one-off scripts if needed.

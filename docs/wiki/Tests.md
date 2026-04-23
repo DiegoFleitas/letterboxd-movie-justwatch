@@ -45,9 +45,3 @@ If you rename those modules, run **`bun run test`** and the **frontend** tests u
 1. Add `tests/yourFeature.test.ts` (or follow existing naming).
 2. Use Vitest `describe` / `it` / `expect`.
 3. Optionally add `package.json` script, e.g. `"test:yourfeature": "bunx vitest run tests/yourFeature.test.ts"`.
-
-## Legacy `testUtils.ts`
-
-[`tests/testUtils.ts`](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/blob/master/tests/testUtils.ts) (custom `TestSuite` / `assert*`) is **deprecated** for new tests; prefer Vitest.
-
-**In-repo copy:** [`tests/README.md`](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/blob/master/tests/README.md).

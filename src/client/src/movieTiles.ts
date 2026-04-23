@@ -63,7 +63,7 @@ export function classifyListReportSymptom(
   return null;
 }
 
-export function normalizeId(title: string, year: string | number | null): string {
+function normalizeId(title: string, year: string | number | null): string {
   return `${year}-${title.toUpperCase().replace(/[^A-Z0-9]/g, "")}`;
 }
 
