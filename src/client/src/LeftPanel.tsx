@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { INTERACTION_FAST_S, motionTransition, TMDB_DEBOUNCE_MS } from "./animation/timing";
 import { useAppState } from "./AppStateContext";
-import { countries, generes } from "./consts";
+import { countries, genres } from "./consts";
 import { CountrySelector } from "./CountrySelector";
 import { fetchCountryFromIp } from "./countryGeo";
 import { SimpleWaitDots } from "./SimpleWaitDots";
@@ -45,9 +45,9 @@ interface TMDBMovie {
 }
 
 function getGenreNames(genreIds: number[] | undefined): string {
-  if (!generes?.length) return "";
+  if (!genres?.length) return "";
   const names = (genreIds || [])
-    .map((id: number) => generes.find((g: { id: number }) => g.id === id)?.name)
+    .map((id: number) => genres.find((g: { id: number }) => g.id === id)?.name)
     .filter(Boolean)
     .slice(0, 3);
   return names.join(", ");
