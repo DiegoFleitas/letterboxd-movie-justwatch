@@ -19,8 +19,11 @@ src/client/dist
 # Tests and dev tooling (not needed for build/start)
 tests
 
-# Separate service
-redis
+# Separate service (except canonical providers runtime data)
+redis/*
+!redis/data/
+redis/data/*
+!redis/data/canonical-providers.json
 
 # Optional: uncomment if you want a smaller context
 # scripts
