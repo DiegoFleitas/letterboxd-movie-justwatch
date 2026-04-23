@@ -30,8 +30,14 @@ const MOVIE_SUGGESTIONS_ID = "movie-suggestions";
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
-    const t = setTimeout(() => setDebouncedValue(value), delay);
-    return () => clearTimeout(t);
+    let cancelled = false;
+    const t = setTimeout(() => {
+      if (!cancelled) setDebouncedValue(value);
+    }, delay);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
   }, [value, delay]);
   return debouncedValue;
 }
