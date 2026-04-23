@@ -77,17 +77,17 @@ export function DevDebugBar(): React.ReactElement | null {
         <button
           type="button"
           className="btn btn-secondary"
-          data-testid="dev-seed-redis-snapshot"
+          data-testid="dev-reset-redis-cache"
           disabled={isListLoading}
           onClick={() =>
             void devPostAlert(
-              `${DEV_HTTP_API_PREFIX}/seed-redis`,
-              (data) => data.stdout?.trim() || "Redis seeded from snapshot.",
-              "Failed to seed Redis",
+              `${DEV_HTTP_API_PREFIX}/reset-redis`,
+              (data) => data.stdout?.trim() || "Redis cache reset from validated snapshot.",
+              "Failed to reset Redis cache",
             )
           }
         >
-          Seed Redis snapshot (dev)
+          Reset Redis cache (dev)
         </button>
         <button
           type="button"
@@ -103,36 +103,6 @@ export function DevDebugBar(): React.ReactElement | null {
           }
         >
           Export Redis snapshot (dev)
-        </button>
-        <button
-          type="button"
-          className="btn btn-secondary"
-          data-testid="dev-validate-redis-snapshot"
-          disabled={isListLoading}
-          onClick={() =>
-            void devPostAlert(
-              `${DEV_HTTP_API_PREFIX}/validate-redis-snapshot`,
-              (data) => data.stdout?.trim() || "Redis snapshot is valid.",
-              "Failed to validate Redis snapshot",
-            )
-          }
-        >
-          Validate Redis snapshot (dev)
-        </button>
-        <button
-          type="button"
-          className="btn btn-secondary"
-          data-testid="dev-refresh-local-seed"
-          disabled={isListLoading}
-          onClick={() =>
-            void devPostAlert(
-              `${DEV_HTTP_API_PREFIX}/refresh-local-seed`,
-              (data) => data.stdout?.trim() || "Redis snapshot refreshed.",
-              "Failed to refresh Redis snapshot",
-            )
-          }
-        >
-          Refresh Redis snapshot (dev)
         </button>
       </div>
     </div>

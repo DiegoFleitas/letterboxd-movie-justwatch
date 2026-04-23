@@ -21,16 +21,19 @@ Useful commands inside the container: `redis-cli` (`KEYS *`, `GET`, `TTL`, `DEL`
 
 Scripts: [`redis/scripts/`](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/tree/master/redis/scripts). Shortcuts from repo root (see [`package.json`](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/blob/master/package.json)):
 
-| Script                    | Purpose                                                                             |
-| ------------------------- | ----------------------------------------------------------------------------------- |
-| `bun run export-redis`    | Dump Redis keys/sets to `redis/data/redis-snapshot.json` (or `REDIS_SNAPSHOT_PATH`) |
-| `bun run seed-redis`      | Restore snapshot into target Redis (`SEED_REDIS_URL` / `FLYIO_REDIS_URL`)           |
-| `bun run seed:validate`   | Validate snapshot JSON schema                                                       |
-| `bun run build:providers` | Regenerate `redis/data/canonical-providers.json`                                    |
+| Script                    | Purpose                                                                                      |
+| ------------------------- | -------------------------------------------------------------------------------------------- |
+| `bun run redis:reset`     | Default smart reset: if snapshot exists -> validate+seed; if missing -> export+validate+seed |
+| `bun run export-redis`    | Dump Redis keys/sets to `redis/data/redis-snapshot.json` (or `REDIS_SNAPSHOT_PATH`)          |
+| `bun run seed-redis`      | Restore snapshot into target Redis (`SEED_REDIS_URL` / `FLYIO_REDIS_URL`)                    |
+| `bun run seed:validate`   | Validate snapshot JSON schema                                                                |
+| `bun run build:providers` | Regenerate `redis/data/canonical-providers.json`                                             |
 
-**Export:** set `FLYIO_REDIS_URL`, optional `FLY_APP_NAME` for key prefix, then `bun run export-redis`.
+**Recommended:** run `bun run redis:reset` for day-to-day local cache reset.
 
-**Seed:** set `SEED_REDIS_URL` or rely on `FLYIO_REDIS_URL` / localhost defaults.
+**Manual Export:** set `FLYIO_REDIS_URL`, optional `FLY_APP_NAME` for key prefix, then `bun run export-redis`.
+
+**Manual Seed:** set `SEED_REDIS_URL` or rely on `FLYIO_REDIS_URL` / localhost defaults.
 
 Scripts enforce **local-only** Redis targets unless `ALLOW_NON_LOCAL_REDIS` is set—see script sources for details.
 

@@ -9,6 +9,30 @@ import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from "./httpStatusCodes.js";
 
 const exec = promisify(execCallback);
 
+async function runDevCommand(command: string): Promise<{ stdout: string; stderr: string }> {
+  const { stdout, stderr } = await exec(command, { cwd: process.cwd() });
+  return { stdout, stderr };
+}
+
+function toDevCommandError(
+  operation: string,
+  fallback: string,
+  error: unknown,
+): { error: string; stdout: string; stderr: string; operation: string; nextSteps: string[] } {
+  const err = error as { stdout?: string; stderr?: string; message?: string };
+  return {
+    operation,
+    error: err.stderr || err.message || fallback,
+    stdout: err.stdout || "",
+    stderr: err.stderr || "",
+    nextSteps: [
+      "Verify local Redis is running and reachable.",
+      "Run the command manually from repo root for full logs.",
+      "Confirm Redis dev guard environment settings allow local target.",
+    ],
+  };
+}
+
 /** Scoped `/api/dev/*` routes (guarded by devApiGuard). No-op in production. */
 export function registerDevHttpRoutes(app: FastifyInstance): void {
   if (isNodeProductionEnvironment()) return;
@@ -27,74 +51,34 @@ export function registerDevHttpRoutes(app: FastifyInstance): void {
         reply.send({ ok: true, ...result });
       });
 
-      dev.post("/seed-redis", async (_request, reply) => {
+      dev.post("/reset-redis", async (_request, reply) => {
         if (!devRedisApisAllowedOrReply(reply)) return;
         try {
-          const { stdout, stderr } = await exec("bun run seed-redis", { cwd: process.cwd() });
-          reply.send({ ok: true, stdout, stderr });
-        } catch (error) {
-          const err = error as { stdout?: string; stderr?: string; message?: string };
-          reply.code(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({
-            error: err.stderr || err.message || "Failed to seed Redis from snapshot",
-            stdout: err.stdout || "",
-            stderr: err.stderr || "",
+          const { stdout, stderr } = await runDevCommand("bun run redis:reset");
+          reply.send({
+            ok: true,
+            message: "Redis reset completed. Snapshot was validated and Redis was seeded.",
+            stdout,
+            stderr,
           });
+        } catch (error) {
+          reply
+            .code(HTTP_STATUS_INTERNAL_SERVER_ERROR)
+            .send(
+              toDevCommandError("reset-redis", "Failed to reset Redis snapshot workflow", error),
+            );
         }
       });
 
       dev.post("/export-redis", async (_request, reply) => {
         if (!devRedisApisAllowedOrReply(reply)) return;
         try {
-          const { stdout, stderr } = await exec("bun run export-redis", { cwd: process.cwd() });
+          const { stdout, stderr } = await runDevCommand("bun run export-redis");
           reply.send({ ok: true, stdout, stderr });
         } catch (error) {
-          const err = error as { stdout?: string; stderr?: string; message?: string };
-          reply.code(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({
-            error: err.stderr || err.message || "Failed to export Redis snapshot",
-            stdout: err.stdout || "",
-            stderr: err.stderr || "",
-          });
-        }
-      });
-
-      dev.post("/validate-redis-snapshot", async (_request, reply) => {
-        if (!devRedisApisAllowedOrReply(reply)) return;
-        try {
-          const { stdout, stderr } = await exec("bun run seed:validate", { cwd: process.cwd() });
-          reply.send({ ok: true, stdout, stderr });
-        } catch (error) {
-          const err = error as { stdout?: string; stderr?: string; message?: string };
-          reply.code(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({
-            error: err.stderr || err.message || "Failed to validate Redis snapshot",
-            stdout: err.stdout || "",
-            stderr: err.stderr || "",
-          });
-        }
-      });
-
-      dev.post("/refresh-local-seed", async (_request, reply) => {
-        if (!devRedisApisAllowedOrReply(reply)) return;
-        try {
-          const { stdout, stderr } = await exec("bun run seed:refresh:local", {
-            cwd: process.cwd(),
-          });
-          reply.send({
-            ok: true,
-            message:
-              "Refreshed/exported the local Redis snapshot file and validated it. This command does not re-seed Redis.",
-            stdout,
-            stderr,
-          });
-        } catch (error) {
-          const err = error as { stdout?: string; stderr?: string; message?: string };
-          reply.code(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({
-            error:
-              err.stderr ||
-              err.message ||
-              "Failed to refresh/export and validate the local Redis snapshot file",
-            stdout: err.stdout || "",
-            stderr: err.stderr || "",
-          });
+          reply
+            .code(HTTP_STATUS_INTERNAL_SERVER_ERROR)
+            .send(toDevCommandError("export-redis", "Failed to export Redis snapshot", error));
         }
       });
     },
