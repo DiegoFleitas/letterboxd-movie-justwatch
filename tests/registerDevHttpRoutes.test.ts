@@ -32,4 +32,29 @@ describe("registerDevHttpRoutes", () => {
     expect(lastStatus).toBe(429);
     await app.close();
   });
+
+  it("registers simplified Redis routes and removes legacy ones", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubEnv("DISABLE_REDIS", "1");
+    const app = Fastify({ logger: false });
+    registerDevHttpRoutes(app);
+    await app.ready();
+
+    const reset = await app.inject({ method: "POST", url: "/api/dev/reset-redis" });
+    const exportSnapshot = await app.inject({ method: "POST", url: "/api/dev/export-redis" });
+    const oldSeed = await app.inject({ method: "POST", url: "/api/dev/seed-redis" });
+    const oldValidate = await app.inject({
+      method: "POST",
+      url: "/api/dev/validate-redis-snapshot",
+    });
+    const oldRefresh = await app.inject({ method: "POST", url: "/api/dev/refresh-local-seed" });
+
+    expect(reset.statusCode).toBe(403);
+    expect(exportSnapshot.statusCode).toBe(403);
+    expect(oldSeed.statusCode).toBe(404);
+    expect(oldValidate.statusCode).toBe(404);
+    expect(oldRefresh.statusCode).toBe(404);
+
+    await app.close();
+  });
 });

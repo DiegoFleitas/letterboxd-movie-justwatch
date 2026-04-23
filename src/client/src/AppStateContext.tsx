@@ -117,6 +117,7 @@ export function AppStateProvider({ children }: { children: ReactNode }): React.R
   const loadLetterboxdListRaw = useLetterboxdList(mergeListTile, setListLoading, listMovieTilesRef);
   const loadLetterboxdList = useCallback(
     async (listUrl: string, country: string) => {
+      setActiveTab("list");
       setShowAltSearchButtonByTab((prev) => ({ ...prev, list: true }));
       await loadLetterboxdListRaw(listUrl, country);
     },

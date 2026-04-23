@@ -4,10 +4,49 @@ import { exec as execCallback } from "node:child_process";
 import { promisify } from "node:util";
 import { DEV_HTTP_API_PREFIX } from "./routes.js";
 import { devRedisApisAllowedOrReply, isNodeProductionEnvironment } from "./lib/devApiGuard.js";
-import { clearCacheByCategory } from "./lib/redis.js";
+import {
+  clearCacheByCategory,
+  estimateSearchMovieStringKeyCount,
+  getCacheCategoryCount,
+  getSoonestIndexedCacheKeyExpiryAtMs,
+} from "./lib/redis.js";
+import { getJustWatchHttpErrorSnapshot } from "./lib/justWatchOutbound.js";
 import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from "./httpStatusCodes.js";
 
 const exec = promisify(execCallback);
+
+/** Parsed `CACHE_TTL` (seconds) for dev diagnostics; `null` when unset or not a finite positive number. */
+function parseCacheTtlEnvSeconds(): number | null {
+  const raw = process.env.CACHE_TTL;
+  if (raw === undefined || raw === "") return null;
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return n;
+}
+
+async function runDevCommand(command: string): Promise<{ stdout: string; stderr: string }> {
+  const { stdout, stderr } = await exec(command, { cwd: process.cwd() });
+  return { stdout, stderr };
+}
+
+function toDevCommandError(
+  operation: string,
+  fallback: string,
+  error: unknown,
+): { error: string; stdout: string; stderr: string; operation: string; nextSteps: string[] } {
+  const err = error as { stdout?: string; stderr?: string; message?: string };
+  return {
+    operation,
+    error: err.stderr || err.message || fallback,
+    stdout: err.stdout || "",
+    stderr: err.stderr || "",
+    nextSteps: [
+      "Verify local Redis is running and reachable.",
+      "Run the command manually from repo root for full logs.",
+      "Confirm Redis dev guard environment settings allow local target.",
+    ],
+  };
+}
 
 /** Scoped `/api/dev/*` routes (guarded by devApiGuard). No-op in production. */
 export function registerDevHttpRoutes(app: FastifyInstance): void {
@@ -27,74 +66,76 @@ export function registerDevHttpRoutes(app: FastifyInstance): void {
         reply.send({ ok: true, ...result });
       });
 
-      dev.post("/seed-redis", async (_request, reply) => {
+      dev.get("/cache-status", { logLevel: "silent" }, async (request, reply) => {
+        if (!devRedisApisAllowedOrReply(reply)) return;
+        const query = request.query as Record<string, string | undefined>;
+        const includeScan = query.scan === "1";
+        const redisKeyPrefix = process.env.FLY_APP_NAME || "app";
+        const [watchlistResult, listResult, searchMovieResult, searchMovieScan, soonestTtl] =
+          await Promise.all([
+            getCacheCategoryCount("watchlist"),
+            getCacheCategoryCount("list"),
+            getCacheCategoryCount("search-movie"),
+            includeScan ? estimateSearchMovieStringKeyCount() : Promise.resolve(null),
+            getSoonestIndexedCacheKeyExpiryAtMs(),
+          ]);
+        const error =
+          watchlistResult.error ||
+          listResult.error ||
+          searchMovieResult.error ||
+          (searchMovieScan?.error ?? undefined) ||
+          soonestTtl.error;
+        reply.send({
+          ok: !error,
+          redisKeyPrefix,
+          cacheTtlEnvSeconds: parseCacheTtlEnvSeconds(),
+          soonestIndexedKeyExpiryAtMs: soonestTtl.error ? null : soonestTtl.soonestExpiryAtMs,
+          soonestIndexedKeyExpiryError: soonestTtl.error ?? null,
+          watchlistCacheEntries: watchlistResult.count,
+          hasWatchlistCache: watchlistResult.count > 0,
+          listCacheEntries: listResult.count,
+          hasListCache: listResult.count > 0,
+          searchMovieCacheEntries: searchMovieResult.count,
+          hasSearchMovieCache: searchMovieResult.count > 0,
+          searchMovieApproxStringKeys: searchMovieScan?.approxSearchMovieStringKeys ?? null,
+          searchMovieScannedStringKeys: searchMovieScan?.scannedStringKeys ?? null,
+          searchMovieUnindexedApprox:
+            searchMovieScan != null
+              ? Math.max(0, searchMovieScan.approxSearchMovieStringKeys - searchMovieResult.count)
+              : null,
+          justWatchHttpErrors: getJustWatchHttpErrorSnapshot(),
+          error,
+        });
+      });
+
+      dev.post("/reset-redis", async (_request, reply) => {
         if (!devRedisApisAllowedOrReply(reply)) return;
         try {
-          const { stdout, stderr } = await exec("bun run seed-redis", { cwd: process.cwd() });
-          reply.send({ ok: true, stdout, stderr });
-        } catch (error) {
-          const err = error as { stdout?: string; stderr?: string; message?: string };
-          reply.code(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({
-            error: err.stderr || err.message || "Failed to seed Redis from snapshot",
-            stdout: err.stdout || "",
-            stderr: err.stderr || "",
+          const { stdout, stderr } = await runDevCommand("bun run redis:reset");
+          reply.send({
+            ok: true,
+            message: "Redis reset completed. Snapshot was validated and Redis was seeded.",
+            stdout,
+            stderr,
           });
+        } catch (error) {
+          reply
+            .code(HTTP_STATUS_INTERNAL_SERVER_ERROR)
+            .send(
+              toDevCommandError("reset-redis", "Failed to reset Redis snapshot workflow", error),
+            );
         }
       });
 
       dev.post("/export-redis", async (_request, reply) => {
         if (!devRedisApisAllowedOrReply(reply)) return;
         try {
-          const { stdout, stderr } = await exec("bun run export-redis", { cwd: process.cwd() });
+          const { stdout, stderr } = await runDevCommand("bun run export-redis");
           reply.send({ ok: true, stdout, stderr });
         } catch (error) {
-          const err = error as { stdout?: string; stderr?: string; message?: string };
-          reply.code(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({
-            error: err.stderr || err.message || "Failed to export Redis snapshot",
-            stdout: err.stdout || "",
-            stderr: err.stderr || "",
-          });
-        }
-      });
-
-      dev.post("/validate-redis-snapshot", async (_request, reply) => {
-        if (!devRedisApisAllowedOrReply(reply)) return;
-        try {
-          const { stdout, stderr } = await exec("bun run seed:validate", { cwd: process.cwd() });
-          reply.send({ ok: true, stdout, stderr });
-        } catch (error) {
-          const err = error as { stdout?: string; stderr?: string; message?: string };
-          reply.code(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({
-            error: err.stderr || err.message || "Failed to validate Redis snapshot",
-            stdout: err.stdout || "",
-            stderr: err.stderr || "",
-          });
-        }
-      });
-
-      dev.post("/refresh-local-seed", async (_request, reply) => {
-        if (!devRedisApisAllowedOrReply(reply)) return;
-        try {
-          const { stdout, stderr } = await exec("bun run seed:refresh:local", {
-            cwd: process.cwd(),
-          });
-          reply.send({
-            ok: true,
-            message:
-              "Refreshed/exported the local Redis snapshot file and validated it. This command does not re-seed Redis.",
-            stdout,
-            stderr,
-          });
-        } catch (error) {
-          const err = error as { stdout?: string; stderr?: string; message?: string };
-          reply.code(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({
-            error:
-              err.stderr ||
-              err.message ||
-              "Failed to refresh/export and validate the local Redis snapshot file",
-            stdout: err.stdout || "",
-            stderr: err.stderr || "",
-          });
+          reply
+            .code(HTTP_STATUS_INTERNAL_SERVER_ERROR)
+            .send(toDevCommandError("export-redis", "Failed to export Redis snapshot", error));
         }
       });
     },
