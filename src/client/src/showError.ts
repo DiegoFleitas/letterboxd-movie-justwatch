@@ -9,16 +9,18 @@ export const showError = (error: unknown): void => {
   const message = plainText(typeof error === "string" ? error : String(error));
   const now = Date.now();
   if (message === lastErrorMessage && now - lastErrorAt < ERROR_DEDUPE_WINDOW_MS) return;
-  lastErrorMessage = message;
-  lastErrorAt = now;
   const impl = getToastImpl();
   if (impl?.error) {
+    lastErrorMessage = message;
+    lastErrorAt = now;
     impl.error(message);
     return;
   }
   if (typeof (globalThis as { iziToast?: unknown }).iziToast === "undefined") return;
   const toastCount = document.querySelectorAll(".iziToast-capsule")?.length || 0;
   if (toastCount >= 2) return;
+  lastErrorMessage = message;
+  lastErrorAt = now;
   (globalThis as { iziToast?: { show: (o: Record<string, unknown>) => void } }).iziToast?.show({
     title: "Error",
     message: message,

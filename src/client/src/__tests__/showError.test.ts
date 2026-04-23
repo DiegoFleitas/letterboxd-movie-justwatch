@@ -38,4 +38,34 @@ describe("showError", () => {
 
     expect(errorToast).toHaveBeenCalledTimes(2);
   });
+
+  it("does not poison dedupe state when iziToast is undefined", () => {
+    // No toast impl and no iziToast global → nothing shown, state must not be updated
+    showError("msg");
+
+    // Now set a real impl — the same message should still be shown
+    const errorToast = vi.fn();
+    setToastImpl({ error: errorToast });
+    showError("msg");
+
+    expect(errorToast).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not poison dedupe state when toastCount >= 2", () => {
+    const iziToastShow = vi.fn();
+    (globalThis as { iziToast?: unknown }).iziToast = { show: iziToastShow };
+
+    // Simulate 2 existing toasts so the call is skipped
+    document.body.innerHTML =
+      '<div class="iziToast-capsule"></div><div class="iziToast-capsule"></div>';
+    showError("capped");
+
+    // Remove the capsules so the next call can proceed
+    document.body.innerHTML = "";
+    showError("capped");
+
+    expect(iziToastShow).toHaveBeenCalledTimes(1);
+
+    delete (globalThis as { iziToast?: unknown }).iziToast;
+  });
 });
