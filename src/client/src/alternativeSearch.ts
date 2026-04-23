@@ -3,6 +3,7 @@ import { showMessage } from "./showMessage";
 import { showError } from "./showError";
 import { NOTICE_HOLD_ALT_SEARCH_MS } from "./animation/timing";
 import { captureFrontendException, captureFrontendMessage } from "./sentry";
+import { HTTP_API_PATHS } from "@server/routes";
 import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from "@server/httpStatusCodes";
 
 let isAlternativeSearchInFlight = false;
@@ -20,7 +21,7 @@ export function runAlternativeSearch(
   isAlternativeSearchInFlight = true;
   options?.setAlternativeSearchLoading?.(true);
   toggleNotice(`Searching for ${title} (${year})...`);
-  fetch("/api/alternative-search", {
+  fetch(HTTP_API_PATHS.alternativeSearch, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ title, year }),
@@ -28,7 +29,7 @@ export function runAlternativeSearch(
     .then((res) => {
       if (res.status >= HTTP_STATUS_INTERNAL_SERVER_ERROR) {
         captureFrontendMessage("alternative-search upstream error", {
-          tags: { source: "api", endpoint: "/api/alternative-search", reason: "http-5xx" },
+          tags: { source: "api", endpoint: HTTP_API_PATHS.alternativeSearch, reason: "http-5xx" },
           extra: { status: res.status, title, year },
         });
       }
@@ -43,7 +44,7 @@ export function runAlternativeSearch(
     })
     .catch((err) => {
       captureFrontendException(err, {
-        tags: { source: "api", endpoint: "/api/alternative-search" },
+        tags: { source: "api", endpoint: HTTP_API_PATHS.alternativeSearch },
         extra: { title, year },
       });
       console.error(err);
@@ -56,7 +57,7 @@ export function runAlternativeSearch(
 
 export function searchSubs(query: string, year?: string | number): void {
   if (!query) return;
-  fetch("/api/subdl-search", {
+  fetch(HTTP_API_PATHS.subdlSearch, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ title: query, year }),
@@ -71,7 +72,7 @@ export function searchSubs(query: string, year?: string | number): void {
     })
     .catch((err) => {
       captureFrontendException(err, {
-        tags: { source: "api", endpoint: "/api/subdl-search" },
+        tags: { source: "api", endpoint: HTTP_API_PATHS.subdlSearch },
         extra: { query, year },
       });
       console.error(err);

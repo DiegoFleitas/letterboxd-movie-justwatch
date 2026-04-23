@@ -6,6 +6,7 @@ import { countries, generes } from "./consts";
 import { CountrySelector } from "./CountrySelector";
 import { fetchCountryFromIp } from "./countryGeo";
 import { SimpleWaitDots } from "./SimpleWaitDots";
+import { HTTP_API_PATHS } from "@server/routes";
 import { WaitCue } from "./WaitCue";
 
 const COUNTRY_STORAGE_KEY = "letterboxd-justwatch-country";
@@ -112,9 +113,12 @@ export function LeftPanel(): React.ReactElement {
     const ac = new AbortController();
     setSuggestionsLoading(true);
     const query = encodeURIComponent(debouncedTitle.trim());
-    fetch(`/api/proxy/https://api.themoviedb.org/3/search/movie?query=${query}`, {
-      signal: ac.signal,
-    })
+    fetch(
+      `${HTTP_API_PATHS.proxyPrefix}/https://api.themoviedb.org/3/search/movie?query=${query}`,
+      {
+        signal: ac.signal,
+      },
+    )
       .then((res) => res.json())
       .then((data: { results?: TMDBMovie[] }) => {
         const results = (data.results || []).slice(0, TMDB_MAX_SUGGESTIONS);

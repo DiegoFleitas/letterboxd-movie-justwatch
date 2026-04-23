@@ -12,6 +12,7 @@ import {
   type MergeData,
   type TileData,
 } from "./movieTiles";
+import { HTTP_API_PATHS } from "@server/routes";
 import { captureFrontendException } from "./sentry";
 import { safeJsonResponse } from "./safeJsonResponse";
 
@@ -159,7 +160,7 @@ export function useLetterboxdList(
           const { title, year } = element;
           const movieData = { title, year, country: data.country ?? "" };
           return () =>
-            fetch("/api/search-movie", {
+            fetch(HTTP_API_PATHS.searchMovie, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(movieData),
@@ -202,7 +203,7 @@ export function useLetterboxdList(
                   }
                 }
                 captureFrontendException(e, {
-                  tags: { source: "api", endpoint: "/api/search-movie", flow: "list-batch" },
+                  tags: { source: "api", endpoint: HTTP_API_PATHS.searchMovie, flow: "list-batch" },
                   extra: { title, year, country: data.country, listUrl: data.listUrl },
                 });
                 console.error(e);
@@ -266,7 +267,7 @@ export function useLetterboxdList(
   const loadWatchlist = useCallback(
     async (data: LoadData): Promise<void> => {
       try {
-        const response = await fetch("/api/letterboxd-watchlist", {
+        const response = await fetch(HTTP_API_PATHS.letterboxdWatchlist, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
@@ -277,7 +278,11 @@ export function useLetterboxdList(
       } catch (e) {
         if (isListFetchTimedOut(e)) {
           captureFrontendException(e, {
-            tags: { source: "api", endpoint: "/api/letterboxd-watchlist", reason: "timeout" },
+            tags: {
+              source: "api",
+              endpoint: HTTP_API_PATHS.letterboxdWatchlist,
+              reason: "timeout",
+            },
             extra: { listType: data.listType, listUrl: data.listUrl, page: data.page },
           });
           showError(
@@ -287,7 +292,7 @@ export function useLetterboxdList(
           return;
         }
         captureFrontendException(e, {
-          tags: { source: "api", endpoint: "/api/letterboxd-watchlist" },
+          tags: { source: "api", endpoint: HTTP_API_PATHS.letterboxdWatchlist },
           extra: { listType: data.listType, listUrl: data.listUrl, page: data.page },
         });
         throw e;
@@ -301,7 +306,7 @@ export function useLetterboxdList(
   const loadCustomList = useCallback(
     async (data: LoadData): Promise<void> => {
       try {
-        const response = await fetch("/api/letterboxd-custom-list", {
+        const response = await fetch(HTTP_API_PATHS.letterboxdCustomList, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
@@ -320,7 +325,11 @@ export function useLetterboxdList(
       } catch (e) {
         if (isListFetchTimedOut(e)) {
           captureFrontendException(e, {
-            tags: { source: "api", endpoint: "/api/letterboxd-custom-list", reason: "timeout" },
+            tags: {
+              source: "api",
+              endpoint: HTTP_API_PATHS.letterboxdCustomList,
+              reason: "timeout",
+            },
             extra: { listType: data.listType, listUrl: data.listUrl, page: data.page },
           });
           showError(
@@ -330,7 +339,7 @@ export function useLetterboxdList(
           return;
         }
         captureFrontendException(e, {
-          tags: { source: "api", endpoint: "/api/letterboxd-custom-list" },
+          tags: { source: "api", endpoint: HTTP_API_PATHS.letterboxdCustomList },
           extra: { listType: data.listType, listUrl: data.listUrl, page: data.page },
         });
         throw e;
