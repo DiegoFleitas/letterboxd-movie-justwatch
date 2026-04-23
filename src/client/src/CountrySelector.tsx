@@ -89,6 +89,7 @@ export function CountrySelector({
             type="text"
             className="country-search"
             placeholder="Type to filter countries"
+            aria-label="Filter countries"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />

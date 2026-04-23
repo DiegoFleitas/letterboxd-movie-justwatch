@@ -3,7 +3,7 @@ export interface Genre {
   id: number;
   name: string;
 }
-export const generes: Genre[] = [
+export const genres: Genre[] = [
   {
     id: 28,
     name: "Action",
