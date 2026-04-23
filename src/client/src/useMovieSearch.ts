@@ -1,5 +1,6 @@
 import { useCallback, useRef } from "react";
 import { showMessage } from "./showMessage";
+import { showError } from "./showError";
 import { PLACEHOLDER_POSTER, normalizePosterPath, type MergeData } from "./movieTiles";
 import { captureFrontendException, captureFrontendMessage } from "./sentry";
 import { SafeJsonResponseError, safeJsonResponse } from "./safeJsonResponse";
@@ -93,6 +94,8 @@ export function useMovieSearch(
                 country: data.country,
               },
             });
+          } else {
+            showError("Movie search failed. Check your connection and try again.");
           }
           captureFrontendException(err, {
             tags: { source: "api", endpoint: HTTP_API_PATHS.searchMovie },

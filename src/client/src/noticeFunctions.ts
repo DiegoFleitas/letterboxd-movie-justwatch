@@ -49,6 +49,10 @@ export const toggleNotice = (msg: string | null | undefined): void => {
 };
 
 export const hideNotice = (): void => {
+  if (noticeSetter) {
+    noticeSetter(null);
+    return;
+  }
   const impl = getToastImpl();
   if (impl?.dismissLoading && noticeId != null) {
     impl.dismissLoading(noticeId);

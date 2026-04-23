@@ -21,10 +21,7 @@ const lakeMungoSearch = searchMovieData.find(
 )?.response;
 
 function generateTileId(title: string, year: string | null): string {
-  return `${year}-${title
-    .toUpperCase()
-    .replace(/ /g, "-")
-    .replace(/[^A-Z0-9]/g, "")}`;
+  return `${year}-${title.toUpperCase().replace(/[^A-Z0-9]/g, "")}`;
 }
 
 interface TileData {
@@ -69,6 +66,10 @@ describe("state tile ID management", () => {
     expect(generateTileId("It's Never Over, Jeff Buckley", "2025")).toBe(
       "2025-ITSNEVEROVERJEFFBUCKLEY",
     );
+  });
+
+  it("strips spaces instead of preserving hyphens", () => {
+    expect(generateTileId("A  Space Heavy Title", "2024")).toBe("2024-ASPACEHEAVYTITLE");
   });
 
   it("handles null year", () => {
