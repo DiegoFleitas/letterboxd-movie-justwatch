@@ -88,7 +88,7 @@ docker compose up --build
 
 Then open **`http://localhost:3000`**. Provide secrets (`OMDB_API_KEY`, `APP_SECRET_KEY`, and others) via a root `.env` or `docker-compose.override.yml`; Compose loads `.env` automatically.
 
-## Refresh local dev seed data
+## Reset local Redis dev cache
 
 This snapshot workflow is for **local development seeding only**. It is not intended for production backup or migration.
 
@@ -99,22 +99,23 @@ Prerequisites:
 - Local Redis reachable (`FLYIO_REDIS_URL` defaults to `redis://localhost:6379` when unset)
 - `FLY_APP_NAME` set when you want to control key prefix filtering (defaults to `app`)
 
-Commands:
+Default command:
 
 ```bash
-# 1) Export from local Redis to snapshot file
-bun run export-redis
-
-# 2) Validate snapshot schema
-bun run seed:validate
-
-# 3) Seed local Redis from snapshot
-bun run seed-redis
+bun run redis:reset
 ```
 
-One-shot refresh (export + validate):
+What `redis:reset` does:
+
+- If snapshot exists (`redis/data/redis-snapshot.json`), it runs validate + seed.
+- If snapshot is missing, it runs export + validate + seed.
+
+Advanced/manual commands:
 
 ```bash
+bun run export-redis
+bun run seed:validate
+bun run seed-redis
 bun run seed:refresh:local
 ```
 

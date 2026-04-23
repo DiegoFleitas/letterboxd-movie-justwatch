@@ -1,4 +1,4 @@
-import { describe, it, beforeAll, afterAll, expect, vi } from "vitest";
+import { describe, it, beforeAll, afterAll, expect } from "vitest";
 import { HTTP_API_PATHS } from "@server/routes";
 import { createServer } from "@server/createServer.js";
 import { _injectRedisClientForTest, _resetRedisForTesting } from "@server/lib/redis.js";
@@ -38,6 +38,33 @@ function createInMemoryRedisMock() {
       return Promise.resolve(added);
     },
     smembers: (key: string) => Promise.resolve([...(sets.get(key) ?? [])]),
+    exists: (...keys: string[]) => {
+      let n = 0;
+      for (const k of keys) {
+        if (store.has(k)) n++;
+      }
+      return Promise.resolve(n);
+    },
+    pipeline() {
+      const ops: Array<{ op: "exists"; key: string }> = [];
+      const chain = {
+        exists(key: string) {
+          ops.push({ op: "exists", key });
+          return chain;
+        },
+        type() {
+          return chain;
+        },
+        pttl() {
+          return chain;
+        },
+        get() {
+          return chain;
+        },
+        exec: async () => ops.map((o): [null, number] => [null, store.has(o.key) ? 1 : 0]),
+      };
+      return chain;
+    },
     quit: () => Promise.resolve(undefined as void),
     on: () => {},
   };
@@ -133,10 +160,11 @@ describe("backend integration (fastify)", () => {
 describe("backend integration (DISABLE_REDIS)", () => {
   let baseUrl: string;
   let closeServer: (() => Promise<void>) | null = null;
+  const prevDisableRedis = process.env.DISABLE_REDIS;
 
   beforeAll(async () => {
     _resetRedisForTesting();
-    vi.stubEnv("DISABLE_REDIS", "1");
+    process.env.DISABLE_REDIS = "1";
     const created = createServer();
     const { port, close } = await created.start(0);
     baseUrl = `http://127.0.0.1:${port}`;
@@ -148,7 +176,11 @@ describe("backend integration (DISABLE_REDIS)", () => {
       await closeServer();
       closeServer = null;
     }
-    vi.unstubAllEnvs();
+    if (prevDisableRedis === undefined) {
+      delete process.env.DISABLE_REDIS;
+    } else {
+      process.env.DISABLE_REDIS = prevDisableRedis;
+    }
   });
 
   it("GET /redis-healthcheck returns OK (Redis disabled)", async () => {

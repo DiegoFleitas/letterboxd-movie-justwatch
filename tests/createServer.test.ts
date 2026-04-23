@@ -37,6 +37,33 @@ function createInMemoryRedisMock() {
       return Promise.resolve(added);
     },
     smembers: (key: string) => Promise.resolve([...(sets.get(key) ?? [])]),
+    exists: (...keys: string[]) => {
+      let n = 0;
+      for (const k of keys) {
+        if (store.has(k)) n++;
+      }
+      return Promise.resolve(n);
+    },
+    pipeline() {
+      const ops: Array<{ op: "exists"; key: string }> = [];
+      const chain = {
+        exists(key: string) {
+          ops.push({ op: "exists", key });
+          return chain;
+        },
+        type() {
+          return chain;
+        },
+        pttl() {
+          return chain;
+        },
+        get() {
+          return chain;
+        },
+        exec: async () => ops.map((o): [null, number] => [null, store.has(o.key) ? 1 : 0]),
+      };
+      return chain;
+    },
     quit: () => Promise.resolve(undefined as void),
     on: () => {},
   };

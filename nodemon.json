@@ -1,0 +1,5 @@
+{
+  "watch": ["src/server"],
+  "ext": "ts,js,mjs,cjs",
+  "ignore": ["redis/**", "src/client/**", "tests/**", "dist/**", "coverage/**"]
+}
