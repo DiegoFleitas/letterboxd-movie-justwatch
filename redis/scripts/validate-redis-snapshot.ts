@@ -13,8 +13,7 @@ type SnapshotSet = { key: string; members: string[]; ttlSeconds?: number | null 
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const snapshotPath =
-  process.env.REDIS_SNAPSHOT_PATH ||
-  path.join(__dirname, "..", "resources", "data", "redis-snapshot.json");
+  process.env.REDIS_SNAPSHOT_PATH || path.join(__dirname, "..", "data", "redis-snapshot.json");
 
 function isFiniteNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);

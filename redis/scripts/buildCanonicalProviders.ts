@@ -1,5 +1,5 @@
 /**
- * One-time (or periodic) build: fetch GetPackages, build canonical map, write resources/data/canonical-providers.json.
+ * One-time (or periodic) build: fetch GetPackages, build canonical map, write redis/data/canonical-providers.json.
  */
 import type { AxiosInstance } from "axios";
 import httpClientFactory from "@server/lib/axios.js";
@@ -9,7 +9,7 @@ import { fileURLToPath, pathToFileURL } from "url";
 import { buildCanonicalProviderMaps } from "@server/lib/canonicalProviders.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const rootDir = join(__dirname, "..");
+const rootDir = join(__dirname, "..", "..");
 const isDryRun = process.argv.includes("--dry-run");
 
 const GET_PACKAGES_QUERY = `
@@ -87,7 +87,7 @@ async function main(): Promise<void> {
   }
 
   const { byTechnicalName, byClearName } = buildCanonicalProviderMaps(allPackages);
-  const outPath = join(rootDir, "resources", "data", "canonical-providers.json");
+  const outPath = join(rootDir, "redis", "data", "canonical-providers.json");
   mkdirSync(dirname(outPath), { recursive: true });
   const payload = { byTechnicalName, byClearName };
   writeFileSync(outPath, JSON.stringify(payload, null, 2), "utf8");

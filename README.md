@@ -92,7 +92,7 @@ Then open **`http://localhost:3000`**. Provide secrets (`OMDB_API_KEY`, `APP_SEC
 
 This snapshot workflow is for **local development seeding only**. It is not intended for production backup or migration.
 
-Default snapshot path: `resources/data/redis-snapshot.json`.
+Default snapshot path: `redis/data/redis-snapshot.json`.
 
 Prerequisites:
 
@@ -120,7 +120,7 @@ bun run seed:refresh:local
 
 Expected success output for export + validate includes:
 
-- `Exported <n> keys and <m> sets to .../resources/data/redis-snapshot.json`
+- `Exported <n> keys and <m> sets to .../redis/data/redis-snapshot.json`
 - `[redis-snapshot-validate] OK path=... keys=<n> sets=<m>`
 
 Expected success output for seeding includes:
@@ -142,16 +142,22 @@ The `bun run fly:*` scripts are optional helpers for logs, SSH, or ad hoc `flyct
 
 ## Documentation
 
-Operational detail (scripts, environment, layout, observability, branding) lives in the **[GitHub Wiki](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki)**. Source Markdown for those pages is in **[`docs/wiki/`](docs/wiki/)** so changes can be reviewed in pull requests; see [`docs/wiki/README.md`](docs/wiki/README.md) for how to sync the wiki git repository.
+Operational detail (scripts, environment, layout, tests, Redis, observability, branding) lives in the **[GitHub Wiki](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki)**. Source Markdown lives in **[`docs/wiki/`](docs/wiki/)** for pull-request review; publishing that tree into the wiki git repo is described in **[`docs/Wiki-publish.md`](docs/Wiki-publish.md)**.
 
-| Topic                              | Wiki                                                                                                   |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| Bun scripts                        | [Commands](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki/Commands)                   |
-| Environment variables              | [Configuration](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki/Configuration)         |
-| Sentry, Fastify logging, redaction | [Sentry and logger](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki/Sentry-and-logger) |
-| Observability overview             | [Observability](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki/Observability)         |
-| Paths and folders                  | [Repository layout](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki/Repository-layout) |
-| README banner and social preview   | [Branding](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki/Branding)                   |
+| Topic                              | Wiki                                                                                                       |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Wiki home (links this README)      | [Home](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki/Home)                               |
+| Bun scripts                        | [Commands](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki/Commands)                       |
+| Environment variables              | [Configuration](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki/Configuration)             |
+| Sentry, Fastify logging, redaction | [Sentry and logger](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki/Sentry-and-logger)     |
+| Observability overview             | [Observability](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki/Observability)             |
+| Paths and folders                  | [Repository layout](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki/Repository-layout)     |
+| Vitest (unit / integration)        | [Tests](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki/Tests)                             |
+| `tests/fixtures`                   | [Test fixtures](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki/Test-fixtures)             |
+| `tests/goldens`                    | [Test goldens](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki/Test-goldens)               |
+| Playwright (E2E)                   | [E2E (Playwright)](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki/E2E-Playwright)         |
+| Redis, snapshots, local image      | [Redis and local dev](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki/Redis-and-local-dev) |
+| README banner and social preview   | [Branding](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki/Branding)                       |
 
 ## Contributing
 
@@ -161,7 +167,7 @@ Before opening a pull request, run:
 bun run lint && bun run typecheck && bun run test
 ```
 
-End-to-end details: [`e2e/README.md`](e2e/README.md).
+End-to-end details: [`tests/e2e/README.md`](tests/e2e/README.md).
 
 **License:** ISC (see `package.json`).
 

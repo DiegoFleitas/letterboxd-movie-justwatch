@@ -1,7 +1,7 @@
 /**
  * Hits the real Fastify server (not Vite). Fails if the API is down even when
- * app.spec.ts passes (those tests mock /api/* in the browser).
- * Base URL: E2E_API_BASE_URL or http://127.0.0.1:3000 — see e2e/README.md.
+ * UI specs in `*-*.spec.ts` pass (those tests mock `/api/*` in the browser).
+ * Base URL: E2E_API_BASE_URL or http://127.0.0.1:3000 — see tests/e2e/README.md.
  */
 import { test, expect } from "@playwright/test";
 

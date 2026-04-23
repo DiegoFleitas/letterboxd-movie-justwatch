@@ -14,8 +14,7 @@ const url = process.env.FLYIO_REDIS_URL || "redis://localhost:6379";
 const prefix = process.env.FLY_APP_NAME || "app";
 const matchPattern = `${prefix}:*`;
 const outPath =
-  process.env.REDIS_SNAPSHOT_PATH ||
-  path.join(__dirname, "..", "resources", "data", "redis-snapshot.json");
+  process.env.REDIS_SNAPSHOT_PATH || path.join(__dirname, "..", "data", "redis-snapshot.json");
 
 function sanitizeRedisUrl(redisUrl: string): string {
   try {

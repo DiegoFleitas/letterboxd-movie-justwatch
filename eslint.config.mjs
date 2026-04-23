@@ -14,8 +14,8 @@ export default [
       "dist",
       "build",
       "src/client/dist",
-      "playwright-report",
-      "test-results",
+      "tests/playwright-report",
+      "tests/test-results",
       ".turbo",
       ".cache",
     ],
@@ -95,7 +95,7 @@ export default [
     },
   },
   {
-    files: ["playwright.config.*", "tests/e2e/**"],
+    files: ["playwright.config.*", "tests/e2e/**/*.ts"],
     languageOptions: {
       globals: {
         test: "readonly",

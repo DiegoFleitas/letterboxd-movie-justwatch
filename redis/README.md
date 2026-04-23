@@ -44,13 +44,15 @@ You can also use redis-cli to connect to flyio redis upstash instance
 
 ## Snapshot export and seed
 
+Scripts live under `redis/scripts/`; npm-style shortcuts are `bun run export-redis`, `bun run seed-redis`, `bun run seed:validate`, and `bun run build:providers` (see root `package.json`).
+
 You can export the app's Redis cache to a JSON file and later restore it (e.g. to avoid re-hitting JustWatch after a flush or to seed local Redis).
 
 **Export** (from the project root):
 
 - Set `FLYIO_REDIS_URL` (and `FLY_APP_NAME` if your app uses a custom namespace).
 - Run: `bun run export-redis`
-- Snapshot is written to `resources/data/redis-snapshot.json` (or set `REDIS_SNAPSHOT_PATH`).
+- Snapshot is written to `redis/data/redis-snapshot.json` (or set `REDIS_SNAPSHOT_PATH`).
 
 **Seed** (restore into a Redis instance):
 
@@ -58,7 +60,7 @@ You can export the app's Redis cache to a JSON file and later restore it (e.g. t
 - Run: `bun run seed-redis`
 - Keys and sets from the snapshot file are restored; existing keys are overwritten.
 
-The snapshot file can be large. You can commit it under `resources/data/` if you want to share the cache state, or keep it local only.
+The snapshot file can be large. You can commit it under `redis/data/` if you want to share the cache state, or keep it local only.
 
 ## Gotchas
 

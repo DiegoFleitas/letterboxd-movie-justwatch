@@ -2,8 +2,8 @@ node_modules
 dist
 build
 src/client/dist
-playwright-report
-test-results
+tests/playwright-report
+tests/test-results
 .turbo
 .cache
 bun.lock
