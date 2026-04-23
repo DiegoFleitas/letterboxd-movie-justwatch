@@ -101,6 +101,14 @@ const fetchList = async ({
           } else {
             console.log(`Page ${pageUrl} has no content, stopping pagination.`);
           }
+          // Avoid repeated Letterboxd fetches for "past end" pages once we know the list size.
+          if (haveFilmTotal) {
+            await setCacheValue(cacheKey, [], cacheTtl, cacheCategories);
+          } else if (currentPage === page) {
+            console.log(
+              `[LIST_CACHE_SKIP] No parsable films for starting page ${page} (${cacheKey}); not caching. Often markup changed, blocked HTML, or an empty watchlist.`,
+            );
+          }
           break;
         }
 

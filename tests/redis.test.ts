@@ -6,6 +6,7 @@ import {
   getCacheValue,
   setCacheValue,
   clearCacheByCategory,
+  getSoonestIndexedCacheKeyExpiryAtMs,
   isHealthy,
   disconnectRedis,
   _resetRedisForTesting,
@@ -58,6 +59,26 @@ function createMockClient(overrides: Record<string, unknown> = {}): Record<strin
     del: (...args: unknown[]) => {
       calls.del.push(args);
       return Promise.resolve(args.length);
+    },
+    pipeline() {
+      const ops: Array<{ op: "exists"; key: string }> = [];
+      const chain = {
+        exists(key: string) {
+          ops.push({ op: "exists", key });
+          return chain;
+        },
+        type() {
+          return chain;
+        },
+        pttl() {
+          return chain;
+        },
+        get() {
+          return chain;
+        },
+        exec: async () => ops.map((): [null, number] => [null, 1] as [null, number]),
+      };
+      return chain;
     },
     quit: () => Promise.resolve("OK"),
     _calls: calls,
@@ -210,6 +231,99 @@ describe("Redis cache", () => {
     expect(mock._calls.smembers[0][0]).toBe("myapp:keys:search");
     if (saved !== undefined) process.env.FLY_APP_NAME = saved;
     else delete process.env.FLY_APP_NAME;
+  });
+
+  it("getSoonestIndexedCacheKeyExpiryAtMs returns null with error when client is null", async () => {
+    _injectRedisClientForTest(null);
+    expect(await getSoonestIndexedCacheKeyExpiryAtMs()).toEqual({
+      soonestExpiryAtMs: null,
+      error: "Redis unavailable",
+    });
+  });
+
+  it("getSoonestIndexedCacheKeyExpiryAtMs returns null when all category sets are empty", async () => {
+    const mock = createMockClient({ smembers: () => Promise.resolve([]) });
+    _injectRedisClientForTest(mock as never);
+    expect(await getSoonestIndexedCacheKeyExpiryAtMs()).toEqual({ soonestExpiryAtMs: null });
+  });
+
+  it("getSoonestIndexedCacheKeyExpiryAtMs returns null when no key has a positive PTTL", async () => {
+    const keys = ["app:k1", "app:k2"];
+    const mock = {
+      smembers: () => Promise.resolve(keys),
+      pipeline() {
+        return {
+          pttl() {
+            return this;
+          },
+          exists() {
+            return this;
+          },
+          type() {
+            return this;
+          },
+          get() {
+            return this;
+          },
+          exec: async () =>
+            [
+              [null, -1],
+              [null, -2],
+            ] as [null, number][],
+        };
+      },
+      ping: () => Promise.resolve("PONG"),
+      get: () => Promise.resolve(null),
+      set: () => Promise.resolve("OK"),
+      sadd: () => Promise.resolve(1),
+      del: () => Promise.resolve(1),
+      quit: () => Promise.resolve("OK"),
+    };
+    _injectRedisClientForTest(mock as never);
+    expect(await getSoonestIndexedCacheKeyExpiryAtMs()).toEqual({ soonestExpiryAtMs: null });
+  });
+
+  it("getSoonestIndexedCacheKeyExpiryAtMs uses minimum positive PTTL", async () => {
+    const saved = process.env.FLY_APP_NAME;
+    delete process.env.FLY_APP_NAME;
+    const keys = ["app:k1", "app:k2"];
+    const mock = {
+      smembers: () => Promise.resolve(keys),
+      pipeline() {
+        return {
+          pttl() {
+            return this;
+          },
+          exists() {
+            return this;
+          },
+          type() {
+            return this;
+          },
+          get() {
+            return this;
+          },
+          exec: async () =>
+            [
+              [null, 5000],
+              [null, 12_000],
+            ] as [null, number][],
+        };
+      },
+      ping: () => Promise.resolve("PONG"),
+      get: () => Promise.resolve(null),
+      set: () => Promise.resolve("OK"),
+      sadd: () => Promise.resolve(1),
+      del: () => Promise.resolve(1),
+      quit: () => Promise.resolve("OK"),
+    };
+    _injectRedisClientForTest(mock as never);
+    const before = Date.now();
+    const r = await getSoonestIndexedCacheKeyExpiryAtMs();
+    expect(r.error).toBeUndefined();
+    expect(r.soonestExpiryAtMs).toBeGreaterThanOrEqual(before + 4980);
+    expect(r.soonestExpiryAtMs).toBeLessThanOrEqual(before + 5020);
+    if (saved !== undefined) process.env.FLY_APP_NAME = saved;
   });
 
   it("disconnectRedis does not throw when client is null", async () => {

@@ -3,6 +3,7 @@
   bottom: 0;
   left: 0;
   right: 0;
+  overflow: visible;
   /* Keep above common UI layers so native/custom hovers aren't hidden behind tiles/panels */
   z-index: 12000;
   display: flex;
@@ -27,6 +28,24 @@
   margin-right: 0.25rem;
 }
 
+.debug-bar__origin {
+  flex: 1 1 12rem;
+  min-width: 0;
+  position: relative;
+  font-family: var(--ui-font);
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--color-text-subtle);
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.debug-bar__origin code {
+  font-size: 0.62em;
+}
+
 .debug-bar__cache-status {
   flex: 0 0 auto;
   margin-left: auto;
@@ -43,6 +62,10 @@
   line-height: 1;
   color: var(--color-text);
   background: var(--color-surface);
+}
+
+.debug-bar__cache-status + .debug-bar__cache-status {
+  margin-left: 0.35rem;
 }
 
 .debug-bar__cache-status--neutral {
@@ -76,6 +99,40 @@
   font-weight: 600;
   color: var(--color-text-subtle);
   opacity: 0.8;
+  white-space: nowrap;
+}
+
+/* Keep width stable when 9 → 10 etc. so flex + margin-left:auto does not shift pills/buttons. */
+.debug-bar__cache-poll-count {
+  display: inline-block;
+  min-width: 2ch;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.debug-bar__cache-ttl {
+  flex: 0 0 auto;
+  margin-left: 0.35rem;
+  position: relative;
+  font-family: var(--ui-font);
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--color-text-subtle);
+  opacity: 0.8;
+  white-space: nowrap;
+}
+
+.debug-bar__cache-ttl-count {
+  display: inline-block;
+  min-width: 4ch;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.debug-bar__cache-ttl-na {
+  display: inline-block;
+  min-width: 4ch;
+  text-align: center;
 }
 
 .debug-bar__actions {
@@ -90,6 +147,7 @@
 .debug-bar__actions > .debug-bar__tip-host {
   display: inline-flex;
   max-width: 100%;
+  position: relative;
 }
 
 /* Undo global .btn full-width inside the bar */
@@ -106,7 +164,7 @@
   font-weight: 600;
 }
 
-.debug-bar .btn.is-disabled {
+.debug-bar .btn:disabled {
   opacity: 0.55;
   filter: grayscale(0.15);
   cursor: not-allowed;
@@ -129,11 +187,15 @@
 .debug-bar__tip {
   position: absolute;
   left: 50%;
-  bottom: calc(100% + 10px);
+  /* Overlap the host slightly so the pointer can reach the tip without leaving :hover (no dead zone). */
+  bottom: calc(100% - 6px);
   transform: translateX(-50%);
   width: min(520px, calc(100vw - 24px));
-  max-height: min(320px, 45vh);
-  overflow: auto;
+  max-height: min(560px, 72vh);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   padding: 0.55rem 0.65rem;
   border-radius: 10px;
   border: 1px solid var(--color-border);
@@ -170,6 +232,24 @@
   filter: drop-shadow(0 1px 0 var(--color-border));
 }
 
+/* Trailing pills: centering a wide tip on a narrow host pushes past the right viewport edge. */
+.debug-bar__cache-status.debug-bar__tip-host .debug-bar__tip,
+.debug-bar__cache-poll.debug-bar__tip-host .debug-bar__tip,
+.debug-bar__cache-ttl.debug-bar__tip-host .debug-bar__tip {
+  left: auto;
+  right: 0;
+  transform: none;
+  width: min(520px, calc(100vw - 16px));
+}
+
+.debug-bar__cache-status.debug-bar__tip-host .debug-bar__tip::after,
+.debug-bar__cache-poll.debug-bar__tip-host .debug-bar__tip::after,
+.debug-bar__cache-ttl.debug-bar__tip-host .debug-bar__tip::after {
+  left: auto;
+  right: 1rem;
+  transform: none;
+}
+
 .debug-bar__tip-host:hover .debug-bar__tip,
 .debug-bar__tip-host:focus-within .debug-bar__tip {
   opacity: 1;
@@ -180,4 +260,13 @@
     opacity 120ms ease,
     transform 120ms ease,
     visibility 0s;
+}
+
+.debug-bar__cache-status.debug-bar__tip-host:hover .debug-bar__tip,
+.debug-bar__cache-status.debug-bar__tip-host:focus-within .debug-bar__tip,
+.debug-bar__cache-poll.debug-bar__tip-host:hover .debug-bar__tip,
+.debug-bar__cache-poll.debug-bar__tip-host:focus-within .debug-bar__tip,
+.debug-bar__cache-ttl.debug-bar__tip-host:hover .debug-bar__tip,
+.debug-bar__cache-ttl.debug-bar__tip-host:focus-within .debug-bar__tip {
+  transform: translateY(-2px);
 }

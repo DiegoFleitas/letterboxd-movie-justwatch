@@ -8,10 +8,21 @@ import {
   clearCacheByCategory,
   estimateSearchMovieStringKeyCount,
   getCacheCategoryCount,
+  getSoonestIndexedCacheKeyExpiryAtMs,
 } from "./lib/redis.js";
+import { getJustWatchHttpErrorSnapshot } from "./lib/justWatchOutbound.js";
 import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from "./httpStatusCodes.js";
 
 const exec = promisify(execCallback);
+
+/** Parsed `CACHE_TTL` (seconds) for dev diagnostics; `null` when unset or not a finite non-negative number. */
+function parseCacheTtlEnvSeconds(): number | null {
+  const raw = process.env.CACHE_TTL;
+  if (raw === undefined || raw === "") return null;
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 0) return null;
+  return n;
+}
 
 async function runDevCommand(command: string): Promise<{ stdout: string; stderr: string }> {
   const { stdout, stderr } = await exec(command, { cwd: process.cwd() });
@@ -55,17 +66,17 @@ export function registerDevHttpRoutes(app: FastifyInstance): void {
         reply.send({ ok: true, ...result });
       });
 
-      dev.get("/cache-status", async (_request, reply) => {
+      dev.get("/cache-status", { logLevel: "silent" }, async (_request, reply) => {
         if (!devRedisApisAllowedOrReply(reply)) return;
         const redisKeyPrefix = process.env.FLY_APP_NAME || "app";
-        const [watchlistResult, listResult, searchMovieResult, searchMovieScan] = await Promise.all(
-          [
+        const [watchlistResult, listResult, searchMovieResult, searchMovieScan, soonestTtl] =
+          await Promise.all([
             getCacheCategoryCount("watchlist"),
             getCacheCategoryCount("list"),
             getCacheCategoryCount("search-movie"),
             estimateSearchMovieStringKeyCount(),
-          ],
-        );
+            getSoonestIndexedCacheKeyExpiryAtMs(),
+          ]);
         const error =
           watchlistResult.error ||
           listResult.error ||
@@ -74,6 +85,8 @@ export function registerDevHttpRoutes(app: FastifyInstance): void {
         reply.send({
           ok: !error,
           redisKeyPrefix,
+          cacheTtlEnvSeconds: parseCacheTtlEnvSeconds(),
+          soonestIndexedKeyExpiryAtMs: soonestTtl.error ? null : soonestTtl.soonestExpiryAtMs,
           watchlistCacheEntries: watchlistResult.count,
           hasWatchlistCache: watchlistResult.count > 0,
           listCacheEntries: listResult.count,
@@ -86,6 +99,7 @@ export function registerDevHttpRoutes(app: FastifyInstance): void {
             0,
             searchMovieScan.approxSearchMovieStringKeys - searchMovieResult.count,
           ),
+          justWatchHttpErrors: getJustWatchHttpErrorSnapshot(),
           error,
         });
       });

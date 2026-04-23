@@ -1,6 +1,15 @@
 import Redis from "ioredis";
 import crypto from "crypto";
 
+/** ioredis pipeline batching (used to avoid N parallel round-trips for EXISTS/TYPE/GET). */
+interface RedisPipelineLike {
+  exists(key: string): RedisPipelineLike;
+  type(key: string): RedisPipelineLike;
+  pttl(key: string): RedisPipelineLike;
+  get(key: string): RedisPipelineLike;
+  exec(): Promise<Array<[Error | null, unknown]> | null>;
+}
+
 /** Minimal type for Redis client (ioredis default export can be awkward under TS). */
 interface RedisClientLike {
   ping(): Promise<string>;
@@ -11,6 +20,7 @@ interface RedisClientLike {
   sadd(key: string, ...members: string[]): Promise<number>;
   srem(key: string, ...members: string[]): Promise<number>;
   smembers(key: string): Promise<string[]>;
+  pipeline(): RedisPipelineLike;
   quit(): Promise<void>;
   on(event: string, cb: (...args: unknown[]) => void): unknown;
 }
@@ -170,6 +180,64 @@ export const clearCacheByCategory = async (
   }
 };
 
+const PTTL_CHUNK = 400;
+
+/**
+ * Earliest Redis key expiry among keys listed in the watchlist / list / search-movie category sets.
+ * Keys with no TTL (PTTL -1) are ignored. Read-only (does not prune index sets).
+ */
+export const getSoonestIndexedCacheKeyExpiryAtMs = async (): Promise<{
+  soonestExpiryAtMs: number | null;
+  error?: string;
+}> => {
+  const client = await getRedisClient();
+  if (!client) {
+    return { soonestExpiryAtMs: null, error: "Redis unavailable" };
+  }
+  const app = process.env.FLY_APP_NAME || "app";
+  const categories = ["watchlist", "list", "search-movie"] as const;
+  try {
+    const keySet = new Set<string>();
+    for (const cat of categories) {
+      const indexKey = `${app}:keys:${cat}`;
+      const keys = await client.smembers(indexKey);
+      for (const k of keys) {
+        keySet.add(k);
+      }
+    }
+    if (keySet.size === 0) {
+      return { soonestExpiryAtMs: null };
+    }
+    const keys = [...keySet];
+    let minPttlMs: number | null = null;
+    for (let offset = 0; offset < keys.length; offset += PTTL_CHUNK) {
+      const chunk = keys.slice(offset, offset + PTTL_CHUNK);
+      const pipeline = client.pipeline();
+      for (const key of chunk) {
+        pipeline.pttl(key);
+      }
+      const execResult = await pipeline.exec();
+      if (!execResult) continue;
+      for (let i = 0; i < chunk.length; i++) {
+        const row = execResult[i] as [Error | null, number] | undefined;
+        if (!row) continue;
+        const [pttlErr, pttl] = row;
+        if (pttlErr) continue;
+        if (pttl <= 0) continue;
+        if (minPttlMs === null || pttl < minPttlMs) minPttlMs = pttl;
+      }
+    }
+    if (minPttlMs === null) {
+      return { soonestExpiryAtMs: null };
+    }
+    return { soonestExpiryAtMs: Date.now() + minPttlMs };
+  } catch (error) {
+    const err = error as Error;
+    console.log(`[REDIS_SOONEST_TTL_ERROR] ${error}`);
+    return { soonestExpiryAtMs: null, error: err.message };
+  }
+};
+
 export const getCacheCategoryCount = async (
   category: string,
 ): Promise<{ count: number; error?: string }> => {
@@ -183,8 +251,26 @@ export const getCacheCategoryCount = async (
     if (keys.length === 0) {
       return { count: 0 };
     }
-    const presentMask = await Promise.all(keys.map((key) => client.exists(key)));
-    const staleKeys = keys.filter((_, index) => presentMask[index] === 0);
+    /** Batch EXISTS into pipelines so large category sets do not open N concurrent commands per poll. */
+    const EXISTS_CHUNK = 400;
+    const staleKeys: string[] = [];
+    for (let offset = 0; offset < keys.length; offset += EXISTS_CHUNK) {
+      const chunk = keys.slice(offset, offset + EXISTS_CHUNK);
+      const pipeline = client.pipeline();
+      for (const key of chunk) {
+        pipeline.exists(key);
+      }
+      const execResult = await pipeline.exec();
+      if (!execResult) continue;
+      for (let i = 0; i < chunk.length; i++) {
+        const tuple = execResult[i] as [Error | null, number] | undefined;
+        if (!tuple) continue;
+        const [existsErr, n] = tuple;
+        if (existsErr || n === 0) {
+          staleKeys.push(chunk[i]);
+        }
+      }
+    }
     if (staleKeys.length > 0) {
       await client.srem(indexKey, ...staleKeys);
     }
@@ -222,6 +308,64 @@ function isLikelySearchMovieCacheJson(value: string): boolean {
   return false;
 }
 
+type ScanStream = NodeJS.ReadableStream & {
+  pause(): void;
+  resume(): void;
+  on(event: "data", listener: (keyList: string[]) => void): ScanStream;
+  on(event: "end", listener: () => void): ScanStream;
+  on(event: "error", listener: (err: Error) => void): ScanStream;
+};
+
+async function classifySearchMovieKeysFromScanChunk(
+  scanClient: RedisClientLike,
+  keyList: string[],
+  counters: { scannedStringKeys: number; approxSearchMovieStringKeys: number },
+): Promise<void> {
+  if (keyList.length === 0) return;
+
+  const typePipeline = scanClient.pipeline();
+  for (const key of keyList) {
+    typePipeline.type(key);
+  }
+  const typeRows = await typePipeline.exec();
+  if (!typeRows) return;
+
+  const candidateKeys: string[] = [];
+  for (let i = 0; i < keyList.length; i++) {
+    const key = keyList[i];
+    const row = typeRows[i] as [Error | null, string] | undefined;
+    if (!row) continue;
+    const [typeErr, keyType] = row;
+    if (typeErr || keyType !== "string") continue;
+    counters.scannedStringKeys++;
+
+    // Skip category index sets stored as strings (shouldn't happen) and any obvious index keys.
+    if (key.includes(":keys:")) continue;
+    candidateKeys.push(key);
+  }
+
+  if (candidateKeys.length === 0) return;
+
+  const metaPipeline = scanClient.pipeline();
+  for (const key of candidateKeys) {
+    metaPipeline.pttl(key);
+    metaPipeline.get(key);
+  }
+  const metaRows = await metaPipeline.exec();
+  if (!metaRows) return;
+
+  for (let i = 0; i < candidateKeys.length; i++) {
+    const pttlRow = metaRows[i * 2] as [Error | null, number] | undefined;
+    const getRow = metaRows[i * 2 + 1] as [Error | null, string | null] | undefined;
+    if (!pttlRow || !getRow) continue;
+    const [pttlErr, pttl] = pttlRow;
+    if (pttlErr || pttl === -2) continue;
+    const [getErr, value] = getRow;
+    if (getErr || value == null || typeof value !== "string") continue;
+    if (isLikelySearchMovieCacheJson(value)) counters.approxSearchMovieStringKeys++;
+  }
+}
+
 /**
  * Dev/diagnostic estimate: count Redis STRING keys under the app prefix whose JSON payload looks like
  * `/api/search-movie` cache entries.
@@ -241,39 +385,43 @@ export const estimateSearchMovieStringKeyCount = async (): Promise<{
   const prefix = `${process.env.FLY_APP_NAME || "app"}:`;
 
   // Use a dedicated short-lived client for SCAN (doesn't affect the pooled app client).
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const scanClient = new (Redis as any)(url, { maxRetriesPerRequest: 1 });
+  const scanClient = new (Redis as unknown as new (
+    url: string,
+    opts?: { maxRetriesPerRequest?: number },
+  ) => RedisClientLike & { scanStream(opts: { match: string; count: number }): ScanStream })(url, {
+    maxRetriesPerRequest: 1,
+  });
 
-  let approxSearchMovieStringKeys = 0;
-  let scannedStringKeys = 0;
+  const counters = { scannedStringKeys: 0, approxSearchMovieStringKeys: 0 };
 
   try {
     const stream = scanClient.scanStream({ match: `${prefix}*`, count: 200 });
-    const keys: string[] = [];
+    let workChain = Promise.resolve();
 
     await new Promise<void>((resolve, reject) => {
-      stream.on("data", (keyList: string[]) => keys.push(...keyList));
-      stream.on("end", () => resolve());
-      stream.on("error", reject);
+      const fail = (err: unknown) => {
+        reject(err);
+      };
+
+      stream.on("error", fail);
+      stream.on("data", (keyList: string[]) => {
+        stream.pause();
+        workChain = workChain
+          .then(() => classifySearchMovieKeysFromScanChunk(scanClient, keyList, counters))
+          .then(() => {
+            stream.resume();
+          })
+          .catch(fail);
+      });
+      stream.on("end", () => {
+        void workChain.then(() => resolve()).catch(fail);
+      });
     });
 
-    for (const key of keys) {
-      const t = await scanClient.type(key);
-      if (t !== "string") continue;
-      scannedStringKeys++;
-
-      // Skip category index sets stored as strings (shouldn't happen) and any obvious index keys.
-      if (key.includes(":keys:")) continue;
-
-      const pttl = await scanClient.pttl(key);
-      if (pttl === -2) continue;
-
-      const value = await scanClient.get(key);
-      if (value == null) continue;
-      if (isLikelySearchMovieCacheJson(value)) approxSearchMovieStringKeys++;
-    }
-
-    return { approxSearchMovieStringKeys, scannedStringKeys };
+    return {
+      approxSearchMovieStringKeys: counters.approxSearchMovieStringKeys,
+      scannedStringKeys: counters.scannedStringKeys,
+    };
   } catch (error) {
     const err = error as Error;
     console.log(`[REDIS_SEARCH_MOVIE_SCAN_ERROR] ${error}`);

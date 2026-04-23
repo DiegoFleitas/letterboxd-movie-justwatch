@@ -5,10 +5,17 @@ import { isViteDev } from "./devDebugBarEnv";
 import "./DevDebugBar.css";
 
 type DevPostJson = { ok?: boolean; error?: string; cleared?: number; stdout?: string };
+type JustWatchHttpErrorsSnapshot = {
+  total: number;
+  byStatus: Record<string, number>;
+  last?: { status: number; at: string };
+};
 type CacheStatusJson = {
   ok?: boolean;
   error?: string;
   redisKeyPrefix?: string;
+  /** When set, server read numeric `CACHE_TTL` (seconds). `null` = unset or invalid in this process. */
+  cacheTtlEnvSeconds?: number | null;
   watchlistCacheEntries?: number;
   hasWatchlistCache?: boolean;
   listCacheEntries?: number;
@@ -18,11 +25,118 @@ type CacheStatusJson = {
   searchMovieApproxStringKeys?: number;
   searchMovieScannedStringKeys?: number;
   searchMovieUnindexedApprox?: number;
+  /** Epoch ms when the soonest PTTL among indexed watchlist/list/search-movie keys expires; null if none. */
+  soonestIndexedKeyExpiryAtMs?: number | null;
+  justWatchHttpErrors?: JustWatchHttpErrorsSnapshot;
 };
 type CacheStatusTone = "neutral" | "progress" | "ok" | "error";
 type CacheStatus = { text: string; tone: CacheStatusTone; title: string };
-const CACHE_STATUS_POLL_MS_IDLE = 15_000;
+const CACHE_STATUS_POLL_MS_IDLE = 10_000;
 const CACHE_STATUS_POLL_MS_LOADING = 2_500;
+
+/** Survives full page reload so dev pills do not flash back to "checking…" while Redis is unchanged. */
+const SESSION_CACHE_STATUS_KEY = "lbjw:dev-cache-status-payload-v1";
+
+async function sleep(ms: number): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function formatJustWatchHttpBreakdown(byStatus: Record<string, number> | undefined): string {
+  if (!byStatus) return "(no samples yet)";
+  const entries = Object.entries(byStatus)
+    .map(([k, v]) => ({ status: Number(k), count: v }))
+    .filter((e) => Number.isFinite(e.status));
+  entries.sort((a, b) => {
+    if (b.count !== a.count) return b.count - a.count;
+    return a.status - b.status;
+  });
+  if (entries.length === 0) return "(no samples yet)";
+  return entries.map((e) => `${e.status}: ${e.count}`).join(", ");
+}
+
+function buildJustWatchPillTitle(snapshot: JustWatchHttpErrorsSnapshot | undefined): string {
+  const lines: string[] = [];
+  lines.push("JustWatch outbound HTTP attempts (GraphQL via axios):");
+  lines.push(
+    "- Counts non-success attempts (HTTP status not 2xx), including retries during backoff.",
+  );
+  lines.push("- Status `0` means no HTTP response was received (timeouts/DNS/etc).");
+  lines.push("");
+  lines.push(`Total non-success attempts: ${snapshot?.total ?? 0}`);
+  lines.push(`By status: ${formatJustWatchHttpBreakdown(snapshot?.byStatus)}`);
+  if (snapshot?.last) {
+    lines.push("");
+    lines.push(`Last: HTTP ${snapshot.last.status} at ${snapshot.last.at}`);
+  }
+  return lines.join("\n");
+}
+
+function buildJustWatchStatusFromPayload(
+  data: CacheStatusJson,
+  isListLoading: boolean,
+  titleSuffix = "",
+): CacheStatus {
+  const jw = data.justWatchHttpErrors;
+  const total = jw?.total ?? 0;
+  return {
+    text: `JW errs: ${total}${isListLoading ? " (loading)" : ""}`,
+    tone: isListLoading ? "progress" : total > 0 ? "error" : "ok",
+    title: buildJustWatchPillTitle(jw) + titleSuffix,
+  };
+}
+
+function readStoredCacheStatusPayload(): CacheStatusJson | null {
+  try {
+    const raw = sessionStorage.getItem(SESSION_CACHE_STATUS_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw) as CacheStatusJson;
+    if (!data || typeof data !== "object" || data.ok === false) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+function persistCacheStatusPayload(data: CacheStatusJson): void {
+  try {
+    sessionStorage.setItem(SESSION_CACHE_STATUS_KEY, JSON.stringify(data));
+  } catch {
+    /* quota / private mode */
+  }
+}
+
+function parseSoonestIndexedKeyExpiryAtMs(data: CacheStatusJson): number | null {
+  const v = data.soonestIndexedKeyExpiryAtMs;
+  if (typeof v !== "number" || !Number.isFinite(v)) return null;
+  return v;
+}
+
+function deriveCacheStatusesFromPayload(
+  data: CacheStatusJson,
+  isListLoading: boolean,
+  staleHydrated?: boolean,
+): { cache: CacheStatus; justWatch: CacheStatus } {
+  const staleSuffix = staleHydrated
+    ? "\n\nRestored from this tab's last successful poll (React state resets on reload; Redis was not cleared)."
+    : "";
+  const count = data.watchlistCacheEntries ?? 0;
+  const listCount = data.listCacheEntries ?? 0;
+  const searchCount = data.searchMovieCacheEntries ?? 0;
+  const searchApprox = data.searchMovieApproxStringKeys ?? 0;
+  const searchUnindexed = data.searchMovieUnindexedApprox ?? 0;
+  return {
+    cache: {
+      text: `Cache: watchlist ${count}, list ${listCount}, search idx ${searchCount} (~str ${searchApprox}, ~unidx ${searchUnindexed})${isListLoading ? " (loading)" : ""}`,
+      tone: isListLoading
+        ? "progress"
+        : count > 0 || listCount > 0 || searchCount > 0 || searchApprox > 0
+          ? "ok"
+          : "neutral",
+      title: buildCacheStatusTitleFromPayload(data, isListLoading) + staleSuffix,
+    },
+    justWatch: buildJustWatchStatusFromPayload(data, isListLoading, staleSuffix),
+  };
+}
 
 function buildCacheStatusTitleFromPayload(data: CacheStatusJson, isListLoading: boolean): string {
   const lines: string[] = [];
@@ -60,6 +174,16 @@ function buildCacheStatusTitleFromPayload(data: CacheStatusJson, isListLoading: 
     `- search ~str=${data.searchMovieApproxStringKeys ?? 0}, ~unidx=${data.searchMovieUnindexedApprox ?? 0}`,
   );
 
+  lines.push("");
+  lines.push("JustWatch HTTP errors (process-local counters):");
+  lines.push(`- total=${data.justWatchHttpErrors?.total ?? 0}`);
+  lines.push(`- byStatus: ${formatJustWatchHttpBreakdown(data.justWatchHttpErrors?.byStatus)}`);
+  if (data.justWatchHttpErrors?.last) {
+    lines.push(
+      `- last: HTTP ${data.justWatchHttpErrors.last.status} at ${data.justWatchHttpErrors.last.at}`,
+    );
+  }
+
   if (data.error) {
     lines.push("");
     lines.push(`Server note: ${data.error}`);
@@ -71,6 +195,65 @@ function buildCacheStatusTitleFromPayload(data: CacheStatusJson, isListLoading: 
       "UI note: a Letterboxd list/watchlist load is in progress; counts may be mid-flight.",
     );
   }
+
+  return lines.join("\n");
+}
+
+/** Shown on the "Next key TTL" hover only (keeps the main cache pill tooltip shorter). */
+function buildCacheTtlRowTooltip(data: CacheStatusJson | null): string {
+  const lines: string[] = [];
+  lines.push("Redis TTL (dev):");
+  lines.push("");
+
+  if (!data) {
+    lines.push(
+      "No snapshot yet. After /api/dev/cache-status succeeds, this shows CACHE_TTL env and next-key expiry notes.",
+    );
+    lines.push("");
+  }
+
+  const d = data ?? ({} as CacheStatusJson);
+
+  lines.push("Redis key TTL (SET … EX, seconds):");
+  if (typeof d.cacheTtlEnvSeconds === "number" && Number.isFinite(d.cacheTtlEnvSeconds)) {
+    lines.push(
+      `- CACHE_TTL env on this server process: ${d.cacheTtlEnvSeconds}s (used wherever controllers read it; overrides their built-in defaults).`,
+    );
+    lines.push(
+      "- Note: /api/search-movie still uses a fixed 120s TTL for the upstream-unavailable tier (not overridden by CACHE_TTL).",
+    );
+  } else {
+    lines.push(
+      "- CACHE_TTL env is not set (or invalid) on this process. Built-in defaults when unset:",
+    );
+    lines.push("  - Letterboxd list/watchlist page cache: 20s");
+    lines.push("  - /api/search-movie (success): 3600s; upstream-unavailable tier: 120s (fixed)");
+    lines.push("  - Alternative search: 3600s");
+    lines.push("  - OMDB poster, generic proxy cache, Letterboxd poster URLs: 60s");
+  }
+
+  lines.push("");
+  lines.push("Soonest indexed key expiry (from last poll):");
+  if (
+    typeof d.soonestIndexedKeyExpiryAtMs === "number" &&
+    Number.isFinite(d.soonestIndexedKeyExpiryAtMs)
+  ) {
+    lines.push(
+      `- Next key with a finite TTL in the watchlist + list + search-movie index sets expires at epoch ms ${d.soonestIndexedKeyExpiryAtMs}.`,
+    );
+    lines.push(
+      "- Keys with no expiry (PTTL -1) are ignored; unindexed STRING keys are not scanned here.",
+    );
+  } else {
+    lines.push("- No expiring indexed keys right now, or TTL snapshot unavailable.");
+  }
+
+  lines.push("");
+  lines.push("Countdown row:");
+  lines.push(
+    "- The number counts down seconds until that soonest EX expiry (client ticks every second; anchor refreshes each /api/dev/cache-status poll).",
+  );
+  lines.push("- Keys not in those three index sets are not included.");
 
   return lines.join("\n");
 }
@@ -215,21 +398,44 @@ export function DevDebugBar(): React.ReactElement | null {
   const dev = isViteDev();
   const { isListLoading, loadLetterboxdListWithSyncedUrl } = useAppState();
   const actionsDisabled = isListLoading;
-  const [cacheStatus, setCacheStatus] = React.useState<CacheStatus>({
-    text: "Cache: checking...",
-    tone: "neutral",
-    title:
-      "Fetching /api/dev/cache-status…\n\nThis polls Redis category index sets (and runs a heavier SCAN estimate for search-movie-shaped STRING keys).",
+  const [cacheStatus, setCacheStatus] = React.useState<CacheStatus>(() => {
+    const stored = readStoredCacheStatusPayload();
+    if (stored) return deriveCacheStatusesFromPayload(stored, false, true).cache;
+    return {
+      text: "Cache: checking...",
+      tone: "neutral",
+      title:
+        "Fetching /api/dev/cache-status…\n\nThis polls Redis category index sets (and runs a heavier SCAN estimate for search-movie-shaped STRING keys).",
+    };
+  });
+  const [justWatchStatus, setJustWatchStatus] = React.useState<CacheStatus>(() => {
+    const stored = readStoredCacheStatusPayload();
+    if (stored) return deriveCacheStatusesFromPayload(stored, false, true).justWatch;
+    return {
+      text: "JW errs: checking...",
+      tone: "neutral",
+      title:
+        "Fetching /api/dev/cache-status…\n\nJustWatch HTTP error counters are included in the same JSON payload as Redis cache diagnostics.",
+    };
   });
   const [pollCountdownSeconds, setPollCountdownSeconds] = React.useState(
     Math.ceil(CACHE_STATUS_POLL_MS_IDLE / 1000),
   );
+  const [soonestIndexedKeyExpiryAtMs, setSoonestIndexedKeyExpiryAtMs] = React.useState<
+    number | null
+  >(() => parseSoonestIndexedKeyExpiryAtMs(readStoredCacheStatusPayload() ?? {}));
+  const [ttlTooltipSource, setTtlTooltipSource] = React.useState<CacheStatusJson | null>(() =>
+    readStoredCacheStatusPayload(),
+  );
+  const [nowMs, setNowMs] = React.useState(() => Date.now());
 
   const refreshWatchlistCacheStatus = React.useCallback(async (): Promise<boolean> => {
     try {
       const r = await fetch(`${DEV_HTTP_API_PREFIX}/cache-status`, { cache: "no-store" });
       const data = (await r.json()) as CacheStatusJson;
       if (!r.ok || data.ok === false) {
+        setTtlTooltipSource(null);
+        setSoonestIndexedKeyExpiryAtMs(null);
         setCacheStatus({
           text: "Cache: status unavailable",
           tone: "error",
@@ -237,29 +443,35 @@ export function DevDebugBar(): React.ReactElement | null {
             "Could not read /api/dev/cache-status.\n\nCommon causes: dev server not running, dev routes blocked, Redis unreachable, or DISABLE_REDIS enabled." +
             (data.error ? `\n\nServer error: ${data.error}` : ""),
         });
+        setJustWatchStatus({
+          text: "JW errs: unavailable",
+          tone: "error",
+          title:
+            "Could not read JustWatch counters from /api/dev/cache-status.\n\nFix cache-status first; these counters are process-local and reset on server restart.",
+        });
         return false;
       }
-      const count = data.watchlistCacheEntries ?? 0;
-      const listCount = data.listCacheEntries ?? 0;
-      const searchCount = data.searchMovieCacheEntries ?? 0;
-      const searchApprox = data.searchMovieApproxStringKeys ?? 0;
-      const searchUnindexed = data.searchMovieUnindexedApprox ?? 0;
-      setCacheStatus({
-        text: `Cache: watchlist ${count}, list ${listCount}, search idx ${searchCount} (~str ${searchApprox}, ~unidx ${searchUnindexed})${isListLoading ? " (loading)" : ""}`,
-        tone: isListLoading
-          ? "progress"
-          : count > 0 || listCount > 0 || searchCount > 0 || searchApprox > 0
-            ? "ok"
-            : "neutral",
-        title: buildCacheStatusTitleFromPayload(data, isListLoading),
-      });
+      const { cache, justWatch } = deriveCacheStatusesFromPayload(data, isListLoading, false);
+      setCacheStatus(cache);
+      setJustWatchStatus(justWatch);
+      setTtlTooltipSource(data);
+      setSoonestIndexedKeyExpiryAtMs(parseSoonestIndexedKeyExpiryAtMs(data));
+      persistCacheStatusPayload(data);
       return true;
     } catch {
+      setTtlTooltipSource(null);
+      setSoonestIndexedKeyExpiryAtMs(null);
       setCacheStatus({
         text: "Cache: status unavailable",
         tone: "error",
         title:
           "Network error while calling /api/dev/cache-status.\n\nIf the backend restarted, wait a moment and hover again after the next poll.",
+      });
+      setJustWatchStatus({
+        text: "JW errs: unavailable",
+        tone: "error",
+        title:
+          "Network error while calling /api/dev/cache-status.\n\nJustWatch counters ride along with that endpoint.",
       });
       return false;
     }
@@ -273,6 +485,12 @@ export function DevDebugBar(): React.ReactElement | null {
       document.body.classList.remove("has-dev-debug-bar");
     };
   }, [dev, refreshWatchlistCacheStatus]);
+
+  useEffect(() => {
+    if (!dev) return;
+    const id = window.setInterval(() => setNowMs(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, [dev]);
 
   useEffect(() => {
     if (!dev) return;
@@ -298,12 +516,18 @@ export function DevDebugBar(): React.ReactElement | null {
 
   if (!dev) return null;
 
+  const nextKeyTtlSec =
+    soonestIndexedKeyExpiryAtMs == null
+      ? null
+      : Math.max(0, Math.ceil((soonestIndexedKeyExpiryAtMs - nowMs) / 1000));
+
   async function withCacheStatus(pendingLabel: string, fn: () => Promise<boolean>): Promise<void> {
     setCacheStatus({
       text: `Cache: ${pendingLabel}`,
       tone: "progress",
       title: `Operation in progress: ${pendingLabel}\n\nCounts may be stale until this finishes and the next /api/dev/cache-status refresh runs.`,
     });
+    setJustWatchStatus((prev) => ({ ...prev, tone: "progress" }));
     const didSucceed = await fn();
     if (!didSucceed) {
       setCacheStatus({
@@ -312,9 +536,22 @@ export function DevDebugBar(): React.ReactElement | null {
         title:
           "The last dev cache operation failed.\n\nCheck the alert dialog for details, then hover the status pill again after the next poll.",
       });
+      setJustWatchStatus({
+        text: "JW errs: stale",
+        tone: "error",
+        title:
+          "Could not refresh JustWatch counters after a failed dev cache operation.\n\nWait for the next /api/dev/cache-status poll or reload the page.",
+      });
       return;
     }
-    await refreshWatchlistCacheStatus();
+    // After POST /api/dev/* the backend may restart (e.g. nodemon). Retry cache-status so the
+    // UI does not briefly error while the proxy target comes back.
+    const cacheStatusRetries = 8;
+    const cacheStatusRetryDelayMs = 400;
+    for (let attempt = 0; attempt < cacheStatusRetries; attempt++) {
+      if (attempt > 0) await sleep(cacheStatusRetryDelayMs);
+      if (await refreshWatchlistCacheStatus()) return;
+    }
   }
 
   return (
@@ -325,16 +562,24 @@ export function DevDebugBar(): React.ReactElement | null {
       data-testid="dev-debug-bar"
     >
       <span className="debug-bar__label">Dev</span>
+      <span className="debug-bar__origin debug-bar__tip-host" data-testid="dev-debug-origin">
+        Origin: {typeof window !== "undefined" ? window.location.origin : "—"}
+        <span className="debug-bar__tip" aria-hidden="true">
+          Same-origin <code>/api/*</code> (Vite proxies <code>/api</code> to Fastify on port 3000).
+          If JustWatch is blocked server-side, <code>POST /api/search-movie</code> still returns
+          HTTP 200 with JSON <code>error</code> — open that request in Network and check Response
+          Headers: <code>X-JustWatch-Upstream-Status</code>, <code>X-JustWatch-Used-Proxy</code>.
+        </span>
+      </span>
       <div className="debug-bar__actions">
         <span className="debug-bar__tip-host">
           <DebugBarHoverTip tip="Clears Redis category `list` (Letterboxd list page caches). Does not rebuild from snapshot.">
             <button
               type="button"
-              className={`btn btn-secondary dev-clear-cache${actionsDisabled ? " is-disabled" : ""}`}
+              className="btn btn-secondary dev-clear-cache"
               data-testid="dev-clear-list-cache"
-              aria-disabled={actionsDisabled}
+              disabled={actionsDisabled}
               onClick={() => {
-                if (actionsDisabled) return;
                 void withCacheStatus("clearing", () =>
                   devPostAlert(
                     `${DEV_HTTP_API_PREFIX}/clear-list-cache`,
@@ -355,17 +600,17 @@ export function DevDebugBar(): React.ReactElement | null {
           <DebugBarHoverTip tip="Loads a fixed dummy public watchlist through the normal app flow (scrapes Letterboxd + kicks off per-title searches).">
             <button
               type="button"
-              className={`btn btn-secondary${actionsDisabled ? " is-disabled" : ""}`}
+              className="btn btn-secondary"
               data-testid="dev-load-dummy-watchlist"
-              aria-disabled={actionsDisabled}
+              disabled={actionsDisabled}
               onClick={() => {
-                if (actionsDisabled) return;
                 setCacheStatus({
                   text: "Cache: loading watchlist...",
                   tone: "progress",
                   title:
                     "Loading the dummy Letterboxd watchlist pages and then searching each title.\n\nWatch Redis counters update as pages and searches get cached.",
                 });
+                setJustWatchStatus((prev) => ({ ...prev, tone: "progress" }));
                 const url = "https://letterboxd.com/oobbvvss/watchlist/";
                 loadLetterboxdListWithSyncedUrl(url);
                 void refreshWatchlistCacheStatus();
@@ -382,11 +627,10 @@ export function DevDebugBar(): React.ReactElement | null {
           <DebugBarHoverTip tip="Runs `bun run redis:reset` (validate + seed from redis snapshot). Restores baseline dev Redis, not an empty wipe.">
             <button
               type="button"
-              className={`btn btn-secondary${actionsDisabled ? " is-disabled" : ""}`}
+              className="btn btn-secondary"
               data-testid="dev-reset-redis-cache"
-              aria-disabled={actionsDisabled}
+              disabled={actionsDisabled}
               onClick={() => {
-                if (actionsDisabled) return;
                 void withCacheStatus("resetting", () =>
                   devPostAlert(
                     `${DEV_HTTP_API_PREFIX}/reset-redis`,
@@ -407,11 +651,10 @@ export function DevDebugBar(): React.ReactElement | null {
           <DebugBarHoverTip tip="Runs `bun run export-redis` to write redis/data/redis-snapshot.json from current local Redis (read-only export).">
             <button
               type="button"
-              className={`btn btn-secondary${actionsDisabled ? " is-disabled" : ""}`}
+              className="btn btn-secondary"
               data-testid="dev-export-redis-snapshot"
-              aria-disabled={actionsDisabled}
+              disabled={actionsDisabled}
               onClick={() => {
-                if (actionsDisabled) return;
                 void withCacheStatus("exporting", () =>
                   devPostAlert(
                     `${DEV_HTTP_API_PREFIX}/export-redis`,
@@ -439,13 +682,45 @@ export function DevDebugBar(): React.ReactElement | null {
         </span>
       </span>
       <span
+        className={`debug-bar__cache-status debug-bar__cache-status--${justWatchStatus.tone} debug-bar__tip-host`}
+        data-testid="dev-justwatch-http-errors"
+      >
+        {justWatchStatus.text}
+        <span className="debug-bar__tip" aria-hidden="true">
+          {justWatchStatus.title}
+        </span>
+      </span>
+      <span
         className="debug-bar__cache-poll debug-bar__tip-host"
         data-testid="dev-cache-poll-countdown"
       >
-        Next poll in {pollCountdownSeconds}s
+        Next poll in{" "}
+        <span className="debug-bar__cache-poll-count" aria-live="polite">
+          {pollCountdownSeconds}
+        </span>
+        s
         <span className="debug-bar__tip" aria-hidden="true">
           Time until the next automatic /api/dev/cache-status refresh. Faster while a list/watchlist
           load is active.
+        </span>
+      </span>
+      <span
+        className="debug-bar__cache-ttl debug-bar__tip-host"
+        data-testid="dev-cache-ttl-countdown"
+      >
+        Next key TTL in{" "}
+        {nextKeyTtlSec == null ? (
+          <span className="debug-bar__cache-ttl-na">—</span>
+        ) : (
+          <>
+            <span className="debug-bar__cache-ttl-count" aria-live="polite">
+              {nextKeyTtlSec}
+            </span>
+            s
+          </>
+        )}
+        <span className="debug-bar__tip" aria-hidden="true">
+          {buildCacheTtlRowTooltip(ttlTooltipSource)}
         </span>
       </span>
     </div>
