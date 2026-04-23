@@ -102,21 +102,14 @@ export function RightPanel(): React.ReactElement {
         {providerList.map((provider: ProviderLike) => {
           const isActive = activeFilters.includes(provider.name);
           return (
-            <motion.div
+            <motion.button
+              type="button"
               key={provider.id}
               className={`streaming-provider-icon ${isActive ? "active" : ""}`}
               data-sp={provider.name}
               title={provider.name}
-              role="button"
-              tabIndex={0}
+              aria-pressed={isActive}
               onClick={() => toggleFilter(provider.name)}
-              onKeyDown={(e: React.KeyboardEvent) => {
-                if (e.key === "Enter") toggleFilter(provider.name);
-                else if (e.key === " ") {
-                  e.preventDefault();
-                  toggleFilter(provider.name);
-                }
-              }}
               onFocus={() => setFocusedProvider(provider.name)}
               onBlur={() => setFocusedProvider((prev) => (prev === provider.name ? null : prev))}
               onMouseEnter={() => setFocusedProvider(provider.name)}
@@ -157,26 +150,19 @@ export function RightPanel(): React.ReactElement {
                   ✓
                 </motion.span>
               )}
-            </motion.div>
+            </motion.button>
           );
         })}
         {showAltSearchButton ? (
-          <motion.div
+          <motion.button
+            type="button"
             className={`streaming-provider-icon streaming-provider-icon--alt-search ${
               altSearchFilter ? "active" : ""
             }`}
             data-sp="alternative search"
             title="Alternative search"
+            aria-pressed={altSearchFilter}
             onClick={toggleAltSearchFilter}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") toggleAltSearchFilter();
-              else if (e.key === " ") {
-                e.preventDefault();
-                toggleAltSearchFilter();
-              }
-            }}
             initial={"idle"}
             animate={altSearchFilter ? "selected" : "idle"}
             whileHover={reduceMotion ? undefined : { scale: 1.02 }}
@@ -185,7 +171,7 @@ export function RightPanel(): React.ReactElement {
             transition={motionTransition(PROVIDER_FAST_S)}
           >
             <img src={alternativeSearchIcon} alt="Alternative search" />
-          </motion.div>
+          </motion.button>
         ) : null}
       </div>
       <div className="poster-showcase" data-testid="poster-showcase">
