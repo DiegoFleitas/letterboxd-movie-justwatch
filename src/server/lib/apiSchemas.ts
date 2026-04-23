@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { parseLetterboxdListUrl } from "./letterboxdListUrl.js";
+import { HTTP_STATUS_BAD_REQUEST, HTTP_STATUS_FORBIDDEN } from "../httpStatusCodes.js";
 
 /** Hostnames clients may request through `/api/proxy/*` (HTTPS only). */
 export const PROXY_ALLOWED_HOSTNAMES = new Set(["api.themoviedb.org", "www.omdbapi.com"]);
@@ -49,13 +50,19 @@ const proxyPathUrlSchema = z
 
 export type ParseProxyUrlResult =
   | { ok: true; url: URL }
-  | { ok: false; status: 400 | 403; message: string };
+  | {
+      ok: false;
+      status: typeof HTTP_STATUS_BAD_REQUEST | typeof HTTP_STATUS_FORBIDDEN;
+      message: string;
+    };
 
 export function parseAllowedProxyUrl(raw: string): ParseProxyUrlResult {
   const result = proxyPathUrlSchema.safeParse(raw);
   if (result.success) return { ok: true, url: result.data };
   const msg = result.error.issues[0]?.message ?? proxyValidationMessages.invalid;
-  const status = proxyHttpsOrHostMessages.has(msg) ? 403 : 400;
+  const status = proxyHttpsOrHostMessages.has(msg)
+    ? HTTP_STATUS_FORBIDDEN
+    : HTTP_STATUS_BAD_REQUEST;
   return { ok: false, status, message: msg };
 }
 

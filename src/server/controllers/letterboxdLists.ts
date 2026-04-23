@@ -19,6 +19,12 @@ import {
   fetchLetterboxdHtml,
 } from "../lib/letterboxdHttp.js";
 import { getRandomScrapeUserAgent } from "../lib/scrapeUserAgent.js";
+import {
+  HTTP_STATUS_BAD_REQUEST,
+  HTTP_STATUS_INTERNAL_SERVER_ERROR,
+  HTTP_STATUS_NOT_FOUND,
+  HTTP_STATUS_OK,
+} from "../httpStatusCodes.js";
 
 const cacheTtl = Number(process.env.CACHE_TTL) || 20;
 
@@ -41,7 +47,7 @@ const fetchList = async ({
     const body = (req.body as { page?: number }) ?? {};
     const page = body.page ?? 1;
     if (page < 1) {
-      res.status(400).json({ error: "Invalid page number" });
+      res.status(HTTP_STATUS_BAD_REQUEST).json({ error: "Invalid page number" });
       return;
     }
 
@@ -101,7 +107,7 @@ const fetchList = async ({
             totalPages = Math.ceil(filmsCount / filmsPerPage) || 1;
             haveFilmTotal = true;
             if (currentPage > totalPages) {
-              res.status(404).json({ error: "Invalid list page" });
+              res.status(HTTP_STATUS_NOT_FOUND).json({ error: "Invalid list page" });
               return;
             }
           }
@@ -113,7 +119,7 @@ const fetchList = async ({
     }
 
     const films = await Promise.all(filmsPromises);
-    res.status(200).json({
+    res.status(HTTP_STATUS_OK).json({
       message: "List found",
       watchlist: films,
       lastPage: Math.min(currentPage, totalPages),
@@ -121,21 +127,21 @@ const fetchList = async ({
     });
   } catch (error) {
     console.error(error);
-    if (error instanceof LetterboxdHttpError && error.status === 404) {
-      res.status(404).json({ error: "List not found" });
+    if (error instanceof LetterboxdHttpError && error.status === HTTP_STATUS_NOT_FOUND) {
+      res.status(HTTP_STATUS_NOT_FOUND).json({ error: "List not found" });
       return;
     }
     if (Sentry.getClient()) {
       Sentry.captureException(error, { extra: { route: "letterboxd-list-fetch" } });
     }
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: "Internal Server Error" });
   }
 };
 
 export const letterboxdWatchlist: HttpHandler = async ({ req, res }) => {
   const parsedBody = letterboxdWatchlistBodySchema.safeParse(req.body ?? {});
   if (!parsedBody.success) {
-    res.status(400).json({ error: firstZodIssueMessage(parsedBody.error) });
+    res.status(HTTP_STATUS_BAD_REQUEST).json({ error: firstZodIssueMessage(parsedBody.error) });
     return;
   }
   const { username, listType, parsedListUrl, page } = parsedBody.data;
@@ -146,7 +152,7 @@ export const letterboxdWatchlist: HttpHandler = async ({ req, res }) => {
 export const letterboxdCustomList: HttpHandler = async ({ req, res }) => {
   const parsedBody = letterboxdCustomListBodySchema.safeParse(req.body ?? {});
   if (!parsedBody.success) {
-    res.status(400).json({ error: firstZodIssueMessage(parsedBody.error) });
+    res.status(HTTP_STATUS_BAD_REQUEST).json({ error: firstZodIssueMessage(parsedBody.error) });
     return;
   }
   const { username, listType, parsedListUrl, page } = parsedBody.data;

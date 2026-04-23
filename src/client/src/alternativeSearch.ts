@@ -3,6 +3,7 @@ import { showMessage } from "./showMessage";
 import { showError } from "./showError";
 import { NOTICE_HOLD_ALT_SEARCH_MS } from "./animation/timing";
 import { captureFrontendException, captureFrontendMessage } from "./sentry";
+import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from "@server/httpStatusCodes";
 
 let isAlternativeSearchInFlight = false;
 
@@ -25,7 +26,7 @@ export function runAlternativeSearch(
     body: JSON.stringify({ title, year }),
   })
     .then((res) => {
-      if (res.status >= 500) {
+      if (res.status >= HTTP_STATUS_INTERNAL_SERVER_ERROR) {
         captureFrontendMessage("alternative-search upstream error", {
           tags: { source: "api", endpoint: "/api/alternative-search", reason: "http-5xx" },
           extra: { status: res.status, title, year },

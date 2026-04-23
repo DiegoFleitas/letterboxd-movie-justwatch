@@ -7,6 +7,13 @@ import {
   fetchLetterboxdBinaryOk,
 } from "../lib/letterboxdHttp.js";
 import { getRandomScrapeUserAgent } from "../lib/scrapeUserAgent.js";
+import {
+  HTTP_STATUS_BAD_REQUEST,
+  HTTP_STATUS_FORBIDDEN,
+  HTTP_STATUS_INTERNAL_SERVER_ERROR,
+  HTTP_STATUS_NOT_FOUND,
+  HTTP_STATUS_OK,
+} from "../httpStatusCodes.js";
 
 const postersTtl = Number(process.env.CACHE_TTL) || 60;
 
@@ -19,7 +26,7 @@ export const letterboxdPoster: HttpHandler = async ({ req, res }) => {
     }) ?? {};
 
   if (!filmId || !filmSlug) {
-    res.status(400).json({ error: "Missing filmId or filmSlug" });
+    res.status(HTTP_STATUS_BAD_REQUEST).json({ error: "Missing filmId or filmSlug" });
     return;
   }
 
@@ -28,7 +35,7 @@ export const letterboxdPoster: HttpHandler = async ({ req, res }) => {
   try {
     const cachedPoster = await getCacheValue(cacheKey);
     if (cachedPoster) {
-      res.status(200).json({
+      res.status(HTTP_STATUS_OK).json({
         message: "Poster found (cached)",
         poster: cachedPoster,
       });
@@ -49,19 +56,22 @@ export const letterboxdPoster: HttpHandler = async ({ req, res }) => {
 
     await setCacheValue(cacheKey, posterUrl, postersTtl);
 
-    res.status(200).json({
+    res.status(HTTP_STATUS_OK).json({
       message: "Poster found",
       poster: posterUrl,
     });
   } catch (error) {
     console.error(`Failed to fetch poster for ${filmSlug}:`, (error as Error).message);
-    if (error instanceof LetterboxdHttpError && (error.status === 403 || error.status === 404)) {
-      res.status(404).json({ error: "Poster not available", fallback: true });
+    if (
+      error instanceof LetterboxdHttpError &&
+      (error.status === HTTP_STATUS_FORBIDDEN || error.status === HTTP_STATUS_NOT_FOUND)
+    ) {
+      res.status(HTTP_STATUS_NOT_FOUND).json({ error: "Poster not available", fallback: true });
       return;
     }
     if (Sentry.getClient()) {
       Sentry.captureException(error, { extra: { route: "letterboxd-poster", filmSlug } });
     }
-    res.status(500).json({ error: "Internal server error" });
+    res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
   }
 };

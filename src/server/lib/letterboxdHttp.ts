@@ -1,4 +1,5 @@
 import { getLetterboxdFetchTimeoutMs } from "./letterboxdFetchTimeout.js";
+import { HTTP_STATUS_TOO_MANY_REQUESTS } from "../httpStatusCodes.js";
 
 const sanitizeUrl = (url: string): string =>
   url.replace(/((?:api_key|apikey|access_token|token|key)=)([^&]+)/gi, "$1***");
@@ -110,10 +111,13 @@ async function fetchWith429Retry(url: string, headers: Record<string, string>): 
       signal: AbortSignal.timeout(timeoutMs),
     });
 
-    if (res.status === 429) {
+    if (res.status === HTTP_STATUS_TOO_MANY_REQUESTS) {
       rateLimitCount++;
       if (rateLimitCount > maxRetries) {
-        throw new LetterboxdHttpError(`Rate limited after ${maxRetries} retries`, 429);
+        throw new LetterboxdHttpError(
+          `Rate limited after ${maxRetries} retries`,
+          HTTP_STATUS_TOO_MANY_REQUESTS,
+        );
       }
       const raw = Number(res.headers.get("retry-after")) || 1;
       const retryAfterSec = Math.min(raw, max429RetryAfterSeconds());
