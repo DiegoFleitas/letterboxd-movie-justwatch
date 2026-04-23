@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { DEV_HTTP_API_PREFIX } from "@server/routes";
 import { useAppState } from "./AppStateContext";
-import { isViteDev } from "./devDebugBarEnv";
+import { isDevDebugBarEnabled } from "./devDebugBarEnv";
 import "./DevDebugBar.css";
 
 type DevPostJson = { ok?: boolean; error?: string; cleared?: number; stdout?: string };
@@ -395,7 +395,7 @@ function DebugBarHoverTip(props: { tip: string; children: React.ReactNode }): Re
 }
 
 export function DevDebugBar(): React.ReactElement | null {
-  const dev = isViteDev();
+  const dev = isDevDebugBarEnabled();
   const { isListLoading, loadLetterboxdListWithSyncedUrl } = useAppState();
   const actionsDisabled = isListLoading;
   const [cacheStatus, setCacheStatus] = React.useState<CacheStatus>(() => {

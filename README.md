@@ -80,6 +80,8 @@ This application connects **Letterboxd** lists to **streaming availability** for
 
 4. Open **`http://localhost:5173`**. The dev UI proxies API traffic to the backend per Vite configuration.
 
+   The development debug bar (Redis/cache tooling) is not shipped in production builds. To hide it while running Vite, set **`VITE_DEV_DEBUG_BAR=false`** in `.env.development.local` (unset = shown in dev).
+
 ### Docker Compose
 
 ```bash
