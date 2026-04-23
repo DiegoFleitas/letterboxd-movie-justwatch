@@ -12,6 +12,7 @@ const COUNTRY_STORAGE_KEY = "letterboxd-justwatch-country";
 
 describe("search panel tab isolation model", () => {
   beforeEach(() => {
+    vi.useFakeTimers();
     globalThis.fetch = vi.fn((input: RequestInfo | URL) => {
       const url = typeof input === "string" ? input : String(input);
       if (url.includes("letterboxd-watchlist")) {
@@ -49,6 +50,8 @@ describe("search panel tab isolation model", () => {
   });
 
   afterEach(() => {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
