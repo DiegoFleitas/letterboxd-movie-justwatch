@@ -5,17 +5,17 @@ import { createRoot } from "react-dom/client";
 import { act, waitFor } from "@testing-library/react";
 import { AppStateProvider } from "../AppStateContext";
 import { DevDebugBar } from "../DevDebugBar";
-import { isViteDev } from "../devDebugBarEnv";
+import { isDevDebugBarEnabled } from "../devDebugBarEnv";
 
 vi.mock("../devDebugBarEnv", () => ({
-  isViteDev: vi.fn(),
+  isDevDebugBarEnabled: vi.fn(),
 }));
 
 describe("DevDebugBar", () => {
   beforeEach(() => {
     sessionStorage.clear();
     document.body.classList.remove("has-dev-debug-bar");
-    vi.mocked(isViteDev).mockReset();
+    vi.mocked(isDevDebugBarEnabled).mockReset();
     vi.spyOn(globalThis, "fetch").mockResolvedValue({
       ok: true,
       json: async () => ({
@@ -40,8 +40,8 @@ describe("DevDebugBar", () => {
     vi.restoreAllMocks();
   });
 
-  it("renders nothing and does not toggle body class when not in Vite dev mode", async () => {
-    vi.mocked(isViteDev).mockReturnValue(false);
+  it("renders nothing and does not toggle body class when the debug bar is disabled", async () => {
+    vi.mocked(isDevDebugBarEnabled).mockReturnValue(false);
 
     const container = document.createElement("div");
     document.body.appendChild(container);
@@ -64,8 +64,8 @@ describe("DevDebugBar", () => {
     document.body.removeChild(container);
   });
 
-  it("renders the debug region and adds body class in Vite dev mode; cleans up on unmount", async () => {
-    vi.mocked(isViteDev).mockReturnValue(true);
+  it("renders the debug region and adds body class when enabled; cleans up on unmount", async () => {
+    vi.mocked(isDevDebugBarEnabled).mockReturnValue(true);
 
     const container = document.createElement("div");
     document.body.appendChild(container);
@@ -139,7 +139,7 @@ describe("DevDebugBar", () => {
   });
 
   it("shows last /api/dev/cache-status snapshot from sessionStorage on first paint before fetch resolves", async () => {
-    vi.mocked(isViteDev).mockReturnValue(true);
+    vi.mocked(isDevDebugBarEnabled).mockReturnValue(true);
 
     sessionStorage.setItem(
       "lbjw:dev-cache-status-payload-v1",

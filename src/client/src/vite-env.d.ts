@@ -1,5 +1,12 @@
 /// <reference types="vite/client" />
 
+// Merged onto Vite's `ImportMetaEnv` for `import.meta.env` typing; name is not referenced in this file.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- ambient interface merge
+interface ImportMetaEnv {
+  /** `"false"` hides the dev debug bar during `vite dev`. Omitted = visible in dev. No effect in production builds. */
+  readonly VITE_DEV_DEBUG_BAR?: string;
+}
+
 declare global {
   interface Window {
     __POSTHOG_KEY__?: string;
