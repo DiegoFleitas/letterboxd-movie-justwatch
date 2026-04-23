@@ -64,10 +64,7 @@ export function classifyListReportSymptom(
 }
 
 export function normalizeId(title: string, year: string | number | null): string {
-  return `${year}-${title
-    .toUpperCase()
-    .replace(/ /g, "-")
-    .replace(/[^A-Z0-9]/g, "")}`;
+  return `${year}-${title.toUpperCase().replace(/[^A-Z0-9]/g, "")}`;
 }
 
 /** Letterboxd list entries often use root-relative paths; keep absolute URLs for consumers. */
@@ -194,14 +191,4 @@ export function mergeTileStateForTab(
 
 export function getTileProviderNames(tileData: TileData | null | undefined): string[] {
   return (tileData?.movieProviders ?? []).map((p) => p.name);
-}
-
-export function tileMatchesFilter(
-  tileData: TileData | null | undefined,
-  activeProviderNames: string[] | null | undefined,
-): boolean {
-  if (!activeProviderNames?.length) return true;
-  const names = getTileProviderNames(tileData);
-  if (!names.length) return false;
-  return activeProviderNames.some((n) => names.includes(n));
 }
