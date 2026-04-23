@@ -14,6 +14,8 @@ import {
 const axios = axiosHelper();
 const cacheTtl = Number(process.env.CACHE_TTL) || 3600;
 const CACHE_TTL_UNAVAILABLE = 120;
+/** Redis category for movie-search responses (must not reuse Letterboxd list page category `list`). */
+const SEARCH_MOVIE_CACHE_CATEGORY = "search-movie";
 const JUSTWATCH_TIMEOUT_MS = 15000;
 const JUSTWATCH_RETRIES = 3;
 const PROXY = "";
@@ -138,7 +140,7 @@ export const searchMovie: HttpHandler = async ({ req, res }) => {
         title,
         year,
       };
-      await setCacheValue(cacheKey, response, cacheTtl, "list");
+      await setCacheValue(cacheKey, response, cacheTtl, SEARCH_MOVIE_CACHE_CATEGORY);
       res.json(response);
       return;
     }
@@ -218,7 +220,7 @@ export const searchMovie: HttpHandler = async ({ req, res }) => {
         ...(letterboxdStableLink ? { link: letterboxdStableLink } : {}),
         ...(tmdbLink ? { tmdbLink } : {}),
       };
-      await setCacheValue(cacheKey, response, CACHE_TTL_UNAVAILABLE, "list");
+      await setCacheValue(cacheKey, response, CACHE_TTL_UNAVAILABLE, SEARCH_MOVIE_CACHE_CATEGORY);
       res.json(response);
       return;
     }
@@ -238,7 +240,7 @@ export const searchMovie: HttpHandler = async ({ req, res }) => {
         ...(letterboxdStableLink ? { link: letterboxdStableLink } : {}),
         ...(tmdbLink ? { tmdbLink } : {}),
       };
-      await setCacheValue(cacheKey, response, cacheTtl, "list");
+      await setCacheValue(cacheKey, response, cacheTtl, SEARCH_MOVIE_CACHE_CATEGORY);
       res.json(response);
       return;
     }
@@ -261,7 +263,12 @@ export const searchMovie: HttpHandler = async ({ req, res }) => {
     };
 
     if (!movieData.node.offers || !movieData.node.offers.length) {
-      await setCacheValue(cacheKey, noStreamingServicesResponse, cacheTtl, "list");
+      await setCacheValue(
+        cacheKey,
+        noStreamingServicesResponse,
+        cacheTtl,
+        SEARCH_MOVIE_CACHE_CATEGORY,
+      );
       res.json(noStreamingServicesResponse);
       return;
     }
@@ -275,7 +282,12 @@ export const searchMovie: HttpHandler = async ({ req, res }) => {
     );
 
     if (!providers?.length) {
-      await setCacheValue(cacheKey, noStreamingServicesResponse, cacheTtl, "list");
+      await setCacheValue(
+        cacheKey,
+        noStreamingServicesResponse,
+        cacheTtl,
+        SEARCH_MOVIE_CACHE_CATEGORY,
+      );
       res.json(noStreamingServicesResponse);
       return;
     }
@@ -291,7 +303,7 @@ export const searchMovie: HttpHandler = async ({ req, res }) => {
       ...(tmdbLink ? { tmdbLink } : {}),
     };
 
-    await setCacheValue(cacheKey, responsePayload, cacheTtl, "list");
+    await setCacheValue(cacheKey, responsePayload, cacheTtl, SEARCH_MOVIE_CACHE_CATEGORY);
     res.json(responsePayload);
   } catch (err) {
     console.error(err);

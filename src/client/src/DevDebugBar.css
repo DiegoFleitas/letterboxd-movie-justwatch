@@ -3,7 +3,8 @@
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 80;
+  /* Keep above common UI layers so native/custom hovers aren't hidden behind tiles/panels */
+  z-index: 12000;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -26,6 +27,57 @@
   margin-right: 0.25rem;
 }
 
+.debug-bar__cache-status {
+  flex: 0 0 auto;
+  margin-left: auto;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.45rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  font-family: var(--ui-font);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  color: var(--color-text);
+  background: var(--color-surface);
+}
+
+.debug-bar__cache-status--neutral {
+  color: var(--color-text-subtle);
+}
+
+.debug-bar__cache-status--progress {
+  color: #9a6700;
+  border-color: color-mix(in srgb, #9a6700 45%, var(--color-border));
+  background: color-mix(in srgb, #fef3c7 80%, var(--color-surface));
+}
+
+.debug-bar__cache-status--ok {
+  color: #166534;
+  border-color: color-mix(in srgb, #22c55e 45%, var(--color-border));
+  background: color-mix(in srgb, #dcfce7 82%, var(--color-surface));
+}
+
+.debug-bar__cache-status--error {
+  color: #991b1b;
+  border-color: color-mix(in srgb, #ef4444 45%, var(--color-border));
+  background: color-mix(in srgb, #fee2e2 80%, var(--color-surface));
+}
+
+.debug-bar__cache-poll {
+  flex: 0 0 auto;
+  margin-left: 0.35rem;
+  position: relative;
+  font-family: var(--ui-font);
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--color-text-subtle);
+  opacity: 0.8;
+}
+
 .debug-bar__actions {
   display: flex;
   flex-wrap: wrap;
@@ -35,15 +87,97 @@
   min-width: 0;
 }
 
+.debug-bar__actions > .debug-bar__tip-host {
+  display: inline-flex;
+  max-width: 100%;
+}
+
 /* Undo global .btn full-width inside the bar */
 .debug-bar .btn {
   width: auto;
   min-width: 0;
   margin: 0;
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0.4rem 0.65rem;
   font-size: 0.75rem;
   font-weight: 600;
+}
+
+.debug-bar .btn.is-disabled {
+  opacity: 0.55;
+  filter: grayscale(0.15);
+  cursor: not-allowed;
+}
+
+.debug-bar__btn-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.debug-bar__icon {
+  flex: 0 0 auto;
+  display: block;
+  color: currentColor;
+  opacity: 0.92;
+}
+
+.debug-bar__tip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  transform: translateX(-50%);
+  width: min(520px, calc(100vw - 24px));
+  max-height: min(320px, 45vh);
+  overflow: auto;
+  padding: 0.55rem 0.65rem;
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-elevated);
+  color: var(--color-text);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.22);
+  font-family: var(--ui-font);
+  font-size: 0.72rem;
+  font-weight: 500;
+  line-height: 1.25;
+  white-space: pre-wrap;
+  text-align: left;
+  z-index: 20000;
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease,
+    visibility 0s linear 120ms;
+}
+
+.debug-bar__tip::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid var(--color-surface-elevated);
+  filter: drop-shadow(0 1px 0 var(--color-border));
+}
+
+.debug-bar__tip-host:hover .debug-bar__tip,
+.debug-bar__tip-host:focus-within .debug-bar__tip {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(-2px);
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease,
+    visibility 0s;
 }

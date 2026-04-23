@@ -1,7 +1,7 @@
 import type { HttpHandler } from "../httpContext.js";
 import * as Sentry from "@sentry/node";
 import * as cheerio from "cheerio";
-import { getCacheValue, setCacheValue } from "../lib/redis.js";
+import { getCacheValue, indexCacheKeyByCategory, setCacheValue } from "../lib/redis.js";
 import {
   getPageFilms,
   getFilmsCount,
@@ -60,6 +60,9 @@ const fetchList = async ({
     let haveFilmTotal = false;
     let filmsPromises: PageFilm[] = [];
     let lastPage: number | null = null;
+    const cacheCategories: string[] = cacheKeyPrefix.startsWith("watchlist:")
+      ? ["list", "watchlist"]
+      : ["list"];
 
     for (let index = 0; index < maxPages; index++) {
       currentPage = Number(page) + index;
@@ -68,6 +71,7 @@ const fetchList = async ({
 
       if (cachedList && Array.isArray(cachedList)) {
         console.log(`List for page ${currentPage} found (cached)`);
+        await indexCacheKeyByCategory(cacheKey, cacheCategories);
         filmsPromises = filmsPromises.concat(cachedList);
       } else {
         const pageUrl = `${baseUrl}/page/${currentPage}/`;
@@ -113,7 +117,7 @@ const fetchList = async ({
           }
         }
 
-        setCacheValue(cacheKey, pageFilmsPromise, cacheTtl, "list");
+        await setCacheValue(cacheKey, pageFilmsPromise, cacheTtl, cacheCategories);
         filmsPromises = filmsPromises.concat(pageFilmsPromise);
       }
     }

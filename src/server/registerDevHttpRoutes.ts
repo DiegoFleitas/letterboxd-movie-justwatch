@@ -4,7 +4,11 @@ import { exec as execCallback } from "node:child_process";
 import { promisify } from "node:util";
 import { DEV_HTTP_API_PREFIX } from "./routes.js";
 import { devRedisApisAllowedOrReply, isNodeProductionEnvironment } from "./lib/devApiGuard.js";
-import { clearCacheByCategory } from "./lib/redis.js";
+import {
+  clearCacheByCategory,
+  estimateSearchMovieStringKeyCount,
+  getCacheCategoryCount,
+} from "./lib/redis.js";
 import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from "./httpStatusCodes.js";
 
 const exec = promisify(execCallback);
@@ -49,6 +53,41 @@ export function registerDevHttpRoutes(app: FastifyInstance): void {
         if (!devRedisApisAllowedOrReply(reply)) return;
         const result = await clearCacheByCategory("list");
         reply.send({ ok: true, ...result });
+      });
+
+      dev.get("/cache-status", async (_request, reply) => {
+        if (!devRedisApisAllowedOrReply(reply)) return;
+        const redisKeyPrefix = process.env.FLY_APP_NAME || "app";
+        const [watchlistResult, listResult, searchMovieResult, searchMovieScan] = await Promise.all(
+          [
+            getCacheCategoryCount("watchlist"),
+            getCacheCategoryCount("list"),
+            getCacheCategoryCount("search-movie"),
+            estimateSearchMovieStringKeyCount(),
+          ],
+        );
+        const error =
+          watchlistResult.error ||
+          listResult.error ||
+          searchMovieResult.error ||
+          searchMovieScan.error;
+        reply.send({
+          ok: !error,
+          redisKeyPrefix,
+          watchlistCacheEntries: watchlistResult.count,
+          hasWatchlistCache: watchlistResult.count > 0,
+          listCacheEntries: listResult.count,
+          hasListCache: listResult.count > 0,
+          searchMovieCacheEntries: searchMovieResult.count,
+          hasSearchMovieCache: searchMovieResult.count > 0,
+          searchMovieApproxStringKeys: searchMovieScan.approxSearchMovieStringKeys,
+          searchMovieScannedStringKeys: searchMovieScan.scannedStringKeys,
+          searchMovieUnindexedApprox: Math.max(
+            0,
+            searchMovieScan.approxSearchMovieStringKeys - searchMovieResult.count,
+          ),
+          error,
+        });
       });
 
       dev.post("/reset-redis", async (_request, reply) => {
