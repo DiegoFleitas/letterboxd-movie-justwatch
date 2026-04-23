@@ -254,27 +254,44 @@ export const getCacheCategoryCount = async (
     /** Batch EXISTS into pipelines so large category sets do not open N concurrent commands per poll. */
     const EXISTS_CHUNK = 400;
     const staleKeys: string[] = [];
-    for (let offset = 0; offset < keys.length; offset += EXISTS_CHUNK) {
+    let verifiedExistingCount = 0;
+    let existsError: string | undefined;
+    outer: for (let offset = 0; offset < keys.length; offset += EXISTS_CHUNK) {
       const chunk = keys.slice(offset, offset + EXISTS_CHUNK);
       const pipeline = client.pipeline();
       for (const key of chunk) {
         pipeline.exists(key);
       }
       const execResult = await pipeline.exec();
-      if (!execResult) continue;
+      if (!execResult) {
+        existsError = "Redis EXISTS pipeline returned no results";
+        break;
+      }
       for (let i = 0; i < chunk.length; i++) {
         const tuple = execResult[i] as [Error | null, number] | undefined;
-        if (!tuple) continue;
+        if (!tuple) {
+          existsError = "Redis EXISTS pipeline returned incomplete results";
+          break outer;
+        }
         const [existsErr, n] = tuple;
-        if (existsErr || n === 0) {
+        if (existsErr) {
+          existsError = existsErr.message;
+          break outer;
+        }
+        if (n === 0) {
           staleKeys.push(chunk[i]);
+        } else {
+          verifiedExistingCount += 1;
         }
       }
+    }
+    if (existsError) {
+      return { count: verifiedExistingCount, error: existsError };
     }
     if (staleKeys.length > 0) {
       await client.srem(indexKey, ...staleKeys);
     }
-    return { count: keys.length - staleKeys.length };
+    return { count: verifiedExistingCount };
   } catch (error) {
     const err = error as Error;
     console.log(`[REDIS_COUNT_ERROR] (${category}) ${error}`);

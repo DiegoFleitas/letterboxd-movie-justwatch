@@ -15,12 +15,12 @@ import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from "./httpStatusCodes.js";
 
 const exec = promisify(execCallback);
 
-/** Parsed `CACHE_TTL` (seconds) for dev diagnostics; `null` when unset or not a finite non-negative number. */
+/** Parsed `CACHE_TTL` (seconds) for dev diagnostics; `null` when unset or not a finite positive number. */
 function parseCacheTtlEnvSeconds(): number | null {
   const raw = process.env.CACHE_TTL;
   if (raw === undefined || raw === "") return null;
   const n = Number(raw);
-  if (!Number.isFinite(n) || n < 0) return null;
+  if (!Number.isFinite(n) || n <= 0) return null;
   return n;
 }
 
@@ -66,39 +66,43 @@ export function registerDevHttpRoutes(app: FastifyInstance): void {
         reply.send({ ok: true, ...result });
       });
 
-      dev.get("/cache-status", { logLevel: "silent" }, async (_request, reply) => {
+      dev.get("/cache-status", { logLevel: "silent" }, async (request, reply) => {
         if (!devRedisApisAllowedOrReply(reply)) return;
+        const query = request.query as Record<string, string | undefined>;
+        const includeScan = query.scan === "1";
         const redisKeyPrefix = process.env.FLY_APP_NAME || "app";
         const [watchlistResult, listResult, searchMovieResult, searchMovieScan, soonestTtl] =
           await Promise.all([
             getCacheCategoryCount("watchlist"),
             getCacheCategoryCount("list"),
             getCacheCategoryCount("search-movie"),
-            estimateSearchMovieStringKeyCount(),
+            includeScan ? estimateSearchMovieStringKeyCount() : Promise.resolve(null),
             getSoonestIndexedCacheKeyExpiryAtMs(),
           ]);
         const error =
           watchlistResult.error ||
           listResult.error ||
           searchMovieResult.error ||
-          searchMovieScan.error;
+          (searchMovieScan?.error ?? undefined) ||
+          soonestTtl.error;
         reply.send({
           ok: !error,
           redisKeyPrefix,
           cacheTtlEnvSeconds: parseCacheTtlEnvSeconds(),
           soonestIndexedKeyExpiryAtMs: soonestTtl.error ? null : soonestTtl.soonestExpiryAtMs,
+          soonestIndexedKeyExpiryError: soonestTtl.error ?? null,
           watchlistCacheEntries: watchlistResult.count,
           hasWatchlistCache: watchlistResult.count > 0,
           listCacheEntries: listResult.count,
           hasListCache: listResult.count > 0,
           searchMovieCacheEntries: searchMovieResult.count,
           hasSearchMovieCache: searchMovieResult.count > 0,
-          searchMovieApproxStringKeys: searchMovieScan.approxSearchMovieStringKeys,
-          searchMovieScannedStringKeys: searchMovieScan.scannedStringKeys,
-          searchMovieUnindexedApprox: Math.max(
-            0,
-            searchMovieScan.approxSearchMovieStringKeys - searchMovieResult.count,
-          ),
+          searchMovieApproxStringKeys: searchMovieScan?.approxSearchMovieStringKeys ?? null,
+          searchMovieScannedStringKeys: searchMovieScan?.scannedStringKeys ?? null,
+          searchMovieUnindexedApprox:
+            searchMovieScan != null
+              ? Math.max(0, searchMovieScan.approxSearchMovieStringKeys - searchMovieResult.count)
+              : null,
           justWatchHttpErrors: getJustWatchHttpErrorSnapshot(),
           error,
         });
