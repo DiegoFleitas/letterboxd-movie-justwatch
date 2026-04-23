@@ -2,6 +2,14 @@ import type { HttpHandler } from "../httpContext.js";
 import axiosHelper from "../lib/axios.js";
 import { getCacheValue, setCacheValue } from "../lib/redis.js";
 import { alternativeSearchBodySchema, firstZodIssueMessage } from "../lib/apiSchemas.js";
+import {
+  HTTP_STATUS_BAD_REQUEST,
+  HTTP_STATUS_INTERNAL_SERVER_ERROR,
+  HTTP_STATUS_NOT_FOUND,
+  HTTP_STATUS_OK,
+  HTTP_STATUS_SERVICE_UNAVAILABLE,
+  HTTP_STATUS_UNAUTHORIZED,
+} from "../httpStatusCodes.js";
 
 const axios = axiosHelper();
 const cacheTtl = Number(process.env.CACHE_TTL) || 3600;
@@ -16,7 +24,7 @@ interface JackettResult {
 export const alternativeSearch: HttpHandler = async ({ req, res }) => {
   const parsedBody = alternativeSearchBodySchema.safeParse(req.body ?? {});
   if (!parsedBody.success) {
-    res.status(400).json({ error: firstZodIssueMessage(parsedBody.error) });
+    res.status(HTTP_STATUS_BAD_REQUEST).json({ error: firstZodIssueMessage(parsedBody.error) });
     return;
   }
   const { title, year } = parsedBody.data;
@@ -24,7 +32,9 @@ export const alternativeSearch: HttpHandler = async ({ req, res }) => {
   const jackettKey = process.env.JACKETT_API_KEY;
   const jackettEndpoint = process.env.JACKETT_API_ENDPOINT;
   if (!jackettKey?.trim() || !jackettEndpoint?.trim()) {
-    res.status(503).json({ error: "Alternative search is not configured" });
+    res
+      .status(HTTP_STATUS_SERVICE_UNAVAILABLE)
+      .json({ error: "Alternative search is not configured" });
     return;
   }
 
@@ -37,7 +47,7 @@ export const alternativeSearch: HttpHandler = async ({ req, res }) => {
       | null
       | undefined;
     if (cachedResponse) {
-      const status = cachedResponse.error ? 404 : 200;
+      const status = cachedResponse.error ? HTTP_STATUS_NOT_FOUND : HTTP_STATUS_OK;
       console.log("Response found (cached)");
       res.status(status).json(cachedResponse);
       return;
@@ -78,20 +88,22 @@ export const alternativeSearch: HttpHandler = async ({ req, res }) => {
         year,
       };
       await setCacheValue(cacheKey, response, cacheTtl);
-      res.status(200).json(response);
+      res.status(HTTP_STATUS_OK).json(response);
     } else {
       const response = { error: "No results found." };
       await setCacheValue(cacheKey, response, cacheTtl);
-      res.status(404).json(response);
+      res.status(HTTP_STATUS_NOT_FOUND).json(response);
     }
   } catch (error) {
     const err = error as { response?: { status?: number } };
-    if (err?.response?.status === 401) {
-      res.status(401).json({ error: "Alternative search temporarily disabled" });
+    if (err?.response?.status === HTTP_STATUS_UNAUTHORIZED) {
+      res
+        .status(HTTP_STATUS_UNAUTHORIZED)
+        .json({ error: "Alternative search temporarily disabled" });
       return;
     }
     console.error(error);
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: "Internal Server Error" });
   }
 };
 

@@ -1,4 +1,5 @@
 import type { FastifyReply } from "fastify";
+import { HTTP_STATUS_FORBIDDEN, HTTP_STATUS_NOT_FOUND } from "../httpStatusCodes.js";
 
 /** Hostnames treated as safe targets for dev-only Redis HTTP APIs (see docker-compose `redis` service). */
 const DEFAULT_LOCAL_REDIS_HOSTS = new Set(["localhost", "127.0.0.1", "::1", "redis"]);
@@ -63,10 +64,10 @@ export function getDevApiGuardFailure(): DevApiGuardFailure | null {
 
 export function sendDevApiGuardFailure(reply: FastifyReply, failure: DevApiGuardFailure): void {
   if (failure.code === "production") {
-    reply.code(404).send({ error: failure.message });
+    reply.code(HTTP_STATUS_NOT_FOUND).send({ error: failure.message });
     return;
   }
-  reply.code(403).send({ error: failure.message });
+  reply.code(HTTP_STATUS_FORBIDDEN).send({ error: failure.message });
 }
 
 /** If dev Redis APIs are not allowed, sends the response and returns false. */

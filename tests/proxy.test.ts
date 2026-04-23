@@ -74,6 +74,7 @@ describe("proxy handler", () => {
   function createMockRes() {
     let statusCode = 0;
     let jsonBody: unknown;
+    const headers: Record<string, string | number | readonly string[]> = {};
     const res: HttpResponseContext = {
       status(code: number) {
         statusCode = code;
@@ -83,11 +84,17 @@ describe("proxy handler", () => {
         jsonBody = payload;
       },
       send() {},
-      setHeader() {
+      setHeader(name: string, value: string | number | readonly string[]) {
+        headers[name] = value;
         return this;
       },
     };
-    return { res, getStatus: () => statusCode, getJson: () => jsonBody };
+    return {
+      res,
+      getStatus: () => statusCode,
+      getJson: () => jsonBody,
+      getHeader: (name: string) => headers[name],
+    };
   }
 
   it("returns 403 and does not call axios for disallowed host", async () => {
@@ -170,5 +177,25 @@ describe("proxy handler", () => {
     await proxy({ req, res });
 
     expect(mockPost.mock.calls[0]?.[1]).toEqual({ a: 1 });
+  });
+
+  it("returns 405 and Allow header for unsupported methods", async () => {
+    const req: HttpRequestContext = {
+      body: {},
+      params: {},
+      query: {},
+      headers: {},
+      method: "PUT",
+      url: "/api/proxy/https://api.themoviedb.org/3/foo",
+      cookies: {},
+      session: null,
+      appLocals: {},
+    };
+    const { res, getStatus, getJson, getHeader } = createMockRes();
+    await proxy({ req, res });
+
+    expect(getStatus()).toBe(405);
+    expect(getHeader("Allow")).toBe("GET, POST");
+    expect(getJson()).toEqual({ error: "Method not allowed" });
   });
 });

@@ -26,6 +26,11 @@ import { getPosthog, shutdownPosthog } from "./lib/posthog.js";
 import { injectRuntimeConfig } from "./lib/injectRuntimeConfig.js";
 import type { HttpHandler, HttpRequestContext, HttpResponseContext } from "./httpContext.js";
 import * as Sentry from "@sentry/node";
+import {
+  HTTP_STATUS_INTERNAL_SERVER_ERROR,
+  HTTP_STATUS_NOT_FOUND,
+  HTTP_STATUS_OK,
+} from "./httpStatusCodes.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -116,7 +121,7 @@ export function createServer(): CreatedServer {
 
     app.get("/", async (_request, reply) => {
       if (!cachedIndexHtml) {
-        reply.code(404).send();
+        reply.code(HTTP_STATUS_NOT_FOUND).send();
         return;
       }
       reply.header("Content-Type", "text/html; charset=utf-8");
@@ -168,13 +173,16 @@ export function createServer(): CreatedServer {
 
     app.get("/redis-healthcheck", async (_request, reply) => {
       if (isRedisDisabled()) {
-        reply.type("text/plain").code(200).send("OK (Redis disabled)");
+        reply.type("text/plain").code(HTTP_STATUS_OK).send("OK (Redis disabled)");
         return;
       }
       if (await isHealthy()) {
-        reply.type("text/plain").code(200).send("OK");
+        reply.type("text/plain").code(HTTP_STATUS_OK).send("OK");
       } else {
-        reply.type("text/plain").code(500).send("Redis is not healthy");
+        reply
+          .type("text/plain")
+          .code(HTTP_STATUS_INTERNAL_SERVER_ERROR)
+          .send("Redis is not healthy");
       }
     });
 
@@ -199,7 +207,9 @@ export function createServer(): CreatedServer {
             extra: { endpoint: "/api/sentry-test", mode, method: request.method, url: request.url },
           });
         }
-        reply.code(500).send({ error: "Dummy backend response error for Sentry testing" });
+        reply.code(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({
+          error: "Dummy backend response error for Sentry testing",
+        });
         return;
       }
       throw new Error("Dummy BE Sentry test throw");
@@ -228,7 +238,7 @@ export function createServer(): CreatedServer {
         }
       }
       if (!reply.raw.headersSent) {
-        reply.code(500).send({ error: "Internal Server Error" });
+        reply.code(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ error: "Internal Server Error" });
       }
     });
 

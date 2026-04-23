@@ -5,6 +5,7 @@ import { promisify } from "node:util";
 import { DEV_HTTP_API_PREFIX } from "../devHttpApiPrefix.js";
 import { devRedisApisAllowedOrReply, isNodeProductionEnvironment } from "./lib/devApiGuard.js";
 import { clearCacheByCategory } from "./lib/redis.js";
+import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from "./httpStatusCodes.js";
 
 const exec = promisify(execCallback);
 
@@ -33,7 +34,7 @@ export function registerDevHttpRoutes(app: FastifyInstance): void {
           reply.send({ ok: true, stdout, stderr });
         } catch (error) {
           const err = error as { stdout?: string; stderr?: string; message?: string };
-          reply.code(500).send({
+          reply.code(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({
             error: err.stderr || err.message || "Failed to seed Redis from snapshot",
             stdout: err.stdout || "",
             stderr: err.stderr || "",
@@ -48,7 +49,7 @@ export function registerDevHttpRoutes(app: FastifyInstance): void {
           reply.send({ ok: true, stdout, stderr });
         } catch (error) {
           const err = error as { stdout?: string; stderr?: string; message?: string };
-          reply.code(500).send({
+          reply.code(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({
             error: err.stderr || err.message || "Failed to export Redis snapshot",
             stdout: err.stdout || "",
             stderr: err.stderr || "",
@@ -63,7 +64,7 @@ export function registerDevHttpRoutes(app: FastifyInstance): void {
           reply.send({ ok: true, stdout, stderr });
         } catch (error) {
           const err = error as { stdout?: string; stderr?: string; message?: string };
-          reply.code(500).send({
+          reply.code(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({
             error: err.stderr || err.message || "Failed to validate Redis snapshot",
             stdout: err.stdout || "",
             stderr: err.stderr || "",
@@ -86,7 +87,7 @@ export function registerDevHttpRoutes(app: FastifyInstance): void {
           });
         } catch (error) {
           const err = error as { stdout?: string; stderr?: string; message?: string };
-          reply.code(500).send({
+          reply.code(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({
             error:
               err.stderr ||
               err.message ||

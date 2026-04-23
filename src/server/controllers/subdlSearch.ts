@@ -2,6 +2,13 @@ import type { HttpHandler } from "../httpContext.js";
 import axiosHelper from "../lib/axios.js";
 import { alternativeSearchBodySchema, firstZodIssueMessage } from "../lib/apiSchemas.js";
 import { pickSubdlBrowseUrl, type SubdlResponse } from "../lib/subdlBrowseUrl.js";
+import {
+  HTTP_STATUS_BAD_REQUEST,
+  HTTP_STATUS_INTERNAL_SERVER_ERROR,
+  HTTP_STATUS_NOT_FOUND,
+  HTTP_STATUS_OK,
+  HTTP_STATUS_SERVICE_UNAVAILABLE,
+} from "../httpStatusCodes.js";
 
 const axios = axiosHelper();
 
@@ -10,13 +17,15 @@ const subdlEndpoint = "https://api.subdl.com/api/v1/subtitles";
 export const subdlSearch: HttpHandler = async ({ req, res }) => {
   const parsedBody = alternativeSearchBodySchema.safeParse(req.body ?? {});
   if (!parsedBody.success) {
-    res.status(400).json({ error: firstZodIssueMessage(parsedBody.error) });
+    res.status(HTTP_STATUS_BAD_REQUEST).json({ error: firstZodIssueMessage(parsedBody.error) });
     return;
   }
 
   const subdlApiKey = process.env.SUBDL_API_KEY;
   if (!subdlApiKey?.trim()) {
-    res.status(503).json({ error: "Subtitles search is not configured" });
+    res
+      .status(HTTP_STATUS_SERVICE_UNAVAILABLE)
+      .json({ error: "Subtitles search is not configured" });
     return;
   }
 
@@ -39,10 +48,10 @@ export const subdlSearch: HttpHandler = async ({ req, res }) => {
     });
     const url = pickSubdlBrowseUrl(data);
     if (!data?.status || !url) {
-      res.status(404).json({ error: data?.error || "No subtitles found." });
+      res.status(HTTP_STATUS_NOT_FOUND).json({ error: data?.error || "No subtitles found." });
       return;
     }
-    res.status(200).json({ url, title, year });
+    res.status(HTTP_STATUS_OK).json({ url, title, year });
   } catch (error) {
     const axiosError = error as {
       message?: string;
@@ -55,6 +64,6 @@ export const subdlSearch: HttpHandler = async ({ req, res }) => {
       status: axiosError?.response?.status,
       statusText: axiosError?.response?.statusText,
     });
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: "Internal Server Error" });
   }
 };

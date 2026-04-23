@@ -2,6 +2,11 @@ import type { HttpHandler } from "../httpContext.js";
 import axiosHelper from "../lib/axios.js";
 import { getCacheValue, setCacheValue } from "../lib/redis.js";
 import { parseAllowedProxyUrl } from "../lib/apiSchemas.js";
+import {
+  HTTP_STATUS_INTERNAL_SERVER_ERROR,
+  HTTP_STATUS_METHOD_NOT_ALLOWED,
+  HTTP_STATUS_OK,
+} from "../httpStatusCodes.js";
 
 const axios = axiosHelper();
 const cacheTtl = Number(process.env.CACHE_TTL) || 60;
@@ -31,7 +36,7 @@ export const proxy: HttpHandler = async ({ req, res }) => {
     const cacheKey = `proxy:${method}:${targetUrl}:${JSON.stringify(req.body)}`;
     const cachedResponse = await getCacheValue(cacheKey);
     if (cachedResponse) {
-      res.status(200).json(cachedResponse);
+      res.status(HTTP_STATUS_OK).json(cachedResponse);
       return;
     }
 
@@ -45,14 +50,15 @@ export const proxy: HttpHandler = async ({ req, res }) => {
         response = await axios.post(finalUrl, postBodyForAxios(req.body));
         break;
       default:
-        res.status(400).json({ error: "Method not allowed" });
+        res.setHeader("Allow", "GET, POST");
+        res.status(HTTP_STATUS_METHOD_NOT_ALLOWED).json({ error: "Method not allowed" });
         return;
     }
     await setCacheValue(cacheKey, response?.data, cacheTtl);
     res.status(response.status).json(response?.data);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: "Internal Server Error" });
   }
 };
 

@@ -1,5 +1,6 @@
 import axios, { type AxiosInstance, type InternalAxiosRequestConfig } from "axios";
 import https from "https";
+import { HTTP_STATUS_TOO_MANY_REQUESTS } from "../httpStatusCodes.js";
 
 const instance = axios.create({});
 
@@ -43,7 +44,7 @@ instance.interceptors.response.use(
     const { config, response } = error;
     if (response) {
       (response as Record<string, unknown>).axiosError = error;
-      if (response.status === 429) {
+      if (response.status === HTTP_STATUS_TOO_MANY_REQUESTS) {
         const cfg = config as ConfigWith429Retry;
         const nextAttempt = (cfg.__rateLimitRetryCount ?? 0) + 1;
         const maxRetries = getMax429Retries();
