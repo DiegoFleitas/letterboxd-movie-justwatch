@@ -94,6 +94,7 @@ export function useMovieSearch(
                 country: data.country,
               },
             });
+            showError("Movie search failed. Please try again.");
           } else {
             showError("Movie search failed. Check your connection and try again.");
           }

@@ -68,7 +68,7 @@ describe("state tile ID management", () => {
     );
   });
 
-  it("strips spaces instead of preserving hyphens", () => {
+  it("removes whitespace during normalization", () => {
     expect(generateTileId("A  Space Heavy Title", "2024")).toBe("2024-ASPACEHEAVYTITLE");
   });
 
