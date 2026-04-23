@@ -5,7 +5,7 @@ import type { CanonicalProviderMap } from "./types/index.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const rootDir = join(__dirname, "..", "..", "..");
-const dataPath = join(rootDir, "resources", "data", "canonical-providers.json");
+const dataPath = join(rootDir, "redis", "data", "canonical-providers.json");
 
 interface CanonicalData {
   byTechnicalName: CanonicalProviderMap;

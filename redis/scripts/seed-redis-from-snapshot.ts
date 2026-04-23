@@ -11,8 +11,7 @@ import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const snapshotPath =
-  process.env.REDIS_SNAPSHOT_PATH ||
-  path.join(__dirname, "..", "resources", "data", "redis-snapshot.json");
+  process.env.REDIS_SNAPSHOT_PATH || path.join(__dirname, "..", "data", "redis-snapshot.json");
 const url = process.env.SEED_REDIS_URL || process.env.FLYIO_REDIS_URL || "redis://localhost:6379";
 
 function assertLocalRedisTarget(redisUrl: string): void {

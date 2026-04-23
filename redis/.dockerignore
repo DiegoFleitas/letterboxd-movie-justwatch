@@ -1,0 +1,5 @@
+# Build context is this directory (`docker build … .` from `redis/`).
+# The image only COPYs entrypoint.sh; keep the context tiny.
+data/
+scripts/
+README.md
