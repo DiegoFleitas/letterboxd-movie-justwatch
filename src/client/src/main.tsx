@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import { useEffect } from "react";
 import { PostHogProvider, usePostHog } from "@posthog/react";
 import { App } from "./App";
+import { HTTP_API_PATHS } from "@server/routes";
 import { captureFrontendException, initFrontendSentry } from "./sentry";
 
 function PostHogWindowRef(): null {
@@ -33,11 +34,11 @@ if (rootEl) {
       });
     }
     if (params.get("sentryDummyBe") === "1") {
-      fetch("/api/sentry-test?mode=throw")
+      fetch(`${HTTP_API_PATHS.sentryTest}?mode=throw`)
         .then(() => {})
         .catch((err: unknown) => {
           captureFrontendException(err, {
-            tags: { source: "dummy", layer: "frontend", endpoint: "/api/sentry-test" },
+            tags: { source: "dummy", layer: "frontend", endpoint: HTTP_API_PATHS.sentryTest },
           });
         });
     }

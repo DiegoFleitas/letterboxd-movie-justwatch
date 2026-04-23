@@ -1,0 +1,28 @@
+/**
+ * HTTP path constants shared by Fastify and the Vite client (`@server/routes`).
+ * Not Fastify registration — only strings and small helpers.
+ */
+
+/** Development-only JSON APIs (`registerDevHttpRoutes` + `DevDebugBar`). */
+export const DEV_HTTP_API_PREFIX = "/api/dev" as const;
+
+/** Production same-origin JSON + proxy endpoints. */
+export const HTTP_API_PATHS = {
+  searchMovie: "/api/search-movie",
+  poster: "/api/poster",
+  letterboxdWatchlist: "/api/letterboxd-watchlist",
+  letterboxdCustomList: "/api/letterboxd-custom-list",
+  letterboxdPoster: "/api/letterboxd-poster",
+  alternativeSearch: "/api/alternative-search",
+  subdlSearch: "/api/subdl-search",
+  proxyPrefix: "/api/proxy",
+  sentryTest: "/api/sentry-test",
+} as const;
+
+/** Fastify `app.all` pattern for the HTTPS proxy (must end with `/*`). */
+export const HTTP_API_PROXY_ROUTE = `${HTTP_API_PATHS.proxyPrefix}/*` as const;
+
+/** Strip our proxy mount from `req.url` to recover the target URL string. */
+export function proxyTargetFromRequestUrl(requestUrl: string): string {
+  return (requestUrl || "").replace(`${HTTP_API_PATHS.proxyPrefix}/`, "");
+}
