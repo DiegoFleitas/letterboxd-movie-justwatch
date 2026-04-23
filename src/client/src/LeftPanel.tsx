@@ -99,6 +99,7 @@ export function LeftPanel(): React.ReactElement {
   const [suggestions, setSuggestions] = useState<TMDBMovie[]>([]);
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const typeaheadRef = useRef<HTMLDivElement>(null);
   const movieInputRef = useRef<HTMLInputElement>(null);
 
@@ -108,6 +109,7 @@ export function LeftPanel(): React.ReactElement {
     if (debouncedTitle.length < TMDB_MIN_LENGTH) {
       setSuggestions([]);
       setSuggestionsOpen(false);
+      setHighlightedIndex(-1);
       return;
     }
     const ac = new AbortController();
@@ -123,6 +125,7 @@ export function LeftPanel(): React.ReactElement {
       .then((data: { results?: TMDBMovie[] }) => {
         const results = (data.results || []).slice(0, TMDB_MAX_SUGGESTIONS);
         setSuggestions(results);
+        setHighlightedIndex(-1);
         if (movieInputRef.current === document.activeElement) {
           setSuggestionsOpen(true);
         }
@@ -138,6 +141,7 @@ export function LeftPanel(): React.ReactElement {
     function handleClickOutside(e: MouseEvent): void {
       if (typeaheadRef.current && !typeaheadRef.current.contains(e.target as Node)) {
         setSuggestionsOpen(false);
+        setHighlightedIndex(-1);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -149,6 +153,7 @@ export function LeftPanel(): React.ReactElement {
     setMovieYear(movie.release_date ? movie.release_date.slice(0, 4) : "");
     setSuggestionsOpen(false);
     setSuggestions([]);
+    setHighlightedIndex(-1);
     movieInputRef.current?.blur();
   };
 
@@ -265,12 +270,41 @@ export function LeftPanel(): React.ReactElement {
                   aria-autocomplete="list"
                   aria-expanded={suggestionsOpen}
                   aria-controls={MOVIE_SUGGESTIONS_ID}
+                  aria-activedescendant={
+                    suggestionsOpen && highlightedIndex >= 0
+                      ? `${MOVIE_SUGGESTIONS_ID}-option-${highlightedIndex}`
+                      : undefined
+                  }
                   placeholder="Jurassic Park"
                   required
                   data-testid="movie-input"
                   value={movieTitle}
-                  onChange={(e) => setMovieTitle(e.target.value)}
+                  onChange={(e) => {
+                    setMovieTitle(e.target.value);
+                    setHighlightedIndex(-1);
+                  }}
                   onFocus={() => suggestions.length > 0 && setSuggestionsOpen(true)}
+                  onKeyDown={(e) => {
+                    if (!suggestions.length) return;
+                    if (e.key === "ArrowDown") {
+                      e.preventDefault();
+                      if (!suggestionsOpen) setSuggestionsOpen(true);
+                      setHighlightedIndex(
+                        (prev) => (prev + 1 + suggestions.length) % suggestions.length,
+                      );
+                    } else if (e.key === "ArrowUp") {
+                      e.preventDefault();
+                      if (!suggestionsOpen) setSuggestionsOpen(true);
+                      setHighlightedIndex((prev) =>
+                        prev < 0
+                          ? suggestions.length - 1
+                          : (prev - 1 + suggestions.length) % suggestions.length,
+                      );
+                    } else if (e.key === "Enter" && suggestionsOpen && highlightedIndex >= 0) {
+                      e.preventDefault();
+                      pickSuggestion(suggestions[highlightedIndex]);
+                    }
+                  }}
                   autoComplete="off"
                 />
                 {suggestionsLoading && (
@@ -290,18 +324,20 @@ export function LeftPanel(): React.ReactElement {
                     role="listbox"
                     aria-label="Movie title suggestions"
                   >
-                    {suggestions.map((movie) => (
+                    {suggestions.map((movie, idx) => (
                       <li
                         key={movie.id}
+                        id={`${MOVIE_SUGGESTIONS_ID}-option-${idx}`}
                         className="tt-suggestion"
                         onClick={() => pickSuggestion(movie)}
+                        onMouseEnter={() => setHighlightedIndex(idx)}
                         onKeyDown={(e) =>
                           (e.key === "Enter" || e.key === " ") &&
                           (e.preventDefault(), pickSuggestion(movie))
                         }
                         role="option"
-                        aria-selected={false}
-                        tabIndex={0}
+                        aria-selected={highlightedIndex === idx}
+                        tabIndex={-1}
                       >
                         {movie.poster_path ? (
                           <img
