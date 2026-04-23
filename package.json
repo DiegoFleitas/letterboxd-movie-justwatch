@@ -20,6 +20,7 @@
     "build:providers": "bun redis/scripts/buildCanonicalProviders.ts",
     "build:providers:dry-run": "bun redis/scripts/buildCanonicalProviders.ts --dry-run",
     "update:letterboxd-fixtures": "bun scripts/updateLetterboxdFixtures.ts",
+    "sync:api-fixtures-from-redis": "bun scripts/syncApiFixturesFromRedisSnapshot.ts",
     "export-redis": "bun redis/scripts/export-redis-snapshot.ts",
     "seed-redis": "bun redis/scripts/seed-redis-from-snapshot.ts",
     "seed:validate": "bun redis/scripts/validate-redis-snapshot.ts",
