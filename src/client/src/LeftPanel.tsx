@@ -337,7 +337,7 @@ export function LeftPanel(): React.ReactElement {
                         }
                         role="option"
                         aria-selected={highlightedIndex === idx}
-                        tabIndex={0}
+                        tabIndex={-1}
                       >
                         {movie.poster_path ? (
                           <img

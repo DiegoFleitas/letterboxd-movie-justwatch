@@ -108,6 +108,7 @@ export function RightPanel(): React.ReactElement {
               className={`streaming-provider-icon ${isActive ? "active" : ""}`}
               data-sp={provider.name}
               title={provider.name}
+              aria-pressed={isActive}
               onClick={() => toggleFilter(provider.name)}
               onFocus={() => setFocusedProvider(provider.name)}
               onBlur={() => setFocusedProvider((prev) => (prev === provider.name ? null : prev))}
@@ -160,6 +161,7 @@ export function RightPanel(): React.ReactElement {
             }`}
             data-sp="alternative search"
             title="Alternative search"
+            aria-pressed={altSearchFilter}
             onClick={toggleAltSearchFilter}
             initial={"idle"}
             animate={altSearchFilter ? "selected" : "idle"}

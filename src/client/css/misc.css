@@ -74,6 +74,9 @@ img.logo {
 /* Alternative search icon is shown inline with other providers by default. */
 
 .streaming-provider-icon {
+  background: transparent;
+  border: none;
+  appearance: none;
   opacity: 0.35;
   cursor: pointer;
 }

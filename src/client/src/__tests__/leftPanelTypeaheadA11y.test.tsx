@@ -11,27 +11,31 @@ describe("LeftPanel typeahead accessibility", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     localStorage.setItem(COUNTRY_STORAGE_KEY, "en_US");
-    globalThis.fetch = vi.fn((input: RequestInfo | URL) => {
-      const url = typeof input === "string" ? input : String(input);
-      if (url.includes("/search/movie?query=")) {
-        return Promise.resolve({
-          ok: true,
-          json: () =>
-            Promise.resolve({
-              results: [
-                { id: 1, title: "Jurassic Park", release_date: "1993-01-01" },
-                { id: 2, title: "Jumanji", release_date: "1995-01-01" },
-              ],
-            }),
-        } as Response);
-      }
-      return Promise.reject(new Error(`unexpected fetch: ${url}`));
-    }) as unknown as typeof globalThis.fetch;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: RequestInfo | URL) => {
+        const url = typeof input === "string" ? input : String(input);
+        if (url.includes("/search/movie?query=")) {
+          return Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve({
+                results: [
+                  { id: 1, title: "Jurassic Park", release_date: "1993-01-01" },
+                  { id: 2, title: "Jumanji", release_date: "1995-01-01" },
+                ],
+              }),
+          } as Response);
+        }
+        return Promise.reject(new Error(`unexpected fetch: ${url}`));
+      }),
+    );
   });
 
   afterEach(() => {
     vi.useRealTimers();
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
     localStorage.removeItem(COUNTRY_STORAGE_KEY);
   });
 
