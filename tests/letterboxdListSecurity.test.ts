@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { HTTP_API_PATHS } from "@server/routes";
 import type { HttpRequestContext, HttpResponseContext } from "@server/httpContext.js";
 
 const { mockFetchLetterboxdHtml } = vi.hoisted(() => ({
@@ -72,7 +73,7 @@ describe("letterboxd list URL validation (SSRF guard)", () => {
       query: {},
       headers: {},
       method: "POST",
-      url: "/api/letterboxd-watchlist",
+      url: HTTP_API_PATHS.letterboxdWatchlist,
       cookies: {},
       session: null,
       appLocals: {},
@@ -95,7 +96,7 @@ describe("letterboxd list URL validation (SSRF guard)", () => {
       query: {},
       headers: {},
       method: "POST",
-      url: "/api/letterboxd-custom-list",
+      url: HTTP_API_PATHS.letterboxdCustomList,
       cookies: {},
       session: null,
       appLocals: {},
@@ -119,7 +120,7 @@ describe("letterboxd list URL validation (SSRF guard)", () => {
       query: {},
       headers: {},
       method: "POST",
-      url: "/api/letterboxd-custom-list",
+      url: HTTP_API_PATHS.letterboxdCustomList,
       cookies: {},
       session: null,
       appLocals: {},
@@ -142,7 +143,7 @@ describe("letterboxd list URL validation (SSRF guard)", () => {
       query: {},
       headers: {},
       method: "POST",
-      url: "/api/letterboxd-watchlist",
+      url: HTTP_API_PATHS.letterboxdWatchlist,
       cookies: {},
       session: null,
       appLocals: {},

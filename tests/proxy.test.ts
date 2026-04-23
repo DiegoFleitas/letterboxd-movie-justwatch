@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { HTTP_API_PATHS } from "@server/routes";
 import type { HttpRequestContext, HttpResponseContext } from "@server/httpContext.js";
 
 const { mockGet, mockPost, mockGetCache, mockSetCache } = vi.hoisted(() => ({
@@ -104,7 +105,7 @@ describe("proxy handler", () => {
       query: {},
       headers: {},
       method: "GET",
-      url: "/api/proxy/https://malicious.example/hook",
+      url: `${HTTP_API_PATHS.proxyPrefix}/https://malicious.example/hook`,
       cookies: {},
       session: null,
       appLocals: {},
@@ -125,7 +126,7 @@ describe("proxy handler", () => {
       query: {},
       headers: {},
       method: "GET",
-      url: "/api/proxy/https://api.themoviedb.org/3/search/movie?query=test",
+      url: `${HTTP_API_PATHS.proxyPrefix}/https://api.themoviedb.org/3/search/movie?query=test`,
       cookies: {},
       session: null,
       appLocals: {},
@@ -148,7 +149,7 @@ describe("proxy handler", () => {
       query: {},
       headers: {},
       method: "POST",
-      url: "/api/proxy/https://api.themoviedb.org/3/foo",
+      url: `${HTTP_API_PATHS.proxyPrefix}/https://api.themoviedb.org/3/foo`,
       cookies: {},
       session: null,
       appLocals: {},
@@ -168,7 +169,7 @@ describe("proxy handler", () => {
       query: {},
       headers: {},
       method: "POST",
-      url: "/api/proxy/https://api.themoviedb.org/3/foo",
+      url: `${HTTP_API_PATHS.proxyPrefix}/https://api.themoviedb.org/3/foo`,
       cookies: {},
       session: null,
       appLocals: {},
@@ -186,7 +187,7 @@ describe("proxy handler", () => {
       query: {},
       headers: {},
       method: "PUT",
-      url: "/api/proxy/https://api.themoviedb.org/3/foo",
+      url: `${HTTP_API_PATHS.proxyPrefix}/https://api.themoviedb.org/3/foo`,
       cookies: {},
       session: null,
       appLocals: {},

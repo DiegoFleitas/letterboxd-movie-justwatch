@@ -1,4 +1,5 @@
 import type { HttpHandler } from "../httpContext.js";
+import { proxyTargetFromRequestUrl } from "../routes.js";
 import axiosHelper from "../lib/axios.js";
 import { getCacheValue, setCacheValue } from "../lib/redis.js";
 import { parseAllowedProxyUrl } from "../lib/apiSchemas.js";
@@ -22,7 +23,7 @@ function postBodyForAxios(body: unknown): unknown {
 }
 
 export const proxy: HttpHandler = async ({ req, res }) => {
-  const url = (req.url || "").replace("/api/proxy/", "");
+  const url = proxyTargetFromRequestUrl(req.url || "");
   const { method } = req;
   try {
     const parsed = parseAllowedProxyUrl(url);

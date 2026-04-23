@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import rateLimit from "@fastify/rate-limit";
 import { exec as execCallback } from "node:child_process";
 import { promisify } from "node:util";
-import { DEV_HTTP_API_PREFIX } from "../devHttpApiPrefix.js";
+import { DEV_HTTP_API_PREFIX } from "./routes.js";
 import { devRedisApisAllowedOrReply, isNodeProductionEnvironment } from "./lib/devApiGuard.js";
 import { clearCacheByCategory } from "./lib/redis.js";
 import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from "./httpStatusCodes.js";

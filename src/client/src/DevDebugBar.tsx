@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { DEV_HTTP_API_PREFIX } from "@devHttpApiPrefix";
+import { DEV_HTTP_API_PREFIX } from "@server/routes";
 import { useAppState } from "./AppStateContext";
 import { isViteDev } from "./devDebugBarEnv";
 import "./DevDebugBar.css";

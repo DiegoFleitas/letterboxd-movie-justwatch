@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { HTTP_API_PATHS } from "@server/routes";
 import { searchSubs } from "../alternativeSearch";
 
 vi.mock("../showError", () => ({
@@ -44,7 +45,7 @@ describe("searchSubs", () => {
       );
     });
     expect(fetchMock).toHaveBeenCalledWith(
-      "/api/subdl-search",
+      HTTP_API_PATHS.subdlSearch,
       expect.objectContaining({
         method: "POST",
         body: JSON.stringify({ title: "Inception", year: 2010 }),

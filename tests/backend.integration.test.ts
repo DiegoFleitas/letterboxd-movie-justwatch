@@ -1,4 +1,5 @@
-import { describe, it, beforeAll, afterAll, expect } from "vitest";
+import { describe, it, beforeAll, afterAll, expect, vi } from "vitest";
+import { HTTP_API_PATHS } from "@server/routes";
 import { createServer } from "@server/createServer.js";
 import { _injectRedisClientForTest, _resetRedisForTesting } from "@server/lib/redis.js";
 
@@ -80,10 +81,32 @@ describe("backend integration (fastify)", () => {
     expect(text).toBe("OK");
   });
 
+  it("POST /api/search-movie without title returns JSON and sets cache headers", async () => {
+    const res = await fetch(`${baseUrl}${HTTP_API_PATHS.searchMovie}`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({}),
+    });
+
+    expect(res.headers.get("cache-control")).toBe("public, max-age=3600");
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { message?: string };
+    expect(body).toMatchObject({ message: "Movie not found" });
+  });
+
+  it("GET /api/sentry-test?mode=response returns JSON error without throwing", async () => {
+    const res = await fetch(`${baseUrl}${HTTP_API_PATHS.sentryTest}?mode=response`);
+    expect(res.status).toBe(500);
+    const body = (await res.json()) as { error?: string };
+    expect(body.error).toContain("Sentry");
+  });
+
   it.skipIf(!process.env.MOVIE_DB_API_KEY)(
     "POST /api/search-movie responds with JSON shape",
     async () => {
-      const res = await fetch(`${baseUrl}/api/search-movie`, {
+      const res = await fetch(`${baseUrl}${HTTP_API_PATHS.searchMovie}`, {
         method: "POST",
         headers: {
           "content-type": "application/json",
@@ -105,4 +128,33 @@ describe("backend integration (fastify)", () => {
       expect(typeof (body as { title: unknown }).title).toBe("string");
     },
   );
+});
+
+describe("backend integration (DISABLE_REDIS)", () => {
+  let baseUrl: string;
+  let closeServer: (() => Promise<void>) | null = null;
+
+  beforeAll(async () => {
+    _resetRedisForTesting();
+    vi.stubEnv("DISABLE_REDIS", "1");
+    const created = createServer();
+    const { port, close } = await created.start(0);
+    baseUrl = `http://127.0.0.1:${port}`;
+    closeServer = close;
+  });
+
+  afterAll(async () => {
+    if (closeServer) {
+      await closeServer();
+      closeServer = null;
+    }
+    vi.unstubAllEnvs();
+  });
+
+  it("GET /redis-healthcheck returns OK (Redis disabled)", async () => {
+    const res = await fetch(`${baseUrl}/redis-healthcheck`);
+    const text = await res.text();
+    expect(res.status).toBe(200);
+    expect(text).toBe("OK (Redis disabled)");
+  });
 });

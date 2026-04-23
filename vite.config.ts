@@ -26,7 +26,6 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "src/client/src"),
       "@server": path.resolve(__dirname, "src/server"),
-      "@devHttpApiPrefix": path.resolve(__dirname, "src/devHttpApiPrefix.ts"),
     },
   },
   root: "src/client",

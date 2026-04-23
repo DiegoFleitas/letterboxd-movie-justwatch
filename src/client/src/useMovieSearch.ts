@@ -3,6 +3,7 @@ import { showMessage } from "./showMessage";
 import { PLACEHOLDER_POSTER, normalizePosterPath, type MergeData } from "./movieTiles";
 import { captureFrontendException, captureFrontendMessage } from "./sentry";
 import { SafeJsonResponseError, safeJsonResponse } from "./safeJsonResponse";
+import { HTTP_API_PATHS } from "@server/routes";
 import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from "@server/httpStatusCodes";
 
 export interface MovieSearchResponse {
@@ -48,7 +49,7 @@ export function useMovieSearch(
       }
       isInFlightRef.current = true;
       setMovieSearchLoading?.(true);
-      fetch("/api/search-movie", {
+      fetch(HTTP_API_PATHS.searchMovie, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -57,7 +58,7 @@ export function useMovieSearch(
           setShowAltSearchButton?.(true);
           if (response.status >= HTTP_STATUS_INTERNAL_SERVER_ERROR) {
             captureFrontendMessage("search-movie upstream error", {
-              tags: { source: "api", endpoint: "/api/search-movie", reason: "http-5xx" },
+              tags: { source: "api", endpoint: HTTP_API_PATHS.searchMovie, reason: "http-5xx" },
               extra: { status: response.status, title: data.title, year: data.year },
             });
             console.error(response);
@@ -81,7 +82,7 @@ export function useMovieSearch(
             captureFrontendMessage("search-movie parse failure", {
               tags: {
                 source: "api",
-                endpoint: "/api/search-movie",
+                endpoint: HTTP_API_PATHS.searchMovie,
                 reason: err.kind,
               },
               extra: {
@@ -94,7 +95,7 @@ export function useMovieSearch(
             });
           }
           captureFrontendException(err, {
-            tags: { source: "api", endpoint: "/api/search-movie" },
+            tags: { source: "api", endpoint: HTTP_API_PATHS.searchMovie },
             extra: { title: data.title, year: data.year, country: data.country },
           });
           console.error(err);
