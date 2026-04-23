@@ -43,10 +43,9 @@ export function MovieTile({
     "OpenSubtitles",
   ].filter(Boolean);
   const { searchSubs } = useAppState();
-  const providerNames = movieProviders.map((p: { name: string }) => p.name);
   const [loaded, setLoaded] = useState(false);
 
-  const handleProviderClick = (e: React.MouseEvent | React.KeyboardEvent, url?: string): void => {
+  const handleProviderClick = (e: React.MouseEvent, url?: string): void => {
     e.preventDefault();
     if (url) window.open(`${JUSTWATCH_PROXY}${url}`, "_blank");
   };
@@ -272,31 +271,20 @@ export function MovieTile({
         <div className="poster-info">
           <h2 className="poster-title">{title}</h2>
           {year ? <p className="poster-release-date">{year}</p> : null}
-          <p className="streaming-services" style={{ display: "none" }}>
-            {providerNames.join(" / ")}
-          </p>
           <div className="poster-providers">
             <div className="icons-container icons-container-tile">
               {movieProviders.map((provider: TileProvider) => (
-                <div
+                <button
+                  type="button"
                   key={provider.id}
                   className="tile-icon-btn"
                   data-sp={provider.name}
                   data-url={provider.url}
                   title={provider.name}
                   onClick={(e: React.MouseEvent) => handleProviderClick(e, provider.url)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleProviderClick(e, provider.url);
-                    else if (e.key === " ") {
-                      e.preventDefault();
-                      handleProviderClick(e, provider.url);
-                    }
-                  }}
-                  role="button"
-                  tabIndex={0}
                 >
                   <img className="tile-icons" src={provider.icon ?? ""} alt={provider.name} />
-                </div>
+                </button>
               ))}
             </div>
             <button
