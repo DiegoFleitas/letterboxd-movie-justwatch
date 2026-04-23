@@ -1,6 +1,6 @@
 # Tests
 
-Unit and integration tests use **[Vitest](https://vitest.dev/)**. End-to-end tests use **Playwright** (`e2e/`).
+Unit and integration tests use **[Vitest](https://vitest.dev/)**. End-to-end tests use **Playwright** (`tests/e2e/`).
 
 ## Commands
 
@@ -9,7 +9,7 @@ Unit and integration tests use **[Vitest](https://vitest.dev/)**. End-to-end tes
 | `bun run test` / `bun run test:unit`                                             | All Vitest tests under `tests/**/*.test.ts` (see exclusions in `vitest.config.ts`)             |
 | `bun run test:backend`                                                           | Fastify integration tests only                                                                 |
 | `bun run test:filter`, `test:state`, `test:posthog`, `test:redis`, `test:dedupe` | Single Vitest files                                                                            |
-| `bun run test:e2e`                                                               | Playwright (`e2e/app.spec.ts`)                                                                 |
+| `bun run test:e2e`                                                               | Playwright (`tests/e2e/*.spec.ts`; UI mocks + `backend-smoke.spec.ts`)                         |
 | `bun run test:poster-flow`                                                       | Manual script: hits `localhost:3000` (backend must be running); **not** part of `bun run test` |
 
 Config: root [`vitest.config.ts`](../vitest.config.ts) (Node environment, `APP_SECRET_KEY` for sessions). Poster-flow is excluded from the default Vitest run because it requires a live server.
@@ -21,7 +21,7 @@ Config: root [`vitest.config.ts`](../vitest.config.ts) (Node environment, `APP_S
 - **`tests/*.test.ts`** – unit/integration tests (`describe` / `it` / `expect`).
 - **`tests/backend.integration.test.ts`** – Fastify HTTP checks; optional `MOVIE_DB_API_KEY` enables the search-movie case.
 - **`tests/fixtures/`** – HTML/JSON fixtures for scrapers and state tests.
-- **`e2e/app.spec.ts`** – browser E2E (mocked APIs).
+- **`tests/e2e/*.spec.ts`** (except `backend-smoke`) – browser E2E with mocked `/api/*`; see `tests/e2e/README.md`.
 
 ## Cross-layer imports from client src
 

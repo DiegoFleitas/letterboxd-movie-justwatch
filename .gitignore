@@ -14,24 +14,16 @@ src/client/dist
 # misc
 *.log
 # Large optional Redis dump (canonical JSON stays tracked)
-/resources/data/redis-snapshot.json
+/redis/data/redis-snapshot.json
 
 
 .npmrc
 .corepack
 
-# Ignore Playwright test output
-playwright-report/
-test-results/
+# Playwright (e2e) output
+/tests/playwright-report/
+/tests/test-results/
 
-# Ignore Playwright trace files
-playwright-report/data/trace/
-
-# Ignore Playwright screenshots
-playwright-report/screenshots/
-
-# Ignore Playwright videos
-playwright-report/videos/
-
-# Ignore Playwright logs
-playwright-report/logs/
+# Legacy Playwright default paths (before reports lived at repo root)
+/playwright-report/
+/test-results/
