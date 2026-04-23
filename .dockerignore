@@ -14,12 +14,10 @@ node_modules
 
 # Build output and logs
 *.log
-playwright-report
 src/client/dist
 
 # Tests and dev tooling (not needed for build/start)
 tests
-e2e
 
 # Separate service
 redis
