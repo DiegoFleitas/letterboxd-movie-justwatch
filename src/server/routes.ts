@@ -24,5 +24,13 @@ export const HTTP_API_PROXY_ROUTE = `${HTTP_API_PATHS.proxyPrefix}/*` as const;
 
 /** Strip our proxy mount from `req.url` to recover the target URL string. */
 export function proxyTargetFromRequestUrl(requestUrl: string): string {
-  return (requestUrl || "").replace(`${HTTP_API_PATHS.proxyPrefix}/`, "");
+  const normalizedRequestUrl = requestUrl || "";
+  const proxyPrefixWithSlash = `${HTTP_API_PATHS.proxyPrefix}/`;
+  const proxyPrefixIndex = normalizedRequestUrl.indexOf(proxyPrefixWithSlash);
+
+  if (proxyPrefixIndex === -1) {
+    return normalizedRequestUrl;
+  }
+
+  return normalizedRequestUrl.slice(proxyPrefixIndex + proxyPrefixWithSlash.length);
 }

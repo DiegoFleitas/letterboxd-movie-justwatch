@@ -11,6 +11,10 @@ describe("server/routes", () => {
   });
 
   it("proxyTargetFromRequestUrl uses replace semantics for the first prefix occurrence", () => {
-    expect(proxyTargetFromRequestUrl("")).toBe("");
+    expect(
+      proxyTargetFromRequestUrl(
+        `${HTTP_API_PATHS.proxyPrefix}/https://example.com${HTTP_API_PATHS.proxyPrefix}/resource`,
+      ),
+    ).toBe(`https://example.com${HTTP_API_PATHS.proxyPrefix}/resource`);
   });
 });
