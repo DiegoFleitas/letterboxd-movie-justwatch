@@ -48,6 +48,7 @@ export function runAlternativeSearch(
         extra: { title, year },
       });
       console.error(err);
+      showError("Alternative search failed.");
     })
     .finally(() => {
       isAlternativeSearchInFlight = false;
