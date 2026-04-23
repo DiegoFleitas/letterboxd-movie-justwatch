@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { HTTP_API_PATHS } from "@server/routes";
-import { searchSubs } from "../alternativeSearch";
+import { runAlternativeSearch, searchSubs } from "../alternativeSearch";
 
 vi.mock("../showError", () => ({
   showError: vi.fn(),
@@ -79,6 +79,30 @@ describe("searchSubs", () => {
     searchSubs("Nope");
     await vi.waitFor(() => {
       expect(showError).toHaveBeenCalledWith("Failed to search subtitles.");
+    });
+  });
+});
+
+describe("runAlternativeSearch", () => {
+  const fetchMock = vi.fn();
+
+  beforeEach(() => {
+    vi.stubGlobal("fetch", fetchMock);
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it("shows failure message when fetch rejects", async () => {
+    fetchMock.mockRejectedValue(new Error("network"));
+
+    runAlternativeSearch("Inception", 2010);
+
+    await vi.waitFor(() => {
+      expect(showError).toHaveBeenCalledWith("Alternative search failed.");
     });
   });
 });
