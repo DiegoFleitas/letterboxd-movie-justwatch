@@ -3,8 +3,8 @@ import axiosHelper from "../lib/axios.js";
 import { getCacheValue, setCacheValue } from "../lib/redis.js";
 import { parseAllowedProxyUrl } from "../lib/apiSchemas.js";
 import {
-  HTTP_STATUS_BAD_REQUEST,
   HTTP_STATUS_INTERNAL_SERVER_ERROR,
+  HTTP_STATUS_METHOD_NOT_ALLOWED,
   HTTP_STATUS_OK,
 } from "../httpStatusCodes.js";
 
@@ -50,7 +50,8 @@ export const proxy: HttpHandler = async ({ req, res }) => {
         response = await axios.post(finalUrl, postBodyForAxios(req.body));
         break;
       default:
-        res.status(HTTP_STATUS_BAD_REQUEST).json({ error: "Method not allowed" });
+        res.setHeader("Allow", "GET, POST");
+        res.status(HTTP_STATUS_METHOD_NOT_ALLOWED).json({ error: "Method not allowed" });
         return;
     }
     await setCacheValue(cacheKey, response?.data, cacheTtl);
