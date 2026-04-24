@@ -25,5 +25,20 @@ export default defineConfig({
     env: {
       APP_SECRET_KEY: "dev-only-session-secret-do-not-use-in-production!!",
     },
+    coverage: {
+      provider: "v8",
+      reportsDirectory: "coverage",
+      reporter: ["text", "lcov", "html"],
+      include: ["src/server/**/*.ts", "src/client/src/**/*.{ts,tsx}"],
+      exclude: [
+        "**/node_modules/**",
+        "**/*.d.ts",
+        "**/dist/**",
+        "**/__tests__/**",
+        "**/*.test.ts",
+        "**/*.test.tsx",
+        "tests/testPosterFlow.test.ts",
+      ],
+    },
   },
 });

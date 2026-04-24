@@ -27,3 +27,4 @@ src/client/dist
 # Legacy Playwright default paths (before reports lived at repo root)
 /playwright-report/
 /test-results/
+coverage/
