@@ -190,3 +190,59 @@ describe("backend integration (DISABLE_REDIS)", () => {
     expect(text).toBe("OK (Redis disabled)");
   });
 });
+
+describe("backend integration (Redis unhealthy)", () => {
+  let baseUrl: string;
+  let closeServer: (() => Promise<void>) | null = null;
+
+  beforeAll(async () => {
+    _injectRedisClientForTest({
+      ping: () => Promise.resolve("NOT_PONG"),
+      get: () => Promise.resolve(null),
+      set: () => Promise.resolve("OK"),
+      del: () => Promise.resolve(0),
+      sadd: () => Promise.resolve(0),
+      smembers: () => Promise.resolve([]),
+      exists: () => Promise.resolve(0),
+      pipeline() {
+        const chain = {
+          exists() {
+            return chain;
+          },
+          type() {
+            return chain;
+          },
+          pttl() {
+            return chain;
+          },
+          get() {
+            return chain;
+          },
+          exec: async () => [],
+        };
+        return chain;
+      },
+      quit: () => Promise.resolve(undefined as void),
+      on: () => {},
+    } as never);
+    const created = createServer();
+    const { port, close } = await created.start(0);
+    baseUrl = `http://127.0.0.1:${port}`;
+    closeServer = close;
+  });
+
+  afterAll(async () => {
+    if (closeServer) {
+      await closeServer();
+      closeServer = null;
+    }
+    _resetRedisForTesting();
+  });
+
+  it("GET /redis-healthcheck returns 500 when ping is unhealthy", async () => {
+    const res = await fetch(`${baseUrl}/redis-healthcheck`);
+    const text = await res.text();
+    expect(res.status).toBe(500);
+    expect(text).toBe("Redis is not healthy");
+  });
+});

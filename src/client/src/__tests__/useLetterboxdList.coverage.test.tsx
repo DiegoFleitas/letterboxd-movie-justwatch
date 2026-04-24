@@ -220,6 +220,37 @@ describe("useLetterboxdList coverage", () => {
     );
   });
 
+  it("shows timeout error when custom-list fetch aborts", async () => {
+    const abortErr = new DOMException("The operation was aborted.", "AbortError");
+    globalThis.fetch = vi.fn((input: RequestInfo | URL) => {
+      const url = typeof input === "string" ? input : String(input);
+      if (url.includes(HTTP_API_PATHS.letterboxdCustomList)) {
+        return Promise.reject(abortErr);
+      }
+      return Promise.reject(new Error(`unexpected fetch: ${url}`));
+    }) as unknown as typeof fetch;
+
+    const { result } = renderHook(() => useLetterboxdList(vi.fn(), undefined, null));
+
+    await act(async () => {
+      await result.current(customListUrl, "US");
+    });
+
+    expect(mockedShowError).toHaveBeenCalledWith(
+      "Request timed out while loading the list. Try again with a valid Letterboxd URL.",
+    );
+    expect(mockedToggleNotice).toHaveBeenCalledWith(null);
+    expect(mockedCapture).toHaveBeenCalledWith(
+      abortErr,
+      expect.objectContaining({
+        tags: expect.objectContaining({
+          reason: "timeout",
+          endpoint: HTTP_API_PATHS.letterboxdCustomList,
+        }),
+      }),
+    );
+  });
+
   it("shows Already working when a second load starts before the first finishes", async () => {
     let resolveWatchlist!: (value: Response) => void;
     const watchlistPending = new Promise<Response>((res) => {
