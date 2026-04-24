@@ -7,6 +7,7 @@ import { createInitialTabbedTileState, mergeTileStateForTab } from "../movieTile
 import { AppStateProvider, selectActiveTileState, useAppState } from "../AppStateContext";
 import { LeftPanel } from "../LeftPanel";
 import { RightPanel } from "../RightPanel";
+import { jsonResponse } from "./jsonResponse";
 
 const COUNTRY_STORAGE_KEY = "letterboxd-justwatch-country";
 
@@ -16,34 +17,30 @@ describe("search panel tab isolation model", () => {
     globalThis.fetch = vi.fn((input: RequestInfo | URL) => {
       const url = typeof input === "string" ? input : String(input);
       if (url.includes("letterboxd-watchlist")) {
-        return Promise.resolve({
-          ok: true,
-          json: () =>
-            Promise.resolve({
-              watchlist: [
-                {
-                  title: "List Film",
-                  year: "2020",
-                  link: "https://letterboxd.com/film/list-film/",
-                },
-              ],
-              lastPage: 1,
-              totalPages: 1,
-            }),
-        } as Response);
+        return Promise.resolve(
+          jsonResponse({
+            watchlist: [
+              {
+                title: "List Film",
+                year: "2020",
+                link: "https://letterboxd.com/film/list-film/",
+              },
+            ],
+            lastPage: 1,
+            totalPages: 1,
+          }),
+        );
       }
       if (url.includes("search-movie")) {
-        return Promise.resolve({
-          ok: true,
-          json: () =>
-            Promise.resolve({
-              title: "List Film",
-              year: 2020,
-              poster: "https://example.com/list.jpg",
-              link: "https://letterboxd.com/film/list-film/",
-              movieProviders: [],
-            }),
-        } as Response);
+        return Promise.resolve(
+          jsonResponse({
+            title: "List Film",
+            year: 2020,
+            poster: "https://example.com/list.jpg",
+            link: "https://letterboxd.com/film/list-film/",
+            movieProviders: [],
+          }),
+        );
       }
       return Promise.reject(new Error(`unexpected fetch: ${url}`));
     }) as unknown as typeof globalThis.fetch;

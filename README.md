@@ -12,6 +12,7 @@
 <br />
 
 [![CI](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/DiegoFleitas/letterboxd-movie-justwatch/graph/badge.svg?branch=master)](https://codecov.io/gh/DiegoFleitas/letterboxd-movie-justwatch)
 
 **Scan public Letterboxd watchlists and custom lists, then see where each title streams in your country—without JustWatch’s recommendation layer.**
 

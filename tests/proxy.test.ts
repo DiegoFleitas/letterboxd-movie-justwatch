@@ -180,6 +180,45 @@ describe("proxy handler", () => {
     expect(mockPost.mock.calls[0]?.[1]).toEqual({ a: 1 });
   });
 
+  it("returns cached JSON without calling axios when Redis has entry", async () => {
+    mockGetCache.mockResolvedValue({ from: "cache" });
+    const req: HttpRequestContext = {
+      body: {},
+      params: {},
+      query: {},
+      headers: {},
+      method: "GET",
+      url: `${HTTP_API_PATHS.proxyPrefix}/https://api.themoviedb.org/3/search/movie?query=z`,
+      cookies: {},
+      session: null,
+      appLocals: {},
+    };
+    const { res, getStatus, getJson } = createMockRes();
+    await proxy({ req, res });
+    expect(mockGet).not.toHaveBeenCalled();
+    expect(getStatus()).toBe(200);
+    expect(getJson()).toEqual({ from: "cache" });
+  });
+
+  it("returns 500 when axios throws", async () => {
+    mockGet.mockRejectedValue(new Error("upstream"));
+    const req: HttpRequestContext = {
+      body: {},
+      params: {},
+      query: {},
+      headers: {},
+      method: "GET",
+      url: `${HTTP_API_PATHS.proxyPrefix}/https://www.omdbapi.com/?t=x`,
+      cookies: {},
+      session: null,
+      appLocals: {},
+    };
+    const { res, getStatus, getJson } = createMockRes();
+    await proxy({ req, res });
+    expect(getStatus()).toBe(500);
+    expect(getJson()).toEqual({ error: "Internal Server Error" });
+  });
+
   it("returns 405 and Allow header for unsupported methods", async () => {
     const req: HttpRequestContext = {
       body: {},

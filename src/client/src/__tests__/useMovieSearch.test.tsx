@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { useMovieSearch } from "../useMovieSearch";
 import { showError } from "../showError";
+import { showMessage } from "../showMessage";
 
 vi.mock("../showMessage", () => ({
   showMessage: vi.fn(),
@@ -21,6 +22,18 @@ describe("useMovieSearch", () => {
 
   afterEach(() => {
     globalThis.fetch = originalFetch;
+  });
+
+  it("shows already-working message when a search is in flight", async () => {
+    globalThis.fetch = vi.fn(() => new Promise<Response>(() => {}));
+    const { result } = renderHook(() => useMovieSearch());
+    await act(async () => {
+      result.current({ title: "First", country: "US" });
+    });
+    await act(async () => {
+      result.current({ title: "Second", country: "US" });
+    });
+    expect(vi.mocked(showMessage)).toHaveBeenCalledWith("Already working on that search...");
   });
 
   it("shows an error toast when network request fails", async () => {

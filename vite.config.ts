@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
 import react from "@vitejs/plugin-react";
+import { codecovVitePlugin } from "@codecov/vite-plugin";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -21,7 +22,16 @@ function stripDevToolsScript() {
 }
 
 export default defineConfig({
-  plugins: [stripDevToolsScript(), react()],
+  plugins: [
+    stripDevToolsScript(),
+    react(),
+    // Keep Codecov plugin last so it can inspect final bundle output.
+    codecovVitePlugin({
+      enableBundleAnalysis: Boolean(process.env.CODECOV_TOKEN),
+      bundleName: "letterboxd-movie-justwatch",
+      uploadToken: process.env.CODECOV_TOKEN,
+    }),
+  ],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src/client/src"),
