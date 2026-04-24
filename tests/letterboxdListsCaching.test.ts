@@ -1,11 +1,20 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { HTTP_API_PATHS } from "@server/routes.js";
-import type { HttpRequestContext, HttpResponseContext } from "@server/httpContext.js";
+import {
+  createHttpMockResponse,
+  createLetterboxdRequest,
+} from "./helpers/letterboxdRequestTestUtils.js";
 
-const { mockFetchLetterboxdHtml, mockGetCacheValue, mockSetCacheValue } = vi.hoisted(() => ({
+const {
+  mockFetchLetterboxdHtml,
+  mockGetCacheValue,
+  mockSetCacheValue,
+  mockIndexCacheKeyByCategory,
+} = vi.hoisted(() => ({
   mockFetchLetterboxdHtml: vi.fn(),
   mockGetCacheValue: vi.fn(),
   mockSetCacheValue: vi.fn().mockResolvedValue(true),
+  mockIndexCacheKeyByCategory: vi.fn().mockResolvedValue(true),
 }));
 
 vi.mock("@server/lib/letterboxdHttp.js", () => ({
@@ -32,42 +41,26 @@ vi.mock("@server/lib/letterboxdHttp.js", () => ({
 vi.mock("@server/lib/redis.js", () => ({
   getCacheValue: mockGetCacheValue,
   setCacheValue: mockSetCacheValue,
-  indexCacheKeyByCategory: vi.fn().mockResolvedValue(true),
+  indexCacheKeyByCategory: mockIndexCacheKeyByCategory,
 }));
 
 import { letterboxdWatchlist } from "@server/controllers/letterboxdLists.js";
+import { LetterboxdHttpError } from "@server/lib/letterboxdHttp.js";
 
 describe("letterboxdLists Redis caching", () => {
   beforeEach(() => {
     mockFetchLetterboxdHtml.mockReset();
     mockGetCacheValue.mockReset();
     mockSetCacheValue.mockReset();
+    mockIndexCacheKeyByCategory.mockReset();
     mockGetCacheValue.mockResolvedValue(null);
     mockSetCacheValue.mockResolvedValue(true);
+    mockIndexCacheKeyByCategory.mockResolvedValue(true);
   });
 
   afterEach(() => {
     vi.clearAllMocks();
   });
-
-  function createMockRes() {
-    let statusCode = 0;
-    let jsonBody: unknown;
-    const res: HttpResponseContext = {
-      status(code: number) {
-        statusCode = code;
-        return this;
-      },
-      json(payload: unknown) {
-        jsonBody = payload;
-      },
-      send() {},
-      setHeader() {
-        return this;
-      },
-    };
-    return { res, getStatus: () => statusCode, getJson: () => jsonBody };
-  }
 
   it("caches an empty array for later pages after total is known (pagination tail)", async () => {
     const page1Html = `
@@ -85,23 +78,16 @@ describe("letterboxdLists Redis caching", () => {
       return Promise.reject(new Error(`unexpected fetch ${url}`));
     });
 
-    const req: HttpRequestContext = {
-      body: {
+    const req = createLetterboxdRequest(
+      {
         username: "u",
         listUrl: "https://letterboxd.com/u/watchlist/",
         listType: "watchlist",
         page: 1,
       },
-      params: {},
-      query: {},
-      headers: {},
-      method: "POST",
-      url: HTTP_API_PATHS.letterboxdWatchlist,
-      cookies: {},
-      session: null,
-      appLocals: {},
-    };
-    const { res, getStatus } = createMockRes();
+      HTTP_API_PATHS.letterboxdWatchlist,
+    );
+    const { res, getStatus } = createHttpMockResponse();
     await letterboxdWatchlist({ req, res });
 
     expect(getStatus()).toBe(200);
@@ -112,5 +98,44 @@ describe("letterboxdLists Redis caching", () => {
         args[1].length === 0,
     );
     expect(emptyTailCall).toBeDefined();
+  });
+
+  it("returns 400 for invalid page number", async () => {
+    const req = createLetterboxdRequest(
+      {
+        username: "u",
+        listUrl: "https://letterboxd.com/u/watchlist/",
+        listType: "watchlist",
+        page: 0,
+      },
+      HTTP_API_PATHS.letterboxdWatchlist,
+    );
+    const { res, getStatus, getJson } = createHttpMockResponse();
+
+    await letterboxdWatchlist({ req, res });
+
+    expect(getStatus()).toBe(400);
+    expect(getJson()).toMatchObject({ error: expect.stringContaining("expected number") });
+    expect(mockFetchLetterboxdHtml).not.toHaveBeenCalled();
+  });
+
+  it("returns 404 when Letterboxd responds with not found", async () => {
+    mockFetchLetterboxdHtml.mockRejectedValue(new LetterboxdHttpError("not found", 404));
+
+    const req = createLetterboxdRequest(
+      {
+        username: "u",
+        listUrl: "https://letterboxd.com/u/watchlist/",
+        listType: "watchlist",
+        page: 1,
+      },
+      HTTP_API_PATHS.letterboxdWatchlist,
+    );
+    const { res, getStatus, getJson } = createHttpMockResponse();
+
+    await letterboxdWatchlist({ req, res });
+
+    expect(getStatus()).toBe(404);
+    expect(getJson()).toMatchObject({ error: "List not found" });
   });
 });

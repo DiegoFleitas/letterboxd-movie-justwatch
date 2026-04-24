@@ -6,8 +6,9 @@ import {
   HTTP_STATUS_NOT_FOUND,
   HTTP_STATUS_OK,
 } from "@server/httpStatusCodes.js";
-import type { HttpHandler, HttpHandlerArgs } from "@server/httpContext.js";
+import type { HttpHandler } from "@server/httpContext.js";
 import { LetterboxdHttpError } from "@server/lib/letterboxdHttp.js";
+import { createControllerArgs } from "./helpers/httpControllerTestUtils.js";
 
 const fetchBinaryMock = vi.fn();
 
@@ -40,52 +41,7 @@ vi.mock("@sentry/node", () => ({
   captureException: (...a: unknown[]) => sentryMocks.captureException(...a),
 }));
 
-type MockRes = {
-  json: (payload: unknown) => void;
-  jsonMock: ReturnType<typeof vi.fn>;
-  statusCode: number | undefined;
-  status: (code: number) => MockRes;
-  send: (payload?: unknown) => void;
-  setHeader: (name: string, value: string | number | readonly string[]) => MockRes;
-};
-
-function mockRes(): MockRes {
-  const jsonMock = vi.fn();
-  const self: MockRes = {
-    json: jsonMock,
-    jsonMock,
-    statusCode: undefined,
-    status(code: number) {
-      self.statusCode = code;
-      return self;
-    },
-    send: vi.fn(),
-    setHeader() {
-      return self;
-    },
-  };
-  return self;
-}
-
-type HandlerCtx = Omit<HttpHandlerArgs, "res"> & { res: MockRes };
-
-function ctx(body: unknown): HandlerCtx {
-  const res = mockRes();
-  return {
-    req: {
-      body,
-      params: {},
-      query: {},
-      headers: {},
-      method: "POST",
-      url: "/api/letterboxd-poster",
-      cookies: {},
-      session: {},
-      appLocals: {},
-    },
-    res,
-  };
-}
+const ctx = (body: unknown) => createControllerArgs(body, "/api/letterboxd-poster");
 
 describe("letterboxdPoster controller", () => {
   let letterboxdPoster: HttpHandler;
@@ -132,25 +88,29 @@ describe("letterboxdPoster controller", () => {
     expect(redisMocks.setCacheValue).toHaveBeenCalled();
   });
 
-  it("returns 404 with fallback for Letterboxd 403", async () => {
+  it.each([
+    {
+      name: "returns 404 with fallback for Letterboxd 403",
+      status: HTTP_STATUS_FORBIDDEN,
+      slug: "x",
+      expectedBody: expect.objectContaining({ error: "Poster not available", fallback: true }),
+    },
+    {
+      name: "returns 404 for Letterboxd 404",
+      status: HTTP_STATUS_NOT_FOUND,
+      slug: "y",
+      expectedBody: undefined,
+    },
+  ])("$name", async ({ status, slug, expectedBody }) => {
     redisMocks.getCacheValue.mockResolvedValue(null);
-    fetchBinaryMock.mockRejectedValue(new LetterboxdHttpError("forbidden", HTTP_STATUS_FORBIDDEN));
-    const args = ctx({ filmId: "1", filmSlug: "x" });
+    fetchBinaryMock.mockRejectedValue(new LetterboxdHttpError("error", status));
+    const args = ctx({ filmId: "1", filmSlug: slug });
     await letterboxdPoster(args);
     const r = args.res;
     expect(r.statusCode).toBe(HTTP_STATUS_NOT_FOUND);
-    expect(r.jsonMock).toHaveBeenCalledWith(
-      expect.objectContaining({ error: "Poster not available", fallback: true }),
-    );
-  });
-
-  it("returns 404 for Letterboxd 404", async () => {
-    redisMocks.getCacheValue.mockResolvedValue(null);
-    fetchBinaryMock.mockRejectedValue(new LetterboxdHttpError("nf", HTTP_STATUS_NOT_FOUND));
-    const args = ctx({ filmId: "1", filmSlug: "y" });
-    await letterboxdPoster(args);
-    const r = args.res;
-    expect(r.statusCode).toBe(HTTP_STATUS_NOT_FOUND);
+    if (expectedBody) {
+      expect(r.jsonMock).toHaveBeenCalledWith(expectedBody);
+    }
   });
 
   it("captures with Sentry and returns 500 on other errors when client exists", async () => {

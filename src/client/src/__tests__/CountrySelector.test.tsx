@@ -6,9 +6,9 @@ import { CountrySelector } from "../CountrySelector";
 import type { Country } from "../consts";
 
 const sampleCountries: Country[] = [
-  { id: "en_US", text: "United States", flag: "🇺🇸" },
-  { id: "es_AR", text: "Argentina", flag: "🇦🇷" },
-  { id: "en_AU", text: "Australia", flag: "🇦🇺" },
+  { id: "en_US", text: "United States" },
+  { id: "es_AR", text: "Argentina" },
+  { id: "en_AU", text: "Australia" },
 ];
 
 function getOptionByText(container: HTMLElement, label: string): HTMLButtonElement | null {

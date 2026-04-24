@@ -7,7 +7,8 @@ import {
   HTTP_STATUS_SERVICE_UNAVAILABLE,
   HTTP_STATUS_UNAUTHORIZED,
 } from "@server/httpStatusCodes.js";
-import type { HttpHandler, HttpHandlerArgs } from "@server/httpContext.js";
+import type { HttpHandler } from "@server/httpContext.js";
+import { createControllerArgs } from "./helpers/httpControllerTestUtils.js";
 
 const axiosMocks = vi.hoisted(() => ({
   get: vi.fn(),
@@ -30,52 +31,7 @@ vi.mock("@server/lib/redis.js", () => ({
   setCacheValue: (...args: unknown[]) => redisMocks.setCacheValue(...(args as [])),
 }));
 
-type MockRes = {
-  json: (payload: unknown) => void;
-  jsonMock: ReturnType<typeof vi.fn>;
-  statusCode: number | undefined;
-  status: (code: number) => MockRes;
-  send: (payload?: unknown) => void;
-  setHeader: (name: string, value: string | number | readonly string[]) => MockRes;
-};
-
-function mockRes(): MockRes {
-  const jsonMock = vi.fn();
-  const self: MockRes = {
-    json: jsonMock,
-    jsonMock,
-    statusCode: undefined,
-    status(code: number) {
-      self.statusCode = code;
-      return self;
-    },
-    send: vi.fn(),
-    setHeader() {
-      return self;
-    },
-  };
-  return self;
-}
-
-type HandlerCtx = Omit<HttpHandlerArgs, "res"> & { res: MockRes };
-
-function ctx(body: unknown): HandlerCtx {
-  const res = mockRes();
-  return {
-    req: {
-      body,
-      params: {},
-      query: {},
-      headers: {},
-      method: "POST",
-      url: "/api/alternative-search",
-      cookies: {},
-      session: {},
-      appLocals: {},
-    },
-    res,
-  };
-}
+const ctx = (body: unknown) => createControllerArgs(body, "/api/alternative-search");
 
 describe("alternativeSearch controller", () => {
   let alternativeSearch: HttpHandler;
@@ -209,28 +165,28 @@ describe("alternativeSearch controller", () => {
     expect(r.jsonMock).toHaveBeenCalledWith({ error: "No results found." });
   });
 
-  it("returns 401 JSON when Jackett responds 401", async () => {
+  it.each([
+    {
+      name: "returns 401 JSON when Jackett responds 401",
+      error: Object.assign(new Error("unauth"), {
+        response: { status: HTTP_STATUS_UNAUTHORIZED },
+      }),
+      expectedStatus: HTTP_STATUS_UNAUTHORIZED,
+      expectedBody: expect.objectContaining({ error: "Alternative search temporarily disabled" }),
+    },
+    {
+      name: "returns 500 on unexpected Jackett error",
+      error: new Error("boom"),
+      expectedStatus: HTTP_STATUS_INTERNAL_SERVER_ERROR,
+      expectedBody: { error: "Internal Server Error" },
+    },
+  ])("$name", async ({ error, expectedStatus, expectedBody }) => {
     redisMocks.getCacheValue.mockResolvedValue(null);
-    const err = Object.assign(new Error("unauth"), {
-      response: { status: HTTP_STATUS_UNAUTHORIZED },
-    });
-    axiosMocks.get.mockRejectedValue(err);
+    axiosMocks.get.mockRejectedValue(error);
     const args = ctx({ title: "X" });
     await alternativeSearch(args);
     const r = args.res;
-    expect(r.statusCode).toBe(HTTP_STATUS_UNAUTHORIZED);
-    expect(r.jsonMock).toHaveBeenCalledWith(
-      expect.objectContaining({ error: "Alternative search temporarily disabled" }),
-    );
-  });
-
-  it("returns 500 on unexpected Jackett error", async () => {
-    redisMocks.getCacheValue.mockResolvedValue(null);
-    axiosMocks.get.mockRejectedValue(new Error("boom"));
-    const args = ctx({ title: "X" });
-    await alternativeSearch(args);
-    const r = args.res;
-    expect(r.statusCode).toBe(HTTP_STATUS_INTERNAL_SERVER_ERROR);
-    expect(r.jsonMock).toHaveBeenCalledWith({ error: "Internal Server Error" });
+    expect(r.statusCode).toBe(expectedStatus);
+    expect(r.jsonMock).toHaveBeenCalledWith(expectedBody);
   });
 });

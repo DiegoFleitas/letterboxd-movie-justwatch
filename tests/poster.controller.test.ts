@@ -4,7 +4,8 @@ import {
   HTTP_STATUS_NOT_FOUND,
   HTTP_STATUS_OK,
 } from "@server/httpStatusCodes.js";
-import type { HttpHandler, HttpHandlerArgs } from "@server/httpContext.js";
+import type { HttpHandler } from "@server/httpContext.js";
+import { createControllerArgs } from "./helpers/httpControllerTestUtils.js";
 
 const axiosMocks = vi.hoisted(() => ({ get: vi.fn() }));
 
@@ -22,52 +23,7 @@ vi.mock("@server/lib/redis.js", () => ({
   setCacheValue: (...a: unknown[]) => redisMocks.setCacheValue(...(a as [])),
 }));
 
-type MockRes = {
-  json: (payload: unknown) => void;
-  jsonMock: ReturnType<typeof vi.fn>;
-  statusCode: number | undefined;
-  status: (code: number) => MockRes;
-  send: (payload?: unknown) => void;
-  setHeader: (name: string, value: string | number | readonly string[]) => MockRes;
-};
-
-function mockRes(): MockRes {
-  const jsonMock = vi.fn();
-  const self: MockRes = {
-    json: jsonMock,
-    jsonMock,
-    statusCode: undefined,
-    status(code: number) {
-      self.statusCode = code;
-      return self;
-    },
-    send: vi.fn(),
-    setHeader() {
-      return self;
-    },
-  };
-  return self;
-}
-
-type HandlerCtx = Omit<HttpHandlerArgs, "res"> & { res: MockRes };
-
-function ctx(body: unknown): HandlerCtx {
-  const res = mockRes();
-  return {
-    req: {
-      body,
-      params: {},
-      query: {},
-      headers: {},
-      method: "POST",
-      url: "/api/poster",
-      cookies: {},
-      session: {},
-      appLocals: {},
-    },
-    res,
-  };
-}
+const ctx = (body: unknown) => createControllerArgs(body, "/api/poster");
 
 describe("poster controller", () => {
   let poster: HttpHandler;

@@ -5,6 +5,7 @@ import { createRoot } from "react-dom/client";
 import { act } from "@testing-library/react";
 import { AppStateProvider, useAppState } from "../AppStateContext";
 import { jsonResponse } from "./jsonResponse";
+import { setToastImpl } from "../toastApi";
 
 function Probe(): React.ReactElement {
   const { activeTab, setActiveTab } = useAppState();
@@ -94,6 +95,59 @@ describe("AppStateProvider movie search wiring", () => {
       await Promise.resolve();
     });
     expect(container.querySelector('[data-testid="search-probe"]')).toBeTruthy();
+    root.unmount();
+  });
+});
+
+function NoticeProbe(): React.ReactElement {
+  const { setNotice } = useAppState();
+  return (
+    <div>
+      <button data-testid="notice-one" onClick={() => setNotice("Loading one")} />
+      <button data-testid="notice-two" onClick={() => setNotice("Loading two")} />
+      <button data-testid="notice-clear" onClick={() => setNotice(null)} />
+    </div>
+  );
+}
+
+describe("AppStateProvider notice toast wiring", () => {
+  afterEach(() => {
+    setToastImpl(null);
+  });
+
+  it("dismisses previous loading toast ids and clears on null notice", async () => {
+    const loading = vi.fn().mockReturnValueOnce("id-1").mockReturnValueOnce("id-2");
+    const dismissLoading = vi.fn();
+    setToastImpl({ loading, dismissLoading });
+
+    const container = document.createElement("div");
+    const root = createRoot(container);
+    await act(async () => {
+      root.render(
+        <AppStateProvider>
+          <NoticeProbe />
+        </AppStateProvider>,
+      );
+    });
+
+    const one = container.querySelector('[data-testid="notice-one"]') as HTMLButtonElement;
+    const two = container.querySelector('[data-testid="notice-two"]') as HTMLButtonElement;
+    const clear = container.querySelector('[data-testid="notice-clear"]') as HTMLButtonElement;
+
+    await act(async () => {
+      one.click();
+    });
+    await act(async () => {
+      two.click();
+    });
+    await act(async () => {
+      clear.click();
+    });
+
+    expect(loading).toHaveBeenCalledWith("Loading one");
+    expect(loading).toHaveBeenCalledWith("Loading two");
+    expect(dismissLoading).toHaveBeenCalledWith("id-1");
+    expect(dismissLoading).toHaveBeenCalledWith("id-2");
     root.unmount();
   });
 });

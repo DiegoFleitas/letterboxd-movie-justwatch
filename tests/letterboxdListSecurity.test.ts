@@ -1,6 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { HTTP_API_PATHS } from "@server/routes.js";
-import type { HttpRequestContext, HttpResponseContext } from "@server/httpContext.js";
+import {
+  createHttpMockResponse,
+  createLetterboxdRequest,
+} from "./helpers/letterboxdRequestTestUtils.js";
 
 const { mockFetchLetterboxdHtml } = vi.hoisted(() => ({
   mockFetchLetterboxdHtml: vi.fn(),
@@ -43,115 +46,59 @@ describe("letterboxd list URL validation (SSRF guard)", () => {
     vi.clearAllMocks();
   });
 
-  function createMockRes() {
-    let statusCode = 0;
-    let jsonBody: unknown;
-    const res: HttpResponseContext = {
-      status(code: number) {
-        statusCode = code;
-        return this;
-      },
-      json(payload: unknown) {
-        jsonBody = payload;
-      },
-      send() {},
-      setHeader() {
-        return this;
-      },
-    };
-    return { res, getStatus: () => statusCode, getJson: () => jsonBody };
-  }
-
-  it("rejects custom list URL on watchlist endpoint before any HTTP fetch", async () => {
-    const req: HttpRequestContext = {
+  it.each([
+    {
+      name: "rejects custom list URL on watchlist endpoint before any HTTP fetch",
       body: {
         username: "someone",
         listUrl: "https://letterboxd.com/someone/list/my-list/",
         listType: "custom list",
       },
-      params: {},
-      query: {},
-      headers: {},
-      method: "POST",
-      url: HTTP_API_PATHS.letterboxdWatchlist,
-      cookies: {},
-      session: null,
-      appLocals: {},
-    };
-    const { res, getStatus } = createMockRes();
-    await letterboxdWatchlist({ req, res });
-
-    expect(getStatus()).toBe(400);
-    expect(mockFetchLetterboxdHtml).not.toHaveBeenCalled();
-  });
-
-  it("rejects non-Letterboxd listUrl on custom-list endpoint", async () => {
-    const req: HttpRequestContext = {
+      endpoint: HTTP_API_PATHS.letterboxdWatchlist,
+      handler: letterboxdWatchlist,
+      expectErrorBody: false,
+    },
+    {
+      name: "rejects non-Letterboxd listUrl on custom-list endpoint",
       body: {
         username: "u",
         listUrl: "https://evil.com/list/",
         listType: "custom list",
       },
-      params: {},
-      query: {},
-      headers: {},
-      method: "POST",
-      url: HTTP_API_PATHS.letterboxdCustomList,
-      cookies: {},
-      session: null,
-      appLocals: {},
-    };
-    const { res, getStatus, getJson } = createMockRes();
-    await letterboxdCustomList({ req, res });
-
-    expect(getStatus()).toBe(400);
-    expect((getJson() as { error?: string }).error).toBeDefined();
-    expect(mockFetchLetterboxdHtml).not.toHaveBeenCalled();
-  });
-
-  it("rejects watchlist URL on custom-list endpoint", async () => {
-    const req: HttpRequestContext = {
+      endpoint: HTTP_API_PATHS.letterboxdCustomList,
+      handler: letterboxdCustomList,
+      expectErrorBody: true,
+    },
+    {
+      name: "rejects watchlist URL on custom-list endpoint",
       body: {
         username: "someone",
         listUrl: "https://letterboxd.com/someone/watchlist/",
         listType: "watchlist",
       },
-      params: {},
-      query: {},
-      headers: {},
-      method: "POST",
-      url: HTTP_API_PATHS.letterboxdCustomList,
-      cookies: {},
-      session: null,
-      appLocals: {},
-    };
-    const { res, getStatus } = createMockRes();
-    await letterboxdCustomList({ req, res });
-
-    expect(getStatus()).toBe(400);
-    expect(mockFetchLetterboxdHtml).not.toHaveBeenCalled();
-  });
-
-  it("rejects username mismatch for watchlist", async () => {
-    const req: HttpRequestContext = {
+      endpoint: HTTP_API_PATHS.letterboxdCustomList,
+      handler: letterboxdCustomList,
+      expectErrorBody: false,
+    },
+    {
+      name: "rejects username mismatch for watchlist",
       body: {
         username: "alice",
         listUrl: "https://letterboxd.com/bob/watchlist/",
         listType: "watchlist",
       },
-      params: {},
-      query: {},
-      headers: {},
-      method: "POST",
-      url: HTTP_API_PATHS.letterboxdWatchlist,
-      cookies: {},
-      session: null,
-      appLocals: {},
-    };
-    const { res, getStatus } = createMockRes();
-    await letterboxdWatchlist({ req, res });
-
+      endpoint: HTTP_API_PATHS.letterboxdWatchlist,
+      handler: letterboxdWatchlist,
+      expectErrorBody: false,
+    },
+  ])("$name", async ({ body, endpoint, handler, expectErrorBody }) => {
+    const req = createLetterboxdRequest(body, endpoint);
+    const { res, getStatus, getJson } = createHttpMockResponse();
+    await handler({ req, res });
     expect(getStatus()).toBe(400);
+    if (expectErrorBody) {
+      expect((getJson() as { error?: string }).error).toBeDefined();
+    }
     expect(mockFetchLetterboxdHtml).not.toHaveBeenCalled();
   });
 });
