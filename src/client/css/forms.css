@@ -153,6 +153,24 @@ label {
   max-height: 320px;
   overflow-y: auto;
 }
+
+/* Native fieldset instead of role="group" (a11y / Sonar); reset UA chrome */
+.movie-suggestions-fieldset {
+  border: none;
+  margin: 0;
+  min-inline-size: 0;
+}
+
+button.tt-suggestion {
+  width: 100%;
+  border: none;
+  margin: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
 .typeahead-loading {
   position: absolute;
   right: 12px;

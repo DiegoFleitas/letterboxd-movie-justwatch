@@ -54,21 +54,21 @@ describe("LeftPanel typeahead accessibility", () => {
     });
 
     fireEvent.keyDown(input, { key: "ArrowDown" });
-    expect(screen.getByRole("listbox", { name: "Movie title suggestions" })).toBeTruthy();
+    expect(screen.getByRole("group", { name: "Movie title suggestions" })).toBeTruthy();
     expect(input.getAttribute("aria-activedescendant")).toBe("movie-suggestions-option-0");
     expect(
-      screen.getByRole("option", { name: /Jurassic Park/i }).getAttribute("aria-selected"),
+      screen.getByRole("button", { name: /Jurassic Park/i }).getAttribute("aria-current"),
     ).toBe("true");
 
     fireEvent.keyDown(input, { key: "ArrowDown" });
     expect(input.getAttribute("aria-activedescendant")).toBe("movie-suggestions-option-1");
-    expect(screen.getByRole("option", { name: /Jumanji/i }).getAttribute("aria-selected")).toBe(
+    expect(screen.getByRole("button", { name: /Jumanji/i }).getAttribute("aria-current")).toBe(
       "true",
     );
 
     fireEvent.keyDown(input, { key: "Enter" });
     expect((input as HTMLInputElement).value).toBe("Jumanji");
-    expect(screen.queryByRole("listbox", { name: "Movie title suggestions" })).toBeNull();
+    expect(screen.queryByRole("group", { name: "Movie title suggestions" })).toBeNull();
   });
 
   it("renders placeholder poster and genre line when TMDB metadata is sparse", async () => {
@@ -103,7 +103,7 @@ describe("LeftPanel typeahead accessibility", () => {
     });
     fireEvent.keyDown(input, { key: "ArrowDown" });
 
-    const opt = screen.getByRole("option", { name: /Sparse Film/i });
+    const opt = screen.getByRole("button", { name: /Sparse Film/i });
     expect(opt.querySelector(".typeahead-poster-placeholder")).not.toBeNull();
     expect(opt.textContent).toContain("Action");
   });
