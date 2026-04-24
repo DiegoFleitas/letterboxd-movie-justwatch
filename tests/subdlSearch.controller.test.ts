@@ -6,7 +6,8 @@ import {
   HTTP_STATUS_OK,
   HTTP_STATUS_SERVICE_UNAVAILABLE,
 } from "@server/httpStatusCodes.js";
-import type { HttpHandler, HttpHandlerArgs } from "@server/httpContext.js";
+import type { HttpHandler } from "@server/httpContext.js";
+import { createControllerArgs } from "./helpers/httpControllerTestUtils.js";
 
 const axiosMocks = vi.hoisted(() => ({ get: vi.fn() }));
 
@@ -14,52 +15,7 @@ vi.mock("@server/lib/axios.js", () => ({
   default: () => ({ get: axiosMocks.get, post: vi.fn() }),
 }));
 
-type MockRes = {
-  json: (payload: unknown) => void;
-  jsonMock: ReturnType<typeof vi.fn>;
-  statusCode: number | undefined;
-  status: (code: number) => MockRes;
-  send: (payload?: unknown) => void;
-  setHeader: (name: string, value: string | number | readonly string[]) => MockRes;
-};
-
-function mockRes(): MockRes {
-  const jsonMock = vi.fn();
-  const self: MockRes = {
-    json: jsonMock,
-    jsonMock,
-    statusCode: undefined,
-    status(code: number) {
-      self.statusCode = code;
-      return self;
-    },
-    send: vi.fn(),
-    setHeader() {
-      return self;
-    },
-  };
-  return self;
-}
-
-type HandlerCtx = Omit<HttpHandlerArgs, "res"> & { res: MockRes };
-
-function ctx(body: unknown): HandlerCtx {
-  const res = mockRes();
-  return {
-    req: {
-      body,
-      params: {},
-      query: {},
-      headers: {},
-      method: "POST",
-      url: "/api/subdl-search",
-      cookies: {},
-      session: {},
-      appLocals: {},
-    },
-    res,
-  };
-}
+const ctx = (body: unknown) => createControllerArgs(body, "/api/subdl-search");
 
 describe("subdlSearch controller", () => {
   let subdlSearch: HttpHandler;

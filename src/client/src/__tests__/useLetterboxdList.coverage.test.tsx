@@ -7,6 +7,11 @@ import { toggleNotice } from "../noticeFunctions";
 import { captureFrontendException } from "../sentry";
 import { HTTP_API_PATHS } from "@server/routes";
 import { PLACEHOLDER_POSTER } from "../movieTiles";
+import {
+  createListAndSearchFetchMock,
+  customListUrl,
+  watchlistUrl,
+} from "./test-utils/useLetterboxdListHarness.js";
 
 vi.mock("../showError", () => ({
   showError: vi.fn(),
@@ -33,9 +38,6 @@ function jsonResponse(body: unknown, status = 200): Response {
     headers: { "content-type": "application/json" },
   });
 }
-
-const watchlistUrl = "https://letterboxd.com/test-user/watchlist/";
-const customListUrl = "https://letterboxd.com/test-user/list/my-list/";
 
 describe("useLetterboxdList coverage", () => {
   const mockedShowError = vi.mocked(showError);
@@ -145,36 +147,23 @@ describe("useLetterboxdList coverage", () => {
   });
 
   it("loads custom list and completes search batch", async () => {
-    globalThis.fetch = vi.fn((input: RequestInfo | URL) => {
-      const url = typeof input === "string" ? input : String(input);
-      if (url.includes(HTTP_API_PATHS.letterboxdCustomList)) {
-        return Promise.resolve(
-          jsonResponse({
-            watchlist: [
-              {
-                title: "Custom Film",
-                year: "2021",
-                link: "https://letterboxd.com/film/custom-film/",
-              },
-            ],
-            lastPage: 1,
-            totalPages: 1,
-          }),
-        );
-      }
-      if (url.includes(HTTP_API_PATHS.searchMovie)) {
-        return Promise.resolve(
-          jsonResponse({
-            title: "Custom Film",
-            year: "2021",
-            poster: PLACEHOLDER_POSTER,
-            link: "https://letterboxd.com/film/custom-film/",
-            movieProviders: [],
-          }),
-        );
-      }
-      return Promise.reject(new Error(`unexpected fetch: ${url}`));
-    }) as unknown as typeof fetch;
+    globalThis.fetch = createListAndSearchFetchMock({
+      listEndpoint: HTTP_API_PATHS.letterboxdCustomList,
+      listBody: {
+        watchlist: [
+          { title: "Custom Film", year: "2021", link: "https://letterboxd.com/film/custom-film/" },
+        ],
+        lastPage: 1,
+        totalPages: 1,
+      },
+      searchBody: {
+        title: "Custom Film",
+        year: "2021",
+        poster: PLACEHOLDER_POSTER,
+        link: "https://letterboxd.com/film/custom-film/",
+        movieProviders: [],
+      },
+    });
 
     const mergeTile = vi.fn();
     const { result } = renderHook(() => useLetterboxdList(mergeTile, undefined, null));
