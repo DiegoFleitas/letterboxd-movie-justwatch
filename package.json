@@ -29,8 +29,8 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "knip": "bunx knip",
-    "lint": "eslint . --ext .ts,.tsx",
-    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "lint": "bunx eslint . --ext .ts,.tsx",
+    "lint:fix": "bunx eslint . --ext .ts,.tsx --fix",
     "format:check": "prettier . --check",
     "format:write": "prettier . --write",
     "fe:dev": "bunx vite",
@@ -66,7 +66,7 @@
   "lint-staged": {
     "*.{ts,tsx}": [
       "prettier --write",
-      "eslint --fix"
+      "bunx eslint --fix"
     ],
     "*.{js,jsx,json,css,md,yml,yaml,html}": "prettier --write"
   },
