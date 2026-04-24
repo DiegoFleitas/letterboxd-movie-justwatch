@@ -4,61 +4,61 @@
 import { describe, it, expect } from "vitest";
 import { parseLetterboxdListUrl, isLetterboxdListUrlInput } from "@server/lib/letterboxdListUrl.js";
 
+const LB_HTTPS = "https://letterboxd.com";
+const USER = "user";
+const USER_WATCHLIST = `${LB_HTTPS}/${USER}/watchlist`;
+const USER_WATCHLIST_SLASH = `${USER_WATCHLIST}/`;
+const USER_CUSTOM_LIST = `${LB_HTTPS}/${USER}/list/my-list`;
+const USER_CUSTOM_LIST_SLASH = `${USER_CUSTOM_LIST}/`;
+
+function expectParsedList(
+  username: string,
+  listType: "watchlist" | "custom list",
+  listUrl: string,
+) {
+  return { username, listType, listUrl };
+}
+
 describe("Letterboxd list URL parsing", () => {
   it.each([
     {
       name: "valid watchlist URL with trailing slash",
-      input: "https://letterboxd.com/user/watchlist/",
-      expected: {
-        username: "user",
-        listType: "watchlist",
-        listUrl: "https://letterboxd.com/user/watchlist/",
-      },
+      input: USER_WATCHLIST_SLASH,
+      expected: expectParsedList(USER, "watchlist", USER_WATCHLIST_SLASH),
     },
     {
       name: "valid watchlist URL without trailing slash gets normalized",
-      input: "https://letterboxd.com/user/watchlist",
-      expected: {
-        username: "user",
-        listType: "watchlist",
-        listUrl: "https://letterboxd.com/user/watchlist/",
-      },
+      input: USER_WATCHLIST,
+      expected: expectParsedList(USER, "watchlist", USER_WATCHLIST_SLASH),
     },
     {
       name: "valid custom list URL",
-      input: "https://letterboxd.com/user/list/my-list/",
-      expected: {
-        username: "user",
-        listType: "custom list",
-        listUrl: "https://letterboxd.com/user/list/my-list/",
-      },
+      input: USER_CUSTOM_LIST_SLASH,
+      expected: expectParsedList(USER, "custom list", USER_CUSTOM_LIST_SLASH),
     },
     {
       name: "custom list URL without trailing slash gets normalized",
-      input: "https://letterboxd.com/user/list/my-list",
-      expected: {
-        username: "user",
-        listType: "custom list",
-        listUrl: "https://letterboxd.com/user/list/my-list/",
-      },
+      input: USER_CUSTOM_LIST,
+      expected: expectParsedList(USER, "custom list", USER_CUSTOM_LIST_SLASH),
     },
     {
       name: "URL with /page/2 is stripped to base list URL",
-      input: "https://letterboxd.com/user/watchlist/page/2/",
-      expected: {
-        username: "user",
-        listType: "watchlist",
-        listUrl: "https://letterboxd.com/user/watchlist/",
-      },
+      input: `${USER_WATCHLIST}/page/2/`,
+      expected: expectParsedList(USER, "watchlist", USER_WATCHLIST_SLASH),
     },
     {
       name: "www.letterboxd.com is accepted",
       input: "https://www.letterboxd.com/shoemonger/watchlist/",
-      expected: {
-        username: "shoemonger",
-        listType: "watchlist",
-        listUrl: "https://www.letterboxd.com/shoemonger/watchlist/",
-      },
+      expected: expectParsedList(
+        "shoemonger",
+        "watchlist",
+        "https://www.letterboxd.com/shoemonger/watchlist/",
+      ),
+    },
+    {
+      name: "input with leading/trailing whitespace is trimmed before parse",
+      input: `  ${USER_WATCHLIST_SLASH}  `,
+      expected: expectParsedList(USER, "watchlist", USER_WATCHLIST_SLASH),
     },
   ])("$name", ({ input, expected }) => {
     expect(parseLetterboxdListUrl(input)).toMatchObject(expected);
@@ -69,22 +69,16 @@ describe("Letterboxd list URL parsing", () => {
     "",
     "   ",
     "https://letterboxd.com/",
-    "https://letterboxd.com/user/list/",
+    `${LB_HTTPS}/user/list/`,
     "ftp://letterboxd.com/user/watchlist/",
   ])("invalid URL returns null: %s", (input) => {
     expect(parseLetterboxdListUrl(input)).toBeFalsy();
   });
 
-  it("input with leading/trailing whitespace is trimmed before parse", () => {
-    const result = parseLetterboxdListUrl("  https://letterboxd.com/user/watchlist/  ");
-    expect(result).toBeTruthy();
-    expect(result!.username).toBe("user");
-  });
-
   it.each([
-    "https://letterboxd.com/user/watchlist/",
-    "http://letterboxd.com/user/watchlist/",
-    "www.letterboxd.com/user/watchlist/",
+    USER_WATCHLIST_SLASH,
+    `http://letterboxd.com/${USER}/watchlist/`,
+    `www.letterboxd.com/${USER}/watchlist/`,
   ])("isLetterboxdListUrlInput returns true: %s", (input) => {
     expect(isLetterboxdListUrlInput(input)).toBe(true);
   });
