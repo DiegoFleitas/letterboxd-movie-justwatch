@@ -1,7 +1,6 @@
 export interface Country {
   id: string;
   text: string;
-  flag: string;
 }
 
 const COUNTRY_ROWS = [
@@ -126,24 +125,4 @@ const COUNTRY_ROWS = [
   ["en_ZM", "Zambia"],
 ] as const;
 
-const REGIONAL_INDICATOR_OFFSET = 0x1f1a5;
-
-export function flagFromCountryCode(countryCode: string): string {
-  const normalized = countryCode.trim().toUpperCase();
-  if (!/^[A-Z]{2}$/.test(normalized)) {
-    return "🏳️";
-  }
-
-  return Array.from(normalized, (char) =>
-    String.fromCodePoint(REGIONAL_INDICATOR_OFFSET + char.charCodeAt(0)),
-  ).join("");
-}
-
-export const countries: Country[] = COUNTRY_ROWS.map(([id, text]) => {
-  const [, countryCode = ""] = id.split("_");
-  return {
-    id,
-    text,
-    flag: flagFromCountryCode(countryCode),
-  };
-});
+export const countries: Country[] = COUNTRY_ROWS.map(([id, text]) => ({ id, text }));
