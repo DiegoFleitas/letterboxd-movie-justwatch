@@ -81,7 +81,9 @@ export default [
     },
     settings: {
       react: {
-        version: "detect",
+        // Explicit version avoids eslint-plugin-react calling removed ESLint 10
+        // `context.getFilename()` during `"detect"` (see jsx-eslint/eslint-plugin-react#3977).
+        version: "19.0",
       },
     },
   },
