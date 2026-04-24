@@ -43,6 +43,7 @@ jobs:
         run: bun run test:coverage
 
       - name: SonarCloud Scan
+        if: ${{ secrets.SONAR_TOKEN != '' && (github.event_name != 'pull_request' || !github.event.pull_request.head.repo.fork) }}
         uses: SonarSource/sonarqube-scan-action@v7.1.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
