@@ -6,7 +6,7 @@ export type MockRes = HttpResponseContext & {
   statusCode: number | undefined;
 };
 
-export function createMockRes(): MockRes {
+function createMockRes(): MockRes {
   const jsonMock = vi.fn();
   const self: MockRes = {
     json: jsonMock,
