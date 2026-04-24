@@ -14,6 +14,7 @@ import {
 import { NO_POSTER_REPORT_DELAY_MS } from "../animation/timing";
 import { listReportToastCopy } from "../githubIssueUrl";
 import { showMessage } from "../showMessage";
+import { jsonResponse } from "./jsonResponse";
 
 vi.mock("../showError", () => ({
   showError: vi.fn(),
@@ -34,27 +35,22 @@ function createFetchMock(searchMovieBody: Record<string, unknown>) {
   return vi.fn((input: RequestInfo | URL) => {
     const url = typeof input === "string" ? input : String(input);
     if (url.includes("letterboxd-watchlist")) {
-      return Promise.resolve({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            watchlist: [
-              {
-                title: "Test Film",
-                year: "2020",
-                link: "https://letterboxd.com/film/test-film-2020/",
-              },
-            ],
-            lastPage: 1,
-            totalPages: 1,
-          }),
-      });
+      return Promise.resolve(
+        jsonResponse({
+          watchlist: [
+            {
+              title: "Test Film",
+              year: "2020",
+              link: "https://letterboxd.com/film/test-film-2020/",
+            },
+          ],
+          lastPage: 1,
+          totalPages: 1,
+        }),
+      );
     }
     if (url.includes("search-movie")) {
-      return Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve(searchMovieBody),
-      });
+      return Promise.resolve(jsonResponse(searchMovieBody));
     }
     return Promise.reject(new Error(`unexpected fetch: ${url}`));
   });

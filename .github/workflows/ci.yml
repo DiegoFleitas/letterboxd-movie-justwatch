@@ -34,6 +34,9 @@ jobs:
       - name: Knip (unused deps / files / exports)
         run: bun run knip
 
+      - name: Build client (dist for static server tests in coverage)
+        run: bun run build
+
       - name: Unit tests
         run: bun run test
 
@@ -46,9 +49,6 @@ jobs:
           files: coverage/lcov.info
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
-
-      - name: Build
-        run: bun run build
 
   e2e:
     name: E2E (Playwright)

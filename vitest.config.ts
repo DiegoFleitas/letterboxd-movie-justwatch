@@ -38,7 +38,19 @@ export default defineConfig({
         "**/*.test.ts",
         "**/*.test.tsx",
         "tests/testPosterFlow.test.ts",
+        /** Pure bootstrap / barrel files (covered by integration or not meaningful to unit-test). */
+        "src/client/src/main.tsx",
+        "src/client/src/consts.ts",
+        "src/server/main.ts",
+        "src/server/instrument.ts",
+        "src/server/httpContext.ts",
+        "src/server/controllers/index.ts",
+        "src/server/lib/types/index.ts",
       ],
+      thresholds: {
+        statements: 80,
+        lines: 80,
+      },
     },
   },
 });
