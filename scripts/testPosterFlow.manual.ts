@@ -55,10 +55,8 @@ async function testSearchMovie(title: string, year: string | null): Promise<Sear
       const yearPart = year ? ` (${year})` : "";
       console.log(`${hasPoster ? "⚠️ " : "❌"} ${title}${yearPart}`);
       if (data.error) {
-        const stripped = String(data.error)
-          .replaceAll(/<[^>]*>/g, "")
-          .replaceAll(/[<>]/g, "")
-          .substring(0, 80);
+        // Strip angle brackets only (single-char replace); avoids incomplete tag-regex sanitization.
+        const stripped = String(data.error).replaceAll(/[<>]/g, "").substring(0, 80);
         console.log(`   ${stripped}`);
       }
       if (!hasPoster) {
