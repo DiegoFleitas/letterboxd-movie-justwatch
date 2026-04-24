@@ -393,11 +393,12 @@ export function useLetterboxdList(
   );
 
   useEffect(() => {
+    const batchMap = batchMapRef.current;
     return () => {
       if (scrollListenerRef.current) {
         window.removeEventListener("scroll", scrollListenerRef.current);
       }
-      batchMapRef.current.clear();
+      batchMap.clear();
       clearTimeout(noPosterReportTimeoutRef.current);
       noPosterReportTimeoutRef.current = undefined;
     };

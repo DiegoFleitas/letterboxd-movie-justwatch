@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { HTTP_API_PATHS, proxyTargetFromRequestUrl } from "@server/routes";
+import { HTTP_API_PATHS, proxyTargetFromRequestUrl } from "@server/routes.js";
 
 describe("server/routes", () => {
   it("proxyTargetFromRequestUrl strips the proxy mount prefix", () => {

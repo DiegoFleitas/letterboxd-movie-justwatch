@@ -4,15 +4,15 @@ Unit and integration tests use **[Vitest](https://vitest.dev/)**. Browser end-to
 
 ## Commands
 
-| Command                                                                          | What it runs                                                                                                                                                                  |
-| -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bun run test` / `bun run test:unit`                                             | All Vitest tests under `tests/**/*.test.ts` (see exclusions in [`vitest.config.ts`](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/blob/master/vitest.config.ts)) |
-| `bun run test:backend`                                                           | Fastify integration tests only                                                                                                                                                |
-| `bun run test:filter`, `test:state`, `test:posthog`, `test:redis`, `test:dedupe` | Single Vitest entry points                                                                                                                                                    |
-| `bun run test:e2e`                                                               | Playwright (`tests/e2e/*.spec.ts`, including `backend-smoke.spec.ts`)                                                                                                         |
-| `bun run test:poster-flow`                                                       | Manual script against `localhost:3000`; **not** part of `bun run test`                                                                                                        |
+| Command                                                                          | What it runs                                                                                                                                              |
+| -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bun run test` / `bun run test:unit`                                             | All Vitest tests matching `test.include` in [`vitest.config.ts`](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/blob/master/vitest.config.ts) |
+| `bun run test:backend`                                                           | Fastify integration tests only                                                                                                                            |
+| `bun run test:filter`, `test:state`, `test:posthog`, `test:redis`, `test:dedupe` | Single Vitest entry points                                                                                                                                |
+| `bun run test:e2e`                                                               | Playwright (`tests/e2e/*.spec.ts`, including `backend-smoke.spec.ts`)                                                                                     |
+| `bun run test:poster-flow`                                                       | Manual script against `localhost:3000`; **not** part of `bun run test`                                                                                    |
 
-Configuration: root [`vitest.config.ts`](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/blob/master/vitest.config.ts) (Node environment, `APP_SECRET_KEY` for sessions). Poster-flow is excluded from the default Vitest run because it expects a live server.
+Configuration: root [`vitest.config.ts`](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/blob/master/vitest.config.ts) (Node environment, `APP_SECRET_KEY` for sessions). **`test:poster-flow`** is not Vitest: it runs the standalone Bun script [`scripts/testPosterFlow.manual.ts`](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/blob/master/scripts/testPosterFlow.manual.ts) against a live backend on `localhost:3000`.
 
 More script names: [Commands](Commands).
 
@@ -45,9 +45,3 @@ If you rename those modules, run **`bun run test`** and the **frontend** tests u
 1. Add `tests/yourFeature.test.ts` (or follow existing naming).
 2. Use Vitest `describe` / `it` / `expect`.
 3. Optionally add `package.json` script, e.g. `"test:yourfeature": "bunx vitest run tests/yourFeature.test.ts"`.
-
-## Legacy `testUtils.ts`
-
-[`tests/testUtils.ts`](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/blob/master/tests/testUtils.ts) (custom `TestSuite` / `assert*`) is **deprecated** for new tests; prefer Vitest.
-
-**In-repo copy:** [`tests/README.md`](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/blob/master/tests/README.md).

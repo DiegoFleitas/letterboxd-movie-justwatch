@@ -1,5 +1,4 @@
 // @vitest-environment jsdom
-import React from "react";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { AppStateProvider } from "../AppStateContext";

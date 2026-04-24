@@ -1,8 +1,7 @@
 // @vitest-environment jsdom
-import React from "react";
 import { describe, it, expect } from "vitest";
 import { createRoot } from "react-dom/client";
-import { act } from "react-dom/test-utils";
+import { act } from "react";
 import { AppStateProvider } from "../AppStateContext";
 import { MovieTile } from "../MovieTile";
 import type { TileData } from "../movieTiles";

@@ -23,13 +23,11 @@ vi.mock("../showError", () => ({
 vi.mock("../noticeFunctions", () => ({
   toggleNotice: vi.fn(),
   setNoticeImpl: vi.fn(),
-  getNoticeImpl: vi.fn(() => null),
 }));
 
 vi.mock("../showMessage", () => ({
   showMessage: vi.fn(),
   plainText: (s: unknown) => String(s ?? ""),
-  queuedMessages: [] as unknown[],
 }));
 
 function createFetchMock(searchMovieBody: Record<string, unknown>) {

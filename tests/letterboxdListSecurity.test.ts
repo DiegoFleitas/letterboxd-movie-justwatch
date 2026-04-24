@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { HTTP_API_PATHS } from "@server/routes";
+import { HTTP_API_PATHS } from "@server/routes.js";
 import type { HttpRequestContext, HttpResponseContext } from "@server/httpContext.js";
 
 const { mockFetchLetterboxdHtml } = vi.hoisted(() => ({
