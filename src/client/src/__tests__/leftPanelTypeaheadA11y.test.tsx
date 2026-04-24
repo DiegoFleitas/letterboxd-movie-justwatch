@@ -69,4 +69,41 @@ describe("LeftPanel typeahead accessibility", () => {
     expect((input as HTMLInputElement).value).toBe("Jumanji");
     expect(screen.queryByRole("listbox", { name: "Movie title suggestions" })).toBeNull();
   });
+
+  it("renders placeholder poster and genre line when TMDB metadata is sparse", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: RequestInfo | URL) => {
+        const url = typeof input === "string" ? input : String(input);
+        if (url.includes("/search/movie?query=")) {
+          return Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve({
+                results: [{ id: 99, title: "Sparse Film", genre_ids: [28] }],
+              }),
+          } as Response);
+        }
+        return Promise.reject(new Error(`unexpected fetch: ${url}`));
+      }),
+    );
+
+    render(
+      <AppStateProvider>
+        <LeftPanel />
+      </AppStateProvider>,
+    );
+    const input = screen.getByTestId("movie-input");
+
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: "spa" } });
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+    fireEvent.keyDown(input, { key: "ArrowDown" });
+
+    const opt = screen.getByRole("option", { name: /Sparse Film/i });
+    expect(opt.querySelector(".typeahead-poster-placeholder")).not.toBeNull();
+    expect(opt.textContent).toContain("Action");
+  });
 });

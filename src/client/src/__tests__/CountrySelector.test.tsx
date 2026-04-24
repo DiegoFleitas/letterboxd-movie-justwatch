@@ -169,4 +169,115 @@ describe("CountrySelector", () => {
     });
     host.remove();
   });
+
+  it("closes on dialog backdrop click", async () => {
+    const container = document.createElement("div");
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(<CountrySelector value="en_US" onChange={vi.fn()} countries={sampleCountries} />);
+    });
+
+    const trigger = container.querySelector(".country-selected") as HTMLButtonElement;
+    await act(async () => {
+      trigger.click();
+    });
+    const dlg = getDialog(container);
+    expect(dlg.open).toBe(true);
+
+    await act(async () => {
+      fireEvent.click(dlg);
+    });
+    expect(dlg.open).toBe(false);
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  it("does not call onChange when the native select value is unchanged", async () => {
+    const container = document.createElement("div");
+    const root = createRoot(container);
+    const onChange = vi.fn();
+
+    await act(async () => {
+      root.render(
+        <CountrySelector value="en_US" onChange={onChange} countries={sampleCountries} />,
+      );
+    });
+
+    const trigger = container.querySelector(".country-selected") as HTMLButtonElement;
+    await act(async () => {
+      trigger.click();
+    });
+
+    const select = container.querySelector(".country-select-native") as HTMLSelectElement;
+    await act(async () => {
+      fireEvent.change(select, { target: { value: "en_US" } });
+    });
+
+    expect(onChange).not.toHaveBeenCalled();
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  it("uses the full country list in the native select when the filter matches nothing", async () => {
+    const container = document.createElement("div");
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(<CountrySelector value="en_US" onChange={vi.fn()} countries={sampleCountries} />);
+    });
+
+    const trigger = container.querySelector(".country-selected") as HTMLButtonElement;
+    await act(async () => {
+      trigger.click();
+    });
+
+    const input = container.querySelector(".country-search") as HTMLInputElement;
+    await act(async () => {
+      fireEvent.change(input, { target: { value: "zzz" } });
+    });
+
+    expect(getOptionByText(container, "United States")).not.toBeNull();
+    expect(getOptionByText(container, "Argentina")).not.toBeNull();
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  it("opens the dialog via open attribute when showModal is missing", async () => {
+    const proto = HTMLDialogElement.prototype;
+    const realShowModal = proto.showModal;
+    Reflect.deleteProperty(proto, "showModal");
+
+    const container = document.createElement("div");
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(<CountrySelector value="en_US" onChange={vi.fn()} countries={sampleCountries} />);
+    });
+
+    const trigger = container.querySelector(".country-selected") as HTMLButtonElement;
+    await act(async () => {
+      trigger.click();
+    });
+
+    const dlg = getDialog(container);
+    expect(dlg.hasAttribute("open")).toBe(true);
+
+    await act(async () => {
+      trigger.click();
+    });
+    expect(dlg.hasAttribute("open")).toBe(false);
+
+    if (realShowModal) Object.assign(proto, { showModal: realShowModal });
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
 });

@@ -210,4 +210,255 @@ describe("DevDebugBar", () => {
     });
     document.body.removeChild(container);
   });
+
+  it("shows cache-status server error details when the JSON payload reports failure", async () => {
+    vi.mocked(isDevDebugBarEnabled).mockReturnValue(true);
+    vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: false,
+      json: async () => ({ ok: false, error: "Redis unavailable" }),
+    } as Response);
+
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <AppStateProvider>
+          <DevDebugBar />
+        </AppStateProvider>,
+      );
+    });
+
+    await waitFor(() => {
+      const bar = container.querySelector('[data-testid="dev-debug-bar"]');
+      expect(bar?.textContent).toContain("Cache: status unavailable");
+      expect(
+        bar?.querySelector('[data-testid="dev-cache-status"] .debug-bar__tip')?.textContent ?? "",
+      ).toContain("Server error: Redis unavailable");
+    });
+
+    await act(async () => {
+      root.unmount();
+    });
+    document.body.removeChild(container);
+  });
+
+  it("shows network error copy when cache-status fetch throws", async () => {
+    vi.mocked(isDevDebugBarEnabled).mockReturnValue(true);
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("offline"));
+
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <AppStateProvider>
+          <DevDebugBar />
+        </AppStateProvider>,
+      );
+    });
+
+    await waitFor(() => {
+      const bar = container.querySelector('[data-testid="dev-debug-bar"]');
+      const tip =
+        bar?.querySelector('[data-testid="dev-cache-status"] .debug-bar__tip')?.textContent ?? "";
+      expect(tip).toContain("Network error while calling /api/dev/cache-status");
+    });
+
+    await act(async () => {
+      root.unmount();
+    });
+    document.body.removeChild(container);
+  });
+
+  it("TTL tooltip reflects CACHE_TTL env when the snapshot includes it", async () => {
+    vi.mocked(isDevDebugBarEnabled).mockReturnValue(true);
+    vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        ok: true,
+        cacheTtlEnvSeconds: 900,
+        redisKeyPrefix: "movie-justwatch",
+        watchlistCacheEntries: 0,
+        hasWatchlistCache: true,
+        listCacheEntries: 0,
+        hasListCache: true,
+        searchMovieCacheEntries: 0,
+        hasSearchMovieCache: true,
+        searchMovieApproxStringKeys: 0,
+        searchMovieScannedStringKeys: 10,
+        searchMovieUnindexedApprox: 0,
+        soonestIndexedKeyExpiryAtMs: Date.now() + 60_000,
+        justWatchHttpErrors: { total: 0, byStatus: {} },
+      }),
+    } as Response);
+
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <AppStateProvider>
+          <DevDebugBar />
+        </AppStateProvider>,
+      );
+    });
+
+    await waitFor(() => {
+      const bar = container.querySelector('[data-testid="dev-debug-bar"]');
+      const ttlTip =
+        bar?.querySelector('[data-testid="dev-cache-ttl-countdown"] .debug-bar__tip')
+          ?.textContent ?? "";
+      expect(ttlTip).toContain("900");
+      expect(ttlTip).toContain("CACHE_TTL env on this server process");
+    });
+
+    await act(async () => {
+      root.unmount();
+    });
+    document.body.removeChild(container);
+  });
+
+  it("alerts and refreshes after clear-list-cache succeeds", async () => {
+    vi.mocked(isDevDebugBarEnabled).mockReturnValue(true);
+    const alertSpy = vi.spyOn(globalThis, "alert").mockImplementation(() => {});
+
+    const statusPayload = {
+      ok: true,
+      redisKeyPrefix: "movie-justwatch",
+      watchlistCacheEntries: 1,
+      hasWatchlistCache: true,
+      listCacheEntries: 0,
+      hasListCache: true,
+      searchMovieCacheEntries: 0,
+      hasSearchMovieCache: true,
+      searchMovieApproxStringKeys: 0,
+      searchMovieScannedStringKeys: 0,
+      searchMovieUnindexedApprox: 0,
+      soonestIndexedKeyExpiryAtMs: null,
+      justWatchHttpErrors: { total: 0, byStatus: {} },
+    };
+
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation((input: RequestInfo | URL) => {
+        const url = typeof input === "string" ? input : String(input);
+        if (url.includes("/clear-list-cache")) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ ok: true, cleared: 2 }),
+          } as Response);
+        }
+        return Promise.resolve({
+          ok: true,
+          json: async () => statusPayload,
+        } as Response);
+      });
+
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <AppStateProvider>
+          <DevDebugBar />
+        </AppStateProvider>,
+      );
+    });
+
+    await waitFor(() => {
+      expect(container.querySelector('[data-testid="dev-clear-list-cache"]')).toBeTruthy();
+    });
+
+    const clearBtn = container.querySelector(
+      '[data-testid="dev-clear-list-cache"]',
+    ) as HTMLButtonElement;
+    await act(async () => {
+      clearBtn.click();
+    });
+
+    await waitFor(() => {
+      expect(alertSpy).toHaveBeenCalledWith("Cleared 2 list cache entries.");
+    });
+    expect(fetchMock.mock.calls.some(([u]) => String(u).includes("/clear-list-cache"))).toBe(true);
+
+    await act(async () => {
+      root.unmount();
+    });
+    document.body.removeChild(container);
+    alertSpy.mockRestore();
+  });
+
+  it("shows failed cache pill when clear-list-cache responds with an error", async () => {
+    vi.mocked(isDevDebugBarEnabled).mockReturnValue(true);
+    const alertSpy = vi.spyOn(globalThis, "alert").mockImplementation(() => {});
+
+    const statusPayload = {
+      ok: true,
+      redisKeyPrefix: "movie-justwatch",
+      watchlistCacheEntries: 1,
+      hasWatchlistCache: true,
+      listCacheEntries: 0,
+      hasListCache: true,
+      searchMovieCacheEntries: 0,
+      hasSearchMovieCache: true,
+      searchMovieApproxStringKeys: 0,
+      searchMovieScannedStringKeys: 0,
+      searchMovieUnindexedApprox: 0,
+      soonestIndexedKeyExpiryAtMs: null,
+      justWatchHttpErrors: { total: 0, byStatus: {} },
+    };
+
+    vi.spyOn(globalThis, "fetch").mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === "string" ? input : String(input);
+      if (url.includes("/clear-list-cache")) {
+        return Promise.resolve({
+          ok: false,
+          json: async () => ({ ok: false, error: "not allowed" }),
+        } as Response);
+      }
+      return Promise.resolve({
+        ok: true,
+        json: async () => statusPayload,
+      } as Response);
+    });
+
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <AppStateProvider>
+          <DevDebugBar />
+        </AppStateProvider>,
+      );
+    });
+
+    await waitFor(() => {
+      expect(container.querySelector('[data-testid="dev-clear-list-cache"]')).toBeTruthy();
+    });
+
+    const clearBtn = container.querySelector(
+      '[data-testid="dev-clear-list-cache"]',
+    ) as HTMLButtonElement;
+    await act(async () => {
+      clearBtn.click();
+    });
+
+    await waitFor(() => {
+      const bar = container.querySelector('[data-testid="dev-debug-bar"]');
+      expect(bar?.textContent).toContain("Cache: failed");
+    });
+
+    await act(async () => {
+      root.unmount();
+    });
+    document.body.removeChild(container);
+    alertSpy.mockRestore();
+  });
 });

@@ -57,6 +57,7 @@ async function testSearchMovie(title: string, year: string | null): Promise<Sear
       if (data.error) {
         const stripped = String(data.error)
           .replaceAll(/<[^>]*>/g, "")
+          .replaceAll(/[<>]/g, "")
           .substring(0, 80);
         console.log(`   ${stripped}`);
       }
