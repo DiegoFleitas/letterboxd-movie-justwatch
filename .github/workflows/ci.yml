@@ -36,6 +36,7 @@ jobs:
 
       - name: Unit tests
         run: bun run test
+
       - name: Unit tests with coverage
         run: bun run test:coverage
 
