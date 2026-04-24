@@ -3,12 +3,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { AppStateProvider } from "../AppStateContext";
 import { LeftPanel } from "../LeftPanel";
-
-function mockFetchUrl(input: RequestInfo | URL): string {
-  if (typeof input === "string") return input;
-  if (input instanceof URL) return input.href;
-  return input.url;
-}
+import { mockFetchUrl } from "./reactRootTestUtils";
 
 const COUNTRY_STORAGE_KEY = "letterboxd-justwatch-country";
 
