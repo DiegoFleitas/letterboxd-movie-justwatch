@@ -61,8 +61,7 @@ describe("Letterboxd list URL parsing", () => {
       },
     },
   ])("$name", ({ input, expected }) => {
-    const result = parseLetterboxdListUrl(input);
-    expect(result).toMatchObject(expected);
+    expect(parseLetterboxdListUrl(input)).toMatchObject(expected);
   });
 
   it.each([
