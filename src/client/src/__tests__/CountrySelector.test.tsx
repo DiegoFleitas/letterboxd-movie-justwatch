@@ -11,10 +11,14 @@ const sampleCountries: Country[] = [
   { id: "en_AU", text: "Australia" },
 ];
 
-function getOptionByText(container: HTMLElement, label: string): HTMLButtonElement | null {
-  return (Array.from(container.querySelectorAll(".country-list-item")).find(
+function getDialog(container: HTMLElement): HTMLDialogElement {
+  return container.querySelector("dialog.country-modal") as HTMLDialogElement;
+}
+
+function getOptionByText(container: HTMLElement, label: string): HTMLOptionElement | null {
+  return (Array.from(container.querySelectorAll(".country-select-native option")).find(
     (el) => el.textContent?.trim() === label,
-  ) ?? null) as HTMLButtonElement | null;
+  ) ?? null) as HTMLOptionElement | null;
 }
 
 describe("CountrySelector", () => {
@@ -43,17 +47,17 @@ describe("CountrySelector", () => {
     });
 
     const trigger = container.querySelector(".country-selected") as HTMLButtonElement;
-    expect(container.querySelector(".country-modal")).toBeNull();
+    expect(getDialog(container).open).toBe(false);
 
     await act(async () => {
       trigger.click();
     });
-    expect(container.querySelector(".country-modal")).not.toBeNull();
+    expect(getDialog(container).open).toBe(true);
 
     await act(async () => {
       trigger.click();
     });
-    expect(container.querySelector(".country-modal")).toBeNull();
+    expect(getDialog(container).open).toBe(false);
 
     await act(async () => {
       root.unmount();
@@ -103,13 +107,13 @@ describe("CountrySelector", () => {
       trigger.click();
     });
 
-    const argentina = getOptionByText(container, "Argentina") as HTMLButtonElement;
+    const select = container.querySelector(".country-select-native") as HTMLSelectElement;
     await act(async () => {
-      argentina.click();
+      fireEvent.change(select, { target: { value: "es_AR" } });
     });
 
     expect(onChange).toHaveBeenCalledWith("es_AR");
-    expect(container.querySelector(".country-modal")).toBeNull();
+    expect(getDialog(container).open).toBe(false);
 
     await act(async () => {
       root.unmount();
@@ -128,12 +132,12 @@ describe("CountrySelector", () => {
     await act(async () => {
       trigger.click();
     });
-    expect(container.querySelector(".country-modal")).not.toBeNull();
+    expect(getDialog(container).open).toBe(true);
 
     await act(async () => {
       document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
     });
-    expect(container.querySelector(".country-modal")).toBeNull();
+    expect(getDialog(container).open).toBe(false);
 
     await act(async () => {
       root.unmount();
@@ -153,12 +157,12 @@ describe("CountrySelector", () => {
     await act(async () => {
       trigger.click();
     });
-    expect(host.querySelector(".country-modal")).not.toBeNull();
+    expect(getDialog(host).open).toBe(true);
 
     await act(async () => {
       document.body.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
     });
-    expect(host.querySelector(".country-modal")).toBeNull();
+    expect(getDialog(host).open).toBe(false);
 
     await act(async () => {
       root.unmount();

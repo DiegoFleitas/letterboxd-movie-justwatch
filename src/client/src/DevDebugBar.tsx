@@ -55,20 +55,21 @@ function formatJustWatchHttpBreakdown(byStatus: Record<string, number> | undefin
 }
 
 function buildJustWatchPillTitle(snapshot: JustWatchHttpErrorsSnapshot | undefined): string {
-  const lines: string[] = [];
-  lines.push("JustWatch outbound HTTP attempts (GraphQL via axios):");
-  lines.push(
+  return [
+    "JustWatch outbound HTTP attempts (GraphQL via axios):",
     "- Counts non-success attempts (HTTP status not 2xx), including retries during backoff.",
-  );
-  lines.push("- Status `0` means no HTTP response was received (timeouts/DNS/etc).");
-  lines.push("");
-  lines.push(`Total non-success attempts: ${snapshot?.total ?? 0}`);
-  lines.push(`By status: ${formatJustWatchHttpBreakdown(snapshot?.byStatus)}`);
-  if (snapshot?.last) {
-    lines.push("");
-    lines.push(`Last: HTTP ${snapshot.last.status} at ${snapshot.last.at}`);
-  }
-  return lines.join("\n");
+    "- Status `0` means no HTTP response was received (timeouts/DNS/etc).",
+    "",
+    `Total non-success attempts: ${snapshot?.total ?? 0}`,
+    `By status: ${formatJustWatchHttpBreakdown(snapshot?.byStatus)}`,
+    ...(snapshot?.last ? ["", `Last: HTTP ${snapshot.last.status} at ${snapshot.last.at}`] : []),
+  ].join("\n");
+}
+
+function justWatchErrTone(total: number, isListLoading: boolean): CacheStatusTone {
+  if (isListLoading) return "progress";
+  if (total > 0) return "error";
+  return "ok";
 }
 
 function buildJustWatchStatusFromPayload(
@@ -80,7 +81,7 @@ function buildJustWatchStatusFromPayload(
   const total = jw?.total ?? 0;
   return {
     text: `JW errs: ${total}${isListLoading ? " (loading)" : ""}`,
-    tone: isListLoading ? "progress" : total > 0 ? "error" : "ok",
+    tone: justWatchErrTone(total, isListLoading),
     title: buildJustWatchPillTitle(jw) + titleSuffix,
   };
 }
@@ -111,6 +112,18 @@ function parseSoonestIndexedKeyExpiryAtMs(data: CacheStatusJson): number | null 
   return v;
 }
 
+function cachePillTone(
+  isListLoading: boolean,
+  count: number,
+  listCount: number,
+  searchCount: number,
+  searchApprox: number,
+): CacheStatusTone {
+  if (isListLoading) return "progress";
+  if (count > 0 || listCount > 0 || searchCount > 0 || searchApprox > 0) return "ok";
+  return "neutral";
+}
+
 function deriveCacheStatusesFromPayload(
   data: CacheStatusJson,
   isListLoading: boolean,
@@ -127,11 +140,7 @@ function deriveCacheStatusesFromPayload(
   return {
     cache: {
       text: `Cache: watchlist ${count}, list ${listCount}, search idx ${searchCount} (~str ${searchApprox}, ~unidx ${searchUnindexed})${isListLoading ? " (loading)" : ""}`,
-      tone: isListLoading
-        ? "progress"
-        : count > 0 || listCount > 0 || searchCount > 0 || searchApprox > 0
-          ? "ok"
-          : "neutral",
+      tone: cachePillTone(isListLoading, count, listCount, searchCount, searchApprox),
       title: buildCacheStatusTitleFromPayload(data, isListLoading) + staleSuffix,
     },
     justWatch: buildJustWatchStatusFromPayload(data, isListLoading, staleSuffix),
@@ -139,123 +148,82 @@ function deriveCacheStatusesFromPayload(
 }
 
 function buildCacheStatusTitleFromPayload(data: CacheStatusJson, isListLoading: boolean): string {
-  const lines: string[] = [];
   const appPrefix = data.redisKeyPrefix || "app";
-
-  lines.push("Dev cache status (Redis):");
-  lines.push(`Redis key prefix (FLY_APP_NAME): ${appPrefix}`);
-  lines.push(
-    `- watchlist: entries tracked in Redis set "${appPrefix}:keys:watchlist" (Letterboxd watchlist page caches).`,
-  );
-  lines.push(
-    `- list: entries tracked in "${appPrefix}:keys:list" (Letterboxd list page caches; includes custom lists).`,
-  );
-  lines.push(
-    `- search idx: entries tracked in "${appPrefix}:keys:search-movie" (movie search /tile lookup caches).`,
-  );
-  lines.push(
-    "- ~str: approximate count of STRING keys whose JSON looks like /api/search-movie payloads (SCAN + heuristic; not perfect).",
-  );
-  lines.push(
-    "- ~unidx: max(0, ~str - search idx) — suggests index drift/legacy keys not represented in the category set.",
-  );
-
   const scanned = data.searchMovieScannedStringKeys;
-  if (typeof scanned === "number") {
-    lines.push(`Scan coverage: scannedStringKeys=${scanned}.`);
-  }
 
-  lines.push("");
-  lines.push("Current snapshot:");
-  lines.push(
+  return [
+    "Dev cache status (Redis):",
+    `Redis key prefix (FLY_APP_NAME): ${appPrefix}`,
+    `- watchlist: entries tracked in Redis set "${appPrefix}:keys:watchlist" (Letterboxd watchlist page caches).`,
+    `- list: entries tracked in "${appPrefix}:keys:list" (Letterboxd list page caches; includes custom lists).`,
+    `- search idx: entries tracked in "${appPrefix}:keys:search-movie" (movie search /tile lookup caches).`,
+    "- ~str: approximate count of STRING keys whose JSON looks like /api/search-movie payloads (SCAN + heuristic; not perfect).",
+    "- ~unidx: max(0, ~str - search idx) — suggests index drift/legacy keys not represented in the category set.",
+    ...(typeof scanned === "number" ? [`Scan coverage: scannedStringKeys=${scanned}.`] : []),
+    "",
+    "Current snapshot:",
     `- watchlist=${data.watchlistCacheEntries ?? 0}, list=${data.listCacheEntries ?? 0}, search idx=${data.searchMovieCacheEntries ?? 0}`,
-  );
-  lines.push(
     `- search ~str=${data.searchMovieApproxStringKeys ?? 0}, ~unidx=${data.searchMovieUnindexedApprox ?? 0}`,
-  );
-
-  lines.push("");
-  lines.push("JustWatch HTTP errors (process-local counters):");
-  lines.push(`- total=${data.justWatchHttpErrors?.total ?? 0}`);
-  lines.push(`- byStatus: ${formatJustWatchHttpBreakdown(data.justWatchHttpErrors?.byStatus)}`);
-  if (data.justWatchHttpErrors?.last) {
-    lines.push(
-      `- last: HTTP ${data.justWatchHttpErrors.last.status} at ${data.justWatchHttpErrors.last.at}`,
-    );
-  }
-
-  if (data.error) {
-    lines.push("");
-    lines.push(`Server note: ${data.error}`);
-  }
-
-  if (isListLoading) {
-    lines.push("");
-    lines.push(
-      "UI note: a Letterboxd list/watchlist load is in progress; counts may be mid-flight.",
-    );
-  }
-
-  return lines.join("\n");
+    "",
+    "JustWatch HTTP errors (process-local counters):",
+    `- total=${data.justWatchHttpErrors?.total ?? 0}`,
+    `- byStatus: ${formatJustWatchHttpBreakdown(data.justWatchHttpErrors?.byStatus)}`,
+    ...(data.justWatchHttpErrors?.last
+      ? [
+          `- last: HTTP ${data.justWatchHttpErrors.last.status} at ${data.justWatchHttpErrors.last.at}`,
+        ]
+      : []),
+    ...(data.error ? ["", `Server note: ${data.error}`] : []),
+    ...(isListLoading
+      ? ["", "UI note: a Letterboxd list/watchlist load is in progress; counts may be mid-flight."]
+      : []),
+  ].join("\n");
 }
 
 /** Shown on the "Next key TTL" hover only (keeps the main cache pill tooltip shorter). */
 function buildCacheTtlRowTooltip(data: CacheStatusJson | null): string {
-  const lines: string[] = [];
-  lines.push("Redis TTL (dev):");
-  lines.push("");
-
-  if (!data) {
-    lines.push(
-      "No snapshot yet. After /api/dev/cache-status succeeds, this shows CACHE_TTL env and next-key expiry notes.",
-    );
-    lines.push("");
-  }
-
   const d = data ?? ({} as CacheStatusJson);
-
-  lines.push("Redis key TTL (SET … EX, seconds):");
-  if (typeof d.cacheTtlEnvSeconds === "number" && Number.isFinite(d.cacheTtlEnvSeconds)) {
-    lines.push(
-      `- CACHE_TTL env on this server process: ${d.cacheTtlEnvSeconds}s (used wherever controllers read it; overrides their built-in defaults).`,
-    );
-    lines.push(
-      "- Note: /api/search-movie still uses a fixed 120s TTL for the upstream-unavailable tier (not overridden by CACHE_TTL).",
-    );
-  } else {
-    lines.push(
-      "- CACHE_TTL env is not set (or invalid) on this process. Built-in defaults when unset:",
-    );
-    lines.push("  - Letterboxd list/watchlist page cache: 20s");
-    lines.push("  - /api/search-movie (success): 3600s; upstream-unavailable tier: 120s (fixed)");
-    lines.push("  - Alternative search: 3600s");
-    lines.push("  - OMDB poster, generic proxy cache, Letterboxd poster URLs: 60s");
-  }
-
-  lines.push("");
-  lines.push("Soonest indexed key expiry (from last poll):");
-  if (
+  const hasTtlEnv =
+    typeof d.cacheTtlEnvSeconds === "number" && Number.isFinite(d.cacheTtlEnvSeconds);
+  const hasSoonest =
     typeof d.soonestIndexedKeyExpiryAtMs === "number" &&
-    Number.isFinite(d.soonestIndexedKeyExpiryAtMs)
-  ) {
-    lines.push(
-      `- Next key with a finite TTL in the watchlist + list + search-movie index sets expires at epoch ms ${d.soonestIndexedKeyExpiryAtMs}.`,
-    );
-    lines.push(
-      "- Keys with no expiry (PTTL -1) are ignored; unindexed STRING keys are not scanned here.",
-    );
-  } else {
-    lines.push("- No expiring indexed keys right now, or TTL snapshot unavailable.");
-  }
+    Number.isFinite(d.soonestIndexedKeyExpiryAtMs);
 
-  lines.push("");
-  lines.push("Countdown row:");
-  lines.push(
+  return [
+    "Redis TTL (dev):",
+    "",
+    ...(!data
+      ? [
+          "No snapshot yet. After /api/dev/cache-status succeeds, this shows CACHE_TTL env and next-key expiry notes.",
+          "",
+        ]
+      : []),
+    "Redis key TTL (SET … EX, seconds):",
+    ...(hasTtlEnv
+      ? [
+          `- CACHE_TTL env on this server process: ${d.cacheTtlEnvSeconds}s (used wherever controllers read it; overrides their built-in defaults).`,
+          "- Note: /api/search-movie still uses a fixed 120s TTL for the upstream-unavailable tier (not overridden by CACHE_TTL).",
+        ]
+      : [
+          "- CACHE_TTL env is not set (or invalid) on this process. Built-in defaults when unset:",
+          "  - Letterboxd list/watchlist page cache: 20s",
+          "  - /api/search-movie (success): 3600s; upstream-unavailable tier: 120s (fixed)",
+          "  - Alternative search: 3600s",
+          "  - OMDB poster, generic proxy cache, Letterboxd poster URLs: 60s",
+        ]),
+    "",
+    "Soonest indexed key expiry (from last poll):",
+    ...(hasSoonest
+      ? [
+          `- Next key with a finite TTL in the watchlist + list + search-movie index sets expires at epoch ms ${d.soonestIndexedKeyExpiryAtMs}.`,
+          "- Keys with no expiry (PTTL -1) are ignored; unindexed STRING keys are not scanned here.",
+        ]
+      : ["- No expiring indexed keys right now, or TTL snapshot unavailable."]),
+    "",
+    "Countdown row:",
     "- The number counts down seconds until that soonest EX expiry (client ticks every second; anchor refreshes each /api/dev/cache-status poll).",
-  );
-  lines.push("- Keys not in those three index sets are not included.");
-
-  return lines.join("\n");
+    "- Keys not in those three index sets are not included.",
+  ].join("\n");
 }
 
 async function devPostAlert(
@@ -267,14 +235,14 @@ async function devPostAlert(
     const r = await fetch(path, { method: "POST" });
     const data = (await r.json()) as DevPostJson;
     if (r.ok) {
-      window.alert(okMessage(data));
+      globalThis.alert(okMessage(data));
       return true;
     } else {
-      window.alert(data.error || failPrefix);
+      globalThis.alert(data.error || failPrefix);
       return false;
     }
   } catch (e) {
-    window.alert(failPrefix + ": " + (e as Error).message);
+    globalThis.alert(failPrefix + ": " + (e as Error).message);
     return false;
   }
 }
@@ -383,7 +351,9 @@ function DebugBarIconDownload(): React.ReactElement {
   );
 }
 
-function DebugBarHoverTip(props: { tip: string; children: React.ReactNode }): React.ReactElement {
+function DebugBarHoverTip(
+  props: Readonly<{ tip: string; children: React.ReactNode }>,
+): React.ReactElement {
   return (
     <>
       {props.children}
@@ -480,7 +450,9 @@ export function DevDebugBar(): React.ReactElement | null {
   useEffect(() => {
     if (!dev) return;
     document.body.classList.add("has-dev-debug-bar");
-    void refreshWatchlistCacheStatus();
+    refreshWatchlistCacheStatus().catch(() => {
+      /* initial poll errors reflected in pill state */
+    });
     return () => {
       document.body.classList.remove("has-dev-debug-bar");
     };
@@ -488,8 +460,8 @@ export function DevDebugBar(): React.ReactElement | null {
 
   useEffect(() => {
     if (!dev) return;
-    const id = window.setInterval(() => setNowMs(Date.now()), 1000);
-    return () => window.clearInterval(id);
+    const id = globalThis.setInterval(() => setNowMs(Date.now()), 1000);
+    return () => globalThis.clearInterval(id);
   }, [dev]);
 
   useEffect(() => {
@@ -498,19 +470,21 @@ export function DevDebugBar(): React.ReactElement | null {
     let remainingMs = pollMs;
     setPollCountdownSeconds(Math.ceil(pollMs / 1000));
 
-    const countdownTimer = window.setInterval(() => {
+    const countdownTimer = globalThis.setInterval(() => {
       remainingMs = Math.max(0, remainingMs - 1_000);
       setPollCountdownSeconds(Math.ceil(remainingMs / 1000));
     }, 1_000);
 
-    const timer = window.setInterval(() => {
-      void refreshWatchlistCacheStatus();
+    const timer = globalThis.setInterval(() => {
+      refreshWatchlistCacheStatus().catch(() => {
+        /* errors reflected in cache pill */
+      });
       remainingMs = pollMs;
       setPollCountdownSeconds(Math.ceil(pollMs / 1000));
     }, pollMs);
     return () => {
-      window.clearInterval(timer);
-      window.clearInterval(countdownTimer);
+      globalThis.clearInterval(timer);
+      globalThis.clearInterval(countdownTimer);
     };
   }, [dev, isListLoading, refreshWatchlistCacheStatus]);
 
@@ -555,15 +529,10 @@ export function DevDebugBar(): React.ReactElement | null {
   }
 
   return (
-    <div
-      className="debug-bar"
-      role="region"
-      aria-label="Development tools"
-      data-testid="dev-debug-bar"
-    >
+    <section className="debug-bar" aria-label="Development tools" data-testid="dev-debug-bar">
       <span className="debug-bar__label">Dev</span>
       <span className="debug-bar__origin debug-bar__tip-host" data-testid="dev-debug-origin">
-        Origin: {typeof window !== "undefined" ? window.location.origin : "—"}
+        Origin: {globalThis.location?.origin ?? "—"}
         <span className="debug-bar__tip" aria-hidden="true">
           Same-origin <code>/api/*</code> (Vite proxies <code>/api</code> to Fastify on port 3000).
           If JustWatch is blocked server-side, <code>POST /api/search-movie</code> still returns
@@ -580,13 +549,15 @@ export function DevDebugBar(): React.ReactElement | null {
               data-testid="dev-clear-list-cache"
               disabled={actionsDisabled}
               onClick={() => {
-                void withCacheStatus("clearing", () =>
+                withCacheStatus("clearing", () =>
                   devPostAlert(
                     `${DEV_HTTP_API_PREFIX}/clear-list-cache`,
                     (data) => `Cleared ${data.cleared ?? 0} list cache entries.`,
                     "Failed to clear cache",
                   ),
-                );
+                ).catch(() => {
+                  /* withCacheStatus handles UI state */
+                });
               }}
             >
               <span className="debug-bar__btn-inner">
@@ -613,7 +584,9 @@ export function DevDebugBar(): React.ReactElement | null {
                 setJustWatchStatus((prev) => ({ ...prev, tone: "progress" }));
                 const url = "https://letterboxd.com/oobbvvss/watchlist/";
                 loadLetterboxdListWithSyncedUrl(url);
-                void refreshWatchlistCacheStatus();
+                refreshWatchlistCacheStatus().catch(() => {
+                  /* errors reflected in cache pill */
+                });
               }}
             >
               <span className="debug-bar__btn-inner">
@@ -631,13 +604,15 @@ export function DevDebugBar(): React.ReactElement | null {
               data-testid="dev-reset-redis-cache"
               disabled={actionsDisabled}
               onClick={() => {
-                void withCacheStatus("resetting", () =>
+                withCacheStatus("resetting", () =>
                   devPostAlert(
                     `${DEV_HTTP_API_PREFIX}/reset-redis`,
                     (data) => data.stdout?.trim() || "Redis cache reset from validated snapshot.",
                     "Failed to reset Redis cache",
                   ),
-                );
+                ).catch(() => {
+                  /* withCacheStatus handles UI state */
+                });
               }}
             >
               <span className="debug-bar__btn-inner">
@@ -655,13 +630,15 @@ export function DevDebugBar(): React.ReactElement | null {
               data-testid="dev-export-redis-snapshot"
               disabled={actionsDisabled}
               onClick={() => {
-                void withCacheStatus("exporting", () =>
+                withCacheStatus("exporting", () =>
                   devPostAlert(
                     `${DEV_HTTP_API_PREFIX}/export-redis`,
                     (data) => data.stdout?.trim() || "Redis snapshot exported.",
                     "Failed to export Redis snapshot",
                   ),
-                );
+                ).catch(() => {
+                  /* withCacheStatus handles UI state */
+                });
               }}
             >
               <span className="debug-bar__btn-inner">
@@ -696,9 +673,8 @@ export function DevDebugBar(): React.ReactElement | null {
       >
         Next poll in{" "}
         <span className="debug-bar__cache-poll-count" aria-live="polite">
-          {pollCountdownSeconds}
+          {`${pollCountdownSeconds}s`}
         </span>
-        s
         <span className="debug-bar__tip" aria-hidden="true">
           Time until the next automatic /api/dev/cache-status refresh. Faster while a list/watchlist
           load is active.
@@ -712,17 +688,14 @@ export function DevDebugBar(): React.ReactElement | null {
         {nextKeyTtlSec == null ? (
           <span className="debug-bar__cache-ttl-na">—</span>
         ) : (
-          <>
-            <span className="debug-bar__cache-ttl-count" aria-live="polite">
-              {nextKeyTtlSec}
-            </span>
-            s
-          </>
+          <span className="debug-bar__cache-ttl-count" aria-live="polite">
+            {`${nextKeyTtlSec}s`}
+          </span>
         )}
         <span className="debug-bar__tip" aria-hidden="true">
           {buildCacheTtlRowTooltip(ttlTooltipSource)}
         </span>
       </span>
-    </div>
+    </section>
   );
 }

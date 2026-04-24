@@ -4,9 +4,9 @@
 import { config as dotenvConfig } from "dotenv";
 dotenvConfig();
 
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 type SnapshotKey = { key: string; value: string; ttlSeconds?: number | null };
 type SnapshotSet = { key: string; members: string[]; ttlSeconds?: number | null };

@@ -8,9 +8,9 @@
  * Defaults: shoemonger/watchlist (page 1), eibonslam/list/pelis-uru-cinemateca-gratis (page 1, with esiAllowFilters for fragment).
  */
 import httpClientFactory from "@server/lib/axios.js";
-import { writeFileSync } from "fs";
-import { dirname, join } from "path";
-import { fileURLToPath } from "url";
+import { writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { extractGridHtml } from "@server/lib/letterboxdListHtml.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -74,7 +74,9 @@ async function main(): Promise<void> {
   console.log("Done. Run tests to ensure parser still works: bun run test");
 }
 
-main().catch((err) => {
+try {
+  await main();
+} catch (err) {
   console.error(err);
   process.exit(1);
-});
+}

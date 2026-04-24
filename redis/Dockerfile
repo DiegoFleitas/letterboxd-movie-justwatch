@@ -1,8 +1,8 @@
-FROM redis
+FROM redis:7.4-bookworm
 
-RUN apt-get update && apt-get install -y curl
-
-RUN curl -L https://fly.io/install.sh | sh
+RUN apt-get update && apt-get install -y curl \
+  && curl -L https://fly.io/install.sh | sh \
+  && rm -rf /var/lib/apt/lists/*
 
 ENV FLYCTL_INSTALL="/root/.fly"
 ENV PATH="$FLYCTL_INSTALL/bin:$PATH"

@@ -48,11 +48,14 @@
   font-size: 1.1em;
 }
 
-.country-modal {
-  position: absolute;
-  top: 110%;
-  right: 0;
-  width: 100%;
+dialog.country-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  width: min(100vw - 2rem, 380px);
+  max-width: 100%;
   background: var(--color-surface-elevated);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -61,6 +64,10 @@
   z-index: 999;
   max-height: min(360px, 70vh);
   overflow: hidden;
+}
+
+dialog.country-modal::backdrop {
+  background: rgba(0, 0, 0, 0.45);
 }
 
 .country-modal-header {
@@ -129,6 +136,16 @@
   font-weight: 500;
 }
 
-#country-selector.open .country-modal {
-  display: block !important;
+.country-select-native {
+  display: block;
+  width: 100%;
+  margin-top: 0.6em;
+  padding: 0.4em 0.5em;
+  font-size: 0.95em;
+  line-height: 1.35;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-alt);
+  color: var(--color-text);
+  box-sizing: border-box;
 }

@@ -80,7 +80,7 @@ describe("DevDebugBar", () => {
 
     const bar = container.querySelector('[data-testid="dev-debug-bar"]');
     expect(bar).not.toBeNull();
-    expect(bar?.getAttribute("role")).toBe("region");
+    expect(bar?.tagName.toLowerCase()).toBe("section");
     expect(bar?.getAttribute("aria-label")).toBe("Development tools");
 
     await waitFor(() => {

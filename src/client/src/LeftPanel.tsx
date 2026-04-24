@@ -59,6 +59,16 @@ function getGenreNames(genreIds: number[] | undefined): string {
   return names.join(", ");
 }
 
+function getDefaultCountryId(): string {
+  const stored = getStoredCountryId();
+  return (
+    stored ??
+    countries.find((c: { id: string }) => c.id === FALLBACK_COUNTRY_ID)?.id ??
+    countries[0]?.id ??
+    ""
+  );
+}
+
 export function LeftPanel(): React.ReactElement {
   const {
     loadLetterboxdList,
@@ -69,15 +79,7 @@ export function LeftPanel(): React.ReactElement {
     isListLoading,
     registerListFormDevBridge,
   } = useAppState();
-  const [country, setCountryState] = useState(() => {
-    const stored = getStoredCountryId();
-    return (
-      stored ??
-      countries.find((c: { id: string }) => c.id === FALLBACK_COUNTRY_ID)?.id ??
-      countries[0]?.id ??
-      ""
-    );
-  });
+  const [country, setCountryState] = useState(getDefaultCountryId);
 
   const setCountry = (id: string): void => {
     setCountryState(id);
