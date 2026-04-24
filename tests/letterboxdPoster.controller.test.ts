@@ -6,7 +6,7 @@ import {
   HTTP_STATUS_NOT_FOUND,
   HTTP_STATUS_OK,
 } from "@server/httpStatusCodes.js";
-import type { HttpHandlerArgs } from "@server/httpContext.js";
+import type { HttpHandler, HttpHandlerArgs } from "@server/httpContext.js";
 import { LetterboxdHttpError } from "@server/lib/letterboxdHttp.js";
 
 const fetchBinaryMock = vi.fn();
@@ -40,23 +40,36 @@ vi.mock("@sentry/node", () => ({
   captureException: (...a: unknown[]) => sentryMocks.captureException(...a),
 }));
 
-function mockRes(): HttpHandlerArgs["res"] & { jsonMock: ReturnType<typeof vi.fn> } {
+type MockRes = {
+  json: (payload: unknown) => void;
+  jsonMock: ReturnType<typeof vi.fn>;
+  statusCode: number | undefined;
+  status: (code: number) => MockRes;
+  send: (payload?: unknown) => void;
+  setHeader: (name: string, value: string | number | readonly string[]) => MockRes;
+};
+
+function mockRes(): MockRes {
   const jsonMock = vi.fn();
-  const self = {
+  const self: MockRes = {
     json: jsonMock,
     jsonMock,
-    statusCode: undefined as number | undefined,
+    statusCode: undefined,
     status(code: number) {
       self.statusCode = code;
       return self;
     },
     send: vi.fn(),
-    setHeader: vi.fn().mockReturnThis(),
+    setHeader() {
+      return self;
+    },
   };
-  return self as HttpHandlerArgs["res"] & { jsonMock: ReturnType<typeof vi.fn> };
+  return self;
 }
 
-function ctx(body: unknown): HttpHandlerArgs {
+type HandlerCtx = Omit<HttpHandlerArgs, "res"> & { res: MockRes };
+
+function ctx(body: unknown): HandlerCtx {
   const res = mockRes();
   return {
     req: {
@@ -75,7 +88,7 @@ function ctx(body: unknown): HttpHandlerArgs {
 }
 
 describe("letterboxdPoster controller", () => {
-  let letterboxdPoster: (args: HttpHandlerArgs) => Promise<void>;
+  let letterboxdPoster: HttpHandler;
 
   beforeEach(async () => {
     fetchBinaryMock.mockReset();
@@ -89,7 +102,7 @@ describe("letterboxdPoster controller", () => {
   it("returns 400 when filmId or filmSlug missing", async () => {
     const args = ctx({ filmId: "1" });
     await letterboxdPoster(args);
-    const r = args.res as ReturnType<typeof mockRes>;
+    const r = args.res;
     expect(r.statusCode).toBe(HTTP_STATUS_BAD_REQUEST);
   });
 
@@ -97,7 +110,7 @@ describe("letterboxdPoster controller", () => {
     redisMocks.getCacheValue.mockResolvedValue("https://cached-poster");
     const args = ctx({ filmId: "12345", filmSlug: "matrix-1999" });
     await letterboxdPoster(args);
-    const r = args.res as ReturnType<typeof mockRes>;
+    const r = args.res;
     expect(r.statusCode).toBe(HTTP_STATUS_OK);
     expect(r.jsonMock).toHaveBeenCalledWith(
       expect.objectContaining({ poster: "https://cached-poster" }),
@@ -110,7 +123,7 @@ describe("letterboxdPoster controller", () => {
     fetchBinaryMock.mockResolvedValue(undefined);
     const args = ctx({ filmId: "99", filmSlug: "test-film", cacheBustingKey: "abc" });
     await letterboxdPoster(args);
-    const r = args.res as ReturnType<typeof mockRes>;
+    const r = args.res;
     expect(r.statusCode).toBe(HTTP_STATUS_OK);
     expect(fetchBinaryMock).toHaveBeenCalled();
     const posterArg = fetchBinaryMock.mock.calls[0][0] as string;
@@ -124,7 +137,7 @@ describe("letterboxdPoster controller", () => {
     fetchBinaryMock.mockRejectedValue(new LetterboxdHttpError("forbidden", HTTP_STATUS_FORBIDDEN));
     const args = ctx({ filmId: "1", filmSlug: "x" });
     await letterboxdPoster(args);
-    const r = args.res as ReturnType<typeof mockRes>;
+    const r = args.res;
     expect(r.statusCode).toBe(HTTP_STATUS_NOT_FOUND);
     expect(r.jsonMock).toHaveBeenCalledWith(
       expect.objectContaining({ error: "Poster not available", fallback: true }),
@@ -136,7 +149,7 @@ describe("letterboxdPoster controller", () => {
     fetchBinaryMock.mockRejectedValue(new LetterboxdHttpError("nf", HTTP_STATUS_NOT_FOUND));
     const args = ctx({ filmId: "1", filmSlug: "y" });
     await letterboxdPoster(args);
-    const r = args.res as ReturnType<typeof mockRes>;
+    const r = args.res;
     expect(r.statusCode).toBe(HTTP_STATUS_NOT_FOUND);
   });
 
@@ -146,7 +159,7 @@ describe("letterboxdPoster controller", () => {
     sentryMocks.getClient.mockReturnValue({} as never);
     const args = ctx({ filmId: "1", filmSlug: "z" });
     await letterboxdPoster(args);
-    const r = args.res as ReturnType<typeof mockRes>;
+    const r = args.res;
     expect(r.statusCode).toBe(HTTP_STATUS_INTERNAL_SERVER_ERROR);
     expect(sentryMocks.captureException).toHaveBeenCalled();
   });

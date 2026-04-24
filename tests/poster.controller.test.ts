@@ -4,7 +4,7 @@ import {
   HTTP_STATUS_NOT_FOUND,
   HTTP_STATUS_OK,
 } from "@server/httpStatusCodes.js";
-import type { HttpHandlerArgs } from "@server/httpContext.js";
+import type { HttpHandler, HttpHandlerArgs } from "@server/httpContext.js";
 
 const axiosMocks = vi.hoisted(() => ({ get: vi.fn() }));
 
@@ -22,23 +22,36 @@ vi.mock("@server/lib/redis.js", () => ({
   setCacheValue: (...a: unknown[]) => redisMocks.setCacheValue(...(a as [])),
 }));
 
-function mockRes(): HttpHandlerArgs["res"] & { jsonMock: ReturnType<typeof vi.fn> } {
+type MockRes = {
+  json: (payload: unknown) => void;
+  jsonMock: ReturnType<typeof vi.fn>;
+  statusCode: number | undefined;
+  status: (code: number) => MockRes;
+  send: (payload?: unknown) => void;
+  setHeader: (name: string, value: string | number | readonly string[]) => MockRes;
+};
+
+function mockRes(): MockRes {
   const jsonMock = vi.fn();
-  const self = {
+  const self: MockRes = {
     json: jsonMock,
     jsonMock,
-    statusCode: undefined as number | undefined,
+    statusCode: undefined,
     status(code: number) {
       self.statusCode = code;
       return self;
     },
     send: vi.fn(),
-    setHeader: vi.fn().mockReturnThis(),
+    setHeader() {
+      return self;
+    },
   };
-  return self as HttpHandlerArgs["res"] & { jsonMock: ReturnType<typeof vi.fn> };
+  return self;
 }
 
-function ctx(body: unknown): HttpHandlerArgs {
+type HandlerCtx = Omit<HttpHandlerArgs, "res"> & { res: MockRes };
+
+function ctx(body: unknown): HandlerCtx {
   const res = mockRes();
   return {
     req: {
@@ -57,7 +70,7 @@ function ctx(body: unknown): HttpHandlerArgs {
 }
 
 describe("poster controller", () => {
-  let poster: (args: HttpHandlerArgs) => Promise<void>;
+  let poster: HttpHandler;
 
   beforeEach(async () => {
     vi.stubEnv("OMDB_API_KEY", "omdb-key");
@@ -71,7 +84,7 @@ describe("poster controller", () => {
     redisMocks.getCacheValue.mockResolvedValue("https://cached.jpg");
     const args = ctx({ title: "X", year: 2000 });
     await poster(args);
-    const r = args.res as ReturnType<typeof mockRes>;
+    const r = args.res;
     expect(r.statusCode).toBe(HTTP_STATUS_OK);
     expect(r.jsonMock).toHaveBeenCalledWith(
       expect.objectContaining({ poster: "https://cached.jpg", message: "Poster found" }),
@@ -83,7 +96,7 @@ describe("poster controller", () => {
     redisMocks.getCacheValue.mockResolvedValue(null);
     const args = ctx({ year: 2000 });
     await poster(args);
-    const r = args.res as ReturnType<typeof mockRes>;
+    const r = args.res;
     expect(r.statusCode).toBe(HTTP_STATUS_NOT_FOUND);
   });
 
@@ -105,7 +118,7 @@ describe("poster controller", () => {
     axiosMocks.get.mockResolvedValue({ data: { Error: "Movie not found!" } });
     const args = ctx({ title: "Nope", year: 1900 });
     await poster(args);
-    const r = args.res as ReturnType<typeof mockRes>;
+    const r = args.res;
     expect(r.statusCode).toBe(HTTP_STATUS_NOT_FOUND);
   });
 
@@ -116,7 +129,7 @@ describe("poster controller", () => {
     });
     const args = ctx({ title: "Ghost", year: 2000 });
     await poster(args);
-    const r = args.res as ReturnType<typeof mockRes>;
+    const r = args.res;
     expect(r.statusCode).toBe(HTTP_STATUS_NOT_FOUND);
   });
 
@@ -127,7 +140,7 @@ describe("poster controller", () => {
     });
     const args = ctx({ title: "Matrix", year: 1999 });
     await poster(args);
-    const r = args.res as ReturnType<typeof mockRes>;
+    const r = args.res;
     expect(r.statusCode).toBe(HTTP_STATUS_OK);
     expect(redisMocks.setCacheValue).toHaveBeenCalled();
     expect(r.jsonMock).toHaveBeenCalledWith(
@@ -140,7 +153,7 @@ describe("poster controller", () => {
     axiosMocks.get.mockRejectedValue(new Error("timeout"));
     const args = ctx({ title: "X" });
     await poster(args);
-    const r = args.res as ReturnType<typeof mockRes>;
+    const r = args.res;
     expect(r.statusCode).toBe(HTTP_STATUS_INTERNAL_SERVER_ERROR);
   });
 });

@@ -7,7 +7,7 @@ import {
   HTTP_STATUS_SERVICE_UNAVAILABLE,
   HTTP_STATUS_UNAUTHORIZED,
 } from "@server/httpStatusCodes.js";
-import type { HttpHandlerArgs } from "@server/httpContext.js";
+import type { HttpHandler, HttpHandlerArgs } from "@server/httpContext.js";
 
 const axiosMocks = vi.hoisted(() => ({
   get: vi.fn(),
@@ -30,23 +30,36 @@ vi.mock("@server/lib/redis.js", () => ({
   setCacheValue: (...args: unknown[]) => redisMocks.setCacheValue(...(args as [])),
 }));
 
-function mockRes(): HttpHandlerArgs["res"] & { jsonMock: ReturnType<typeof vi.fn> } {
+type MockRes = {
+  json: (payload: unknown) => void;
+  jsonMock: ReturnType<typeof vi.fn>;
+  statusCode: number | undefined;
+  status: (code: number) => MockRes;
+  send: (payload?: unknown) => void;
+  setHeader: (name: string, value: string | number | readonly string[]) => MockRes;
+};
+
+function mockRes(): MockRes {
   const jsonMock = vi.fn();
-  const self = {
+  const self: MockRes = {
     json: jsonMock,
     jsonMock,
-    statusCode: undefined as number | undefined,
+    statusCode: undefined,
     status(code: number) {
       self.statusCode = code;
       return self;
     },
     send: vi.fn(),
-    setHeader: vi.fn().mockReturnThis(),
+    setHeader() {
+      return self;
+    },
   };
-  return self as HttpHandlerArgs["res"] & { jsonMock: ReturnType<typeof vi.fn> };
+  return self;
 }
 
-function ctx(body: unknown): HttpHandlerArgs {
+type HandlerCtx = Omit<HttpHandlerArgs, "res"> & { res: MockRes };
+
+function ctx(body: unknown): HandlerCtx {
   const res = mockRes();
   return {
     req: {
@@ -65,7 +78,7 @@ function ctx(body: unknown): HttpHandlerArgs {
 }
 
 describe("alternativeSearch controller", () => {
-  let alternativeSearch: (args: HttpHandlerArgs) => Promise<void>;
+  let alternativeSearch: HttpHandler;
 
   beforeEach(async () => {
     vi.stubEnv("JACKETT_API_KEY", "jk");
@@ -84,7 +97,7 @@ describe("alternativeSearch controller", () => {
   it("returns 400 when body fails Zod validation", async () => {
     const args = ctx({});
     await alternativeSearch(args);
-    const r = args.res as ReturnType<typeof mockRes>;
+    const r = args.res;
     expect(r.statusCode).toBe(HTTP_STATUS_BAD_REQUEST);
     expect(r.jsonMock).toHaveBeenCalledWith(expect.objectContaining({ error: expect.any(String) }));
   });
@@ -97,7 +110,7 @@ describe("alternativeSearch controller", () => {
     const { alternativeSearch: alt } = await import("@server/controllers/alternativeSearch.js");
     const args = ctx({ title: "Film" });
     await alt(args);
-    const r = args.res as ReturnType<typeof mockRes>;
+    const r = args.res;
     expect(r.statusCode).toBe(HTTP_STATUS_SERVICE_UNAVAILABLE);
     expect(r.jsonMock).toHaveBeenCalledWith(
       expect.objectContaining({ error: "Alternative search is not configured" }),
@@ -112,7 +125,7 @@ describe("alternativeSearch controller", () => {
     });
     const args = ctx({ title: "Film", year: "2020" });
     await alternativeSearch(args);
-    const r = args.res as ReturnType<typeof mockRes>;
+    const r = args.res;
     expect(r.statusCode).toBe(HTTP_STATUS_OK);
     expect(r.jsonMock).toHaveBeenCalledWith(
       expect.objectContaining({ message: "Alternative search result" }),
@@ -124,7 +137,7 @@ describe("alternativeSearch controller", () => {
     redisMocks.getCacheValue.mockResolvedValue({ error: "No results found." });
     const args = ctx({ title: "Film" });
     await alternativeSearch(args);
-    const r = args.res as ReturnType<typeof mockRes>;
+    const r = args.res;
     expect(r.statusCode).toBe(HTTP_STATUS_NOT_FOUND);
     expect(r.jsonMock).toHaveBeenCalledWith({ error: "No results found." });
   });
@@ -141,7 +154,7 @@ describe("alternativeSearch controller", () => {
     });
     const args = ctx({ title: "Matrix", year: "1999" });
     await alternativeSearch(args);
-    const r = args.res as ReturnType<typeof mockRes>;
+    const r = args.res;
     expect(r.statusCode).toBe(HTTP_STATUS_OK);
     expect(r.jsonMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -163,7 +176,7 @@ describe("alternativeSearch controller", () => {
     const args = ctx({ title: "Obscure", year: "2001" });
     await alternativeSearch(args);
     expect(axiosMocks.get).toHaveBeenCalledTimes(2);
-    const r = args.res as ReturnType<typeof mockRes>;
+    const r = args.res;
     expect(r.statusCode).toBe(HTTP_STATUS_OK);
     expect(r.jsonMock).toHaveBeenCalledWith(expect.objectContaining({ url: "https://retry" }));
   });
@@ -180,7 +193,7 @@ describe("alternativeSearch controller", () => {
     });
     const args = ctx({ title: "Thing" });
     await alternativeSearch(args);
-    const r = args.res as ReturnType<typeof mockRes>;
+    const r = args.res;
     expect(r.jsonMock).toHaveBeenCalledWith(expect.objectContaining({ url: "https://good" }));
   });
 
@@ -191,7 +204,7 @@ describe("alternativeSearch controller", () => {
       .mockResolvedValueOnce({ data: { Results: [] } });
     const args = ctx({ title: "Nothing" });
     await alternativeSearch(args);
-    const r = args.res as ReturnType<typeof mockRes>;
+    const r = args.res;
     expect(r.statusCode).toBe(HTTP_STATUS_NOT_FOUND);
     expect(r.jsonMock).toHaveBeenCalledWith({ error: "No results found." });
   });
@@ -204,7 +217,7 @@ describe("alternativeSearch controller", () => {
     axiosMocks.get.mockRejectedValue(err);
     const args = ctx({ title: "X" });
     await alternativeSearch(args);
-    const r = args.res as ReturnType<typeof mockRes>;
+    const r = args.res;
     expect(r.statusCode).toBe(HTTP_STATUS_UNAUTHORIZED);
     expect(r.jsonMock).toHaveBeenCalledWith(
       expect.objectContaining({ error: "Alternative search temporarily disabled" }),
@@ -216,7 +229,7 @@ describe("alternativeSearch controller", () => {
     axiosMocks.get.mockRejectedValue(new Error("boom"));
     const args = ctx({ title: "X" });
     await alternativeSearch(args);
-    const r = args.res as ReturnType<typeof mockRes>;
+    const r = args.res;
     expect(r.statusCode).toBe(HTTP_STATUS_INTERNAL_SERVER_ERROR);
     expect(r.jsonMock).toHaveBeenCalledWith({ error: "Internal Server Error" });
   });

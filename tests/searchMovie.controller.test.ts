@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from "@server/httpStatusCodes.js";
-import type { HttpHandlerArgs } from "@server/httpContext.js";
+import type { HttpHandler, HttpHandlerArgs } from "@server/httpContext.js";
 
 const axiosMocks = vi.hoisted(() => ({
   get: vi.fn(),
@@ -28,26 +28,39 @@ vi.mock("@server/lib/justWatchOutbound.js", () => ({
   recordJustWatchHttpAttempt: vi.fn(),
 }));
 
-function mockRes(): HttpHandlerArgs["res"] & { jsonMock: ReturnType<typeof vi.fn> } {
+type MockRes = {
+  json: (payload: unknown) => void;
+  jsonMock: ReturnType<typeof vi.fn>;
+  statusCode: number | undefined;
+  status: (code: number) => MockRes;
+  send: (payload?: unknown) => void;
+  setHeader: (name: string, value: string | number | readonly string[]) => MockRes;
+};
+
+function mockRes(): MockRes {
   const jsonMock = vi.fn();
-  const self = {
+  const self: MockRes = {
     json: jsonMock,
     jsonMock,
+    statusCode: undefined,
     status(code: number) {
       self.statusCode = code;
       return self;
     },
-    statusCode: undefined as number | undefined,
     send: vi.fn(),
-    setHeader: vi.fn().mockReturnThis(),
+    setHeader() {
+      return self;
+    },
   };
-  return self as HttpHandlerArgs["res"] & { jsonMock: ReturnType<typeof vi.fn> };
+  return self;
 }
+
+type HandlerCtx = Omit<HttpHandlerArgs, "res"> & { res: MockRes };
 
 function ctx(
   body: unknown,
   appLocals: HttpHandlerArgs["req"]["appLocals"] = { canonicalProviderMap: {} },
-): HttpHandlerArgs {
+): HandlerCtx {
   const res = mockRes();
   return {
     req: {
@@ -66,7 +79,7 @@ function ctx(
 }
 
 describe("searchMovie controller", () => {
-  let searchMovie: (args: HttpHandlerArgs) => Promise<void>;
+  let searchMovie: HttpHandler;
 
   beforeEach(async () => {
     vi.resetModules();
@@ -86,7 +99,7 @@ describe("searchMovie controller", () => {
   it("returns movie not found when title is missing", async () => {
     const args = ctx({});
     await searchMovie(args);
-    expect((args.res as ReturnType<typeof mockRes>).jsonMock).toHaveBeenCalledWith(
+    expect(args.res.jsonMock).toHaveBeenCalledWith(
       expect.objectContaining({ message: "Movie not found" }),
     );
     expect(axiosMocks.get).not.toHaveBeenCalled();
@@ -96,7 +109,7 @@ describe("searchMovie controller", () => {
     redisMocks.getCacheValue.mockResolvedValue({ message: "cached", title: "X" });
     const args = ctx({ title: "Inception", country: "en_US" });
     await searchMovie(args);
-    expect((args.res as ReturnType<typeof mockRes>).jsonMock).toHaveBeenCalledWith({
+    expect(args.res.jsonMock).toHaveBeenCalledWith({
       message: "cached",
       title: "X",
     });
@@ -108,7 +121,7 @@ describe("searchMovie controller", () => {
     axiosMocks.get.mockResolvedValue({ data: { results: [] } });
     const args = ctx({ title: "NopeNopeNope", year: 1999, country: "en_US" });
     await searchMovie(args);
-    expect((args.res as ReturnType<typeof mockRes>).jsonMock).toHaveBeenCalledWith(
+    expect(args.res.jsonMock).toHaveBeenCalledWith(
       expect.objectContaining({ error: "Movie not found (TMDB)" }),
     );
     expect(redisMocks.setCacheValue).toHaveBeenCalled();
@@ -132,7 +145,7 @@ describe("searchMovie controller", () => {
     axiosMocks.post.mockRejectedValue(new Error("network down"));
     const args = ctx({ title: "Inception", country: "en_US" });
     await searchMovie(args);
-    expect((args.res as ReturnType<typeof mockRes>).jsonMock).toHaveBeenCalledWith(
+    expect(args.res.jsonMock).toHaveBeenCalledWith(
       expect.objectContaining({
         error: "JustWatch API unavailable",
         title: "Inception",
@@ -173,7 +186,7 @@ describe("searchMovie controller", () => {
     });
     const args = ctx({ title: "Solo", country: "en_US" });
     await searchMovie(args);
-    expect((args.res as ReturnType<typeof mockRes>).jsonMock).toHaveBeenCalledWith(
+    expect(args.res.jsonMock).toHaveBeenCalledWith(
       expect.objectContaining({ error: "Movie not found in JustWatch" }),
     );
   });
@@ -210,7 +223,7 @@ describe("searchMovie controller", () => {
     });
     const args = ctx({ title: "A", country: "en_US" });
     await searchMovie(args);
-    const payload = (args.res as ReturnType<typeof mockRes>).jsonMock.mock.calls[0][0] as {
+    const payload = args.res.jsonMock.mock.calls[0][0] as {
       error?: string;
     };
     expect(payload.error).toContain("No streaming services");
@@ -258,7 +271,7 @@ describe("searchMovie controller", () => {
     });
     const args = ctx({ title: "B", country: "en_US" });
     await searchMovie(args);
-    const payload = (args.res as ReturnType<typeof mockRes>).jsonMock.mock.calls[0][0] as {
+    const payload = args.res.jsonMock.mock.calls[0][0] as {
       error?: string;
     };
     expect(payload.error).toContain("No streaming services");
@@ -308,14 +321,14 @@ describe("searchMovie controller", () => {
     });
     const args = ctx({ title: "Happy", country: "en_US" });
     await searchMovie(args);
-    expect((args.res as ReturnType<typeof mockRes>).jsonMock).toHaveBeenCalledWith(
+    expect(args.res.jsonMock).toHaveBeenCalledWith(
       expect.objectContaining({
         message: "Movie found",
         movieProviders: expect.any(Array),
         title: "Happy",
       }),
     );
-    const body = (args.res as ReturnType<typeof mockRes>).jsonMock.mock.calls[0][0] as {
+    const body = args.res.jsonMock.mock.calls[0][0] as {
       movieProviders: unknown[];
     };
     expect(body.movieProviders.length).toBeGreaterThan(0);
@@ -325,7 +338,7 @@ describe("searchMovie controller", () => {
     redisMocks.getCacheValue.mockResolvedValue(null);
     axiosMocks.get.mockRejectedValue(new Error("TMDB boom"));
     const args = ctx({ title: "Crash", country: "en_US" });
-    const r = args.res as ReturnType<typeof mockRes>;
+    const r = args.res;
     await searchMovie(args);
     expect(r.statusCode).toBe(HTTP_STATUS_INTERNAL_SERVER_ERROR);
     expect(r.jsonMock).toHaveBeenCalledWith(

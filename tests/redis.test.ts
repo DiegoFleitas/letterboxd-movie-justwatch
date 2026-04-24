@@ -472,7 +472,7 @@ describe("Redis cache", () => {
     const mock = {
       smembers: () => Promise.reject(new Error("sm-err")),
       pipeline() {
-        return createMockClient().pipeline();
+        return (createMockClient() as { pipeline: () => unknown }).pipeline();
       },
       ping: () => Promise.resolve("PONG"),
       get: () => Promise.resolve(null),

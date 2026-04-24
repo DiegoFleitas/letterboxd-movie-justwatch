@@ -6,7 +6,7 @@ import {
   HTTP_STATUS_OK,
   HTTP_STATUS_SERVICE_UNAVAILABLE,
 } from "@server/httpStatusCodes.js";
-import type { HttpHandlerArgs } from "@server/httpContext.js";
+import type { HttpHandler, HttpHandlerArgs } from "@server/httpContext.js";
 
 const axiosMocks = vi.hoisted(() => ({ get: vi.fn() }));
 
@@ -14,23 +14,36 @@ vi.mock("@server/lib/axios.js", () => ({
   default: () => ({ get: axiosMocks.get, post: vi.fn() }),
 }));
 
-function mockRes(): HttpHandlerArgs["res"] & { jsonMock: ReturnType<typeof vi.fn> } {
+type MockRes = {
+  json: (payload: unknown) => void;
+  jsonMock: ReturnType<typeof vi.fn>;
+  statusCode: number | undefined;
+  status: (code: number) => MockRes;
+  send: (payload?: unknown) => void;
+  setHeader: (name: string, value: string | number | readonly string[]) => MockRes;
+};
+
+function mockRes(): MockRes {
   const jsonMock = vi.fn();
-  const self = {
+  const self: MockRes = {
     json: jsonMock,
     jsonMock,
-    statusCode: undefined as number | undefined,
+    statusCode: undefined,
     status(code: number) {
       self.statusCode = code;
       return self;
     },
     send: vi.fn(),
-    setHeader: vi.fn().mockReturnThis(),
+    setHeader() {
+      return self;
+    },
   };
-  return self as HttpHandlerArgs["res"] & { jsonMock: ReturnType<typeof vi.fn> };
+  return self;
 }
 
-function ctx(body: unknown): HttpHandlerArgs {
+type HandlerCtx = Omit<HttpHandlerArgs, "res"> & { res: MockRes };
+
+function ctx(body: unknown): HandlerCtx {
   const res = mockRes();
   return {
     req: {
@@ -49,7 +62,7 @@ function ctx(body: unknown): HttpHandlerArgs {
 }
 
 describe("subdlSearch controller", () => {
-  let subdlSearch: (args: HttpHandlerArgs) => Promise<void>;
+  let subdlSearch: HttpHandler;
 
   beforeEach(async () => {
     vi.stubEnv("SUBDL_API_KEY", "subdl-key");
@@ -60,7 +73,7 @@ describe("subdlSearch controller", () => {
   it("returns 400 on invalid body", async () => {
     const args = ctx({});
     await subdlSearch(args);
-    const r = args.res as ReturnType<typeof mockRes>;
+    const r = args.res;
     expect(r.statusCode).toBe(HTTP_STATUS_BAD_REQUEST);
   });
 
@@ -70,7 +83,7 @@ describe("subdlSearch controller", () => {
     const { subdlSearch: handler } = await import("@server/controllers/subdlSearch.js");
     const args = ctx({ title: "Film" });
     await handler(args);
-    const r = args.res as ReturnType<typeof mockRes>;
+    const r = args.res;
     expect(r.statusCode).toBe(HTTP_STATUS_SERVICE_UNAVAILABLE);
     expect(r.jsonMock).toHaveBeenCalledWith(
       expect.objectContaining({ error: "Subtitles search is not configured" }),
@@ -84,7 +97,7 @@ describe("subdlSearch controller", () => {
     axiosMocks.get.mockResolvedValue({ data: { status: false, error: "none" } });
     const args = ctx({ title: "Film", year: "2020" });
     await handler(args);
-    const r = args.res as ReturnType<typeof mockRes>;
+    const r = args.res;
     expect(r.statusCode).toBe(HTTP_STATUS_NOT_FOUND);
     expect(r.jsonMock).toHaveBeenCalledWith(expect.objectContaining({ error: "none" }));
   });
@@ -101,7 +114,7 @@ describe("subdlSearch controller", () => {
     });
     const args = ctx({ title: "Film" });
     await handler(args);
-    const r = args.res as ReturnType<typeof mockRes>;
+    const r = args.res;
     expect(r.statusCode).toBe(HTTP_STATUS_OK);
     expect(r.jsonMock).toHaveBeenCalledWith(
       expect.objectContaining({ url: expect.stringContaining("subdl"), title: "Film" }),
@@ -115,7 +128,7 @@ describe("subdlSearch controller", () => {
     axiosMocks.get.mockRejectedValue(new Error("net"));
     const args = ctx({ title: "Film" });
     await handler(args);
-    const r = args.res as ReturnType<typeof mockRes>;
+    const r = args.res;
     expect(r.statusCode).toBe(HTTP_STATUS_INTERNAL_SERVER_ERROR);
   });
 });

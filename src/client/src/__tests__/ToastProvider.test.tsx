@@ -1,5 +1,4 @@
 // @vitest-environment jsdom
-import React from "react";
 import { describe, it, expect, beforeEach } from "vitest";
 import { render, waitFor } from "@testing-library/react";
 import { ToastProvider } from "../ToastProvider";
