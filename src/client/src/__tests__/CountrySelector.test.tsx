@@ -34,6 +34,24 @@ function getOptionByText(container: HTMLElement, label: string): HTMLOptionEleme
   ) ?? null) as HTMLOptionElement | null;
 }
 
+function getTrigger(container: HTMLElement): HTMLButtonElement {
+  return container.querySelector(".country-selected") as HTMLButtonElement;
+}
+
+function getNativeSelect(container: HTMLElement): HTMLSelectElement {
+  return container.querySelector(".country-select-native") as HTMLSelectElement;
+}
+
+function getSearchInput(container: HTMLElement): HTMLInputElement {
+  return container.querySelector(".country-search") as HTMLInputElement;
+}
+
+async function openCountryModal(container: HTMLElement): Promise<void> {
+  await act(async () => {
+    getTrigger(container).click();
+  });
+}
+
 describe("CountrySelector", () => {
   it("renders the currently selected country", async () => {
     await withRootRender(countrySelector({ value: "es_AR" }), async ({ container }) => {
@@ -44,29 +62,21 @@ describe("CountrySelector", () => {
 
   it("opens and closes on trigger button click", async () => {
     await withRootRender(countrySelector(), async ({ container }) => {
-      const trigger = container.querySelector(".country-selected") as HTMLButtonElement;
       expect(getDialog(container).open).toBe(false);
 
-      await act(async () => {
-        trigger.click();
-      });
+      await openCountryModal(container);
       expect(getDialog(container).open).toBe(true);
 
-      await act(async () => {
-        trigger.click();
-      });
+      await openCountryModal(container);
       expect(getDialog(container).open).toBe(false);
     });
   });
 
   it("filters countries by query", async () => {
     await withRootRender(countrySelector(), async ({ container }) => {
-      const trigger = container.querySelector(".country-selected") as HTMLButtonElement;
-      await act(async () => {
-        trigger.click();
-      });
+      await openCountryModal(container);
 
-      const input = container.querySelector(".country-search") as HTMLInputElement;
+      const input = getSearchInput(container);
       await act(async () => {
         fireEvent.change(input, { target: { value: "arg" } });
       });
@@ -80,12 +90,9 @@ describe("CountrySelector", () => {
   it("selects a country, calls onChange, and closes", async () => {
     const onChange = vi.fn();
     await withRootRender(countrySelector({ onChange }), async ({ container }) => {
-      const trigger = container.querySelector(".country-selected") as HTMLButtonElement;
-      await act(async () => {
-        trigger.click();
-      });
+      await openCountryModal(container);
 
-      const select = container.querySelector(".country-select-native") as HTMLSelectElement;
+      const select = getNativeSelect(container);
       await act(async () => {
         fireEvent.change(select, { target: { value: "es_AR" } });
       });
@@ -97,10 +104,7 @@ describe("CountrySelector", () => {
 
   it("closes on Escape key", async () => {
     await withRootRender(countrySelector(), async ({ container }) => {
-      const trigger = container.querySelector(".country-selected") as HTMLButtonElement;
-      await act(async () => {
-        trigger.click();
-      });
+      await openCountryModal(container);
       expect(getDialog(container).open).toBe(true);
 
       await act(async () => {
@@ -112,10 +116,7 @@ describe("CountrySelector", () => {
 
   it("closes on outside click", async () => {
     await withMountedInBody(countrySelector(), async ({ container: host }) => {
-      const trigger = host.querySelector(".country-selected") as HTMLButtonElement;
-      await act(async () => {
-        trigger.click();
-      });
+      await openCountryModal(host);
       expect(getDialog(host).open).toBe(true);
 
       await act(async () => {
@@ -127,10 +128,7 @@ describe("CountrySelector", () => {
 
   it("closes on dialog backdrop click", async () => {
     await withRootRender(countrySelector(), async ({ container }) => {
-      const trigger = container.querySelector(".country-selected") as HTMLButtonElement;
-      await act(async () => {
-        trigger.click();
-      });
+      await openCountryModal(container);
       const dlg = getDialog(container);
       expect(dlg.open).toBe(true);
 
@@ -144,12 +142,9 @@ describe("CountrySelector", () => {
   it("does not call onChange when the native select value is unchanged", async () => {
     const onChange = vi.fn();
     await withRootRender(countrySelector({ onChange }), async ({ container }) => {
-      const trigger = container.querySelector(".country-selected") as HTMLButtonElement;
-      await act(async () => {
-        trigger.click();
-      });
+      await openCountryModal(container);
 
-      const select = container.querySelector(".country-select-native") as HTMLSelectElement;
+      const select = getNativeSelect(container);
       await act(async () => {
         fireEvent.change(select, { target: { value: "en_US" } });
       });
@@ -160,12 +155,9 @@ describe("CountrySelector", () => {
 
   it("uses the full country list in the native select when the filter matches nothing", async () => {
     await withRootRender(countrySelector(), async ({ container }) => {
-      const trigger = container.querySelector(".country-selected") as HTMLButtonElement;
-      await act(async () => {
-        trigger.click();
-      });
+      await openCountryModal(container);
 
-      const input = container.querySelector(".country-search") as HTMLInputElement;
+      const input = getSearchInput(container);
       await act(async () => {
         fireEvent.change(input, { target: { value: "zzz" } });
       });
@@ -181,17 +173,12 @@ describe("CountrySelector", () => {
     Reflect.deleteProperty(proto, "showModal");
     try {
       await withRootRender(countrySelector(), async ({ container }) => {
-        const trigger = container.querySelector(".country-selected") as HTMLButtonElement;
-        await act(async () => {
-          trigger.click();
-        });
+        await openCountryModal(container);
 
         const dlg = getDialog(container);
         expect(dlg.hasAttribute("open")).toBe(true);
 
-        await act(async () => {
-          trigger.click();
-        });
+        await openCountryModal(container);
         expect(dlg.hasAttribute("open")).toBe(false);
       });
     } finally {

@@ -56,7 +56,8 @@ async function testSearchMovie(title: string, year: string | null): Promise<Sear
       console.log(`${hasPoster ? "⚠️ " : "❌"} ${title}${yearPart}`);
       if (data.error) {
         const snippet = JSON.stringify(String(data.error));
-        console.log(`   ${snippet.length > 90 ? `${snippet.slice(0, 87)}...` : snippet}`);
+        const errorLine = snippet.length > 90 ? `${snippet.slice(0, 87)}...` : snippet;
+        console.log(`   ${errorLine}`);
       }
       if (!hasPoster) {
         console.log("   No poster available");

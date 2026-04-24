@@ -14,6 +14,26 @@ vi.mock("../devDebugBarEnv", () => ({
   isDevDebugBarEnabled: vi.fn(),
 }));
 
+function getDevDebugBar(container: HTMLElement): HTMLElement | null {
+  return container.querySelector('[data-testid="dev-debug-bar"]');
+}
+
+function debugBarTipText(root: ParentNode | null, testId: string): string {
+  return root?.querySelector(`[data-testid="${testId}"] .debug-bar__tip`)?.textContent ?? "";
+}
+
+async function clickClearListCacheWhenReady(container: HTMLElement): Promise<void> {
+  await waitFor(() => {
+    expect(container.querySelector('[data-testid="dev-clear-list-cache"]')).toBeTruthy();
+  });
+  const clearBtn = container.querySelector(
+    '[data-testid="dev-clear-list-cache"]',
+  ) as HTMLButtonElement;
+  await act(async () => {
+    clearBtn.click();
+  });
+}
+
 const devDebugBarTree = (
   <AppStateProvider>
     <DevDebugBar />
@@ -25,6 +45,7 @@ describe("DevDebugBar", () => {
     sessionStorage.clear();
     document.body.classList.remove("has-dev-debug-bar");
     vi.mocked(isDevDebugBarEnabled).mockReset();
+    vi.mocked(isDevDebugBarEnabled).mockReturnValue(true);
     vi.spyOn(globalThis, "fetch").mockResolvedValue({
       ok: true,
       json: async () => defaultDevCacheStatusPayload,
@@ -39,16 +60,14 @@ describe("DevDebugBar", () => {
     vi.mocked(isDevDebugBarEnabled).mockReturnValue(false);
 
     await withMountedInBody(devDebugBarTree, async ({ container }) => {
-      expect(container.querySelector('[data-testid="dev-debug-bar"]')).toBeNull();
+      expect(getDevDebugBar(container)).toBeNull();
       expect(document.body.classList.contains("has-dev-debug-bar")).toBe(false);
     });
   });
 
   it("renders the debug region and adds body class when enabled; cleans up on unmount", async () => {
-    vi.mocked(isDevDebugBarEnabled).mockReturnValue(true);
-
     await withMountedInBody(devDebugBarTree, async ({ container }) => {
-      const bar = container.querySelector('[data-testid="dev-debug-bar"]');
+      const bar = getDevDebugBar(container);
       expect(bar).not.toBeNull();
       expect(bar?.tagName.toLowerCase()).toBe("section");
       expect(bar?.getAttribute("aria-label")).toBe("Development tools");
@@ -65,25 +84,20 @@ describe("DevDebugBar", () => {
         expect(bar?.textContent).toContain("Next key TTL");
       });
       await waitFor(() => {
-        expect(
-          bar?.querySelector('[data-testid="dev-justwatch-http-errors"] .debug-bar__tip')
-            ?.textContent ?? "",
-        ).toContain("Total non-success attempts: 0");
+        expect(debugBarTipText(bar, "dev-justwatch-http-errors")).toContain(
+          "Total non-success attempts: 0",
+        );
       });
       await waitFor(() => {
-        expect(
-          bar?.querySelector('[data-testid="dev-cache-status"] .debug-bar__tip')?.textContent ?? "",
-        ).toContain("Redis key prefix (FLY_APP_NAME): movie-justwatch");
+        expect(debugBarTipText(bar, "dev-cache-status")).toContain(
+          "Redis key prefix (FLY_APP_NAME): movie-justwatch",
+        );
       });
       await waitFor(() => {
-        const cacheTip =
-          bar?.querySelector('[data-testid="dev-cache-status"] .debug-bar__tip')?.textContent ?? "";
-        expect(cacheTip).not.toContain("CACHE_TTL");
+        expect(debugBarTipText(bar, "dev-cache-status")).not.toContain("CACHE_TTL");
       });
       await waitFor(() => {
-        const ttlTip =
-          bar?.querySelector('[data-testid="dev-cache-ttl-countdown"] .debug-bar__tip')
-            ?.textContent ?? "";
+        const ttlTip = debugBarTipText(bar, "dev-cache-ttl-countdown");
         expect(ttlTip).toContain("CACHE_TTL");
         expect(ttlTip).toContain("3600s");
         expect(ttlTip).toContain("Letterboxd list/watchlist page cache: 20s");
@@ -104,8 +118,6 @@ describe("DevDebugBar", () => {
   });
 
   it("shows last /api/dev/cache-status snapshot from sessionStorage on first paint before fetch resolves", async () => {
-    vi.mocked(isDevDebugBarEnabled).mockReturnValue(true);
-
     sessionStorage.setItem(
       "lbjw:dev-cache-status-payload-v1",
       JSON.stringify({
@@ -127,7 +139,7 @@ describe("DevDebugBar", () => {
     vi.spyOn(globalThis, "fetch").mockImplementation(() => fetchPromise);
 
     await withMountedInBody(devDebugBarTree, async ({ container }) => {
-      const bar = container.querySelector('[data-testid="dev-debug-bar"]');
+      const bar = getDevDebugBar(container);
       expect(bar?.textContent).toContain(
         "Cache: watchlist 99, list 0, search idx 0 (~str 0, ~unidx 0)",
       );
@@ -149,7 +161,6 @@ describe("DevDebugBar", () => {
   });
 
   it("shows cache-status server error details when the JSON payload reports failure", async () => {
-    vi.mocked(isDevDebugBarEnabled).mockReturnValue(true);
     vi.spyOn(globalThis, "fetch").mockResolvedValue({
       ok: false,
       json: async () => ({ ok: false, error: "Redis unavailable" }),
@@ -157,31 +168,29 @@ describe("DevDebugBar", () => {
 
     await withMountedInBody(devDebugBarTree, async ({ container }) => {
       await waitFor(() => {
-        const bar = container.querySelector('[data-testid="dev-debug-bar"]');
+        const bar = getDevDebugBar(container);
         expect(bar?.textContent).toContain("Cache: status unavailable");
-        expect(
-          bar?.querySelector('[data-testid="dev-cache-status"] .debug-bar__tip')?.textContent ?? "",
-        ).toContain("Server error: Redis unavailable");
+        expect(debugBarTipText(bar, "dev-cache-status")).toContain(
+          "Server error: Redis unavailable",
+        );
       });
     });
   });
 
   it("shows network error copy when cache-status fetch throws", async () => {
-    vi.mocked(isDevDebugBarEnabled).mockReturnValue(true);
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("offline"));
 
     await withMountedInBody(devDebugBarTree, async ({ container }) => {
       await waitFor(() => {
-        const bar = container.querySelector('[data-testid="dev-debug-bar"]');
-        const tip =
-          bar?.querySelector('[data-testid="dev-cache-status"] .debug-bar__tip')?.textContent ?? "";
-        expect(tip).toContain("Network error while calling /api/dev/cache-status");
+        const bar = getDevDebugBar(container);
+        expect(debugBarTipText(bar, "dev-cache-status")).toContain(
+          "Network error while calling /api/dev/cache-status",
+        );
       });
     });
   });
 
   it("TTL tooltip reflects CACHE_TTL env when the snapshot includes it", async () => {
-    vi.mocked(isDevDebugBarEnabled).mockReturnValue(true);
     vi.spyOn(globalThis, "fetch").mockResolvedValue({
       ok: true,
       json: async () => ({
@@ -199,10 +208,8 @@ describe("DevDebugBar", () => {
 
     await withMountedInBody(devDebugBarTree, async ({ container }) => {
       await waitFor(() => {
-        const bar = container.querySelector('[data-testid="dev-debug-bar"]');
-        const ttlTip =
-          bar?.querySelector('[data-testid="dev-cache-ttl-countdown"] .debug-bar__tip')
-            ?.textContent ?? "";
+        const bar = getDevDebugBar(container);
+        const ttlTip = debugBarTipText(bar, "dev-cache-ttl-countdown");
         expect(ttlTip).toContain("900");
         expect(ttlTip).toContain("CACHE_TTL env on this server process");
       });
@@ -210,7 +217,6 @@ describe("DevDebugBar", () => {
   });
 
   it("alerts and refreshes after clear-list-cache succeeds", async () => {
-    vi.mocked(isDevDebugBarEnabled).mockReturnValue(true);
     const alertSpy = vi.spyOn(globalThis, "alert").mockImplementation(() => {});
 
     const fetchMock = vi
@@ -230,16 +236,7 @@ describe("DevDebugBar", () => {
       });
 
     await withMountedInBody(devDebugBarTree, async ({ container }) => {
-      await waitFor(() => {
-        expect(container.querySelector('[data-testid="dev-clear-list-cache"]')).toBeTruthy();
-      });
-
-      const clearBtn = container.querySelector(
-        '[data-testid="dev-clear-list-cache"]',
-      ) as HTMLButtonElement;
-      await act(async () => {
-        clearBtn.click();
-      });
+      await clickClearListCacheWhenReady(container);
 
       await waitFor(() => {
         expect(alertSpy).toHaveBeenCalledWith("Cleared 2 list cache entries.");
@@ -253,7 +250,6 @@ describe("DevDebugBar", () => {
   });
 
   it("shows failed cache pill when clear-list-cache responds with an error", async () => {
-    vi.mocked(isDevDebugBarEnabled).mockReturnValue(true);
     const alertSpy = vi.spyOn(globalThis, "alert").mockImplementation(() => {});
 
     vi.spyOn(globalThis, "fetch").mockImplementation((input: RequestInfo | URL) => {
@@ -271,20 +267,10 @@ describe("DevDebugBar", () => {
     });
 
     await withMountedInBody(devDebugBarTree, async ({ container }) => {
-      await waitFor(() => {
-        expect(container.querySelector('[data-testid="dev-clear-list-cache"]')).toBeTruthy();
-      });
-
-      const clearBtn = container.querySelector(
-        '[data-testid="dev-clear-list-cache"]',
-      ) as HTMLButtonElement;
-      await act(async () => {
-        clearBtn.click();
-      });
+      await clickClearListCacheWhenReady(container);
 
       await waitFor(() => {
-        const bar = container.querySelector('[data-testid="dev-debug-bar"]');
-        expect(bar?.textContent).toContain("Cache: failed");
+        expect(getDevDebugBar(container)?.textContent).toContain("Cache: failed");
       });
     });
 
