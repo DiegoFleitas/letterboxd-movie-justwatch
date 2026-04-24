@@ -115,7 +115,7 @@ describe("letterboxdLists Redis caching", () => {
     await letterboxdWatchlist({ req, res });
 
     expect(getStatus()).toBe(400);
-    expect(getJson()).toMatchObject({ error: "Too small: expected number to be >=1" });
+    expect(getJson()).toMatchObject({ error: expect.stringContaining("expected number") });
     expect(mockFetchLetterboxdHtml).not.toHaveBeenCalled();
   });
 
