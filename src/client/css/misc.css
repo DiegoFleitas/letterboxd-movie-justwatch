@@ -151,9 +151,6 @@ img.logo {
   opacity: 0.85;
 }
 
-/* Small toggle to reveal hidden providers */
-/* Removed toggle-related styles; no-op kept for backwards compatibility */
-
 @keyframes float {
   0%,
   100% {

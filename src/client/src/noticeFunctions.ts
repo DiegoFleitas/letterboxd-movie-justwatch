@@ -7,10 +7,6 @@ export function setNoticeImpl(setter: ((msg: string | null) => void) | null): vo
   noticeSetter = setter;
 }
 
-export function getNoticeImpl(): ((msg: string | null) => void) | null {
-  return noticeSetter;
-}
-
 export const toggleNotice = (msg: string | null | undefined): void => {
   if (noticeSetter) {
     noticeSetter(msg ?? null);

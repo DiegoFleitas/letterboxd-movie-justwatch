@@ -37,9 +37,3 @@ export function getJustWatchHttpErrorSnapshot(): JustWatchHttpErrorSnapshot {
   }
   return { total: justWatchHttpErrorTotal, byStatus, last: justWatchHttpErrorLast };
 }
-
-export function resetJustWatchHttpErrorCounters(): void {
-  justWatchHttpErrorCounts.clear();
-  justWatchHttpErrorTotal = 0;
-  justWatchHttpErrorLast = undefined;
-}

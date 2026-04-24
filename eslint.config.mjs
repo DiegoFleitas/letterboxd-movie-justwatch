@@ -63,14 +63,20 @@ export default [
     },
     plugins: {
       "@typescript-eslint": tseslint,
-      // Disable React plugin for now because eslint-plugin-react
-      // is not yet fully compatible with ESLint 10's flat config API.
-      // react: reactPlugin,
-      // "react-hooks": reactHooks,
+      react: reactPlugin,
+      "react-hooks": reactHooks,
       "jsx-a11y": jsxA11y,
       import: importPlugin,
     },
     rules: {
+      ...reactPlugin.configs.flat.recommended.rules,
+      // `tsconfig` uses `"jsx": "react-jsx"` — React import is not required for JSX.
+      "react/react-in-jsx-scope": "off",
+      ...reactHooks.configs.recommended.rules,
+      // Hooks v7 adds stricter rules beyond classic `rules-of-hooks` / `exhaustive-deps`;
+      // keep those on without forcing a large effect/refactor pass in this change.
+      "react-hooks/set-state-in-effect": "off",
+      "react-hooks/refs": "off",
       ...jsxA11y.configs.recommended.rules,
     },
     settings: {

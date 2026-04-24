@@ -1,5 +1,5 @@
 import { describe, it, beforeAll, afterAll, expect } from "vitest";
-import { HTTP_API_PATHS } from "@server/routes";
+import { HTTP_API_PATHS } from "@server/routes.js";
 import { createServer } from "@server/createServer.js";
 import { _injectRedisClientForTest, _resetRedisForTesting } from "@server/lib/redis.js";
 

@@ -4,15 +4,16 @@ Unit and integration tests use **[Vitest](https://vitest.dev/)**. End-to-end tes
 
 ## Commands
 
-| Command                                                                          | What it runs                                                                                   |
-| -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `bun run test` / `bun run test:unit`                                             | All Vitest tests under `tests/**/*.test.ts` (see exclusions in `vitest.config.ts`)             |
-| `bun run test:backend`                                                           | Fastify integration tests only                                                                 |
-| `bun run test:filter`, `test:state`, `test:posthog`, `test:redis`, `test:dedupe` | Single Vitest files                                                                            |
-| `bun run test:e2e`                                                               | Playwright (`tests/e2e/*.spec.ts`; UI mocks + `backend-smoke.spec.ts`)                         |
-| `bun run test:poster-flow`                                                       | Manual script: hits `localhost:3000` (backend must be running); **not** part of `bun run test` |
+| Command                                                                          | What it runs                                                                                                                  |
+| -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `bun run test` / `bun run test:unit`                                             | All Vitest tests matching `test.include` in [`vitest.config.ts`](../vitest.config.ts)                                         |
+| `bun run test:backend`                                                           | Fastify integration tests only                                                                                                |
+| `bun run test:filter`, `test:state`, `test:posthog`, `test:redis`, `test:dedupe` | Single Vitest files                                                                                                           |
+| `bun run test:e2e`                                                               | Playwright (`tests/e2e/*.spec.ts`; UI mocks + `backend-smoke.spec.ts`)                                                        |
+| `bun run test:poster-flow`                                                       | Manual script: hits `localhost:3000` (backend must be running); **not** part of `bun run test`                                |
+| `bun run knip`                                                                   | Unused deps / files / exports (not Vitest); see root [`README.md`](../README.md#contributing) and [`knip.json`](../knip.json) |
 
-Config: root [`vitest.config.ts`](../vitest.config.ts) (Node environment, `APP_SECRET_KEY` for sessions). Poster-flow is excluded from the default Vitest run because it requires a live server.
+Config: root [`vitest.config.ts`](../vitest.config.ts) (Node environment, `APP_SECRET_KEY` for sessions). **`test:poster-flow`** is not Vitest: it runs the standalone Bun script [`scripts/testPosterFlow.manual.ts`](../scripts/testPosterFlow.manual.ts) against a live backend on `localhost:3000`.
 
 **Path aliases** (see root [`tsconfig.json`](../tsconfig.json) and Vitest `resolve.alias`): `@server/…` → `src/server/…`, `@/…` → `src/client/src/…`. Prefer these over long `../src/...` chains in new tests.
 
@@ -52,7 +53,3 @@ describe("your feature", () => {
 ```
 
 3. Optional: add a script in `package.json`, e.g. `"test:yourfeature": "bunx vitest run tests/yourFeature.test.ts"`.
-
-## Legacy `testUtils.ts`
-
-`tests/testUtils.ts` (custom `TestSuite` / `assert*`) is **deprecated** for new tests; prefer Vitest. It can remain for any one-off scripts if needed.

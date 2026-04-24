@@ -6,11 +6,11 @@ import type { CheerioAPI } from "cheerio";
 import * as cheerio from "cheerio";
 
 /** Selector for "this element is or contains a film link" (data attrs or /film/ link). */
-export const SELECTOR_HAS_FILM =
+const SELECTOR_HAS_FILM =
   "[data-target-link], [data-film-slug], [data-item-link], a[href^='/film/']";
 
 /** Ordered list of selectors for film container elements (watchlist vs list pages). */
-export const FILM_CONTAINER_SELECTORS = [
+const FILM_CONTAINER_SELECTORS = [
   ".griditem",
   "li.posteritem",
   ".listitem, li.poster-container, li.list-item",
@@ -19,12 +19,7 @@ export const FILM_CONTAINER_SELECTORS = [
 ];
 
 /** Strings to check in raw HTML for "no content" debug logging. */
-export const CONTENT_PRESENCE_MARKERS = [
-  "poster-grid",
-  "griditem",
-  "listitem",
-  "posteritem",
-] as const;
+const CONTENT_PRESENCE_MARKERS = ["poster-grid", "griditem", "listitem", "posteritem"] as const;
 
 /**
  * Returns a map of content presence markers for debug logging (e.g. "poster-grid": true).

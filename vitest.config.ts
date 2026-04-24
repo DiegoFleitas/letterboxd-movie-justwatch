@@ -18,7 +18,7 @@ export default defineConfig({
       "src/client/src/__tests__/**/*.test.ts",
       "src/client/src/__tests__/**/*.test.tsx",
     ],
-    exclude: ["**/node_modules/**", "tests/testPosterFlow.test.ts"],
+    exclude: ["**/node_modules/**"],
     environment: "node",
     globals: true,
     // @fastify/session requires ≥32 chars; CI often has no APP_SECRET_KEY

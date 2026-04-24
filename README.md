@@ -43,12 +43,12 @@ This application connects **Letterboxd** lists to **streaming availability** for
 
 ## Tech stack
 
-| Area            | Stack                                                                         |
-| --------------- | ----------------------------------------------------------------------------- |
-| **Frontend**    | React 19, Vite (`src/client/`)                                                |
-| **Backend**     | Bun, Fastify, TypeScript (`src/server/main.ts`, `src/server/createServer.ts`) |
-| **Data & HTTP** | Cheerio (Letterboxd), axios, ioredis; sessions via Fastify                    |
-| **Quality**     | Vitest, Playwright, ESLint, Prettier, Husky                                   |
+| Area            | Stack                                                                                                 |
+| --------------- | ----------------------------------------------------------------------------------------------------- |
+| **Frontend**    | React 19, Vite (`src/client/`)                                                                        |
+| **Backend**     | Bun, Fastify, TypeScript (`src/server/main.ts`, `src/server/createServer.ts`)                         |
+| **Data & HTTP** | Cheerio (Letterboxd), axios, ioredis; sessions via Fastify                                            |
+| **Quality**     | Vitest, Playwright, ESLint, Prettier, Husky, [Knip](https://knip.dev) (unused files / deps / exports) |
 
 ## Prerequisites
 
@@ -167,8 +167,10 @@ Operational detail (scripts, environment, layout, tests, Redis, observability, b
 Before opening a pull request, run:
 
 ```bash
-bun run lint && bun run typecheck && bun run test
+bun run lint && bun run typecheck && bun run knip && bun run test
 ```
+
+**Knip** (`bun run knip`) scans the repo for unused dependencies, unreachable files, and unused exports using [`knip.json`](knip.json). It runs via `bunx` (no extra install). GitHub Actions runs **`bun run typecheck`** and **`bun run knip`** in [`.github/workflows/ci.yml`](.github/workflows/ci.yml) after lint/format and before tests. Configuration notes: ambient `*.d.ts` and the `flyctl` binary are ignored; exported **types** are not reported (`rules.types` is off) so public type surfaces are not flagged as dead code. Treat Knip findings as hints—verify dynamic imports and test-only entrypoints before deleting.
 
 End-to-end details: [`tests/e2e/README.md`](tests/e2e/README.md).
 

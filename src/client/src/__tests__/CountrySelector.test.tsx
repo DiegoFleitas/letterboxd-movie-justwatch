@@ -1,5 +1,4 @@
 // @vitest-environment jsdom
-import React from "react";
 import { act, fireEvent } from "@testing-library/react";
 import { createRoot } from "react-dom/client";
 import { describe, expect, it, vi } from "vitest";

@@ -12,7 +12,7 @@ export const POSTER_IMAGE_TRANSFORM_S = 0.36;
 export const POSTER_OVERLAY_OPACITY_S = 0.18;
 
 // Shared easing (cubic-bezier(0.2, 0.9, 0.2, 1)) — Motion accepts arrays
-export const EASE_CUBIC_BEZIER: [number, number, number, number] = [0.2, 0.9, 0.2, 1];
+const EASE_CUBIC_BEZIER: [number, number, number, number] = [0.2, 0.9, 0.2, 1];
 
 // Helper for motion transitions
 export function motionTransition(durationS: number) {

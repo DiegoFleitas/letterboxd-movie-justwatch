@@ -1,7 +1,7 @@
 import { getToastImpl } from "./toastApi";
 import { escapeHtml, sanitizeHrefForToast } from "./htmlSafeForToast";
 
-export const queuedMessages: unknown[] = [];
+const queuedMessages: unknown[] = [];
 
 export function plainText(str: unknown): string {
   if (typeof str !== "string") return "";
