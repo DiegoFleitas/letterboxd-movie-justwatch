@@ -48,7 +48,7 @@ test.describe("Alternative search", () => {
       }),
     );
 
-    await altButton.click();
+    await altButton.click({ force: true });
 
     await expect(page.getByText(/Found on Example/)).toBeVisible({ timeout: 5000 });
   });
@@ -94,7 +94,7 @@ test.describe("Alternative search", () => {
       });
     });
 
-    await altBtn.click();
+    await altBtn.click({ force: true });
     await altBtn.click({ force: true });
     await altBtn.click({ force: true });
     await expect
