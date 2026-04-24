@@ -15,7 +15,8 @@ const FALLBACK_COUNTRY_ID = "en_US";
 
 /** Only ids present in `countries` may be persisted or read from storage. */
 function countryIdAllowedForStorage(id: string): string | null {
-  return countries.some((c: { id: string }) => c.id === id) ? id : null;
+  const match = countries.find((c: { id: string }) => c.id === id);
+  return match?.id ?? null;
 }
 
 function getStoredCountryId(): string | null {
@@ -81,7 +82,8 @@ function getDefaultCountryId(): string {
 }
 
 function resolveAllowedCountryId(id: string): string {
-  if (countries.some((c: { id: string }) => c.id === id)) return id;
+  const match = countries.find((c: { id: string }) => c.id === id);
+  if (match) return match.id;
   return getDefaultCountryId();
 }
 
