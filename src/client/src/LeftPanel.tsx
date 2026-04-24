@@ -69,6 +69,11 @@ function getDefaultCountryId(): string {
   );
 }
 
+function resolveAllowedCountryId(id: string): string {
+  if (countries.some((c: { id: string }) => c.id === id)) return id;
+  return getDefaultCountryId();
+}
+
 export function LeftPanel(): React.ReactElement {
   const {
     loadLetterboxdList,
@@ -79,12 +84,13 @@ export function LeftPanel(): React.ReactElement {
     isListLoading,
     registerListFormDevBridge,
   } = useAppState();
-  const [country, setCountryState] = useState(getDefaultCountryId);
+  const [country, setCountryState] = useState(() => getDefaultCountryId());
 
   const setCountry = (id: string): void => {
-    setCountryState(id);
+    const safe = resolveAllowedCountryId(id);
+    setCountryState(safe);
     try {
-      localStorage.setItem(COUNTRY_STORAGE_KEY, id);
+      localStorage.setItem(COUNTRY_STORAGE_KEY, safe);
     } catch {
       // ignore
     }
@@ -94,7 +100,8 @@ export function LeftPanel(): React.ReactElement {
     if (getStoredCountryId() !== null) return;
     let cancelled = false;
     fetchCountryFromIp(countries).then((id: string | null) => {
-      if (!cancelled && id) setCountryState(id);
+      if (!cancelled && id && countries.some((c: { id: string }) => c.id === id))
+        setCountryState(id);
     });
     return () => {
       cancelled = true;

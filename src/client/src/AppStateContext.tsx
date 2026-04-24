@@ -10,7 +10,14 @@ import {
 import { getToastImpl } from "./toastApi";
 import { setNoticeImpl } from "./noticeFunctions";
 import { createInitialTabbedTileState, mergeTileStateForTab } from "./movieTiles";
-import type { MergeData, SearchTab, TabbedTileState, TileData, TileProvider } from "./movieTiles";
+import type {
+  MergeData,
+  SearchTab,
+  TabbedTileState,
+  TileData,
+  TileProvider,
+  TileYear,
+} from "./movieTiles";
 import { useLetterboxdList } from "./useLetterboxdList";
 import { useMovieSearch } from "./useMovieSearch";
 import {
@@ -94,7 +101,7 @@ export function AppStateProvider({ children }: { children: ReactNode }): React.R
     (
       tab: SearchTab,
       title: string,
-      year: string | number | null,
+      year: TileYear,
       data: Parameters<typeof mergeTileStateForTab>[4],
     ) => {
       setTilesByTab((prev: TabbedTileState) => mergeTileStateForTab(prev, tab, title, year, data));
@@ -103,14 +110,14 @@ export function AppStateProvider({ children }: { children: ReactNode }): React.R
   );
 
   const mergeMovieTile = useCallback(
-    (title: string, year: string | number | null, data: MergeData | null | undefined) => {
+    (title: string, year: TileYear, data: MergeData | null | undefined) => {
       mergeTileForTab("movie", title, year, data);
     },
     [mergeTileForTab],
   );
 
   const mergeListTile = useCallback(
-    (title: string, year: string | number | null, data: MergeData | null | undefined) => {
+    (title: string, year: TileYear, data: MergeData | null | undefined) => {
       mergeTileForTab("list", title, year, data);
     },
     [mergeTileForTab],

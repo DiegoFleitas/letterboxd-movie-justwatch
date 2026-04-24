@@ -4,6 +4,12 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { AppStateProvider } from "../AppStateContext";
 import { LeftPanel } from "../LeftPanel";
 
+function mockFetchUrl(input: RequestInfo | URL): string {
+  if (typeof input === "string") return input;
+  if (input instanceof URL) return input.href;
+  return input.url;
+}
+
 const COUNTRY_STORAGE_KEY = "letterboxd-justwatch-country";
 
 describe("LeftPanel typeahead accessibility", () => {
@@ -13,7 +19,7 @@ describe("LeftPanel typeahead accessibility", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn((input: RequestInfo | URL) => {
-        const url = typeof input === "string" ? input : String(input);
+        const url = mockFetchUrl(input);
         if (url.includes("/search/movie?query=")) {
           return Promise.resolve({
             ok: true,
@@ -74,7 +80,7 @@ describe("LeftPanel typeahead accessibility", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn((input: RequestInfo | URL) => {
-        const url = typeof input === "string" ? input : String(input);
+        const url = mockFetchUrl(input);
         if (url.includes("/search/movie?query=")) {
           return Promise.resolve({
             ok: true,

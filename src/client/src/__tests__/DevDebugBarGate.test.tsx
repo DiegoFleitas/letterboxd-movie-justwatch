@@ -59,7 +59,7 @@ describe("DevDebugBarGate", () => {
     await act(async () => {
       root.unmount();
     });
-    document.body.removeChild(container);
+    container.remove();
   });
 
   it("lazy-loads DevDebugBar when the flag is enabled", async () => {
@@ -84,6 +84,6 @@ describe("DevDebugBarGate", () => {
     await act(async () => {
       root.unmount();
     });
-    document.body.removeChild(container);
+    container.remove();
   });
 });

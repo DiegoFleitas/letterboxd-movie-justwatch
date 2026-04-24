@@ -10,6 +10,12 @@ vi.mock("../devDebugBarEnv", () => ({
   isDevDebugBarEnabled: vi.fn(),
 }));
 
+function mockFetchUrl(input: RequestInfo | URL): string {
+  if (typeof input === "string") return input;
+  if (input instanceof URL) return input.href;
+  return input.url;
+}
+
 describe("DevDebugBar", () => {
   beforeEach(() => {
     sessionStorage.clear();
@@ -60,7 +66,7 @@ describe("DevDebugBar", () => {
     await act(async () => {
       root.unmount();
     });
-    document.body.removeChild(container);
+    container.remove();
   });
 
   it("renders the debug region and adds body class when enabled; cleans up on unmount", async () => {
@@ -134,7 +140,7 @@ describe("DevDebugBar", () => {
     });
 
     expect(document.body.classList.contains("has-dev-debug-bar")).toBe(false);
-    document.body.removeChild(container);
+    container.remove();
   });
 
   it("shows last /api/dev/cache-status snapshot from sessionStorage on first paint before fetch resolves", async () => {
@@ -208,7 +214,7 @@ describe("DevDebugBar", () => {
     await act(async () => {
       root.unmount();
     });
-    document.body.removeChild(container);
+    container.remove();
   });
 
   it("shows cache-status server error details when the JSON payload reports failure", async () => {
@@ -241,7 +247,7 @@ describe("DevDebugBar", () => {
     await act(async () => {
       root.unmount();
     });
-    document.body.removeChild(container);
+    container.remove();
   });
 
   it("shows network error copy when cache-status fetch throws", async () => {
@@ -270,7 +276,7 @@ describe("DevDebugBar", () => {
     await act(async () => {
       root.unmount();
     });
-    document.body.removeChild(container);
+    container.remove();
   });
 
   it("TTL tooltip reflects CACHE_TTL env when the snapshot includes it", async () => {
@@ -319,7 +325,7 @@ describe("DevDebugBar", () => {
     await act(async () => {
       root.unmount();
     });
-    document.body.removeChild(container);
+    container.remove();
   });
 
   it("alerts and refreshes after clear-list-cache succeeds", async () => {
@@ -345,7 +351,7 @@ describe("DevDebugBar", () => {
     const fetchMock = vi
       .spyOn(globalThis, "fetch")
       .mockImplementation((input: RequestInfo | URL) => {
-        const url = typeof input === "string" ? input : String(input);
+        const url = mockFetchUrl(input);
         if (url.includes("/clear-list-cache")) {
           return Promise.resolve({
             ok: true,
@@ -384,12 +390,14 @@ describe("DevDebugBar", () => {
     await waitFor(() => {
       expect(alertSpy).toHaveBeenCalledWith("Cleared 2 list cache entries.");
     });
-    expect(fetchMock.mock.calls.some(([u]) => String(u).includes("/clear-list-cache"))).toBe(true);
+    expect(fetchMock.mock.calls.some(([u]) => mockFetchUrl(u).includes("/clear-list-cache"))).toBe(
+      true,
+    );
 
     await act(async () => {
       root.unmount();
     });
-    document.body.removeChild(container);
+    container.remove();
     alertSpy.mockRestore();
   });
 
@@ -414,7 +422,7 @@ describe("DevDebugBar", () => {
     };
 
     vi.spyOn(globalThis, "fetch").mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === "string" ? input : String(input);
+      const url = mockFetchUrl(input);
       if (url.includes("/clear-list-cache")) {
         return Promise.resolve({
           ok: false,
@@ -458,7 +466,7 @@ describe("DevDebugBar", () => {
     await act(async () => {
       root.unmount();
     });
-    document.body.removeChild(container);
+    container.remove();
     alertSpy.mockRestore();
   });
 });

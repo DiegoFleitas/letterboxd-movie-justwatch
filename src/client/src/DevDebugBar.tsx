@@ -192,12 +192,12 @@ function buildCacheTtlRowTooltip(data: CacheStatusJson | null): string {
   return [
     "Redis TTL (dev):",
     "",
-    ...(!data
-      ? [
+    ...(data
+      ? []
+      : [
           "No snapshot yet. After /api/dev/cache-status succeeds, this shows CACHE_TTL env and next-key expiry notes.",
           "",
-        ]
-      : []),
+        ]),
     "Redis key TTL (SET … EX, seconds):",
     ...(hasTtlEnv
       ? [

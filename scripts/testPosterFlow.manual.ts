@@ -55,9 +55,8 @@ async function testSearchMovie(title: string, year: string | null): Promise<Sear
       const yearPart = year ? ` (${year})` : "";
       console.log(`${hasPoster ? "⚠️ " : "❌"} ${title}${yearPart}`);
       if (data.error) {
-        // Strip angle brackets only (single-char replace); avoids incomplete tag-regex sanitization.
-        const stripped = String(data.error).replaceAll(/[<>]/g, "").substring(0, 80);
-        console.log(`   ${stripped}`);
+        const snippet = JSON.stringify(String(data.error));
+        console.log(`   ${snippet.length > 90 ? `${snippet.slice(0, 87)}...` : snippet}`);
       }
       if (!hasPoster) {
         console.log("   No poster available");
