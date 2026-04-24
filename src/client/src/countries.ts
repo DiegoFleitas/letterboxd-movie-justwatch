@@ -135,7 +135,7 @@ function flagFromCountryCode(countryCode: string): string {
   }
 
   return Array.from(normalized, (char) =>
-    String.fromCodePoint(REGIONAL_INDICATOR_OFFSET + char.charCodeAt(0)),
+    String.fromCodePoint(REGIONAL_INDICATOR_OFFSET + (char.codePointAt(0) ?? 0)),
   ).join("");
 }
 

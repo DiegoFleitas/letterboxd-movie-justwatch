@@ -21,7 +21,7 @@ export function createListAndSearchFetchMock(options: {
 }) {
   const { listEndpoint = HTTP_API_PATHS.letterboxdWatchlist, listBody, searchBody } = options;
   return vi.fn((input: RequestInfo | URL) => {
-    const url = typeof input === "string" ? input : String(input);
+    const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
     if (url.includes(listEndpoint)) {
       return Promise.resolve(jsonResponse(listBody));
     }
