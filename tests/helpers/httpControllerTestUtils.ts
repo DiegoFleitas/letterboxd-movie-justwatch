@@ -16,10 +16,8 @@ export function createMockRes(): MockRes {
       self.statusCode = code;
       return self;
     },
-    send() {},
-    setHeader() {
-      return self;
-    },
+    send: vi.fn(),
+    setHeader: vi.fn(() => self),
   };
   return self;
 }
