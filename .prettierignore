@@ -1,6 +1,7 @@
 node_modules
 dist
 build
+coverage
 src/client/dist
 tests/playwright-report
 tests/test-results
