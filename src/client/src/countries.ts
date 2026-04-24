@@ -128,7 +128,7 @@ const COUNTRY_ROWS = [
 
 const REGIONAL_INDICATOR_OFFSET = 0x1f1a5;
 
-function flagFromCountryCode(countryCode: string): string {
+export function flagFromCountryCode(countryCode: string): string {
   const normalized = countryCode.trim().toUpperCase();
   if (!/^[A-Z]{2}$/.test(normalized)) {
     return "🏳️";
