@@ -356,7 +356,7 @@ function LeftPanelMovieTab(props: Readonly<LeftPanelMovieTabProps>): React.React
           </fieldset>
         )}
       </div>
-      <input type="hidden" id="title" name="title" value={movieTitle} readOnly aria-hidden />
+      <input type="hidden" id="title" name="title" value={movieTitle} readOnly />
       <label htmlFor="year">Release year:</label>
       <input
         type="text"
@@ -543,7 +543,7 @@ export function LeftPanel(): React.ReactElement {
               <path d="M10 9l5 3-5 3V9z" />
             </svg>
           </span>
-          Movie
+          {"Movie"}
         </motion.button>
         <motion.button
           type="button"
@@ -574,7 +574,7 @@ export function LeftPanel(): React.ReactElement {
               <line x1="3" y1="18" x2="3.01" y2="18" />
             </svg>
           </span>
-          List
+          {"List"}
         </motion.button>
       </div>
       <div className="tab-content active-section">
