@@ -16,6 +16,7 @@ export default [
       "src/client/dist",
       "tests/playwright-report",
       "tests/test-results",
+      "coverage",
       ".turbo",
       ".cache",
     ],

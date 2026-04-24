@@ -7,6 +7,8 @@ import {
   setCacheValue,
   clearCacheByCategory,
   getSoonestIndexedCacheKeyExpiryAtMs,
+  getCacheCategoryCount,
+  indexCacheKeyByCategory,
   isHealthy,
   disconnectRedis,
   _resetRedisForTesting,
@@ -47,6 +49,9 @@ function createMockClient(overrides: Record<string, unknown> = {}): Record<strin
     },
     sadd: (...args: unknown[]) => {
       calls.sadd.push(args);
+      if (typeof overrides.sadd === "function") {
+        return (overrides.sadd as (...a: unknown[]) => Promise<number>)(...args);
+      }
       return Promise.resolve(1);
     },
     smembers:
@@ -60,6 +65,10 @@ function createMockClient(overrides: Record<string, unknown> = {}): Record<strin
       calls.del.push(args);
       return Promise.resolve(args.length);
     },
+    srem:
+      typeof overrides.srem === "function"
+        ? (...args: unknown[]) => (overrides.srem as (...a: unknown[]) => Promise<number>)(...args)
+        : () => Promise.resolve(1),
     pipeline() {
       const ops: Array<{ op: "exists"; key: string }> = [];
       const chain = {
@@ -141,6 +150,15 @@ describe("Redis cache", () => {
     expect(await getCacheValue("key")).toBeNull();
   });
 
+  it("setCacheValue returns null when set throws", async () => {
+    const mock = {
+      ...(createMockClient() as object),
+      set: () => Promise.reject(new Error("set fail")),
+    };
+    _injectRedisClientForTest(mock as never);
+    expect(await setCacheValue("k", { a: 1 }, 60)).toBeNull();
+  });
+
   it("setCacheValue returns null when client is null", async () => {
     _injectRedisClientForTest(null);
     expect(await setCacheValue("k", "v", 60)).toBeNull();
@@ -186,6 +204,24 @@ describe("Redis cache", () => {
     expect(mock._calls.sadd[0][0]).toBe("movie-justwatch:keys:list");
     if (saved !== undefined) process.env.FLY_APP_NAME = saved;
     else delete process.env.FLY_APP_NAME;
+  });
+
+  it("clearCacheByCategory returns error when smembers throws", async () => {
+    const mock = createMockClient({
+      smembers: () => Promise.reject(new Error("smembers boom")),
+    });
+    _injectRedisClientForTest(mock as never);
+    const r = await clearCacheByCategory("list");
+    expect(r.cleared).toBe(0);
+    expect(r.error).toContain("smembers boom");
+  });
+
+  it("indexCacheKeyByCategory returns false when sadd throws", async () => {
+    const mock = createMockClient({
+      sadd: () => Promise.reject(new Error("sadd fail")),
+    });
+    _injectRedisClientForTest(mock as never);
+    expect(await indexCacheKeyByCategory("k", "list")).toBe(false);
   });
 
   it("clearCacheByCategory returns error when client is null", async () => {
@@ -281,6 +317,205 @@ describe("Redis cache", () => {
     };
     _injectRedisClientForTest(mock as never);
     expect(await getSoonestIndexedCacheKeyExpiryAtMs()).toEqual({ soonestExpiryAtMs: null });
+  });
+
+  it("getCacheCategoryCount returns error when EXISTS pipeline returns null", async () => {
+    const mock = {
+      smembers: () => Promise.resolve(["only-key"]),
+      pipeline() {
+        return {
+          exists() {
+            return this;
+          },
+          type() {
+            return this;
+          },
+          pttl() {
+            return this;
+          },
+          get() {
+            return this;
+          },
+          exec: async () => null,
+        };
+      },
+      srem: () => Promise.resolve(1),
+      ping: () => Promise.resolve("PONG"),
+      get: () => Promise.resolve(null),
+      set: () => Promise.resolve("OK"),
+      sadd: () => Promise.resolve(1),
+      del: () => Promise.resolve(1),
+      quit: () => Promise.resolve("OK"),
+    };
+    _injectRedisClientForTest(mock as never);
+    const r = await getCacheCategoryCount("list");
+    expect(r.error).toContain("no results");
+  });
+
+  it("getCacheCategoryCount returns error when pipeline tuple is missing", async () => {
+    const mock = {
+      smembers: () => Promise.resolve(["a", "b"]),
+      pipeline() {
+        return {
+          exists() {
+            return this;
+          },
+          type() {
+            return this;
+          },
+          pttl() {
+            return this;
+          },
+          get() {
+            return this;
+          },
+          exec: async () => [[null, 1], undefined] as ([null, number] | undefined)[],
+        };
+      },
+      srem: () => Promise.resolve(1),
+      ping: () => Promise.resolve("PONG"),
+      get: () => Promise.resolve(null),
+      set: () => Promise.resolve("OK"),
+      sadd: () => Promise.resolve(1),
+      del: () => Promise.resolve(1),
+      quit: () => Promise.resolve("OK"),
+    };
+    _injectRedisClientForTest(mock as never);
+    const r = await getCacheCategoryCount("list");
+    expect(r.error).toContain("incomplete");
+  });
+
+  it("getCacheCategoryCount prunes stale keys from index set", async () => {
+    const srem = vi.fn(() => Promise.resolve(1));
+    const mock = {
+      smembers: () => Promise.resolve(["stale-h", "alive-h"]),
+      pipeline() {
+        return {
+          exists() {
+            return this;
+          },
+          type() {
+            return this;
+          },
+          pttl() {
+            return this;
+          },
+          get() {
+            return this;
+          },
+          exec: async () =>
+            [
+              [null, 0],
+              [null, 1],
+            ] as [null, number][],
+        };
+      },
+      srem,
+      ping: () => Promise.resolve("PONG"),
+      get: () => Promise.resolve(null),
+      set: () => Promise.resolve("OK"),
+      sadd: () => Promise.resolve(1),
+      del: () => Promise.resolve(1),
+      quit: () => Promise.resolve("OK"),
+    };
+    _injectRedisClientForTest(mock as never);
+    const r = await getCacheCategoryCount("list");
+    expect(r.count).toBe(1);
+    expect(srem).toHaveBeenCalled();
+  });
+
+  it("indexCacheKeyByCategory sadds hashed key for each category", async () => {
+    const mock = createMockClient() as ReturnType<typeof createMockClient> & {
+      _calls: { sadd: unknown[][] };
+    };
+    _injectRedisClientForTest(mock as never);
+    await indexCacheKeyByCategory("cache-key-xyz", ["list", "watchlist"]);
+    expect(mock._calls.sadd.length).toBe(2);
+    expect(String(mock._calls.sadd[0][0])).toContain(":keys:list");
+    expect(String(mock._calls.sadd[1][0])).toContain(":keys:watchlist");
+  });
+
+  it("getCacheCategoryCount surfaces per-key EXISTS errors", async () => {
+    const mock = {
+      smembers: () => Promise.resolve(["k1"]),
+      pipeline() {
+        return {
+          exists() {
+            return this;
+          },
+          type() {
+            return this;
+          },
+          pttl() {
+            return this;
+          },
+          get() {
+            return this;
+          },
+          exec: async () => [[new Error("exists-err"), 0] as [Error, number]],
+        };
+      },
+      srem: () => Promise.resolve(1),
+      ping: () => Promise.resolve("PONG"),
+      get: () => Promise.resolve(null),
+      set: () => Promise.resolve("OK"),
+      sadd: () => Promise.resolve(1),
+      del: () => Promise.resolve(1),
+      quit: () => Promise.resolve("OK"),
+    };
+    _injectRedisClientForTest(mock as never);
+    const r = await getCacheCategoryCount("watchlist");
+    expect(r.error).toContain("exists-err");
+  });
+
+  it("getSoonestIndexedCacheKeyExpiryAtMs returns error when smembers throws", async () => {
+    const mock = {
+      smembers: () => Promise.reject(new Error("sm-err")),
+      pipeline() {
+        return (createMockClient() as { pipeline: () => unknown }).pipeline();
+      },
+      ping: () => Promise.resolve("PONG"),
+      get: () => Promise.resolve(null),
+      set: () => Promise.resolve("OK"),
+      sadd: () => Promise.resolve(1),
+      del: () => Promise.resolve(1),
+      quit: () => Promise.resolve("OK"),
+    };
+    _injectRedisClientForTest(mock as never);
+    const r = await getSoonestIndexedCacheKeyExpiryAtMs();
+    expect(r.error).toContain("sm-err");
+  });
+
+  it("getSoonestIndexedCacheKeyExpiryAtMs ignores PTTL rows with errors", async () => {
+    const mock = {
+      smembers: (key: string) => Promise.resolve(key.includes(":keys:list") ? ["app:one"] : []),
+      pipeline() {
+        return {
+          exists() {
+            return this;
+          },
+          type() {
+            return this;
+          },
+          pttl() {
+            return this;
+          },
+          get() {
+            return this;
+          },
+          exec: async () => [[new Error("pttl-bad"), -1] as [Error, number]],
+        };
+      },
+      ping: () => Promise.resolve("PONG"),
+      get: () => Promise.resolve(null),
+      set: () => Promise.resolve("OK"),
+      sadd: () => Promise.resolve(1),
+      del: () => Promise.resolve(1),
+      quit: () => Promise.resolve("OK"),
+    };
+    _injectRedisClientForTest(mock as never);
+    const r = await getSoonestIndexedCacheKeyExpiryAtMs();
+    expect(r.soonestExpiryAtMs).toBeNull();
   });
 
   it("getSoonestIndexedCacheKeyExpiryAtMs uses minimum positive PTTL", async () => {
