@@ -3,18 +3,15 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { act, renderHook } from "@testing-library/react";
 import { useCallback, useRef } from "react";
 import { useLetterboxdList } from "../useLetterboxdList";
-import {
-  PLACEHOLDER_POSTER,
-  mergeTileState,
-  createInitialTileState,
-  type MergeData,
-  type TileData,
-  type TileState,
-} from "../movieTiles";
+import { PLACEHOLDER_POSTER, type TileData } from "../movieTiles";
 import { NO_POSTER_REPORT_DELAY_MS } from "../animation/timing";
 import { listReportToastCopy } from "../githubIssueUrl";
 import { showMessage } from "../showMessage";
-import { jsonResponse } from "./jsonResponse";
+import {
+  createListAndSearchFetchMock,
+  useLetterboxdListWithMergedTiles,
+  watchlistUrl,
+} from "./test-utils/useLetterboxdListHarness.js";
 
 vi.mock("../showError", () => ({
   showError: vi.fn(),
@@ -31,46 +28,28 @@ vi.mock("../showMessage", () => ({
   plainText: (s: unknown) => String(s ?? ""),
 }));
 
-function createFetchMock(searchMovieBody: Record<string, unknown>) {
-  return vi.fn((input: RequestInfo | URL) => {
-    const url = typeof input === "string" ? input : String(input);
-    if (url.includes("letterboxd-watchlist")) {
-      return Promise.resolve(
-        jsonResponse({
-          watchlist: [
-            {
-              title: "Test Film",
-              year: "2020",
-              link: "https://letterboxd.com/film/test-film-2020/",
-            },
-          ],
-          lastPage: 1,
-          totalPages: 1,
-        }),
-      );
-    }
-    if (url.includes("search-movie")) {
-      return Promise.resolve(jsonResponse(searchMovieBody));
-    }
-    return Promise.reject(new Error(`unexpected fetch: ${url}`));
-  });
-}
-
-const watchlistUrl = "https://letterboxd.com/test-user/watchlist/";
-
 describe("useLetterboxdList GitHub nudge (45s timer)", () => {
   const mockedShowMessage = vi.mocked(showMessage);
 
   beforeEach(() => {
     vi.useFakeTimers();
     mockedShowMessage.mockClear();
-    globalThis.fetch = createFetchMock({
-      title: "Test Film",
-      year: 2020,
-      poster: PLACEHOLDER_POSTER,
-      link: "https://letterboxd.com/film/test-film-2020/",
-      movieProviders: [],
-    }) as unknown as typeof globalThis.fetch;
+    globalThis.fetch = createListAndSearchFetchMock({
+      listBody: {
+        watchlist: [
+          { title: "Test Film", year: "2020", link: "https://letterboxd.com/film/test-film-2020/" },
+        ],
+        lastPage: 1,
+        totalPages: 1,
+      },
+      searchBody: {
+        title: "Test Film",
+        year: 2020,
+        poster: PLACEHOLDER_POSTER,
+        link: "https://letterboxd.com/film/test-film-2020/",
+        movieProviders: [],
+      },
+    });
   });
 
   afterEach(() => {
@@ -78,19 +57,7 @@ describe("useLetterboxdList GitHub nudge (45s timer)", () => {
   });
 
   it("after 45s calls showMessage when all posters are still placeholders", async () => {
-    const { result } = renderHook(() => {
-      const listMovieTilesRef = useRef<Record<string, TileData>>({});
-      const listTileStateRef = useRef<TileState>(createInitialTileState());
-      const mergeTile = useCallback(
-        (title: string, year: string | number | null, data?: MergeData | null) => {
-          const next = mergeTileState(listTileStateRef.current, title, year, data ?? undefined);
-          listTileStateRef.current = next;
-          listMovieTilesRef.current = next.movieTiles;
-        },
-        [],
-      );
-      return useLetterboxdList(mergeTile, undefined, listMovieTilesRef);
-    });
+    const { result } = renderHook(() => useLetterboxdListWithMergedTiles());
 
     await act(async () => {
       await result.current(watchlistUrl, "US");
@@ -144,19 +111,7 @@ describe("useLetterboxdList GitHub nudge (45s timer)", () => {
   });
 
   it("does not call showMessage before 45s", async () => {
-    const { result } = renderHook(() => {
-      const listMovieTilesRef = useRef<Record<string, TileData>>({});
-      const listTileStateRef = useRef<TileState>(createInitialTileState());
-      const mergeTile = useCallback(
-        (title: string, year: string | number | null, data?: MergeData | null) => {
-          const next = mergeTileState(listTileStateRef.current, title, year, data ?? undefined);
-          listTileStateRef.current = next;
-          listMovieTilesRef.current = next.movieTiles;
-        },
-        [],
-      );
-      return useLetterboxdList(mergeTile, undefined, listMovieTilesRef);
-    });
+    const { result } = renderHook(() => useLetterboxdListWithMergedTiles());
 
     await act(async () => {
       await result.current(watchlistUrl, "US");
