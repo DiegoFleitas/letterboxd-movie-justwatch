@@ -13,6 +13,7 @@ Bun scripts from `package.json`. Run from the repository root.
 | `bun run test:e2e`                                                      | Playwright — run **`bun run dev`** first — [E2E Playwright](E2E-Playwright); in-repo [`tests/e2e/README.md`](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/blob/master/tests/e2e/README.md) |
 | `bun run test:poster-flow`                                              | Manual poster checks against **localhost:3000** (not part of `bun run test`)                                                                                                                             |
 | `bun run typecheck`                                                     | TypeScript (root backend + `src/client/`)                                                                                                                                                                |
+| `bun run knip`                                                          | [Knip](https://knip.dev): unused dependencies, files, exports (see **Knip** below)                                                                                                                       |
 | `bun run lint` / `bun run format:check`                                 | ESLint / Prettier                                                                                                                                                                                        |
 | `bun run build:providers`                                               | Regenerate canonical provider data (`build:providers:dry-run` to preview)                                                                                                                                |
 | `bun run redis:reset`                                                   | Default Redis dev reset flow (smart: snapshot exists -> validate+seed, missing -> export+validate+seed) — [Redis and local dev](Redis-and-local-dev)                                                     |
@@ -20,3 +21,13 @@ Bun scripts from `package.json`. Run from the repository root.
 | `bun run fly:deploy` / `fly:deploy:release`                             | Optional local `flyctl deploy` (production normally uses GitHub Actions)                                                                                                                                 |
 | `bun run fly:deploy:with-local-build`                                   | Optional: `vite build` first, then `flyctl deploy`                                                                                                                                                       |
 | `bun run fly:logs` / `fly:stop` / `fly:start` / `fly:ssh`               | Fly.io helpers                                                                                                                                                                                           |
+
+## Knip
+
+Run from the repo root: **`bun run knip`** (uses `bunx`; config in **[`knip.json`](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/blob/master/knip.json)**).
+
+- **What it does:** finds unused `dependencies` / `devDependencies`, files nothing imports, and exported values that no other file references (subject to entry detection from `package.json` scripts and bundled tooling).
+- **Repo-specific config:** `ignore` includes `**/*.d.ts` (Vite/client ambient types are not “unused files”). `ignoreBinaries` lists `flyctl` (invoked only from npm scripts, not from a package). `rules.types` is **`off`** so exported TypeScript types/interfaces used only for public API or documentation are not reported as unused.
+- **Triaging:** confirm dynamic `import()`, Vitest-only paths, and side-effect modules before removing. After dependency removals, run **`bun install`** and **`bun run typecheck`** / **`bun run test`**.
+
+GitHub Actions **CI** runs **`bun run knip`** on pushes and pull requests to `main` / `master` (see [`.github/workflows/ci.yml`](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/blob/master/.github/workflows/ci.yml)). Run it locally before large refactors so fixes are not batched only at review time.

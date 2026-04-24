@@ -19,7 +19,7 @@ export interface ListGithubIssueContext {
 const DEFAULT_ISSUES_NEW_BASE =
   "https://github.com/DiegoFleitas/letterboxd-movie-justwatch/issues/new";
 
-export function getIssuesNewBaseUrl(): string {
+function getIssuesNewBaseUrl(): string {
   const raw = import.meta.env.VITE_GITHUB_ISSUES_NEW_BASE as string | undefined;
   if (raw?.trim()) return raw.trim().replace(/\/$/, "");
   return DEFAULT_ISSUES_NEW_BASE;

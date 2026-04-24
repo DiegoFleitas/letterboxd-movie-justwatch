@@ -5,7 +5,7 @@ import { HTTP_STATUS_BAD_REQUEST, HTTP_STATUS_FORBIDDEN } from "../httpStatusCod
 /** Hostnames clients may request through `/api/proxy/*` (HTTPS only). */
 export const PROXY_ALLOWED_HOSTNAMES = new Set(["api.themoviedb.org", "www.omdbapi.com"]);
 
-export const proxyValidationMessages = {
+const proxyValidationMessages = {
   missing: "Missing proxy target URL",
   invalid: "Invalid proxy target URL",
   https: "Only HTTPS proxy targets are allowed",

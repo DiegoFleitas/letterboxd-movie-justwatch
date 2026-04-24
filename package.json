@@ -28,6 +28,7 @@
     "seed:refresh:local": "bun run export-redis && bun run seed:validate",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "knip": "bunx knip",
     "lint": "eslint . --ext .ts,.tsx",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "format:check": "prettier . --check",
@@ -101,13 +102,11 @@
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-hot-toast": "^2.6.0",
-    "ua-parser-js": "^2.0.9",
     "user-agents": "^2.1.38",
     "zod": "4"
   },
   "devDependencies": {
     "@eslint/js": "9.39.4",
-    "@flydotio/dockerfile": "^0.7.10",
     "@playwright/test": "^1.59.1",
     "@sentry/cli": "^3.4.0",
     "@testing-library/react": "^16.3.0",

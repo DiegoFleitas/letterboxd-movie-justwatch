@@ -4,7 +4,7 @@ import { HTTP_STATUS_FORBIDDEN, HTTP_STATUS_NOT_FOUND } from "../httpStatusCodes
 /** Hostnames treated as safe targets for dev-only Redis HTTP APIs (see docker-compose `redis` service). */
 const DEFAULT_LOCAL_REDIS_HOSTS = new Set(["localhost", "127.0.0.1", "::1", "redis"]);
 
-export function parseRedisUrlHostname(redisUrl: string): string | null {
+function parseRedisUrlHostname(redisUrl: string): string | null {
   try {
     return new URL(redisUrl).hostname;
   } catch {
@@ -62,7 +62,7 @@ export function getDevApiGuardFailure(): DevApiGuardFailure | null {
   return null;
 }
 
-export function sendDevApiGuardFailure(reply: FastifyReply, failure: DevApiGuardFailure): void {
+function sendDevApiGuardFailure(reply: FastifyReply, failure: DevApiGuardFailure): void {
   if (failure.code === "production") {
     reply.code(HTTP_STATUS_NOT_FOUND).send({ error: failure.message });
     return;
