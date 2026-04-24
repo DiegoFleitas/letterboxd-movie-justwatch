@@ -91,7 +91,7 @@ describe("alternativeSearch controller", () => {
   });
 
   afterEach(() => {
-    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
   });
 
   it("returns 400 when body fails Zod validation", async () => {
@@ -103,7 +103,7 @@ describe("alternativeSearch controller", () => {
   });
 
   it("returns 503 when Jackett env is missing", async () => {
-    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
     vi.stubEnv("JACKETT_API_KEY", "");
     vi.stubEnv("JACKETT_API_ENDPOINT", "");
     vi.resetModules();

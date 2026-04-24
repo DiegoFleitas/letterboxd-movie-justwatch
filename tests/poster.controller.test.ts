@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   HTTP_STATUS_INTERNAL_SERVER_ERROR,
   HTTP_STATUS_NOT_FOUND,
@@ -78,6 +78,10 @@ describe("poster controller", () => {
     redisMocks.getCacheValue.mockReset();
     redisMocks.setCacheValue.mockReset();
     ({ poster } = await import("@server/controllers/poster.js"));
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   it("returns cached poster from Redis", async () => {

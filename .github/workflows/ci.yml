@@ -37,9 +37,6 @@ jobs:
       - name: Build client (dist for static server tests in coverage)
         run: bun run build
 
-      - name: Unit tests
-        run: bun run test
-
       - name: Unit tests with coverage
         run: bun run test:coverage
 

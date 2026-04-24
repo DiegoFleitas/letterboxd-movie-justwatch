@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   HTTP_STATUS_BAD_REQUEST,
   HTTP_STATUS_INTERNAL_SERVER_ERROR,
@@ -65,9 +65,14 @@ describe("subdlSearch controller", () => {
   let subdlSearch: HttpHandler;
 
   beforeEach(async () => {
+    vi.resetModules();
     vi.stubEnv("SUBDL_API_KEY", "subdl-key");
     axiosMocks.get.mockReset();
     ({ subdlSearch } = await import("@server/controllers/subdlSearch.js"));
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   it("returns 400 on invalid body", async () => {

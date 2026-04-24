@@ -93,7 +93,7 @@ describe("searchMovie controller", () => {
   });
 
   afterEach(() => {
-    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
   });
 
   it("returns movie not found when title is missing", async () => {
