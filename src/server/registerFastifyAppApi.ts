@@ -18,13 +18,28 @@ import {
 } from "./controllers/index.js";
 import { isHealthy, isRedisDisabled } from "./lib/redis.js";
 import type { FastifyHttpBinder } from "./fastifyHttpBridge.js";
-import { HTTP_STATUS_INTERNAL_SERVER_ERROR, HTTP_STATUS_OK } from "./httpStatusCodes.js";
+import {
+  HTTP_STATUS_BAD_GATEWAY,
+  HTTP_STATUS_GATEWAY_TIMEOUT,
+  HTTP_STATUS_INTERNAL_SERVER_ERROR,
+  HTTP_STATUS_OK,
+} from "./httpStatusCodes.js";
+
+const POSTHOG_PROXY_TIMEOUT_MS = 30_000;
 
 const POSTHOG_PROXY_STRIP_HEADERS = new Set([
   "host",
   "connection",
   "content-length",
   "transfer-encoding",
+  // Sensitive credential/session headers — must not be forwarded to a third party
+  "cookie",
+  "authorization",
+  "proxy-authorization",
+  // Hop-by-hop headers not meaningful across a proxy boundary
+  "te",
+  "trailer",
+  "upgrade",
 ]);
 
 function buildPosthogProxyForwardedHeaders(
@@ -108,11 +123,19 @@ export function registerFastifyAppApi(app: FastifyInstance, binder: FastifyHttpB
     const forwardedHeaders = buildPosthogProxyForwardedHeaders(request.headers, targetHost);
     const rawBody = posthogProxyBodyFromRequest(request.method, request.body);
 
-    const upstream = await fetch(targetUrl, {
-      method: request.method,
-      headers: forwardedHeaders,
-      body: rawBody,
-    });
+    let upstream: Response;
+    try {
+      upstream = await fetch(targetUrl, {
+        method: request.method,
+        headers: forwardedHeaders,
+        body: rawBody,
+        signal: AbortSignal.timeout(POSTHOG_PROXY_TIMEOUT_MS),
+      });
+    } catch (err) {
+      const isTimeout = err instanceof Error && err.name === "TimeoutError";
+      reply.code(isTimeout ? HTTP_STATUS_GATEWAY_TIMEOUT : HTTP_STATUS_BAD_GATEWAY).send();
+      return;
+    }
 
     reply.code(upstream.status);
     upstream.headers.forEach((value, key) => {
