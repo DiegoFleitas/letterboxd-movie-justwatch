@@ -12,7 +12,7 @@ describe("registerFastifySessionPlugins", () => {
     vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("APP_SECRET_KEY", "");
     const app = Fastify({ logger: false });
-    expect(() => registerFastifySessionPlugins(app)).toThrow(
+    await expect(registerFastifySessionPlugins(app)).rejects.toThrow(
       "APP_SECRET_KEY environment variable must be set in production.",
     );
     await app.close();

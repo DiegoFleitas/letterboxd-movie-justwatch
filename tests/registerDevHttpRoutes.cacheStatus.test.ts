@@ -35,7 +35,7 @@ describe("registerDevHttpRoutes cache-status", () => {
 
   it("GET /api/dev/cache-status returns aggregated cache fields", async () => {
     const app = Fastify({ logger: false });
-    registerDevHttpRoutes(app);
+    await registerDevHttpRoutes(app);
     await app.ready();
     const res = await app.inject({ method: "GET", url: "/api/dev/cache-status" });
     expect(res.statusCode).toBe(200);
@@ -54,7 +54,7 @@ describe("registerDevHttpRoutes cache-status", () => {
 
   it("GET /api/dev/cache-status?scan=1 includes scan fields", async () => {
     const app = Fastify({ logger: false });
-    registerDevHttpRoutes(app);
+    await registerDevHttpRoutes(app);
     await app.ready();
     const res = await app.inject({ method: "GET", url: "/api/dev/cache-status?scan=1" });
     const body = JSON.parse(res.body) as { searchMovieScannedStringKeys: number | null };

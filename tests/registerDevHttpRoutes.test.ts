@@ -10,7 +10,7 @@ describe("registerDevHttpRoutes", () => {
   it("does not register /api/dev/* when NODE_ENV is production", async () => {
     vi.stubEnv("NODE_ENV", "production");
     const app = Fastify({ logger: false });
-    registerDevHttpRoutes(app);
+    await registerDevHttpRoutes(app);
     await app.ready();
     const res = await app.inject({ method: "POST", url: "/api/dev/clear-list-cache" });
     expect(res.statusCode).toBe(404);
@@ -21,7 +21,7 @@ describe("registerDevHttpRoutes", () => {
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("DISABLE_REDIS", "1");
     const app = Fastify({ logger: false });
-    registerDevHttpRoutes(app);
+    await registerDevHttpRoutes(app);
     await app.ready();
     let lastStatus = 0;
     for (let i = 0; i < 20; i++) {
@@ -37,7 +37,7 @@ describe("registerDevHttpRoutes", () => {
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("DISABLE_REDIS", "1");
     const app = Fastify({ logger: false });
-    registerDevHttpRoutes(app);
+    await registerDevHttpRoutes(app);
     await app.ready();
 
     const reset = await app.inject({ method: "POST", url: "/api/dev/reset-redis" });

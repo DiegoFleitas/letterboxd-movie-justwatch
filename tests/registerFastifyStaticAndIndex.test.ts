@@ -1,6 +1,6 @@
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import Fastify from "fastify";
 import { describe, expect, it } from "vitest";
 import { registerFastifyStaticAndIndex } from "@server/registerFastifyStaticAndIndex.js";
@@ -12,7 +12,7 @@ const clientDistPath = path.join(__dirname, "..", "src", "client", "dist");
 describe.skipIf(!fs.existsSync(clientDistPath))("registerFastifyStaticAndIndex", () => {
   it("GET / returns 404 when cached index html is null", async () => {
     const app = Fastify({ logger: false });
-    registerFastifyStaticAndIndex(app, null);
+    await registerFastifyStaticAndIndex(app, null);
     await app.ready();
     const res = await app.inject({ method: "GET", url: "/" });
     expect(res.statusCode).toBe(HTTP_STATUS_NOT_FOUND);
@@ -21,7 +21,7 @@ describe.skipIf(!fs.existsSync(clientDistPath))("registerFastifyStaticAndIndex",
 
   it("GET / returns 200 html when cached index is provided", async () => {
     const app = Fastify({ logger: false });
-    registerFastifyStaticAndIndex(app, "<!doctype html><title>unit</title>");
+    await registerFastifyStaticAndIndex(app, "<!doctype html><title>unit</title>");
     await app.ready();
     const res = await app.inject({ method: "GET", url: "/" });
     expect(res.statusCode).toBe(200);
