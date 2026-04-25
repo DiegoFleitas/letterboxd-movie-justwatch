@@ -39,6 +39,8 @@ export interface MergeData {
   movieProviders?: TileProvider[];
 }
 
+export type TileYear = string | number | null;
+
 export const PLACEHOLDER_POSTER = getPublicAssetPath("movie_placeholder.svg");
 export const LEGACY_PLACEHOLDER_POSTER = "/movie_placeholder.svg";
 
@@ -63,7 +65,7 @@ export function classifyListReportSymptom(
   return null;
 }
 
-function normalizeId(title: string, year: string | number | null): string {
+function normalizeId(title: string, year: TileYear): string {
   return `${year}-${title.toUpperCase().replace(/[^A-Z0-9]/g, "")}`;
 }
 
@@ -76,11 +78,7 @@ export function normalizeLetterboxdFilmLink(link: string): string {
 }
 
 /** Film page when `link` is set; otherwise Letterboxd title search. */
-export function letterboxdFilmUrlOrSearchUrl(
-  link: string,
-  title: string,
-  year?: string | number | null,
-): string {
+export function letterboxdFilmUrlOrSearchUrl(link: string, title: string, year?: TileYear): string {
   const trimmed = link?.trim() ?? "";
   if (trimmed) return normalizeLetterboxdFilmLink(trimmed);
   const q = year != null && year !== "" ? `${title} ${year}` : title;
@@ -90,7 +88,7 @@ export function letterboxdFilmUrlOrSearchUrl(
 export function mergeTileState(
   prev: TileState,
   title: string,
-  year: string | number | null,
+  year: TileYear,
   data?: MergeData | null,
 ): TileState {
   const { movieTiles: prevTiles, streamingProviders: prevProviders } = prev;
@@ -180,7 +178,7 @@ export function mergeTileStateForTab(
   prev: TabbedTileState,
   tab: SearchTab,
   title: string,
-  year: string | number | null,
+  year: TileYear,
   data?: MergeData | null,
 ): TabbedTileState {
   return {

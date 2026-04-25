@@ -52,13 +52,12 @@ async function testSearchMovie(title: string, year: string | null): Promise<Sear
     const hasPoster = !!data.poster;
 
     if (!hasPoster || data.error) {
-      console.log(`${hasPoster ? "⚠️ " : "❌"} ${title}${year ? ` (${year})` : ""}`);
+      const yearPart = year ? ` (${year})` : "";
+      console.log(`${hasPoster ? "⚠️ " : "❌"} ${title}${yearPart}`);
       if (data.error) {
-        console.log(
-          `   ${String(data.error)
-            .replace(/<[^>]*>/g, "")
-            .substring(0, 80)}`,
-        );
+        const snippet = JSON.stringify(String(data.error));
+        const errorLine = snippet.length > 90 ? `${snippet.slice(0, 87)}...` : snippet;
+        console.log(`   ${errorLine}`);
       }
       if (!hasPoster) {
         console.log("   No poster available");
@@ -74,7 +73,8 @@ async function testSearchMovie(title: string, year: string | null): Promise<Sear
     };
   } catch (error) {
     const err = error as Error;
-    console.log(`❌ ${title}${year ? ` (${year})` : ""} - Request failed: ${err.message}`);
+    const yearPart = year ? ` (${year})` : "";
+    console.log(`❌ ${title}${yearPart} - Request failed: ${err.message}`);
     return {
       success: false,
       hasPoster: false,
@@ -121,4 +121,9 @@ async function runTests(): Promise<void> {
   console.log("━".repeat(60) + "\n");
 }
 
-runTests().catch(console.error);
+try {
+  await runTests();
+} catch (err) {
+  console.error(err);
+  process.exit(1);
+}

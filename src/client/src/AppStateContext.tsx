@@ -10,7 +10,14 @@ import {
 import { getToastImpl } from "./toastApi";
 import { setNoticeImpl } from "./noticeFunctions";
 import { createInitialTabbedTileState, mergeTileStateForTab } from "./movieTiles";
-import type { MergeData, SearchTab, TabbedTileState, TileData, TileProvider } from "./movieTiles";
+import type {
+  MergeData,
+  SearchTab,
+  TabbedTileState,
+  TileData,
+  TileProvider,
+  TileYear,
+} from "./movieTiles";
 import { useLetterboxdList } from "./useLetterboxdList";
 import { useMovieSearch } from "./useMovieSearch";
 import {
@@ -20,6 +27,8 @@ import {
 import { countries } from "./consts";
 
 const FALLBACK_COUNTRY_ID = "en_US";
+
+type LoadingToastId = string | number | null;
 
 function defaultCountryId(): string {
   return countries.find((c) => c.id === FALLBACK_COUNTRY_ID)?.id ?? countries[0]?.id ?? "";
@@ -80,7 +89,7 @@ export function AppStateProvider({ children }: { children: ReactNode }): React.R
   const [isMovieSearchLoading, setMovieSearchLoading] = useState(false);
   const [isListLoading, setListLoading] = useState(false);
   const [isAlternativeSearchLoading, setAlternativeSearchLoading] = useState(false);
-  const loadingToastIdRef = useRef<string | number | null>(null);
+  const loadingToastIdRef = useRef<LoadingToastId>(null);
   const listMovieTilesRef = useRef<Record<string, TileData>>({});
   const listFormDevBridgeRef = useRef<ListFormDevBridge | null>(null);
 
@@ -92,7 +101,7 @@ export function AppStateProvider({ children }: { children: ReactNode }): React.R
     (
       tab: SearchTab,
       title: string,
-      year: string | number | null,
+      year: TileYear,
       data: Parameters<typeof mergeTileStateForTab>[4],
     ) => {
       setTilesByTab((prev: TabbedTileState) => mergeTileStateForTab(prev, tab, title, year, data));
@@ -101,14 +110,14 @@ export function AppStateProvider({ children }: { children: ReactNode }): React.R
   );
 
   const mergeMovieTile = useCallback(
-    (title: string, year: string | number | null, data: MergeData | null | undefined) => {
+    (title: string, year: TileYear, data: MergeData | null | undefined) => {
       mergeTileForTab("movie", title, year, data);
     },
     [mergeTileForTab],
   );
 
   const mergeListTile = useCallback(
-    (title: string, year: string | number | null, data: MergeData | null | undefined) => {
+    (title: string, year: TileYear, data: MergeData | null | undefined) => {
       mergeTileForTab("list", title, year, data);
     },
     [mergeTileForTab],
@@ -132,7 +141,9 @@ export function AppStateProvider({ children }: { children: ReactNode }): React.R
     (listUrl: string) => {
       listFormDevBridgeRef.current?.setListUrl(listUrl);
       const country = listFormDevBridgeRef.current?.getCountryId() ?? defaultCountryId();
-      void loadLetterboxdList(listUrl, country);
+      loadLetterboxdList(listUrl, country).catch(() => {
+        /* errors surfaced via list loading state / tiles */
+      });
     },
     [loadLetterboxdList],
   );
@@ -162,11 +173,9 @@ export function AppStateProvider({ children }: { children: ReactNode }): React.R
       if (loadingToastIdRef.current != null && impl.dismissLoading)
         impl.dismissLoading(loadingToastIdRef.current);
       loadingToastIdRef.current = impl.loading?.(notice) ?? null;
-    } else {
-      if (loadingToastIdRef.current != null && impl.dismissLoading) {
-        impl.dismissLoading(loadingToastIdRef.current);
-        loadingToastIdRef.current = null;
-      }
+    } else if (loadingToastIdRef.current != null && impl.dismissLoading) {
+      impl.dismissLoading(loadingToastIdRef.current);
+      loadingToastIdRef.current = null;
     }
   }, [notice]);
 
