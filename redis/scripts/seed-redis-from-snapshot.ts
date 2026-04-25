@@ -5,9 +5,9 @@ import { config as dotenvConfig } from "dotenv";
 dotenvConfig();
 
 import Redis from "ioredis";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const snapshotPath =
@@ -71,4 +71,4 @@ async function seedFromSnapshot(): Promise<void> {
   }
 }
 
-seedFromSnapshot();
+await seedFromSnapshot();

@@ -1,12 +1,12 @@
 /* Utility classes and miscellaneous styles */
 .spoiler {
-  color: black;
-  background-color: black;
+  color: var(--color-text-muted);
+  background-color: var(--color-bg-alt);
   border-radius: var(--radius-lg);
   padding: 0.5rem 0;
 }
 .spoiler:hover {
-  color: white;
+  color: var(--color-text);
 }
 
 /* Collapsible "What's Alternative search?" — disclosure styled as a small chip */

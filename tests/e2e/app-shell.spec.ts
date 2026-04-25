@@ -24,7 +24,9 @@ test.describe("App shell and left panel", () => {
     await page.evaluate(() => localStorage.removeItem("letterboxd-justwatch-country"));
     await page.reload();
     await expect(page.getByTestId("country-selector")).toBeVisible();
-    await expect(page.getByTestId("country-selector").getByText("Uruguay")).toBeVisible();
+    await expect(
+      page.getByTestId("country-selector").getByRole("button", { name: "Uruguay" }),
+    ).toBeVisible();
   });
 
   test("switching to List tab shows list form", async ({ page }) => {

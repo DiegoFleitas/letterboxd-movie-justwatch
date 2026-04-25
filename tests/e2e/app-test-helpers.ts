@@ -42,7 +42,8 @@ export function findSearchMovieResponse(body: SearchMovieBody | null): unknown {
 export async function waitForGeoReady(page: Page): Promise<void> {
   const selector = page.getByTestId("country-selector");
   await expect(selector).toBeAttached({ timeout: 5000 });
-  await expect(selector.getByText("Uruguay")).toBeVisible({ timeout: 5000 });
+  // Native <select> options also contain "Uruguay"; target the combobox trigger only.
+  await expect(selector.getByRole("button", { name: "Uruguay" })).toBeVisible({ timeout: 5000 });
 }
 
 /** Stub ipapi so country auto-detection is deterministic in every spec. */

@@ -5,9 +5,9 @@ import { config as dotenvConfig } from "dotenv";
 dotenvConfig();
 
 import Redis from "ioredis";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const url = process.env.FLYIO_REDIS_URL || "redis://localhost:6379";
@@ -57,53 +57,103 @@ function isErrorLikePayload(value: string): boolean {
   }
 }
 
-async function exportSnapshot(): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const redis = new (Redis as any)(url, { maxRetriesPerRequest: 1 });
+type RedisLike = {
+  ping: () => Promise<unknown>;
+  quit: () => void;
+  scanStream: (opts: { match: string; count: number }) => NodeJS.EventEmitter;
+  type: (key: string) => Promise<string>;
+  pttl: (key: string) => Promise<number>;
+  get: (key: string) => Promise<string | null>;
+  smembers: (key: string) => Promise<string[]>;
+};
+
+async function scanSortedKeyBatch(redis: RedisLike, pattern: string): Promise<string[]> {
+  const stream = redis.scanStream({ match: pattern, count: 100 });
+  const keyBatch: string[] = [];
+  await new Promise<void>((resolve, reject) => {
+    stream.on("data", (keyList: string[]) => {
+      keyBatch.push(...keyList);
+    });
+    stream.on("end", () => resolve());
+    stream.on("error", reject);
+  });
+  keyBatch.sort((a, b) => a.localeCompare(b));
+  return keyBatch;
+}
+
+function ttlFromPttl(pttl: number): number | null | undefined {
+  if (pttl === -2) return undefined;
+  return pttl === -1 ? null : Math.floor(pttl / 1000);
+}
+
+async function ingestStringKey(
+  redis: RedisLike,
+  key: string,
+  ttlSeconds: number | null,
+): Promise<
+  { record: { key: string; ttlSeconds: number | null; value: string } } | "skip" | "absent"
+> {
+  const value = await redis.get(key);
+  if (value == null) return "absent";
+  if (isErrorLikePayload(value)) return "skip";
+  return { record: { key, ttlSeconds, value } };
+}
+
+async function ingestSetKey(
+  redis: RedisLike,
+  key: string,
+  ttlSeconds: number | null,
+): Promise<{ key: string; ttlSeconds: number | null; members: string[] }> {
+  const members = await redis.smembers(key);
+  return {
+    key,
+    ttlSeconds,
+    members: [...members].sort((a, b) => a.localeCompare(b)),
+  };
+}
+
+async function collectSnapshotRecords(
+  redis: RedisLike,
+  pattern: string,
+): Promise<{
+  keys: { key: string; ttlSeconds: number | null; value: string }[];
+  sets: { key: string; ttlSeconds: number | null; members: string[] }[];
+  skippedErrorLikeKeys: number;
+}> {
+  const keyBatch = await scanSortedKeyBatch(redis, pattern);
   const keys: { key: string; ttlSeconds: number | null; value: string }[] = [];
   const sets: { key: string; ttlSeconds: number | null; members: string[] }[] = [];
   let skippedErrorLikeKeys = 0;
+
+  for (const key of keyBatch) {
+    const pttl = await redis.pttl(key);
+    const ttlSeconds = ttlFromPttl(pttl);
+    if (ttlSeconds === undefined) continue;
+    const type = await redis.type(key);
+    if (type === "string") {
+      const outcome = await ingestStringKey(redis, key, ttlSeconds);
+      if (outcome === "skip") skippedErrorLikeKeys++;
+      else if (outcome !== "absent") keys.push(outcome.record);
+    } else if (type === "set") {
+      sets.push(await ingestSetKey(redis, key, ttlSeconds));
+    }
+  }
+
+  keys.sort((a, b) => a.key.localeCompare(b.key));
+  sets.sort((a, b) => a.key.localeCompare(b.key));
+  return { keys, sets, skippedErrorLikeKeys };
+}
+
+async function exportSnapshot(): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const redis = new (Redis as any)(url, { maxRetriesPerRequest: 1 }) as RedisLike;
 
   try {
     assertLocalRedisTarget(url);
     await redis.ping();
     console.log(`[redis-export] source=${sanitizeRedisUrl(url)} prefix=${prefix}`);
 
-    const stream = redis.scanStream({ match: matchPattern, count: 100 });
-    const keyBatch: string[] = [];
-
-    await new Promise<void>((resolve, reject) => {
-      stream.on("data", (keyList: string[]) => {
-        keyBatch.push(...keyList);
-      });
-      stream.on("end", () => resolve());
-      stream.on("error", reject);
-    });
-
-    keyBatch.sort((a, b) => a.localeCompare(b));
-
-    for (const key of keyBatch) {
-      const type = await redis.type(key);
-      const pttl = await redis.pttl(key);
-      if (pttl === -2) continue;
-      const ttlSeconds = pttl === -1 ? null : Math.floor(pttl / 1000);
-      if (type === "string") {
-        const value = await redis.get(key);
-        if (value != null) {
-          if (isErrorLikePayload(value)) {
-            skippedErrorLikeKeys++;
-            continue;
-          }
-          keys.push({ key, ttlSeconds, value });
-        }
-      } else if (type === "set") {
-        const members = await redis.smembers(key);
-        sets.push({ key, ttlSeconds, members: [...members].sort((a, b) => a.localeCompare(b)) });
-      }
-    }
-
-    keys.sort((a, b) => a.key.localeCompare(b.key));
-    sets.sort((a, b) => a.key.localeCompare(b.key));
+    const { keys, sets, skippedErrorLikeKeys } = await collectSnapshotRecords(redis, matchPattern);
 
     const dir = path.dirname(outPath);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
@@ -125,4 +175,4 @@ async function exportSnapshot(): Promise<void> {
   }
 }
 
-exportSnapshot();
+await exportSnapshot();

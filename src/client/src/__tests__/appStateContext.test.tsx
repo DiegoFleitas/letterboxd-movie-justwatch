@@ -2,6 +2,7 @@
 import React from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createRoot } from "react-dom/client";
+import { renderToString } from "react-dom/server";
 import { act } from "@testing-library/react";
 import { AppStateProvider, useAppState } from "../AppStateContext";
 import { jsonResponse } from "./jsonResponse";
@@ -19,6 +20,16 @@ function Probe(): React.ReactElement {
 }
 
 describe("AppStateContext", () => {
+  it("throws when useAppState runs outside AppStateProvider", () => {
+    function Outside(): React.ReactElement {
+      useAppState();
+      return <div />;
+    }
+    expect(() => {
+      renderToString(<Outside />);
+    }).toThrow("useAppState must be used within AppStateProvider");
+  });
+
   it("defaults active tab to movie and allows switching", async () => {
     const container = document.createElement("div");
     const root = createRoot(container);

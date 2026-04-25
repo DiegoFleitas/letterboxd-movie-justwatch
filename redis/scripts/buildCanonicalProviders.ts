@@ -3,9 +3,9 @@
  */
 import type { AxiosInstance } from "axios";
 import httpClientFactory from "@server/lib/axios.js";
-import { writeFileSync, mkdirSync } from "fs";
-import { dirname, join } from "path";
-import { fileURLToPath, pathToFileURL } from "url";
+import { writeFileSync, mkdirSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { buildCanonicalProviderMaps } from "@server/lib/canonicalProviders.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -96,7 +96,9 @@ async function main(): Promise<void> {
   );
 }
 
-main().catch((err) => {
+try {
+  await main();
+} catch (err) {
   console.error(err);
   process.exit(1);
-});
+}

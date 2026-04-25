@@ -8,6 +8,7 @@
 }
 .twitter-typeahead {
   display: block !important;
+  position: relative;
   width: 100%;
 }
 /* Form and input styles */
@@ -94,10 +95,6 @@ label {
   z-index: 9999;
 }
 
-.twitter-typeahead {
-  position: relative;
-}
-
 .tt-suggestion {
   display: flex;
   gap: 12px;
@@ -140,10 +137,6 @@ label {
 }
 
 /* React movie typeahead (reuses tt-menu / tt-suggestion look) */
-.twitter-typeahead {
-  position: relative;
-  width: 100%;
-}
 
 /* Room for inline loading indicator so text does not sit under the dots */
 .twitter-typeahead--loading #movie-input {
@@ -159,6 +152,24 @@ label {
   list-style: none;
   max-height: 320px;
   overflow-y: auto;
+}
+
+/* Native fieldset instead of role="group" (a11y / Sonar); reset UA chrome */
+.movie-suggestions-fieldset {
+  border: none;
+  margin: 0;
+  min-inline-size: 0;
+}
+
+button.tt-suggestion {
+  width: 100%;
+  border: none;
+  margin: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 .typeahead-loading {
   position: absolute;
