@@ -59,7 +59,6 @@ if (rootEl) {
 
   const options = {
     api_host: host,
-    ui_host: "https://us.posthog.com",
     capture_exceptions: true,
   };
 
