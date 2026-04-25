@@ -1,8 +1,7 @@
 import { defineConfig } from "vite";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import path from "path";
+import { fileURLToPath } from "url";
 import react from "@vitejs/plugin-react";
-import { POSTHOG_PROXY_DEFAULT_PATH } from "./src/shared/posthog-routes.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -40,10 +39,6 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "http://localhost:3000",
-        changeOrigin: true,
-      },
-      [`^${POSTHOG_PROXY_DEFAULT_PATH}`]: {
         target: "http://localhost:3000",
         changeOrigin: true,
       },
