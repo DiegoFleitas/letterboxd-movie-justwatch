@@ -1,5 +1,10 @@
 import type { FastifyInstance } from "fastify";
-import { HTTP_API_PATHS, HTTP_API_PROXY_ROUTE } from "./routes.js";
+import {
+  HTTP_API_PATHS,
+  HTTP_API_POSTHOG_PROXY_ROUTE,
+  HTTP_API_PROXY_ROUTE,
+  posthogProxyTargetFromRequestUrl,
+} from "./routes.js";
 import {
   searchMovie,
   poster,
@@ -42,4 +47,52 @@ export function registerFastifyAppApi(app: FastifyInstance, binder: FastifyHttpB
   app.post(HTTP_API_PATHS.subdlSearch, setCacheControlFastify(subdlSearch));
 
   app.all(HTTP_API_PROXY_ROUTE, makeFastifyHandler(proxy));
+  app.all(HTTP_API_POSTHOG_PROXY_ROUTE, async (request, reply) => {
+    const targetPath = posthogProxyTargetFromRequestUrl(request.url || "");
+    const targetHost =
+      targetPath.startsWith("/static/") || targetPath.startsWith("/array/")
+        ? "us-assets.i.posthog.com"
+        : "us.i.posthog.com";
+    const targetUrl = `https://${targetHost}${targetPath}`;
+
+    const forwardedHeaders = new Headers();
+    for (const [name, value] of Object.entries(request.headers)) {
+      if (
+        value === undefined ||
+        ["host", "connection", "content-length", "transfer-encoding"].includes(name.toLowerCase())
+      ) {
+        continue;
+      }
+      if (Array.isArray(value)) {
+        forwardedHeaders.set(name, value.join(","));
+        continue;
+      }
+      forwardedHeaders.set(name, String(value));
+    }
+    forwardedHeaders.set("host", targetHost);
+
+    let rawBody: string | Uint8Array | undefined;
+    if (request.method !== "GET" && request.method !== "HEAD") {
+      if (typeof request.body === "string" || request.body instanceof Uint8Array) {
+        rawBody = request.body;
+      } else if (request.body !== undefined) {
+        rawBody = JSON.stringify(request.body);
+      }
+    }
+
+    const upstream = await fetch(targetUrl, {
+      method: request.method,
+      headers: forwardedHeaders,
+      body: rawBody,
+    });
+
+    reply.code(upstream.status);
+    upstream.headers.forEach((value, key) => {
+      if (!["transfer-encoding", "content-length"].includes(key.toLowerCase())) {
+        reply.header(key, value);
+      }
+    });
+    const bytes = await upstream.arrayBuffer();
+    reply.send(Buffer.from(bytes));
+  });
 }
