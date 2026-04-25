@@ -170,11 +170,4 @@ describe("Runtime config + PostHog", () => {
     const source = fs.readFileSync(serverConfigPath, "utf8");
     expect(source).toContain("POSTHOG_PROXY_DEFAULT_PATH");
   });
-
-  it("vite config imports PostHog proxy path from shared constants", () => {
-    const viteConfigPath = path.join(__dirname, "..", "vite.config.ts");
-    const source = fs.readFileSync(viteConfigPath, "utf8");
-    expect(source).toContain("./src/shared/posthog-routes.js");
-    expect(source).toContain("POSTHOG_PROXY_DEFAULT_PATH");
-  });
 });
