@@ -1,9 +1,9 @@
 /**
  * Unit tests for runtime frontend config injection and usage.
  */
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { getPosthog, _resetPosthogForTesting } from "@server/lib/posthog.js";
 import { injectRuntimeConfig } from "@server/lib/injectRuntimeConfig.js";
@@ -20,16 +20,10 @@ beforeEach(() => {
 
 afterEach(() => {
   _resetPosthogForTesting();
-  if (savedPosthogKey === undefined) {
-    delete process.env.POSTHOG_KEY;
-  } else {
-    process.env.POSTHOG_KEY = savedPosthogKey;
-  }
-  if (savedPosthogHost === undefined) {
-    delete process.env.POSTHOG_HOST;
-  } else {
-    process.env.POSTHOG_HOST = savedPosthogHost;
-  }
+  if (savedPosthogKey !== undefined) process.env.POSTHOG_KEY = savedPosthogKey;
+  else delete process.env.POSTHOG_KEY;
+  if (savedPosthogHost !== undefined) process.env.POSTHOG_HOST = savedPosthogHost;
+  else delete process.env.POSTHOG_HOST;
 });
 
 describe("Runtime config + PostHog", () => {
@@ -138,12 +132,10 @@ describe("Runtime config + PostHog", () => {
   it("frontend main.tsx reads runtime PostHog globals with VITE fallback", () => {
     const mainPath = path.join(__dirname, "..", "src", "client", "src", "main.tsx");
     const source = fs.readFileSync(mainPath, "utf8");
-    expect(source).toContain("__POSTHOG_KEY__");
-    expect(source).toContain("__POSTHOG_HOST__");
+    expect(source).toContain("window.__POSTHOG_KEY__");
+    expect(source).toContain("window.__POSTHOG_HOST__");
     expect(/PostHogProvider[^>]*apiKey=\{key\}/.test(source)).toBe(true);
     expect(/api_host:\s*host/.test(source)).toBe(true);
-    expect(source).toContain('ui_host: "https://us.posthog.com"');
-    expect(source).toContain("POSTHOG_PROXY_DEFAULT_PATH");
     expect(source).toContain("VITE_PUBLIC_POSTHOG_KEY");
     expect(source).toContain("VITE_PUBLIC_POSTHOG_HOST");
   });
@@ -157,17 +149,5 @@ describe("Runtime config + PostHog", () => {
     expect(source).toContain("window.__SENTRY_SEND_DEFAULT_PII__");
     expect(source).toContain("window.__SENTRY_ENVIRONMENT__");
     expect(source).toContain("VITE_SENTRY_DSN");
-  });
-
-  it("server runtime config defaults PostHog host to first-party proxy path", () => {
-    const serverConfigPath = path.join(
-      __dirname,
-      "..",
-      "src",
-      "server",
-      "buildIndexHtmlForClient.ts",
-    );
-    const source = fs.readFileSync(serverConfigPath, "utf8");
-    expect(source).toContain("POSTHOG_PROXY_DEFAULT_PATH");
   });
 });

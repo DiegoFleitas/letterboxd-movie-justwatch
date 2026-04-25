@@ -1,9 +1,8 @@
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 import { getCanonicalProviderByNames } from "./lib/loadCanonicalProviders.js";
 import { injectRuntimeConfig } from "./lib/injectRuntimeConfig.js";
-import { POSTHOG_PROXY_DEFAULT_PATH } from "./routes.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -12,7 +11,7 @@ export function buildIndexHtmlForClient(): string | null {
   if (!fs.existsSync(distIndexPath)) return null;
 
   const posthogKey = process.env.POSTHOG_KEY || "";
-  const posthogHost = process.env.POSTHOG_HOST || POSTHOG_PROXY_DEFAULT_PATH;
+  const posthogHost = process.env.POSTHOG_HOST || "https://us.i.posthog.com";
   const html = fs.readFileSync(distIndexPath, "utf8");
   return injectRuntimeConfig(html, posthogKey, posthogHost, getCanonicalProviderByNames(), {
     dsn: process.env.SENTRY_DSN || "",
