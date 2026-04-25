@@ -26,7 +26,8 @@ export const HTTP_API_PATHS = {
   posthogProxyPrefix: POSTHOG_PROXY_DEFAULT_PATH,
 } as const;
 
-/** Fastify `app.all` pattern for the HTTnormalizedRequestUrl = "" with `/*`). *API_PATHS.proxyPrefix}/*` as const;
+/** Fastify `app.all` pattern for the HTTP proxy mount (must end with `/*`). */
+export const HTTP_API_PROXY_ROUTE = `${HTTP_API_PATHS.proxyPrefix}/*` as const;
 export const HTTP_API_POSTHOG_PROXY_ROUTE = `${HTTP_API_PATHS.posthogProxyPrefix}/*` as const;
 
 /** Strip our proxy mount from `req.url` to recover the target URL string. */

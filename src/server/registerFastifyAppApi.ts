@@ -71,10 +71,13 @@ export function registerFastifyAppApi(app: FastifyInstance, binder: FastifyHttpB
     }
     forwardedHeaders.set("host", targetHost);
 
-    let rawBody: string | Uint8Array | undefined;
+    let rawBody: BodyInit | undefined;
     if (request.method !== "GET" && request.method !== "HEAD") {
-      if (typeof request.body === "string" || request.body instanceof Uint8Array) {
+      if (typeof request.body === "string") {
         rawBody = request.body;
+      } else if (request.body instanceof Uint8Array) {
+        // Node's fetch typing accepts Buffer as BodyInit across runtimes.
+        rawBody = Buffer.from(request.body);
       } else if (request.body !== undefined) {
         rawBody = JSON.stringify(request.body);
       }
