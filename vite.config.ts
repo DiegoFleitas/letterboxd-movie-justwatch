@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import react from "@vitejs/plugin-react";
-import { POSTHOG_PROXY_DEFAULT_PATH } from "./src/server/routes";
+import { POSTHOG_PROXY_DEFAULT_PATH } from "./src/shared/posthog-routes.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
