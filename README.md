@@ -11,7 +11,7 @@
 
 <br />
 
-[![CI](https://img.shields.io/github/actions/workflow/status/DiegoFleitas/letterboxd-movie-justwatch/ci.yml?branch=main&label=CI&logo=github)](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/actions/workflows/ci.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/DiegoFleitas/letterboxd-movie-justwatch/ci.yml?branch=master&label=CI&logo=github)](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/actions/workflows/ci.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=DiegoFleitas_letterboxd-movie-justwatch&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=DiegoFleitas_letterboxd-movie-justwatch)
 [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=DiegoFleitas_letterboxd-movie-justwatch&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=DiegoFleitas_letterboxd-movie-justwatch)
 
