@@ -94,7 +94,7 @@ describe("createServer", () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(JSON.stringify({ ok: true }), {
         status: 200,
-        headers: { "content-type": "application/json" },
+        headers: { "content-type": "application/json", "content-encoding": "gzip" },
       }),
     );
 
@@ -110,6 +110,7 @@ describe("createServer", () => {
       });
 
       expect(response.statusCode).toBe(200);
+      expect(response.headers["content-encoding"]).toBeUndefined();
       const proxiedCall = fetchSpy.mock.calls.find((call) => {
         const proxiedUrl = parseFetchUrl(call[0]);
         return proxiedUrl?.protocol === "https:" && proxiedUrl.hostname === "us.i.posthog.com";

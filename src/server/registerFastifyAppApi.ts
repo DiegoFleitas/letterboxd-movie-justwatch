@@ -158,7 +158,9 @@ export function registerFastifyAppApi(app: FastifyInstance, binder: FastifyHttpB
 
       reply.code(upstream.status);
       upstream.headers.forEach((value, key) => {
-        if (!["transfer-encoding", "content-length"].includes(key.toLowerCase())) {
+        if (
+          !["transfer-encoding", "content-length", "content-encoding"].includes(key.toLowerCase())
+        ) {
           reply.header(key, value);
         }
       });
