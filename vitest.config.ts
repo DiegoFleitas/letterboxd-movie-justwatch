@@ -28,7 +28,10 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reportsDirectory: "coverage",
-      reporter: ["text", "lcov", "html"],
+      /** json-summary + json: required/recommended by davelosert/vitest-coverage-report-action (CI job summary) */
+      reporter: ["text", "text-summary", "json-summary", "json", "lcov", "html"],
+      /** Emit lcov/json even when a test fails so CI artifacts stay useful */
+      reportOnFailure: true,
       include: ["src/server/**/*.ts", "src/client/src/**/*.{ts,tsx}"],
       exclude: [
         "**/node_modules/**",
