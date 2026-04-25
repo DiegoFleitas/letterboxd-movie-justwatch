@@ -2,15 +2,11 @@
  * HTTP path constants shared by Fastify and the Vite client (`@server/routes`).
  * Not Fastify registration — only strings and small helpers.
  */
+import { POSTHOG_PROXY_DEFAULT_PATH as POSTHOG_PROXY_PATH } from "../shared/posthog-routes.js";
+export { POSTHOG_PROXY_DEFAULT_PATH } from "../shared/posthog-routes.js";
 
 /** Development-only JSON APIs (`registerDevHttpRoutes` + `DevDebugBar`). */
 export const DEV_HTTP_API_PREFIX = "/api/dev" as const;
-
-/**
- * First-party PostHog reverse-proxy path.
- * Keep this non-obvious to reduce block-list matches by ad blockers.
- */
-export const POSTHOG_PROXY_DEFAULT_PATH = "/phc4v7x" as const;
 
 /** Production same-origin JSON + proxy endpoints. */
 export const HTTP_API_PATHS = {
@@ -23,7 +19,7 @@ export const HTTP_API_PATHS = {
   subdlSearch: "/api/subdl-search",
   proxyPrefix: "/api/proxy",
   sentryTest: "/api/sentry-test",
-  posthogProxyPrefix: POSTHOG_PROXY_DEFAULT_PATH,
+  posthogProxyPrefix: POSTHOG_PROXY_PATH,
 } as const;
 
 /** Fastify `app.all` pattern for the HTTP proxy mount (must end with `/*`). */

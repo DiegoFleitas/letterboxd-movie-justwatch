@@ -142,7 +142,7 @@ describe("Runtime config + PostHog", () => {
     expect(source).toContain("__POSTHOG_HOST__");
     expect(/PostHogProvider[^>]*apiKey=\{key\}/.test(source)).toBe(true);
     expect(/api_host:\s*host/.test(source)).toBe(true);
-    expect(source).toContain('ui_host: "https://us.posthog.com"');
+    expect(source).not.toMatch(/ui_host:\s*["']https?:\/\/[^"']*posthog\.com/);
     expect(source).toContain("POSTHOG_PROXY_DEFAULT_PATH");
     expect(source).toContain("VITE_PUBLIC_POSTHOG_KEY");
     expect(source).toContain("VITE_PUBLIC_POSTHOG_HOST");
