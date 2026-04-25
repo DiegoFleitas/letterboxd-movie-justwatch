@@ -67,7 +67,13 @@ export function registerFastifyAppApi(app: FastifyInstance, binder: FastifyHttpB
         forwardedHeaders.set(name, value.join(","));
         continue;
       }
-      forwardedHeaders.set(name, String(value));
+      if (typeof value === "string") {
+        forwardedHeaders.set(name, value);
+        continue;
+      }
+      if (typeof value === "number" || typeof value === "boolean" || typeof value === "bigint") {
+        forwardedHeaders.set(name, `${value}`);
+      }
     }
     forwardedHeaders.set("host", targetHost);
 
