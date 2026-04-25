@@ -5,6 +5,17 @@ import { _injectRedisClientForTest, _resetRedisForTesting } from "@server/lib/re
 import { HTTP_API_PATHS } from "@server/routes.js";
 import { createInMemoryRedisMock } from "./helpers/inMemoryRedisMock.js";
 
+function parseFetchUrl(input: RequestInfo | URL | undefined): URL | null {
+  try {
+    if (typeof input === "string") return new URL(input);
+    if (input instanceof URL) return input;
+    if (input instanceof Request) return new URL(input.url);
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 describe("createServer", () => {
   let savedPosthogKey: string | undefined;
 
@@ -77,11 +88,15 @@ describe("createServer", () => {
       });
 
       expect(response.statusCode).toBe(200);
-      const proxiedCall = fetchSpy.mock.calls.find((call) =>
-        String(call[0] ?? "").startsWith("https://us.i.posthog.com"),
-      );
+      const proxiedCall = fetchSpy.mock.calls.find((call) => {
+        const proxiedUrl = parseFetchUrl(call[0]);
+        return proxiedUrl?.protocol === "https:" && proxiedUrl.hostname === "us.i.posthog.com";
+      });
       expect(proxiedCall).toBeTruthy();
-      expect(String(proxiedCall?.[0] ?? "")).toContain("https://us.i.posthog.com/e/");
+      const proxiedUrl = parseFetchUrl(proxiedCall?.[0]);
+      if (!proxiedUrl) throw new Error("Expected proxied URL");
+      expect(proxiedUrl.hostname).toBe("us.i.posthog.com");
+      expect(proxiedUrl.pathname).toBe("/e/");
     } finally {
       fetchSpy.mockRestore();
       await close();
@@ -106,13 +121,17 @@ describe("createServer", () => {
       });
 
       expect(response.statusCode).toBe(200);
-      const proxiedCall = fetchSpy.mock.calls.find((call) =>
-        String(call[0] ?? "").startsWith("https://us-assets.i.posthog.com"),
-      );
+      const proxiedCall = fetchSpy.mock.calls.find((call) => {
+        const proxiedUrl = parseFetchUrl(call[0]);
+        return (
+          proxiedUrl?.protocol === "https:" && proxiedUrl.hostname === "us-assets.i.posthog.com"
+        );
+      });
       expect(proxiedCall).toBeTruthy();
-      expect(String(proxiedCall?.[0] ?? "")).toContain(
-        "https://us-assets.i.posthog.com/static/array.js",
-      );
+      const proxiedUrl = parseFetchUrl(proxiedCall?.[0]);
+      if (!proxiedUrl) throw new Error("Expected proxied URL");
+      expect(proxiedUrl.hostname).toBe("us-assets.i.posthog.com");
+      expect(proxiedUrl.pathname).toBe("/static/array.js");
     } finally {
       fetchSpy.mockRestore();
       await close();
