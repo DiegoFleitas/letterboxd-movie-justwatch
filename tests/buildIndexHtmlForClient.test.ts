@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { POSTHOG_PROXY_DEFAULT_PATH as SHARED_POSTHOG_PROXY_DEFAULT_PATH } from "../src/shared/posthog-routes.js";
 import { POSTHOG_PROXY_DEFAULT_PATH } from "@server/routes.js";
 
 describe("buildIndexHtmlForClient", () => {
@@ -13,6 +14,10 @@ describe("buildIndexHtmlForClient", () => {
     vi.spyOn(fs, "existsSync").mockReturnValue(false);
     const { buildIndexHtmlForClient } = await import("@server/buildIndexHtmlForClient.js");
     expect(buildIndexHtmlForClient()).toBeNull();
+  });
+
+  it("uses the same PostHog proxy constant as shared config", () => {
+    expect(POSTHOG_PROXY_DEFAULT_PATH).toBe(SHARED_POSTHOG_PROXY_DEFAULT_PATH);
   });
 
   it("reads index.html and passes buffer through injectRuntimeConfig when present", async () => {
