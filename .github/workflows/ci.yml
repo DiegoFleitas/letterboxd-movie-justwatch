@@ -10,6 +10,9 @@ jobs:
   test-and-build:
     name: Test & Build
     runs-on: ubuntu-latest
+    env:
+      # secrets cannot be used in step `if`; expose only a boolean for gating SonarCloud.
+      SONAR_TOKEN_PRESENT: ${{ secrets.SONAR_TOKEN != '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -43,7 +46,7 @@ jobs:
         run: bun run test:coverage
 
       - name: SonarCloud Scan
-        if: ${{ secrets.SONAR_TOKEN != '' && (github.event_name != 'pull_request' || !github.event.pull_request.head.repo.fork) }}
+        if: ${{ env.SONAR_TOKEN_PRESENT == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
         uses: SonarSource/sonarqube-scan-action@299e4b793aaa83bf2aba7c9c14bedbb485688ec4 # v7.1.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
