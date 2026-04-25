@@ -1,3 +1,4 @@
+import type { IncomingHttpHeaders } from "node:http";
 import type { FastifyInstance } from "fastify";
 import {
   HTTP_API_PATHS,
@@ -18,6 +19,55 @@ import {
 import { isHealthy, isRedisDisabled } from "./lib/redis.js";
 import type { FastifyHttpBinder } from "./fastifyHttpBridge.js";
 import { HTTP_STATUS_INTERNAL_SERVER_ERROR, HTTP_STATUS_OK } from "./httpStatusCodes.js";
+
+const POSTHOG_PROXY_STRIP_HEADERS = new Set([
+  "host",
+  "connection",
+  "content-length",
+  "transfer-encoding",
+]);
+
+function buildPosthogProxyForwardedHeaders(
+  incoming: IncomingHttpHeaders,
+  targetHost: string,
+): Headers {
+  const forwardedHeaders = new Headers();
+  for (const [name, value] of Object.entries(incoming)) {
+    if (value === undefined || POSTHOG_PROXY_STRIP_HEADERS.has(name.toLowerCase())) {
+      continue;
+    }
+    if (Array.isArray(value)) {
+      forwardedHeaders.set(name, value.join(","));
+      continue;
+    }
+    if (typeof value === "string") {
+      forwardedHeaders.set(name, value);
+      continue;
+    }
+    if (typeof value === "number" || typeof value === "boolean" || typeof value === "bigint") {
+      forwardedHeaders.set(name, `${value}`);
+    }
+  }
+  forwardedHeaders.set("host", targetHost);
+  return forwardedHeaders;
+}
+
+function posthogProxyBodyFromRequest(method: string, body: unknown): BodyInit | undefined {
+  if (method === "GET" || method === "HEAD") {
+    return undefined;
+  }
+  if (typeof body === "string") {
+    return body;
+  }
+  if (body instanceof Uint8Array) {
+    // Node's fetch typing accepts Buffer as BodyInit across runtimes.
+    return Buffer.from(body);
+  }
+  if (body !== undefined) {
+    return JSON.stringify(body);
+  }
+  return undefined;
+}
 
 export function registerFastifyAppApi(app: FastifyInstance, binder: FastifyHttpBinder): void {
   const { makeFastifyHandler, setCacheControlFastify } = binder;
@@ -55,39 +105,8 @@ export function registerFastifyAppApi(app: FastifyInstance, binder: FastifyHttpB
         : "us.i.posthog.com";
     const targetUrl = `https://${targetHost}${targetPath}`;
 
-    const forwardedHeaders = new Headers();
-    for (const [name, value] of Object.entries(request.headers)) {
-      if (
-        value === undefined ||
-        ["host", "connection", "content-length", "transfer-encoding"].includes(name.toLowerCase())
-      ) {
-        continue;
-      }
-      if (Array.isArray(value)) {
-        forwardedHeaders.set(name, value.join(","));
-        continue;
-      }
-      if (typeof value === "string") {
-        forwardedHeaders.set(name, value);
-        continue;
-      }
-      if (typeof value === "number" || typeof value === "boolean" || typeof value === "bigint") {
-        forwardedHeaders.set(name, `${value}`);
-      }
-    }
-    forwardedHeaders.set("host", targetHost);
-
-    let rawBody: BodyInit | undefined;
-    if (request.method !== "GET" && request.method !== "HEAD") {
-      if (typeof request.body === "string") {
-        rawBody = request.body;
-      } else if (request.body instanceof Uint8Array) {
-        // Node's fetch typing accepts Buffer as BodyInit across runtimes.
-        rawBody = Buffer.from(request.body);
-      } else if (request.body !== undefined) {
-        rawBody = JSON.stringify(request.body);
-      }
-    }
+    const forwardedHeaders = buildPosthogProxyForwardedHeaders(request.headers, targetHost);
+    const rawBody = posthogProxyBodyFromRequest(request.method, request.body);
 
     const upstream = await fetch(targetUrl, {
       method: request.method,
