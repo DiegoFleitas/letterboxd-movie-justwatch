@@ -51,6 +51,28 @@ describe("createServer", () => {
     }
   });
 
+  it("keeps default text/plain parsing outside PostHog proxy routes", async () => {
+    const { createServer } = await import("@server/createServer.js");
+    const created = createServer();
+    created.app.post("/__text_echo", async (request) => ({
+      bodyType: typeof request.body,
+      body: request.body,
+    }));
+    const { close } = await created.start(0);
+    try {
+      const res = await created.app.inject({
+        method: "POST",
+        url: "/__text_echo",
+        headers: { "content-type": "text/plain" },
+        payload: "plain-text-body",
+      });
+      expect(res.statusCode).toBe(200);
+      expect(res.json()).toEqual({ bodyType: "string", body: "plain-text-body" });
+    } finally {
+      await close();
+    }
+  });
+
   it("close calls disconnectRedis and shutdownPosthog", async () => {
     const disconnectRedis = vi.spyOn(redisLib, "disconnectRedis").mockResolvedValue(undefined);
     const shutdownPosthog = vi.spyOn(posthogLib, "shutdownPosthog").mockResolvedValue(undefined);
@@ -97,6 +119,53 @@ describe("createServer", () => {
       if (!proxiedUrl) throw new Error("Expected proxied URL");
       expect(proxiedUrl.hostname).toBe("us.i.posthog.com");
       expect(proxiedUrl.pathname).toBe("/e/");
+    } finally {
+      fetchSpy.mockRestore();
+      await close();
+    }
+  });
+
+  it("forwards compressed PostHog text/plain payloads without 500", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ status: 1 }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+    const compressedPayload = Buffer.from([
+      0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x03, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00,
+    ]);
+
+    const { createServer } = await import("@server/createServer.js");
+    const created = createServer();
+    const { close } = await created.start(0);
+    try {
+      const response = await created.app.inject({
+        method: "POST",
+        url: `${HTTP_API_PATHS.posthogProxyPrefix}/e/?compression=gzip-js&ver=1.370.0`,
+        headers: { "content-type": "text/plain" },
+        payload: compressedPayload,
+      });
+
+      expect(response.statusCode).toBe(200);
+      const proxiedCall = fetchSpy.mock.calls.find((call) => {
+        const proxiedUrl = parseFetchUrl(call[0]);
+        return proxiedUrl?.protocol === "https:" && proxiedUrl.hostname === "us.i.posthog.com";
+      });
+      if (!proxiedCall) {
+        throw new Error("Expected proxied PostHog ingest call");
+      }
+      const init = proxiedCall[1];
+      const forwardedBody = init?.body;
+      let forwardedBytes = Buffer.alloc(0);
+      if (forwardedBody instanceof Uint8Array) {
+        forwardedBytes = Buffer.from(forwardedBody);
+      } else if (typeof forwardedBody === "string") {
+        forwardedBytes = Buffer.from(forwardedBody, "utf8");
+      }
+      expect(forwardedBytes.length).toBeGreaterThan(0);
+      expect(init?.headers).toBeDefined();
     } finally {
       fetchSpy.mockRestore();
       await close();
