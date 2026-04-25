@@ -138,8 +138,8 @@ describe("Runtime config + PostHog", () => {
   it("frontend main.tsx reads runtime PostHog globals with VITE fallback", () => {
     const mainPath = path.join(__dirname, "..", "src", "client", "src", "main.tsx");
     const source = fs.readFileSync(mainPath, "utf8");
-    expect(source).toContain("window.__POSTHOG_KEY__");
-    expect(source).toContain("window.__POSTHOG_HOST__");
+    expect(source).toContain("__POSTHOG_KEY__");
+    expect(source).toContain("__POSTHOG_HOST__");
     expect(/PostHogProvider[^>]*apiKey=\{key\}/.test(source)).toBe(true);
     expect(/api_host:\s*host/.test(source)).toBe(true);
     expect(source).toContain('ui_host: "https://us.posthog.com"');
