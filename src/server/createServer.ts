@@ -19,6 +19,26 @@ export interface CreatedServer {
   start: (port?: number) => Promise<StartedServer>;
 }
 
+async function captureServerErrorInPosthog(
+  posthog: ReturnType<typeof getPosthog>,
+  err: unknown,
+): Promise<void> {
+  if (!posthog) return;
+  const safeError = err instanceof Error ? err : new Error(String(err));
+  try {
+    posthog.capture({
+      distinctId: "server-error",
+      event: "server_error",
+      properties: {
+        message: safeError.message,
+        name: safeError.name,
+      },
+    });
+  } catch {
+    // ignore PostHog errors
+  }
+}
+
 export function createServer(): CreatedServer {
   const app: FastifyInstance = Fastify({
     logger: true,
@@ -41,20 +61,7 @@ export function createServer(): CreatedServer {
         extra: { method: request.method, url: request.url },
       });
     }
-    if (posthog) {
-      try {
-        await posthog.capture({
-          distinctId: "server-error",
-          event: "server_error",
-          properties: {
-            message: (err as Error).message,
-            name: (err as Error).name,
-          },
-        });
-      } catch {
-        // ignore PostHog errors
-      }
-    }
+    await captureServerErrorInPosthog(posthog, err);
     if (!reply.raw.headersSent) {
       reply.code(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ error: "Internal Server Error" });
     }
@@ -69,9 +76,7 @@ export function createServer(): CreatedServer {
       await app.listen({ port: desiredPort, host: "0.0.0.0" });
       const address = app.server.address();
       const actualPort =
-        typeof address === "object" && address && "port" in address
-          ? (address.port as number)
-          : desiredPort;
+        typeof address === "object" && address && "port" in address ? address.port : desiredPort;
 
       return {
         port: actualPort,
