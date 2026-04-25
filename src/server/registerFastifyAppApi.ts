@@ -87,6 +87,16 @@ function posthogProxyBodyFromRequest(method: string, body: unknown): BodyInit | 
 export function registerFastifyAppApi(app: FastifyInstance, binder: FastifyHttpBinder): void {
   const { makeFastifyHandler, setCacheControlFastify } = binder;
 
+  app.addHook("onRequest", (request, _reply, done) => {
+    if (request.url?.startsWith(HTTP_API_PATHS.posthogProxyPrefix)) {
+      // PostHog gzip-js payloads can arrive as binary text/plain with a client-computed
+      // content-length that may not match Fastify's parsed byte accounting; drop it so
+      // Fastify accepts and forwards the raw body instead of failing before proxying.
+      delete request.headers["content-length"];
+    }
+    done();
+  });
+
   app.get("/healthcheck", async (_request, reply) => {
     reply.type("text/plain").send("OK");
   });
@@ -112,38 +122,48 @@ export function registerFastifyAppApi(app: FastifyInstance, binder: FastifyHttpB
   app.post(HTTP_API_PATHS.subdlSearch, setCacheControlFastify(subdlSearch));
 
   app.all(HTTP_API_PROXY_ROUTE, makeFastifyHandler(proxy));
-  app.all(HTTP_API_POSTHOG_PROXY_ROUTE, async (request, reply) => {
-    const targetPath = posthogProxyTargetFromRequestUrl(request.url || "");
-    const targetHost =
-      targetPath.startsWith("/static/") || targetPath.startsWith("/array/")
-        ? "us-assets.i.posthog.com"
-        : "us.i.posthog.com";
-    const targetUrl = `https://${targetHost}${targetPath}`;
+  app.register(async (posthogApp) => {
+    // PostHog uses text/plain even for compressed binary payloads (compression=gzip-js).
+    // Parse as Buffer so bytes are forwarded intact to upstream ingestion.
+    posthogApp.addContentTypeParser(
+      /^text\/plain(?:;.*)?$/i,
+      { parseAs: "buffer" },
+      (_req, body, done) => done(null, body),
+    );
 
-    const forwardedHeaders = buildPosthogProxyForwardedHeaders(request.headers, targetHost);
-    const rawBody = posthogProxyBodyFromRequest(request.method, request.body);
+    posthogApp.all(HTTP_API_POSTHOG_PROXY_ROUTE, async (request, reply) => {
+      const targetPath = posthogProxyTargetFromRequestUrl(request.url || "");
+      const targetHost =
+        targetPath.startsWith("/static/") || targetPath.startsWith("/array/")
+          ? "us-assets.i.posthog.com"
+          : "us.i.posthog.com";
+      const targetUrl = `https://${targetHost}${targetPath}`;
 
-    let upstream: Response;
-    try {
-      upstream = await fetch(targetUrl, {
-        method: request.method,
-        headers: forwardedHeaders,
-        body: rawBody,
-        signal: AbortSignal.timeout(POSTHOG_PROXY_TIMEOUT_MS),
-      });
-    } catch (err) {
-      const isTimeout = err instanceof Error && err.name === "TimeoutError";
-      reply.code(isTimeout ? HTTP_STATUS_GATEWAY_TIMEOUT : HTTP_STATUS_BAD_GATEWAY).send();
-      return;
-    }
+      const forwardedHeaders = buildPosthogProxyForwardedHeaders(request.headers, targetHost);
+      const rawBody = posthogProxyBodyFromRequest(request.method, request.body);
 
-    reply.code(upstream.status);
-    upstream.headers.forEach((value, key) => {
-      if (!["transfer-encoding", "content-length"].includes(key.toLowerCase())) {
-        reply.header(key, value);
+      let upstream: Response;
+      try {
+        upstream = await fetch(targetUrl, {
+          method: request.method,
+          headers: forwardedHeaders,
+          body: rawBody,
+          signal: AbortSignal.timeout(POSTHOG_PROXY_TIMEOUT_MS),
+        });
+      } catch (err) {
+        const isTimeout = err instanceof Error && err.name === "TimeoutError";
+        reply.code(isTimeout ? HTTP_STATUS_GATEWAY_TIMEOUT : HTTP_STATUS_BAD_GATEWAY).send();
+        return;
       }
+
+      reply.code(upstream.status);
+      upstream.headers.forEach((value, key) => {
+        if (!["transfer-encoding", "content-length"].includes(key.toLowerCase())) {
+          reply.header(key, value);
+        }
+      });
+      const bytes = await upstream.arrayBuffer();
+      reply.send(Buffer.from(bytes));
     });
-    const bytes = await upstream.arrayBuffer();
-    reply.send(Buffer.from(bytes));
   });
 }
