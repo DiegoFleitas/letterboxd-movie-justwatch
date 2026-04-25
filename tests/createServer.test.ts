@@ -158,13 +158,16 @@ describe("createServer", () => {
       }
       const init = proxiedCall[1];
       const forwardedBody = init?.body;
-      let forwardedBytes = Buffer.alloc(0);
       if (forwardedBody instanceof Uint8Array) {
-        forwardedBytes = Buffer.from(forwardedBody);
-      } else if (typeof forwardedBody === "string") {
-        forwardedBytes = Buffer.from(forwardedBody, "utf8");
+        const forwardedBytes = Buffer.from(forwardedBody);
+        expect(forwardedBytes.length).toBeGreaterThan(0);
+        // Gzip payloads should preserve magic bytes when forwarded through the proxy.
+        expect(forwardedBytes[0]).toBe(0x1f);
+        expect(forwardedBytes[1]).toBe(0x8b);
+      } else {
+        expect(typeof forwardedBody).toBe("string");
+        expect((forwardedBody as string).length).toBeGreaterThan(0);
       }
-      expect(forwardedBytes.length).toBeGreaterThan(0);
       expect(init?.headers).toBeDefined();
     } finally {
       fetchSpy.mockRestore();
