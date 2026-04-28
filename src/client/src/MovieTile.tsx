@@ -81,10 +81,10 @@ export function MovieTile({
             }
       }
     >
-      <div
+      <fieldset
         className="poster-external-stack"
-        role="group"
         aria-label={`${title}${year != null && year !== "" ? ` (${year})` : ""} — ${availableExternalLinks.join(", ")}`}
+        style={{ border: 0, padding: 0, margin: 0 }}
       >
         {showExternalLinks ? (
           <>
@@ -202,7 +202,7 @@ export function MovieTile({
         >
           <img src={openSubtitlesIcon} alt="" className="poster-external-btn__icon" />
         </button>
-      </div>
+      </fieldset>
       <div className="poster-body">
         {poster ? (
           <>
