@@ -48,26 +48,40 @@
   font-size: 1.1em;
 }
 
+/*
+ * Positioning lives on a plain wrapper: open <dialog> has UA layout quirks (centering,
+ * asymmetric radius) that break inset alignment under the trigger.
+ */
+.country-modal-anchor {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 110%;
+  z-index: 999;
+}
+
+/* Non-modal <dialog>: no showModal() — fills the anchor like a dropdown panel. */
 dialog.country-modal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  position: static;
+  display: block;
+  width: 100%;
+  max-width: none;
   margin: 0;
-  width: min(100vw - 2rem, 380px);
-  max-width: 100%;
+  padding: 0.75em;
   background: var(--color-surface-elevated);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-strong);
-  padding: 0.75em;
-  z-index: 999;
   max-height: min(360px, 70vh);
   overflow: hidden;
+  color: inherit;
+  box-sizing: border-box;
+  appearance: none;
+  -webkit-appearance: none;
 }
 
 dialog.country-modal::backdrop {
-  background: rgba(0, 0, 0, 0.45);
+  display: none;
 }
 
 .country-modal-header {
@@ -88,22 +102,65 @@ dialog.country-modal::backdrop {
   margin-bottom: 0.6em;
   font-size: 0.9em;
   line-height: 1.3;
+  box-sizing: border-box;
+}
+
+.country-search:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-accent-muted);
 }
 
 .country-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 6px 4px 0;
   max-height: min(280px, 55vh);
   overflow-y: auto;
   overflow-x: hidden;
   background: var(--color-bg-alt);
   border-radius: 8px;
-  padding-bottom: 4px;
+  box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--color-text-muted) 55%, transparent) var(--color-surface);
+}
+
+.country-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.country-list::-webkit-scrollbar-track {
+  margin: 6px 0;
+  background: var(--color-surface);
+  border-radius: 3px;
+}
+
+.country-list::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--color-text-muted) 65%, var(--color-bg-alt));
+  border-radius: 3px;
+}
+
+.country-list::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+.country-list::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.country-list > li {
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .country-list-item {
   display: flex;
   align-items: center;
   width: 100%;
-  padding: 0.5em 0.9em;
+  padding: 0.5em 0.85em 0.5em 0.9em;
   border-radius: 8px;
   cursor: pointer;
   transition:
@@ -114,12 +171,17 @@ dialog.country-modal::backdrop {
   color: var(--color-text-muted);
   border: none;
   text-align: left;
+  font: inherit;
 }
 
 .country-list-item.selected,
 .country-list-item:hover {
   background: var(--color-surface);
   color: var(--color-text);
+}
+
+.country-list-item.selected {
+  font-weight: 600;
 }
 
 .country-list-item.selected .country-name,
@@ -136,16 +198,6 @@ dialog.country-modal::backdrop {
   font-weight: 500;
 }
 
-.country-select-native {
-  display: block;
-  width: 100%;
-  margin-top: 0.6em;
-  padding: 0.4em 0.5em;
-  font-size: 0.95em;
-  line-height: 1.35;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--color-border);
-  background: var(--color-bg-alt);
-  color: var(--color-text);
-  box-sizing: border-box;
+#country-selector.open dialog.country-modal {
+  display: block !important;
 }
