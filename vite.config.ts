@@ -13,7 +13,7 @@ function stripDevToolsScript() {
       if (ctx.bundle) {
         return html
           .replace(/\s*<!-- Dev only: connect to standalone React DevTools[^>]*-->\s*/i, "")
-          .replace(/\s*<script src="http:\/\/localhost:8097"[^>]*><\/script>\s*/i, "");
+          .replace(/\s*<script src="(?:https?:)?\/\/localhost:8097"[^>]*><\/script>\s*/i, "");
       }
       return html;
     },
