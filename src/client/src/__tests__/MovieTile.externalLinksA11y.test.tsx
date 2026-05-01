@@ -26,7 +26,7 @@ describe("MovieTile external links accessibility label", () => {
       );
     });
 
-    const externalGroup = container.querySelector('[role="group"].poster-external-stack');
+    const externalGroup = container.querySelector("fieldset.poster-external-stack");
     expect(externalGroup?.getAttribute("aria-label")).toBe(
       "Foo (1999) — Letterboxd, SubDL, OpenSubtitles",
     );
