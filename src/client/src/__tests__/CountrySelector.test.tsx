@@ -12,9 +12,9 @@ const sampleCountries: Country[] = [
   { id: "en_AU", text: "Australia" },
 ];
 
-function countrySelector(
-  overrides: Partial<{ value: string; onChange: (id: string) => void }> = {},
-): ReactElement {
+type SelectorOverrides = Partial<{ value: string; onChange: (id: string) => void }>;
+
+function countrySelector(overrides: SelectorOverrides = {}): ReactElement {
   return (
     <CountrySelector
       countries={sampleCountries}
@@ -22,6 +22,15 @@ function countrySelector(
       onChange={overrides.onChange ?? vi.fn()}
     />
   );
+}
+
+async function renderCountrySelector(
+  overrides: SelectorOverrides,
+  fn: (container: HTMLElement) => void | Promise<void>,
+): Promise<void> {
+  await withRootRender(countrySelector(overrides), async ({ container }) => {
+    await fn(container);
+  });
 }
 
 function isDropdownOpen(container: HTMLElement): boolean {
@@ -40,6 +49,12 @@ function getSearchInput(container: HTMLElement): HTMLInputElement {
   return container.querySelector(".country-search") as HTMLInputElement;
 }
 
+function listVisibleCountryLabels(container: HTMLElement): string[] {
+  return Array.from(container.querySelectorAll(".country-list-item .country-name")).map(
+    (el) => el.textContent?.trim() ?? "",
+  );
+}
+
 function getCountryButton(container: HTMLElement, label: string): HTMLButtonElement {
   for (const nameEl of container.querySelectorAll(".country-list .country-name")) {
     if (nameEl.textContent?.trim() === label) {
@@ -55,16 +70,40 @@ async function openCountryDropdown(container: HTMLElement): Promise<void> {
   });
 }
 
+async function setFilterQuery(container: HTMLElement, value: string): Promise<void> {
+  await act(async () => {
+    fireEvent.change(getSearchInput(container), { target: { value } });
+  });
+}
+
+async function clickCountryRow(container: HTMLElement, label: string): Promise<void> {
+  await act(async () => {
+    fireEvent.click(getCountryButton(container, label));
+  });
+}
+
+async function dispatchEscapeKey(): Promise<void> {
+  await act(async () => {
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+  });
+}
+
+async function dispatchBodyMouseDown(): Promise<void> {
+  await act(async () => {
+    document.body.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+  });
+}
+
 describe("CountrySelector", () => {
   it("renders the currently selected country", async () => {
-    await withRootRender(countrySelector({ value: "es_AR" }), async ({ container }) => {
+    await renderCountrySelector({ value: "es_AR" }, async (container) => {
       const selected = container.querySelector(".country-selected .country-name");
       expect(selected?.textContent).toBe("Argentina");
     });
   });
 
   it("opens and closes on trigger button click", async () => {
-    await withRootRender(countrySelector(), async ({ container }) => {
+    await renderCountrySelector({}, async (container) => {
       expect(isDropdownOpen(container)).toBe(false);
       expect(getModal(container)).toBeNull();
 
@@ -79,16 +118,11 @@ describe("CountrySelector", () => {
   });
 
   it("filters countries by query", async () => {
-    await withRootRender(countrySelector(), async ({ container }) => {
+    await renderCountrySelector({}, async (container) => {
       await openCountryDropdown(container);
+      await setFilterQuery(container, "arg");
 
-      const input = getSearchInput(container);
-      await act(async () => {
-        fireEvent.change(input, { target: { value: "arg" } });
-      });
-
-      const items = container.querySelectorAll(".country-list-item .country-name");
-      const labels = Array.from(items).map((el) => el.textContent?.trim());
+      const labels = listVisibleCountryLabels(container);
       expect(labels).toContain("Argentina");
       expect(labels).not.toContain("United States");
       expect(labels).not.toContain("Australia");
@@ -97,13 +131,9 @@ describe("CountrySelector", () => {
 
   it("selects a country, calls onChange, and closes", async () => {
     const onChange = vi.fn();
-    await withRootRender(countrySelector({ onChange }), async ({ container }) => {
+    await renderCountrySelector({ onChange }, async (container) => {
       await openCountryDropdown(container);
-
-      const argentina = getCountryButton(container, "Argentina");
-      await act(async () => {
-        fireEvent.click(argentina);
-      });
+      await clickCountryRow(container, "Argentina");
 
       expect(onChange).toHaveBeenCalledWith("es_AR");
       expect(isDropdownOpen(container)).toBe(false);
@@ -111,13 +141,11 @@ describe("CountrySelector", () => {
   });
 
   it("closes on Escape key", async () => {
-    await withRootRender(countrySelector(), async ({ container }) => {
+    await renderCountrySelector({}, async (container) => {
       await openCountryDropdown(container);
       expect(isDropdownOpen(container)).toBe(true);
 
-      await act(async () => {
-        document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
-      });
+      await dispatchEscapeKey();
       expect(isDropdownOpen(container)).toBe(false);
     });
   });
@@ -127,68 +155,55 @@ describe("CountrySelector", () => {
       await openCountryDropdown(host);
       expect(isDropdownOpen(host)).toBe(true);
 
-      await act(async () => {
-        document.body.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
-      });
+      await dispatchBodyMouseDown();
       expect(isDropdownOpen(host)).toBe(false);
     });
   });
 
   it("does not call onChange when selecting the current value", async () => {
     const onChange = vi.fn();
-    await withRootRender(countrySelector({ onChange }), async ({ container }) => {
+    await renderCountrySelector({ onChange }, async (container) => {
       await openCountryDropdown(container);
-
-      const us = getCountryButton(container, "United States");
-      await act(async () => {
-        fireEvent.click(us);
-      });
+      await clickCountryRow(container, "United States");
 
       expect(onChange).not.toHaveBeenCalled();
     });
   });
 
   it("shows the full country list when the filter matches nothing", async () => {
-    await withRootRender(countrySelector(), async ({ container }) => {
+    await renderCountrySelector({}, async (container) => {
       await openCountryDropdown(container);
+      await setFilterQuery(container, "zzz");
 
-      const input = getSearchInput(container);
-      await act(async () => {
-        fireEvent.change(input, { target: { value: "zzz" } });
-      });
-
-      const items = container.querySelectorAll(".country-list-item .country-name");
-      const labels = Array.from(items).map((el) => el.textContent?.trim());
+      const labels = listVisibleCountryLabels(container);
       expect(labels).toContain("United States");
       expect(labels).toContain("Argentina");
     });
   });
 
   it("falls back to the first country when the value is missing from the list", async () => {
-    await withRootRender(countrySelector({ value: "xx_XX" }), async ({ container }) => {
+    await renderCountrySelector({ value: "xx_XX" }, async (container) => {
       const selected = container.querySelector(".country-selected .country-name");
       expect(selected?.textContent).toBe("United States");
     });
   });
 
   it("clears the filter when reopening the panel", async () => {
-    await withRootRender(countrySelector(), async ({ container }) => {
+    await renderCountrySelector({}, async (container) => {
       await openCountryDropdown(container);
-      await act(async () => {
-        fireEvent.change(getSearchInput(container), { target: { value: "arg" } });
-      });
-      expect(container.querySelectorAll(".country-list-item .country-name")).toHaveLength(1);
+      await setFilterQuery(container, "arg");
+      expect(listVisibleCountryLabels(container)).toHaveLength(1);
 
       await openCountryDropdown(container);
       await openCountryDropdown(container);
 
       expect(getSearchInput(container).value).toBe("");
-      expect(container.querySelectorAll(".country-list-item .country-name")).toHaveLength(3);
+      expect(listVisibleCountryLabels(container)).toHaveLength(3);
     });
   });
 
   it("anchors the dialog inside .country-modal-anchor for layout", async () => {
-    await withRootRender(countrySelector(), async ({ container }) => {
+    await renderCountrySelector({}, async (container) => {
       await openCountryDropdown(container);
       const anchor = container.querySelector(".country-modal-anchor");
       const dialog = getModal(container);
@@ -200,7 +215,7 @@ describe("CountrySelector", () => {
   });
 
   it("exposes dialog semantics on the trigger while closed", async () => {
-    await withRootRender(countrySelector(), async ({ container }) => {
+    await renderCountrySelector({}, async (container) => {
       const trigger = getTrigger(container);
       expect(trigger.getAttribute("aria-haspopup")).toBe("dialog");
       expect(trigger.getAttribute("aria-controls")).toBe("country-selector-panel");
@@ -209,14 +224,14 @@ describe("CountrySelector", () => {
   });
 
   it("sets aria-expanded while open", async () => {
-    await withRootRender(countrySelector(), async ({ container }) => {
+    await renderCountrySelector({}, async (container) => {
       await openCountryDropdown(container);
       expect(getTrigger(container).getAttribute("aria-expanded")).toBe("true");
     });
   });
 
   it("marks the current value row with aria-current", async () => {
-    await withRootRender(countrySelector({ value: "es_AR" }), async ({ container }) => {
+    await renderCountrySelector({ value: "es_AR" }, async (container) => {
       await openCountryDropdown(container);
       const selected = container.querySelector("button.country-list-item.selected");
       expect(selected?.getAttribute("aria-current")).toBe("true");
@@ -226,12 +241,12 @@ describe("CountrySelector", () => {
     });
   });
 
-  it("derives flag sprite class from the region suffix of the id", async () => {
-    await withRootRender(countrySelector({ value: "en_US" }), async ({ container }) => {
-      expect(container.querySelector(".country-selected .flag-icon-us")).not.toBeNull();
-    });
-    await withRootRender(countrySelector({ value: "en_AU" }), async ({ container }) => {
-      expect(container.querySelector(".country-selected .flag-icon-au")).not.toBeNull();
+  it.each([
+    ["en_US", "us"],
+    ["en_AU", "au"],
+  ] as const)("derives flag sprite class from id %s (flag-icon-%s)", async (value, code) => {
+    await renderCountrySelector({ value }, async (container) => {
+      expect(container.querySelector(`.country-selected .flag-icon-${code}`)).not.toBeNull();
     });
   });
 });
