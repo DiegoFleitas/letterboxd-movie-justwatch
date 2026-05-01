@@ -13,4 +13,13 @@ describe("countries", () => {
       expect(id).toMatch(/^[a-z]{2}_[A-Z]{2}$/);
     }
   });
+
+  it("keeps ids unique", () => {
+    const ids = countries.map((c) => c.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("includes Japan as ja_JP", () => {
+    expect(countries.some((c) => c.id === "ja_JP" && c.text === "Japan")).toBe(true);
+  });
 });
