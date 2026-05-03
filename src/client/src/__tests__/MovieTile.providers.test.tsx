@@ -4,6 +4,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { MovieTile } from "../MovieTile";
 import { AppStateProvider } from "../AppStateContext";
 import type { TileData } from "../movieTiles";
+import { stubMatchMedia } from "./mockMatchMedia";
 
 describe("MovieTile providers and actions", () => {
   const baseTile: TileData = {
@@ -25,6 +26,7 @@ describe("MovieTile providers and actions", () => {
   };
 
   beforeEach(() => {
+    stubMatchMedia(false);
     vi.spyOn(window, "open").mockImplementation(() => null);
   });
 
@@ -56,6 +58,27 @@ describe("MovieTile providers and actions", () => {
     );
     fireEvent.click(screen.getByTitle("Alternative search"));
     expect(onAlt).toHaveBeenCalledWith(expect.objectContaining({ title: "Test Film" }));
+  });
+
+  it("shows +N when more streaming providers than visible cap", () => {
+    const manyProviders = Array.from({ length: 5 }, (_, i) => ({
+      id: `p${i}`,
+      name: `Prov${i}`,
+      icon: `https://example.com/${i}.png`,
+      url: `https://jw.example/${i}`,
+    }));
+    render(
+      <AppStateProvider>
+        <MovieTile data={{ ...baseTile, movieProviders: manyProviders }} suppressAnimations />
+      </AppStateProvider>,
+    );
+    expect(screen.getByTitle("Prov0")).toBeTruthy();
+    expect(screen.getByTitle("Prov3")).toBeTruthy();
+    expect(screen.queryByTitle("Prov4")).toBeNull();
+    const surplus = document.querySelector(".poster-providers-surplus");
+    expect(surplus?.textContent?.trim()).toBe("+1");
+    expect(surplus?.getAttribute("title")).toBe("Also available: Prov4");
+    expect(surplus?.getAttribute("aria-label")).toBe("Also on: Prov4");
   });
 
   it("renders skeleton when poster missing", () => {

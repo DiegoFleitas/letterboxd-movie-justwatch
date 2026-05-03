@@ -16,8 +16,12 @@ import tmdbIcon from "./assets/tmdb-icon.svg";
 import openSubtitlesIcon from "./assets/opensubtitles-icon.svg";
 import subdlIcon from "./assets/subdl-icon.svg";
 import { WaitCue } from "./WaitCue";
+import { useMobilePosterLayout } from "./useMobilePosterLayout";
 
 const JUSTWATCH_PROXY = "https://click.justwatch.com/a?r=";
+
+const MAX_TILE_PROVIDERS_DESKTOP = 4;
+const MAX_TILE_PROVIDERS_MOBILE = 3;
 
 interface MovieTileProps {
   data: TileData;
@@ -33,17 +37,23 @@ export function MovieTile({
   suppressAnimations = false,
 }: MovieTileProps): React.ReactElement {
   const { id, title, year, poster, link, imdbLink, tmdbLink, movieProviders = [] } = data;
+  const isMobilePoster = useMobilePosterLayout();
   const hasLetterboxdFilmLink = Boolean(link?.trim());
   const showExternalLinks = Boolean(imdbLink || tmdbLink || hasLetterboxdFilmLink);
+  const showSubsLinks = !isMobilePoster;
+  const subsLabels = showSubsLinks ? (["SubDL", "OpenSubtitles"] as const) : [];
   const availableExternalLinks = [
     hasLetterboxdFilmLink ? "Letterboxd" : null,
     tmdbLink ? "TMDB" : null,
     imdbLink ? "IMDb" : null,
-    "SubDL",
-    "OpenSubtitles",
-  ].filter(Boolean);
+    ...subsLabels,
+  ].filter(Boolean) as string[];
   const { searchSubs } = useAppState();
   const [loaded, setLoaded] = useState(false);
+  const maxTileProviders = isMobilePoster ? MAX_TILE_PROVIDERS_MOBILE : MAX_TILE_PROVIDERS_DESKTOP;
+  const visibleProviders = movieProviders.slice(0, maxTileProviders);
+  const hiddenProviders = movieProviders.slice(maxTileProviders);
+  const hiddenProviderNames = hiddenProviders.map((p) => p.name);
 
   const handleProviderClick = (e: React.MouseEvent, url?: string): void => {
     e.preventDefault();
@@ -157,51 +167,55 @@ export function MovieTile({
             ) : null}
           </>
         ) : null}
-        <button
-          type="button"
-          className="poster-external-btn"
-          data-sp="subdl-link-tile"
-          title="Open subtitles on SubDL (website)"
-          aria-label={`Open SubDL subtitle page for ${title}`}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            searchSubs(title, year ?? undefined);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === " ") e.stopPropagation();
-          }}
-        >
-          <img
-            src={subdlIcon}
-            alt=""
-            className="poster-external-btn__icon"
-            width={28}
-            height={28}
-            decoding="async"
-          />
-        </button>
-        <button
-          type="button"
-          className="poster-external-btn"
-          data-sp="opensubtitles-link-tile"
-          title="Search subtitles on OpenSubtitles"
-          aria-label={`Open OpenSubtitles search for ${title}`}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            window.open(
-              buildOpenSubtitlesBrowseUrl(title, year ?? undefined, imdbLink),
-              "_blank",
-              "noopener,noreferrer",
-            );
-          }}
-          onKeyDown={(e) => {
-            if (e.key === " ") e.stopPropagation();
-          }}
-        >
-          <img src={openSubtitlesIcon} alt="" className="poster-external-btn__icon" />
-        </button>
+        {showSubsLinks ? (
+          <>
+            <button
+              type="button"
+              className="poster-external-btn"
+              data-sp="subdl-link-tile"
+              title="Open subtitles on SubDL (website)"
+              aria-label={`Open SubDL subtitle page for ${title}`}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                searchSubs(title, year ?? undefined);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === " ") e.stopPropagation();
+              }}
+            >
+              <img
+                src={subdlIcon}
+                alt=""
+                className="poster-external-btn__icon"
+                width={28}
+                height={28}
+                decoding="async"
+              />
+            </button>
+            <button
+              type="button"
+              className="poster-external-btn"
+              data-sp="opensubtitles-link-tile"
+              title="Search subtitles on OpenSubtitles"
+              aria-label={`Open OpenSubtitles search for ${title}`}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                window.open(
+                  buildOpenSubtitlesBrowseUrl(title, year ?? undefined, imdbLink, tmdbLink),
+                  "_blank",
+                  "noopener,noreferrer",
+                );
+              }}
+              onKeyDown={(e) => {
+                if (e.key === " ") e.stopPropagation();
+              }}
+            >
+              <img src={openSubtitlesIcon} alt="" className="poster-external-btn__icon" />
+            </button>
+          </>
+        ) : null}
       </fieldset>
       <div className="poster-body">
         {poster ? (
@@ -273,7 +287,7 @@ export function MovieTile({
           {year ? <p className="poster-release-date">{year}</p> : null}
           <div className="poster-providers">
             <div className="icons-container icons-container-tile">
-              {movieProviders.map((provider: TileProvider) => (
+              {visibleProviders.map((provider: TileProvider) => (
                 <button
                   type="button"
                   key={provider.id}
@@ -286,6 +300,15 @@ export function MovieTile({
                   <img className="tile-icons" src={provider.icon ?? ""} alt={provider.name} />
                 </button>
               ))}
+              {hiddenProviderNames.length > 0 ? (
+                <span
+                  className="poster-providers-surplus"
+                  title={`Also available: ${hiddenProviderNames.join(", ")}`}
+                  aria-label={`Also on: ${hiddenProviderNames.join(", ")}`}
+                >
+                  +{hiddenProviderNames.length}
+                </span>
+              ) : null}
             </div>
             <button
               type="button"
