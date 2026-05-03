@@ -4,6 +4,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { MovieTile } from "../MovieTile";
 import { AppStateProvider } from "../AppStateContext";
 import type { TileData } from "../movieTiles";
+import { stubMatchMedia } from "./mockMatchMedia";
 
 describe("MovieTile providers and actions", () => {
   const baseTile: TileData = {
@@ -25,6 +26,7 @@ describe("MovieTile providers and actions", () => {
   };
 
   beforeEach(() => {
+    stubMatchMedia(false);
     vi.spyOn(window, "open").mockImplementation(() => null);
   });
 
@@ -56,6 +58,46 @@ describe("MovieTile providers and actions", () => {
     );
     fireEvent.click(screen.getByTitle("Alternative search"));
     expect(onAlt).toHaveBeenCalledWith(expect.objectContaining({ title: "Test Film" }));
+  });
+
+  it("expands +N to render hidden providers on poster and collapses", () => {
+    const manyProviders = Array.from({ length: 5 }, (_, i) => ({
+      id: `p${i}`,
+      name: `Prov${i}`,
+      icon: `https://example.com/${i}.png`,
+      url: `https://jw.example/${i}`,
+    }));
+    render(
+      <AppStateProvider>
+        <MovieTile data={{ ...baseTile, movieProviders: manyProviders }} suppressAnimations />
+      </AppStateProvider>,
+    );
+    expect(screen.getByTitle("Prov0")).toBeTruthy();
+    expect(screen.getByTitle("Prov3")).toBeTruthy();
+    expect(screen.queryByTitle("Prov4")).toBeNull();
+
+    const expand = screen.getByTestId("provider-surplus-toggle");
+    expect(expand.textContent?.trim()).toBe("+1");
+    expect(expand.getAttribute("title")).toBe("Also available: Prov4");
+
+    fireEvent.click(expand);
+
+    expect(screen.queryByTestId("provider-surplus-toggle")).toBeNull();
+    expect(screen.getByTestId("provider-surplus-collapse")).toBeTruthy();
+    const hiddenBtn = screen.getByTitle("Prov4");
+    expect(hiddenBtn).toBeTruthy();
+
+    fireEvent.click(hiddenBtn);
+
+    expect(window.open).toHaveBeenCalled();
+    const opened = (window.open as ReturnType<typeof vi.fn>).mock.calls.pop()?.[0] as string;
+    expect(opened).toContain("click.justwatch.com");
+    expect(opened).toContain("jw.example/4");
+
+    fireEvent.click(screen.getByTestId("provider-surplus-collapse"));
+
+    expect(screen.queryByTitle("Prov4")).toBeNull();
+    expect(screen.getByTestId("provider-surplus-toggle")).toBeTruthy();
   });
 
   it("renders skeleton when poster missing", () => {
