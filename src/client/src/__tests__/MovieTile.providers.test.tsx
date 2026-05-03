@@ -60,7 +60,7 @@ describe("MovieTile providers and actions", () => {
     expect(onAlt).toHaveBeenCalledWith(expect.objectContaining({ title: "Test Film" }));
   });
 
-  it("shows +N when more streaming providers than visible cap", () => {
+  it("shows +N toggle and opens menu with hidden providers", () => {
     const manyProviders = Array.from({ length: 5 }, (_, i) => ({
       id: `p${i}`,
       name: `Prov${i}`,
@@ -74,11 +74,27 @@ describe("MovieTile providers and actions", () => {
     );
     expect(screen.getByTitle("Prov0")).toBeTruthy();
     expect(screen.getByTitle("Prov3")).toBeTruthy();
-    expect(screen.queryByTitle("Prov4")).toBeNull();
-    const surplus = document.querySelector(".poster-providers-surplus");
-    expect(surplus?.textContent?.trim()).toBe("+1");
-    expect(surplus?.getAttribute("title")).toBe("Also available: Prov4");
-    expect(surplus?.getAttribute("aria-label")).toBe("Also on: Prov4");
+    expect(screen.queryByRole("menu")).toBeNull();
+
+    const toggle = screen.getByTestId("provider-surplus-toggle");
+    expect(toggle.textContent?.trim()).toBe("+1");
+    expect(toggle.getAttribute("title")).toBe("Also available: Prov4");
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+
+    fireEvent.click(toggle);
+
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByRole("menu", { name: "Additional streaming providers" })).toBeTruthy();
+    const hiddenBtn = screen.getByTitle("Prov4");
+    expect(hiddenBtn).toBeTruthy();
+
+    fireEvent.click(hiddenBtn);
+
+    expect(window.open).toHaveBeenCalled();
+    const opened = (window.open as ReturnType<typeof vi.fn>).mock.calls.pop()?.[0] as string;
+    expect(opened).toContain("click.justwatch.com");
+    expect(opened).toContain("jw.example/4");
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
   });
 
   it("renders skeleton when poster missing", () => {

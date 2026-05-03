@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useAppState } from "./AppStateContext";
 import {
@@ -236,6 +236,90 @@ type SubsCornerButtonsProps = Readonly<{
   searchSubs: (query: string, year?: string | number) => void;
 }>;
 
+type PosterSurplusMenuProps = Readonly<{
+  hiddenProviders: TileProvider[];
+  onProviderClick: (e: React.MouseEvent, url?: string) => void;
+}>;
+
+function PosterSurplusMenu({
+  hiddenProviders,
+  onProviderClick,
+}: PosterSurplusMenuProps): React.ReactElement | null {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (): void => setOpen(false);
+    const onDocMouseDown = (e: MouseEvent): void => {
+      const el = wrapRef.current;
+      if (el && !el.contains(e.target as Node)) close();
+    };
+    const onKeyDown = (e: KeyboardEvent): void => {
+      if (e.key === "Escape") close();
+    };
+    document.addEventListener("mousedown", onDocMouseDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onDocMouseDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  if (hiddenProviders.length === 0) return null;
+
+  const names = hiddenProviders.map((p) => p.name).join(", ");
+  const count = hiddenProviders.length;
+
+  return (
+    <div className="poster-providers-surplus-wrap" ref={wrapRef}>
+      <button
+        type="button"
+        className="poster-providers-surplus poster-providers-surplus__toggle"
+        data-testid="provider-surplus-toggle"
+        data-sp="provider-surplus-toggle"
+        aria-expanded={open}
+        aria-haspopup="menu"
+        aria-label={`Open menu: ${count} more streaming options (${names})`}
+        title={`Also available: ${names}`}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setOpen((v) => !v);
+        }}
+      >
+        +{count}
+      </button>
+      {open ? (
+        <div
+          className="poster-providers-surplus-popover"
+          role="menu"
+          aria-label="Additional streaming providers"
+        >
+          {hiddenProviders.map((provider) => (
+            <button
+              key={provider.id}
+              type="button"
+              role="menuitem"
+              className="tile-icon-btn poster-providers-surplus-popover__item"
+              data-sp={provider.name}
+              data-url={provider.url}
+              title={provider.name}
+              onClick={(e) => {
+                e.stopPropagation();
+                onProviderClick(e, provider.url);
+                setOpen(false);
+              }}
+            >
+              <img className="tile-icons" src={provider.icon ?? ""} alt={provider.name} />
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function SubsCornerButtons({
   show,
   title,
@@ -319,7 +403,6 @@ export function MovieTile({
   const maxTileProviders = isMobilePoster ? MAX_TILE_PROVIDERS_MOBILE : MAX_TILE_PROVIDERS_DESKTOP;
   const visibleProviders = movieProviders.slice(0, maxTileProviders);
   const hiddenProviders = movieProviders.slice(maxTileProviders);
-  const hiddenProviderNames = hiddenProviders.map((p) => p.name);
 
   const handleProviderClick = (e: React.MouseEvent, url?: string): void => {
     e.preventDefault();
@@ -417,16 +500,11 @@ export function MovieTile({
                   <img className="tile-icons" src={provider.icon ?? ""} alt={provider.name} />
                 </button>
               ))}
-              {hiddenProviderNames.length > 0 ? (
-                <span
-                  className="poster-providers-surplus"
-                  title={`Also available: ${hiddenProviderNames.join(", ")}`}
-                  aria-label={`Also on: ${hiddenProviderNames.join(", ")}`}
-                >
-                  +{hiddenProviderNames.length}
-                </span>
-              ) : null}
             </div>
+            <PosterSurplusMenu
+              hiddenProviders={hiddenProviders}
+              onProviderClick={handleProviderClick}
+            />
             <button
               type="button"
               className="tile-icon-btn tile-icon-btn--alt-search"
