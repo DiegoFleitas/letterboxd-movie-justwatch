@@ -60,7 +60,7 @@ describe("MovieTile providers and actions", () => {
     expect(onAlt).toHaveBeenCalledWith(expect.objectContaining({ title: "Test Film" }));
   });
 
-  it("shows +N toggle and opens menu with hidden providers", () => {
+  it("expands +N to render hidden providers on poster and collapses", () => {
     const manyProviders = Array.from({ length: 5 }, (_, i) => ({
       id: `p${i}`,
       name: `Prov${i}`,
@@ -74,17 +74,16 @@ describe("MovieTile providers and actions", () => {
     );
     expect(screen.getByTitle("Prov0")).toBeTruthy();
     expect(screen.getByTitle("Prov3")).toBeTruthy();
-    expect(screen.queryByRole("menu")).toBeNull();
+    expect(screen.queryByTitle("Prov4")).toBeNull();
 
-    const toggle = screen.getByTestId("provider-surplus-toggle");
-    expect(toggle.textContent?.trim()).toBe("+1");
-    expect(toggle.getAttribute("title")).toBe("Also available: Prov4");
-    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    const expand = screen.getByTestId("provider-surplus-toggle");
+    expect(expand.textContent?.trim()).toBe("+1");
+    expect(expand.getAttribute("title")).toBe("Also available: Prov4");
 
-    fireEvent.click(toggle);
+    fireEvent.click(expand);
 
-    expect(toggle.getAttribute("aria-expanded")).toBe("true");
-    expect(screen.getByRole("menu", { name: "Additional streaming providers" })).toBeTruthy();
+    expect(screen.queryByTestId("provider-surplus-toggle")).toBeNull();
+    expect(screen.getByTestId("provider-surplus-collapse")).toBeTruthy();
     const hiddenBtn = screen.getByTitle("Prov4");
     expect(hiddenBtn).toBeTruthy();
 
@@ -94,7 +93,11 @@ describe("MovieTile providers and actions", () => {
     const opened = (window.open as ReturnType<typeof vi.fn>).mock.calls.pop()?.[0] as string;
     expect(opened).toContain("click.justwatch.com");
     expect(opened).toContain("jw.example/4");
-    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+
+    fireEvent.click(screen.getByTestId("provider-surplus-collapse"));
+
+    expect(screen.queryByTitle("Prov4")).toBeNull();
+    expect(screen.getByTestId("provider-surplus-toggle")).toBeTruthy();
   });
 
   it("renders skeleton when poster missing", () => {

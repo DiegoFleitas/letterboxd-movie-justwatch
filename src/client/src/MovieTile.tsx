@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useAppState } from "./AppStateContext";
 import {
@@ -236,87 +236,59 @@ type SubsCornerButtonsProps = Readonly<{
   searchSubs: (query: string, year?: string | number) => void;
 }>;
 
-type PosterSurplusMenuProps = Readonly<{
-  hiddenProviders: TileProvider[];
-  onProviderClick: (e: React.MouseEvent, url?: string) => void;
+type ProviderSurplusControlsProps = Readonly<{
+  hiddenCount: number;
+  hiddenNames: string;
+  expanded: boolean;
+  onExpand: () => void;
+  onCollapse: () => void;
 }>;
 
-function PosterSurplusMenu({
-  hiddenProviders,
-  onProviderClick,
-}: PosterSurplusMenuProps): React.ReactElement | null {
-  const [open, setOpen] = useState(false);
-  const wrapRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const close = (): void => setOpen(false);
-    const onDocMouseDown = (e: MouseEvent): void => {
-      const el = wrapRef.current;
-      if (el && !el.contains(e.target as Node)) close();
-    };
-    const onKeyDown = (e: KeyboardEvent): void => {
-      if (e.key === "Escape") close();
-    };
-    document.addEventListener("mousedown", onDocMouseDown);
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("mousedown", onDocMouseDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [open]);
-
-  if (hiddenProviders.length === 0) return null;
-
-  const names = hiddenProviders.map((p) => p.name).join(", ");
-  const count = hiddenProviders.length;
-
-  return (
-    <div className="poster-providers-surplus-wrap" ref={wrapRef}>
+function ProviderSurplusControls({
+  hiddenCount,
+  hiddenNames,
+  expanded,
+  onExpand,
+  onCollapse,
+}: ProviderSurplusControlsProps): React.ReactElement | null {
+  if (hiddenCount === 0) return null;
+  if (!expanded) {
+    return (
       <button
         type="button"
         className="poster-providers-surplus poster-providers-surplus__toggle"
         data-testid="provider-surplus-toggle"
         data-sp="provider-surplus-toggle"
-        aria-expanded={open}
-        aria-haspopup="menu"
-        aria-label={`Open menu: ${count} more streaming options (${names})`}
-        title={`Also available: ${names}`}
+        aria-expanded="false"
+        aria-label={`Show ${hiddenCount} more on poster: ${hiddenNames}`}
+        title={`Also available: ${hiddenNames}`}
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          setOpen((v) => !v);
+          onExpand();
         }}
       >
-        +{count}
+        +{hiddenCount}
       </button>
-      {open ? (
-        <div
-          className="poster-providers-surplus-popover"
-          role="menu"
-          aria-label="Additional streaming providers"
-        >
-          {hiddenProviders.map((provider) => (
-            <button
-              key={provider.id}
-              type="button"
-              role="menuitem"
-              className="tile-icon-btn poster-providers-surplus-popover__item"
-              data-sp={provider.name}
-              data-url={provider.url}
-              title={provider.name}
-              onClick={(e) => {
-                e.stopPropagation();
-                onProviderClick(e, provider.url);
-                setOpen(false);
-              }}
-            >
-              <img className="tile-icons" src={provider.icon ?? ""} alt={provider.name} />
-            </button>
-          ))}
-        </div>
-      ) : null}
-    </div>
+    );
+  }
+  return (
+    <button
+      type="button"
+      className="poster-providers-surplus poster-providers-surplus__toggle poster-providers-surplus__collapse"
+      data-testid="provider-surplus-collapse"
+      data-sp="provider-surplus-collapse"
+      aria-expanded="true"
+      aria-label="Show fewer streaming providers on poster"
+      title="Show fewer"
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onCollapse();
+      }}
+    >
+      −
+    </button>
   );
 }
 
@@ -400,9 +372,12 @@ export function MovieTile({
   ].filter(Boolean) as string[];
   const { searchSubs } = useAppState();
   const [loaded, setLoaded] = useState(false);
+  const [providersExpanded, setProvidersExpanded] = useState(false);
   const maxTileProviders = isMobilePoster ? MAX_TILE_PROVIDERS_MOBILE : MAX_TILE_PROVIDERS_DESKTOP;
   const visibleProviders = movieProviders.slice(0, maxTileProviders);
   const hiddenProviders = movieProviders.slice(maxTileProviders);
+  const providersToShow = providersExpanded ? movieProviders : visibleProviders;
+  const hiddenNames = hiddenProviders.map((p) => p.name).join(", ");
 
   const handleProviderClick = (e: React.MouseEvent, url?: string): void => {
     e.preventDefault();
@@ -485,9 +460,15 @@ export function MovieTile({
         <div className="poster-info">
           <h2 className="poster-title">{title}</h2>
           {year ? <p className="poster-release-date">{year}</p> : null}
-          <div className="poster-providers">
-            <div className="icons-container icons-container-tile">
-              {visibleProviders.map((provider: TileProvider) => (
+          <div
+            className={`poster-providers${providersExpanded ? " poster-providers--expanded" : ""}`}
+          >
+            <div
+              className={`icons-container icons-container-tile${
+                providersExpanded ? " icons-container-tile--expanded" : ""
+              }`}
+            >
+              {providersToShow.map((provider: TileProvider) => (
                 <button
                   type="button"
                   key={provider.id}
@@ -500,11 +481,14 @@ export function MovieTile({
                   <img className="tile-icons" src={provider.icon ?? ""} alt={provider.name} />
                 </button>
               ))}
+              <ProviderSurplusControls
+                hiddenCount={hiddenProviders.length}
+                hiddenNames={hiddenNames}
+                expanded={providersExpanded}
+                onExpand={() => setProvidersExpanded(true)}
+                onCollapse={() => setProvidersExpanded(false)}
+              />
             </div>
-            <PosterSurplusMenu
-              hiddenProviders={hiddenProviders}
-              onProviderClick={handleProviderClick}
-            />
             <button
               type="button"
               className="tile-icon-btn tile-icon-btn--alt-search"

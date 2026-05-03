@@ -1,5 +1,15 @@
+/**
+ * OpenSubtitles.com browse URLs for the **website** (no API key).
+ *
+ * Uses the SPA route shape:
+ * `/en/en/search-all/q-{token}/hearing_impaired-include/machine_translated-/trusted_sources-`
+ * (see live paths such as `q-tt0065143` for IMDb ids).
+ */
 const IMDB_TITLE_PATH_RE = /imdb\.com\/title\/(tt\d+)/i;
-const TMDB_MOVIE_PATH_RE = /themoviedb\.org\/movie\/(\d+)/i;
+
+const SEARCH_ALL_BASE = "https://www.opensubtitles.com/en/en/search-all";
+/** Default filter segments after the `q-…` slug (matches site navigation URLs). */
+const SEARCH_ALL_TAIL = "/hearing_impaired-include/machine_translated-/trusted_sources-";
 
 function imdbTtFromLink(imdbLink: string | undefined): string | null {
   if (!imdbLink) return null;
@@ -7,16 +17,27 @@ function imdbTtFromLink(imdbLink: string | undefined): string | null {
   return m ? m[1] : null;
 }
 
+/** TMDB movie URLs always contain `/movie/{numericId}`; locale segments may precede `movie` (e.g. `/es/movie/123`). */
+function isTheMovieDbHostname(hostname: string): boolean {
+  return hostname === "themoviedb.org" || hostname.endsWith(".themoviedb.org");
+}
+
 function tmdbNumericFromLink(tmdbLink: string | undefined): string | null {
   if (!tmdbLink) return null;
-  const m = TMDB_MOVIE_PATH_RE.exec(tmdbLink);
+  try {
+    const { hostname } = new URL(tmdbLink);
+    if (!isTheMovieDbHostname(hostname.toLowerCase())) return null;
+  } catch {
+    return null;
+  }
+  const m = /\/movie\/(\d+)/i.exec(tmdbLink);
   return m ? m[1] : null;
 }
 
-function subtitlesSearchUrl(query: string): string {
-  const params = new URLSearchParams();
-  params.set("query", query);
-  return `https://www.opensubtitles.com/en/subtitles?${params.toString()}`;
+/** `queryToken` becomes the segment after `q-` (encoded for path safety). */
+function searchAllBrowseUrl(queryToken: string): string {
+  const encoded = encodeURIComponent(queryToken);
+  return `${SEARCH_ALL_BASE}/q-${encoded}${SEARCH_ALL_TAIL}`;
 }
 
 /** Browse OpenSubtitles.com for this film (no API key; opens website search). */
@@ -28,14 +49,14 @@ export function buildOpenSubtitlesBrowseUrl(
 ): string {
   const tt = imdbTtFromLink(imdbLink);
   if (tt != null) {
-    return subtitlesSearchUrl(`imdb:${tt}`);
+    return searchAllBrowseUrl(tt);
   }
   const tmdbId = tmdbNumericFromLink(tmdbLink);
   if (tmdbId != null) {
-    return subtitlesSearchUrl(`tmdb:${tmdbId}`);
+    return searchAllBrowseUrl(`tmdb:${tmdbId}`);
   }
   const name = title?.trim() || "film";
   const y = year != null && String(year).trim() !== "" ? String(year).trim() : "";
   const searchText = y ? `${name} ${y}` : name;
-  return subtitlesSearchUrl(searchText);
+  return searchAllBrowseUrl(searchText);
 }

@@ -221,8 +221,11 @@
   gap: 4px;
   max-width: 100%;
   min-width: 0;
-  /* overflow: visible so the +N provider popover can extend above the row */
   overflow: visible;
+}
+
+.poster-providers--expanded {
+  align-items: flex-start;
 }
 
 .icons-container-tile {
@@ -236,9 +239,11 @@
   overflow: hidden;
 }
 
-.poster-providers-surplus-wrap {
-  position: relative;
-  flex-shrink: 0;
+.icons-container-tile--expanded {
+  flex-wrap: wrap;
+  overflow: visible;
+  align-items: center;
+  align-content: center;
 }
 
 .poster-providers-surplus {
@@ -275,30 +280,8 @@
   outline-offset: 2px;
 }
 
-.poster-providers-surplus-popover {
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  margin-bottom: 6px;
-  z-index: 8;
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 8px;
-  max-width: min(240px, 70vw);
-  overflow-x: auto;
-  background: rgba(10, 12, 16, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: var(--radius-sm);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
-}
-
-.poster-providers-surplus-popover__item:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
-  border-radius: 4px;
+.poster-providers-surplus__collapse {
+  min-width: 1.75rem;
 }
 .tile-icons img {
   width: 25px;
