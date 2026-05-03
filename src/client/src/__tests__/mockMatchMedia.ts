@@ -19,10 +19,11 @@ function createMediaQueryList(matches: boolean, query: string): MediaQueryList {
  */
 export function stubMatchMedia(matches: boolean): void {
   const impl = (query: string): MediaQueryList => createMediaQueryList(matches, query);
-  if (typeof window.matchMedia === "function") {
-    vi.spyOn(window, "matchMedia").mockImplementation(impl);
+  const win = globalThis.window;
+  if (typeof win.matchMedia === "function") {
+    vi.spyOn(win, "matchMedia").mockImplementation(impl);
   } else {
-    Object.defineProperty(window, "matchMedia", {
+    Object.defineProperty(win, "matchMedia", {
       configurable: true,
       writable: true,
       value: vi.fn().mockImplementation(impl),

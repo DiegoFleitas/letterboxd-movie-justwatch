@@ -3,13 +3,13 @@ const TMDB_MOVIE_PATH_RE = /themoviedb\.org\/movie\/(\d+)/i;
 
 function imdbTtFromLink(imdbLink: string | undefined): string | null {
   if (!imdbLink) return null;
-  const m = imdbLink.match(IMDB_TITLE_PATH_RE);
+  const m = IMDB_TITLE_PATH_RE.exec(imdbLink);
   return m ? m[1] : null;
 }
 
 function tmdbNumericFromLink(tmdbLink: string | undefined): string | null {
   if (!tmdbLink) return null;
-  const m = tmdbLink.match(TMDB_MOVIE_PATH_RE);
+  const m = TMDB_MOVIE_PATH_RE.exec(tmdbLink);
   return m ? m[1] : null;
 }
 
