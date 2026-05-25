@@ -2,25 +2,25 @@
 
 Bun scripts from `package.json`. Run from the repository root.
 
-| Command                                                                 | Purpose                                                                                                                                                                                                  |
-| ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bun run dev`                                                           | Vite + Fastify together                                                                                                                                                                                  |
-| `bun run fe:dev` / `bun run be:dev`                                     | Frontend or backend only                                                                                                                                                                                 |
-| `bun run start`                                                         | Production-style: `bun src/server/main.ts`                                                                                                                                                               |
-| `bun run build`                                                         | Vite production build → `src/client/dist/`                                                                                                                                                               |
-| `bun run sentry:release:frontend`                                       | Create/finalize Sentry release and upload frontend source maps (`src/client/dist/assets`)                                                                                                                |
-| `bun run test`                                                          | All Vitest tests — [Tests](Tests); in-repo [`tests/README.md`](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/blob/master/tests/README.md)                                                   |
-| `bun run test:e2e`                                                      | Playwright — run **`bun run dev`** first — [E2E Playwright](E2E-Playwright); in-repo [`tests/e2e/README.md`](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/blob/master/tests/e2e/README.md) |
-| `bun run test:poster-flow`                                              | Manual poster checks against **localhost:3000** (not part of `bun run test`)                                                                                                                             |
-| `bun run typecheck`                                                     | TypeScript (root backend + `src/client/`)                                                                                                                                                                |
-| `bun run knip`                                                          | [Knip](https://knip.dev): unused dependencies, files, exports (see **Knip** below)                                                                                                                       |
-| `bun run lint` / `bun run format:check`                                 | ESLint / Prettier                                                                                                                                                                                        |
-| `bun run build:providers`                                               | Regenerate canonical provider data (`build:providers:dry-run` to preview)                                                                                                                                |
-| `bun run redis:reset`                                                   | Default Redis dev reset flow (smart: snapshot exists -> validate+seed, missing -> export+validate+seed) — [Redis and local dev](Redis-and-local-dev)                                                     |
-| `bun run export-redis` / `bun run seed-redis` / `bun run seed:validate` | Advanced/manual Redis snapshot steps — [Redis and local dev](Redis-and-local-dev); in-repo [`redis/README.md`](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/blob/master/redis/README.md)   |
-| `bun run fly:deploy`                                                    | Optional local `flyctl deploy` (production normally uses GitHub Actions)                                                                                                                                 |
-| `bun run fly:deploy:with-local-build`                                   | Optional: `vite build` first, then `flyctl deploy`                                                                                                                                                       |
-| `bun run fly:logs` / `fly:stop` / `fly:start` / `fly:ssh`               | Fly.io helpers                                                                                                                                                                                           |
+| Command                             | Purpose                                                                                                                                                                                                  |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bun run dev`                       | Vite + Fastify together                                                                                                                                                                                  |
+| `bun run fe:dev` / `bun run be:dev` | Frontend or backend only                                                                                                                                                                                 |
+| `bun run start`                     | Production-style: `bun src/server/main.ts`                                                                                                                                                               |
+| `bun run build`                     | Vite production build → `src/client/dist/`                                                                                                                                                               |
+| `bun run sentry:release:frontend`   | Create/finalize Sentry release and upload frontend source maps (`src/client/dist/assets`)                                                                                                                |
+| `bun run test`                      | All Vitest tests — [Tests](Tests); in-repo [`tests/README.md`](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/blob/master/tests/README.md)                                                   |
+| `bun run test:e2e`                  | Playwright — run **`bun run dev`** first — [E2E Playwright](E2E-Playwright); in-repo [`tests/e2e/README.md`](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/blob/master/tests/e2e/README.md) |
+
+| `bun run typecheck` | TypeScript (root backend + `src/client/`) |
+| `bun run knip` | [Knip](https://knip.dev): unused dependencies, files, exports (see **Knip** below) |
+| `bun run lint` / `bun run format:check` | ESLint / Prettier |
+| `bun run build:providers` | Regenerate canonical provider data (`build:providers:dry-run` to preview) |
+| `bun run redis:reset` | Default Redis dev reset flow (smart: snapshot exists -> validate+seed, missing -> export+validate+seed) — [Redis and local dev](Redis-and-local-dev) |
+| `bun run export-redis` / `bun run seed-redis` / `bun run seed:validate` | Advanced/manual Redis snapshot steps — [Redis and local dev](Redis-and-local-dev); in-repo [`redis/README.md`](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/blob/master/redis/README.md) |
+| `bun run fly:deploy` | Optional local `flyctl deploy` (production normally uses GitHub Actions) |
+| `bun run fly:deploy:with-local-build` | Optional: `vite build` first, then `flyctl deploy` |
+| `bun run fly:logs` / `fly:stop` / `fly:start` / `fly:ssh` | Fly.io helpers |
 
 ## Knip
 
