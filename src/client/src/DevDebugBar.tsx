@@ -518,7 +518,7 @@ export function DevDebugBar(): React.ReactElement | null {
       });
       return;
     }
-    // After POST /api/dev/* the backend may restart (e.g. nodemon). Retry cache-status so the
+    // After POST /api/dev/* the backend may restart (e.g. Bun --hot). Retry cache-status so the
     // UI does not briefly error while the proxy target comes back.
     const cacheStatusRetries = 8;
     const cacheStatusRetryDelayMs = 400;
