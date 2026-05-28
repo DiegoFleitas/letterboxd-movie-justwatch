@@ -51,7 +51,15 @@
     "fly:logs": "flyctl logs -a $(bun -e \"import pkg from './package.json'; console.log(pkg.name)\")",
     "fly:stop": "flyctl scale count 0 -a $(bun -e \"import pkg from './package.json'; console.log(pkg.name)\")",
     "fly:start": "flyctl scale count 1 -a $(bun -e \"import pkg from './package.json'; console.log(pkg.name)\")",
-    "fly:ssh": "flyctl ssh console -a $(bun -e \"import pkg from './package.json'; console.log(pkg.name)\")"
+    "fly:ssh": "flyctl ssh console -a $(bun -e \"import pkg from './package.json'; console.log(pkg.name)\")",
+    "fly:audit": "bash devops/fly-ops/bin/fly-post-cost-check.sh",
+    "fly:inventory": "bash devops/fly-ops/bin/fly-inventory.sh",
+    "fly:inventory:json": "bash devops/fly-ops/bin/fly-inventory.sh --json",
+    "fly:cost": "bash devops/fly-ops/bin/fly-inventory.sh --cost",
+    "fly:redis:audit": "bash devops/fly-ops/bin/fly-redis-audit.sh",
+    "fly:memory:check": "bash devops/fly-ops/bin/fly-memory-check.sh",
+    "fly:volumes:prune": "bash devops/fly-ops/bin/fly-volumes-prune.sh",
+    "fly:redis:prune": "bash devops/fly-ops/bin/fly-redis-prune.sh"
   },
   "repository": {
     "type": "git",
