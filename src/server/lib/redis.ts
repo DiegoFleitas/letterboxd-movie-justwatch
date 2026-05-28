@@ -1,5 +1,6 @@
 import Redis from "ioredis";
 import crypto from "crypto";
+import { memoryCache } from "./memoryCache.js";
 
 /** ioredis pipeline batching (used to avoid N parallel round-trips for EXISTS/TYPE/GET). */
 interface RedisPipelineLike {
@@ -80,9 +81,12 @@ const getRedisClient = async (): Promise<RedisClientLike | null> => {
 };
 
 export const getCacheValue = async (key: string): Promise<unknown> => {
+  if (isRedisDisabled()) {
+    return memoryCache.get(getCacheKey(key));
+  }
   const client = await getRedisClient();
   if (!client) {
-    return null;
+    return memoryCache.get(getCacheKey(key));
   }
   try {
     const hashedKey = getCacheKey(key);
@@ -110,9 +114,14 @@ export const setCacheValue = async (
   ttl: number = 60,
   category: string | string[] | null = null,
 ): Promise<boolean | null> => {
+  if (isRedisDisabled()) {
+    memoryCache.set(getCacheKey(key), value, ttl);
+    return true;
+  }
   const client = await getRedisClient();
   if (!client) {
-    return null;
+    memoryCache.set(getCacheKey(key), value, ttl);
+    return true;
   }
   try {
     const serializedValue = JSON.stringify(value);
