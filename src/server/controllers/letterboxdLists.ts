@@ -26,7 +26,7 @@ import {
   HTTP_STATUS_OK,
 } from "../httpStatusCodes.js";
 
-const cacheTtl = Number(process.env.CACHE_TTL) || 20;
+const cacheTtl = Number(process.env.CACHE_TTL) || 300;
 
 const fetchList = async ({
   url,
