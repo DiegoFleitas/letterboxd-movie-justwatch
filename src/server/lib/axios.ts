@@ -70,7 +70,7 @@ instance.interceptors.response.use(
 );
 
 export default (keepAlive?: boolean): AxiosInstance => {
-  if (keepAlive) {
+  if (keepAlive || keepAlive === undefined) {
     instance.defaults.httpsAgent = new https.Agent({ keepAlive: true });
   }
   return instance;
