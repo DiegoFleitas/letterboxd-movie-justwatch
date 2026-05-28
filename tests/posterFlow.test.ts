@@ -23,7 +23,7 @@ describe("poster flow", () => {
 
   beforeAll(async () => {
     _injectRedisClientForTest(createInMemoryRedisMock() as never);
-    const created = createServer();
+    const created = await createServer();
     const { port, close } = await created.start(0);
     baseUrl = `http://127.0.0.1:${port}`;
     closeServer = close;

@@ -16,7 +16,7 @@ describe("createServer", () => {
 
   it("error handler returns JSON 500 for uncaught route errors", async () => {
     const { createServer } = await import("@server/createServer.js");
-    const created = createServer();
+    const created = await createServer();
     created.app.get("/__test_throw", async () => {
       throw new Error("planned failure");
     });
@@ -35,7 +35,7 @@ describe("createServer", () => {
     const shutdownPosthog = vi.spyOn(posthogLib, "shutdownPosthog").mockResolvedValue(undefined);
 
     const { createServer } = await import("@server/createServer.js");
-    const created = createServer();
+    const created = await createServer();
     const { close } = await created.start(0);
     try {
       await close();

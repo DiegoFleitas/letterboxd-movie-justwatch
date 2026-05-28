@@ -13,8 +13,12 @@ import {
 import { isHealthy, isRedisDisabled } from "./lib/redis.js";
 import type { FastifyHttpBinder } from "./fastifyHttpBridge.js";
 import { HTTP_STATUS_INTERNAL_SERVER_ERROR, HTTP_STATUS_OK } from "./httpStatusCodes.js";
+import rateLimit from "@fastify/rate-limit";
 
-export function registerFastifyAppApi(app: FastifyInstance, binder: FastifyHttpBinder): void {
+export async function registerFastifyAppApi(
+  app: FastifyInstance,
+  binder: FastifyHttpBinder,
+): Promise<void> {
   const { makeFastifyHandler, setCacheControlFastify } = binder;
 
   app.get("/healthcheck", async (_request, reply) => {
@@ -33,13 +37,28 @@ export function registerFastifyAppApi(app: FastifyInstance, binder: FastifyHttpB
     }
   });
 
-  app.post(HTTP_API_PATHS.searchMovie, setCacheControlFastify(searchMovie));
-  app.post(HTTP_API_PATHS.poster, setCacheControlFastify(poster));
-  app.post(HTTP_API_PATHS.letterboxdWatchlist, setCacheControlFastify(letterboxdWatchlist));
-  app.post(HTTP_API_PATHS.letterboxdCustomList, setCacheControlFastify(letterboxdCustomList));
-  app.post(HTTP_API_PATHS.letterboxdPoster, setCacheControlFastify(letterboxdPoster));
-  app.post(HTTP_API_PATHS.alternativeSearch, setCacheControlFastify(alternativeSearch));
-  app.post(HTTP_API_PATHS.subdlSearch, setCacheControlFastify(subdlSearch));
+  await app.register(async function apiRoutes(api: FastifyInstance) {
+    api.register(rateLimit, {
+      max: 30,
+      timeWindow: "1 minute",
+      keyGenerator: (request) => {
+        return request.ip;
+      },
+      errorResponseBuilder: (_request, context) => ({
+        error: "Too many requests, please try again later",
+        statusCode: 429,
+        retryAfter: context.after,
+      }),
+    });
 
-  app.all(HTTP_API_PROXY_ROUTE, makeFastifyHandler(proxy));
+    api.post(HTTP_API_PATHS.searchMovie, setCacheControlFastify(searchMovie));
+    api.post(HTTP_API_PATHS.poster, setCacheControlFastify(poster));
+    api.post(HTTP_API_PATHS.letterboxdWatchlist, setCacheControlFastify(letterboxdWatchlist));
+    api.post(HTTP_API_PATHS.letterboxdCustomList, setCacheControlFastify(letterboxdCustomList));
+    api.post(HTTP_API_PATHS.letterboxdPoster, setCacheControlFastify(letterboxdPoster));
+    api.post(HTTP_API_PATHS.alternativeSearch, setCacheControlFastify(alternativeSearch));
+    api.post(HTTP_API_PATHS.subdlSearch, setCacheControlFastify(subdlSearch));
+
+    api.all(HTTP_API_PROXY_ROUTE, makeFastifyHandler(proxy));
+  });
 }

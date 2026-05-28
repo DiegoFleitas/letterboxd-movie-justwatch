@@ -10,7 +10,7 @@ describe("backend integration (fastify)", () => {
 
   beforeAll(async () => {
     _injectRedisClientForTest(createInMemoryRedisMock() as never);
-    const created = createServer();
+    const created = await createServer();
     const { port, close } = await created.start(0);
     baseUrl = `http://127.0.0.1:${port}`;
     closeServer = close;
@@ -99,7 +99,7 @@ describe("backend integration (DISABLE_REDIS)", () => {
   beforeAll(async () => {
     _resetRedisForTesting();
     process.env.DISABLE_REDIS = "1";
-    const created = createServer();
+    const created = await createServer();
     const { port, close } = await created.start(0);
     baseUrl = `http://127.0.0.1:${port}`;
     closeServer = close;
@@ -159,7 +159,7 @@ describe("backend integration (Redis unhealthy)", () => {
       quit: () => Promise.resolve(undefined as void),
       on: () => {},
     } as never);
-    const created = createServer();
+    const created = await createServer();
     const { port, close } = await created.start(0);
     baseUrl = `http://127.0.0.1:${port}`;
     closeServer = close;
