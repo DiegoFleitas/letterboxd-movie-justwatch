@@ -34,6 +34,18 @@ export default defineConfig({
     sourcemap: "hidden",
     rollupOptions: {
       input: path.resolve(__dirname, "src", "client", "index.html"),
+      output: {
+        manualChunks(id: string) {
+          if (
+            id.includes("node_modules/react/") ||
+            id.includes("node_modules/react-dom/") ||
+            id.includes("node_modules/react-hot-toast/")
+          )
+            return "vendor";
+          if (id.includes("node_modules/framer-motion/")) return "animation";
+          if (id.includes("node_modules/posthog-js/")) return "analytics";
+        },
+      },
     },
   },
   server: {
