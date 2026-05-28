@@ -64,22 +64,15 @@ describe("letterboxdHttp", () => {
     });
   });
 
-  it("fetchLetterboxdBinaryOk succeeds for image content-type", async () => {
-    fetchMock.mockResolvedValue(
-      new Response(new Uint8Array([1, 2, 3]), {
-        status: 200,
-        headers: { "content-type": "image/jpeg" },
-      }),
-    );
+  it("fetchLetterboxdBinaryOk succeeds for HEAD with any status 200", async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
     await expect(
       fetchLetterboxdBinaryOk("https://a.ltrbxd.com/poster.jpg", {}),
     ).resolves.toBeUndefined();
   });
 
-  it("fetchLetterboxdBinaryOk throws on wrong content type", async () => {
-    fetchMock.mockResolvedValue(
-      new Response("x", { status: 200, headers: { "content-type": "text/plain" } }),
-    );
+  it("fetchLetterboxdBinaryOk throws on HTTP error", async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 404 }));
     await expect(fetchLetterboxdBinaryOk("https://a.ltrbxd.com/x", {})).rejects.toThrow(
       LetterboxdHttpError,
     );
