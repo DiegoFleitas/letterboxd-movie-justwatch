@@ -1,5 +1,6 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import * as Sentry from "@sentry/node";
+import compress from "@fastify/compress";
 import { disconnectRedis } from "./lib/redis.js";
 import { getCanonicalProviderMap } from "./lib/loadCanonicalProviders.js";
 import { getPosthog, shutdownPosthog } from "./lib/posthog.js";
@@ -19,10 +20,12 @@ export interface CreatedServer {
   start: (port?: number) => Promise<StartedServer>;
 }
 
-export function createServer(): CreatedServer {
+export async function createServer(): Promise<CreatedServer> {
   const app: FastifyInstance = Fastify({
     logger: true,
   });
+
+  await app.register(compress, { global: true, threshold: 1024 });
 
   const canonicalProviderMap = getCanonicalProviderMap();
   (app as FastifyInstance & { locals?: { [key: string]: unknown } }).locals = {
@@ -31,7 +34,7 @@ export function createServer(): CreatedServer {
 
   const binder = createFastifyHttpBinder(app);
   const cachedIndexHtml = buildIndexHtmlForClient();
-  registerFastifyWiring(app, binder, cachedIndexHtml);
+  await registerFastifyWiring(app, binder, cachedIndexHtml);
 
   const posthog = getPosthog();
   app.setErrorHandler(async (err, request, reply) => {

@@ -1,15 +1,17 @@
 import "./instrument.js";
 import * as Sentry from "@sentry/node";
 import { getLetterboxdFetchTimeoutMs } from "./lib/letterboxdFetchTimeout.js";
+import { memoryCache } from "./lib/memoryCache.js";
 import { createServer } from "./createServer.js";
 
 const port = Number(process.env.PORT ?? 3000);
 
 async function main() {
-  const { port: actualPort, close } = await createServer().start(port);
+  const { port: actualPort, close } = await (await createServer()).start(port);
 
   console.log(`Letterboxd outbound fetch timeout: ${getLetterboxdFetchTimeoutMs()} ms`);
   console.log(`fastify app listening on port http://localhost:${actualPort}`);
+  memoryCache.startCleanup();
 
   const gracefulShutdown = async () => {
     try {

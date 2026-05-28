@@ -6,14 +6,14 @@ import { registerFastifySentryTestRoute } from "./registerFastifySentryTestRoute
 import { registerFastifySessionPlugins } from "./registerFastifySessionPlugins.js";
 import { registerFastifyStaticAndIndex } from "./registerFastifyStaticAndIndex.js";
 
-export function registerFastifyWiring(
+export async function registerFastifyWiring(
   app: FastifyInstance,
   binder: FastifyHttpBinder,
   cachedIndexHtml: string | null,
-): void {
+): Promise<void> {
   registerFastifyStaticAndIndex(app, cachedIndexHtml);
   registerFastifySessionPlugins(app);
-  registerFastifyAppApi(app, binder);
+  await registerFastifyAppApi(app, binder);
   registerDevHttpRoutes(app);
   registerFastifySentryTestRoute(app);
 }
