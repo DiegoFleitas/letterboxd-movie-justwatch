@@ -159,9 +159,9 @@ describe("Redis cache", () => {
     expect(await setCacheValue("k", { a: 1 }, 60)).toBeNull();
   });
 
-  it("setCacheValue returns null when client is null", async () => {
+  it("setCacheValue writes to memory cache when client is null", async () => {
     _injectRedisClientForTest(null);
-    expect(await setCacheValue("k", "v", 60)).toBeNull();
+    expect(await setCacheValue("k", "v", 60)).toBe(true);
   });
 
   it("setCacheValue calls set with EX and ttl and returns true", async () => {
