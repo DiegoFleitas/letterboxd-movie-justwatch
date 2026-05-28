@@ -50,21 +50,6 @@ function assertHtmlResponseContentType(res: Response): void {
   );
 }
 
-function assertImageResponseContentType(res: Response): void {
-  const raw = res.headers.get("content-type");
-  if (!raw) {
-    return;
-  }
-  const mt = primaryMediaType(raw);
-  if (mt.startsWith("image/") || mt === "application/octet-stream") {
-    return;
-  }
-  throw new LetterboxdHttpError(
-    `Expected image for poster URL, got Content-Type: ${raw}`,
-    res.status,
-  );
-}
-
 export class LetterboxdHttpError extends Error {
   readonly status: number;
   constructor(message: string, status: number) {
@@ -144,15 +129,18 @@ export async function fetchLetterboxdHtml(
   return res.text();
 }
 
-/** Probe URL (e.g. poster image); drains body. Throws LetterboxdHttpError if not ok. */
+/** Probe URL (e.g. poster image) via HEAD — no body downloaded. */
 export async function fetchLetterboxdBinaryOk(
   url: string,
   headers: Record<string, string>,
 ): Promise<void> {
-  const res = await fetchWith429Retry(url, headers);
+  const timeoutMs = getLetterboxdFetchTimeoutMs();
+  const res = await fetch(url, {
+    method: "HEAD",
+    headers,
+    signal: AbortSignal.timeout(timeoutMs),
+  });
   if (!res.ok) {
     throw new LetterboxdHttpError(`HTTP ${res.status}`, res.status);
   }
-  assertImageResponseContentType(res);
-  await res.arrayBuffer();
 }
