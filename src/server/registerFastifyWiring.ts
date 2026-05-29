@@ -38,12 +38,7 @@ export async function registerFastifyWiring(
         ],
         "font-src": ["'self'", "https://fonts.cdnfonts.com", "https://fonts.gstatic.com"],
         "img-src": ["'self'", "https:", "data:"],
-        "connect-src": [
-          "'self'",
-          "https://ipapi.co",
-          process.env.POSTHOG_HOST || "https://us.i.posthog.com",
-          ...resolveSentryConnectSrc(),
-        ],
+        "connect-src": ["'self'", "https://ipapi.co", ...resolveSentryConnectSrc()],
         "frame-ancestors": ["'none'"],
         "base-uri": ["'self'"],
         "form-action": ["'self'"],

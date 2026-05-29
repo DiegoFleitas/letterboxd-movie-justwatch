@@ -43,7 +43,7 @@ export default defineConfig({
           )
             return "vendor";
           if (id.includes("node_modules/framer-motion/")) return "animation";
-          if (id.includes("node_modules/posthog-js/")) return "analytics";
+          if (id.includes("node_modules/posthog-js/")) return "chunk-vendor2";
         },
       },
     },
