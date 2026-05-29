@@ -117,6 +117,10 @@ export function mergeTileState(
   const incomingPoster = normalizePosterPath(data?.poster);
   const existingPoster = normalizePosterPath(existing?.poster);
   const rawLink = data?.link ?? existing?.link ?? "";
+  const resolvedPoster =
+    incomingPoster && (!isPlaceholderPoster(incomingPoster) || !existingPoster)
+      ? incomingPoster
+      : (existingPoster ?? null);
   const tileData: TileData = {
     id: existingId,
     title,
@@ -127,12 +131,7 @@ export function mergeTileState(
     movieProviders: Object.prototype.hasOwnProperty.call(data ?? {}, "movieProviders")
       ? (data!.movieProviders ?? [])
       : (existing?.movieProviders ?? []),
-    poster:
-      incomingPoster && !isPlaceholderPoster(incomingPoster)
-        ? incomingPoster
-        : incomingPoster && !existingPoster
-          ? incomingPoster
-          : (existingPoster ?? null),
+    poster: resolvedPoster,
   };
   if (data?.link && !tileData.link) tileData.link = normalizeLetterboxdFilmLink(data.link);
   if (!tileData.year) tileData.year = year;
