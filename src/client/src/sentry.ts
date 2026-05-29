@@ -24,24 +24,27 @@ function getRuntimeString(value: unknown): string {
 
 export function initFrontendSentry(): void {
   const dsn =
-    getRuntimeString(window.__SENTRY_DSN__) || getRuntimeString(import.meta.env.VITE_SENTRY_DSN);
+    getRuntimeString((globalThis as { __SENTRY_DSN__?: string }).__SENTRY_DSN__) ||
+    getRuntimeString(import.meta.env.VITE_SENTRY_DSN);
   if (!dsn) return;
 
   const environment =
-    getRuntimeString(window.__SENTRY_ENVIRONMENT__) ||
+    getRuntimeString((globalThis as { __SENTRY_ENVIRONMENT__?: string }).__SENTRY_ENVIRONMENT__) ||
     getRuntimeString(import.meta.env.MODE) ||
     "development";
   const release =
-    getRuntimeString(window.__SENTRY_RELEASE__) ||
+    getRuntimeString((globalThis as { __SENTRY_RELEASE__?: string }).__SENTRY_RELEASE__) ||
     getRuntimeString(import.meta.env.VITE_SENTRY_RELEASE);
   const tracesSampleRate = resolveTracesSampleRate(
-    getRuntimeString(window.__SENTRY_TRACES_SAMPLE_RATE__) ||
-      getRuntimeString(import.meta.env.VITE_SENTRY_TRACES_SAMPLE_RATE),
+    getRuntimeString(
+      (globalThis as { __SENTRY_TRACES_SAMPLE_RATE__?: string }).__SENTRY_TRACES_SAMPLE_RATE__,
+    ) || getRuntimeString(import.meta.env.VITE_SENTRY_TRACES_SAMPLE_RATE),
     environment,
   );
   const sendDefaultPii =
-    getRuntimeString(window.__SENTRY_SEND_DEFAULT_PII__) === "true" ||
-    import.meta.env.VITE_SENTRY_SEND_DEFAULT_PII === "true";
+    getRuntimeString(
+      (globalThis as { __SENTRY_SEND_DEFAULT_PII__?: string }).__SENTRY_SEND_DEFAULT_PII__,
+    ) === "true" || import.meta.env.VITE_SENTRY_SEND_DEFAULT_PII === "true";
 
   Sentry.init({
     dsn,

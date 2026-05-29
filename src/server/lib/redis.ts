@@ -1,5 +1,5 @@
 import Redis from "ioredis";
-import crypto from "crypto";
+import crypto from "node:crypto";
 import { memoryCache } from "./memoryCache.js";
 
 /** ioredis pipeline batching (used to avoid N parallel round-trips for EXISTS/TYPE/GET). */
@@ -489,7 +489,7 @@ export const estimateSearchMovieStringKeyCount = async (): Promise<{
           .catch(fail);
       });
       stream.on("end", () => {
-        void workChain.then(() => resolve()).catch(fail);
+        workChain.then(() => resolve()).catch(fail);
       });
     });
 

@@ -28,7 +28,7 @@ export const SEARCH_CONCURRENCY_MOBILE = 2;
 const LIST_API_TIMEOUT_MS = 120_000;
 
 export function resolveSearchConcurrency(): number {
-  if (typeof navigator !== "undefined" && /Android/i.test(navigator.userAgent)) {
+  if (typeof navigator !== "undefined" && /Android/i.test(globalThis.navigator.userAgent)) {
     return SEARCH_CONCURRENCY_MOBILE;
   }
   return SEARCH_CONCURRENCY_DEFAULT;
@@ -156,7 +156,7 @@ export function useLetterboxdList(
             totalPages,
             lastPage,
           };
-          noPosterReportTimeoutRef.current = window.setTimeout(() => {
+          noPosterReportTimeoutRef.current = globalThis.setTimeout(() => {
             noPosterReportTimeoutRef.current = undefined;
             const tiles = listMovieTilesRef.current;
             const symptom = classifyListReportSymptom(tiles);
@@ -170,7 +170,7 @@ export function useLetterboxdList(
               totalPages: meta.totalPages,
               lastPage: meta.lastPage,
               tileCount: Object.keys(tiles).length,
-              pageUrl: window.location.href,
+              pageUrl: globalThis.location.href,
               userAgent: navigator.userAgent,
             });
             showMessage({ text: listReportToastCopy(symptom), url: issueUrl }, true);
@@ -263,14 +263,15 @@ export function useLetterboxdList(
             const handleScroll = () => {
               if (allPagesLoadedRef.current) {
                 if (scrollListenerRef.current) {
-                  window.removeEventListener("scroll", scrollListenerRef.current);
+                  globalThis.removeEventListener("scroll", scrollListenerRef.current);
                   scrollListenerRef.current = null;
                 }
                 return;
               }
               if (
                 !isLoadingRef.current &&
-                window.innerHeight + window.scrollY + 100 >= document.documentElement.scrollHeight
+                globalThis.innerHeight + globalThis.scrollY + 100 >=
+                  document.documentElement.scrollHeight
               ) {
                 const d = dataRef.current;
                 if (!d) return;
@@ -282,7 +283,7 @@ export function useLetterboxdList(
               }
             };
             scrollListenerRef.current = handleScroll;
-            window.addEventListener("scroll", handleScroll, { passive: true });
+            globalThis.addEventListener("scroll", handleScroll, { passive: true });
           }
         } else {
           toggleNotice(
@@ -441,7 +442,7 @@ export function useLetterboxdList(
     const batchMap = batchMapRef.current;
     return () => {
       if (scrollListenerRef.current) {
-        window.removeEventListener("scroll", scrollListenerRef.current);
+        globalThis.removeEventListener("scroll", scrollListenerRef.current);
       }
       batchMap.clear();
       clearTimeout(noPosterReportTimeoutRef.current);

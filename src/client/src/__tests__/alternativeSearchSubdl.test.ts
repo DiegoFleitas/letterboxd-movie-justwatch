@@ -18,7 +18,7 @@ describe("searchSubs", () => {
 
   beforeEach(() => {
     vi.stubGlobal("fetch", fetchMock);
-    vi.spyOn(window, "open").mockImplementation(() => null);
+    vi.spyOn(globalThis, "open").mockImplementation(() => null);
     vi.clearAllMocks();
   });
 

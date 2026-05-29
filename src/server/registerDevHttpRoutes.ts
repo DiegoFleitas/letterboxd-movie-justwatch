@@ -52,7 +52,7 @@ function toDevCommandError(
 export function registerDevHttpRoutes(app: FastifyInstance): void {
   if (isNodeProductionEnvironment()) return;
 
-  void app.register(
+  app.register(
     async (dev) => {
       await dev.register(rateLimit, {
         max: 15,

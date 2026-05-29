@@ -11,11 +11,11 @@ export function registerFastifySessionPlugins(app: FastifyInstance): void {
   }
   const sessionSecret = appSecretKey || randomBytes(32).toString("hex");
 
-  void app.register(fastifyCookie, {
+  app.register(fastifyCookie, {
     secret: sessionSecret,
   });
 
-  void app.register(fastifySession, {
+  app.register(fastifySession, {
     secret: sessionSecret,
     cookie: {
       maxAge: 24 * 60 * 60 * 1000,
@@ -25,5 +25,5 @@ export function registerFastifySessionPlugins(app: FastifyInstance): void {
     },
   });
 
-  void app.register(fastifyFormbody);
+  app.register(fastifyFormbody);
 }

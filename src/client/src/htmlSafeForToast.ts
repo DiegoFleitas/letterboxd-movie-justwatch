@@ -3,11 +3,11 @@ const ALLOWED_PROTOCOLS = new Set(["http:", "https:"]);
 export function escapeHtml(str: unknown): string {
   if (typeof str !== "string") return "";
   return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 }
 
 /** Safe href for a literal <a href="…"> in third-party HTML toast (http / https only). */
