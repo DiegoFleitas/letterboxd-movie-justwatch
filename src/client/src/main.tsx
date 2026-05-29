@@ -50,7 +50,7 @@ if (rootEl) {
   const host =
     (typeof window !== "undefined" && window.__POSTHOG_HOST__) ||
     import.meta.env.VITE_PUBLIC_POSTHOG_HOST ||
-    "https://us.i.posthog.com";
+    "/api/reversa";
 
   const options = {
     api_host: host,

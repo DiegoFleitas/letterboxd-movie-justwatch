@@ -13,7 +13,7 @@ export interface RuntimeSentryConfig {
 export function injectRuntimeConfig(
   html: string,
   posthogKey: string = "",
-  posthogHost: string = "https://us.i.posthog.com",
+  posthogHost: string = "/api/reversa",
   canonicalByNames: Record<string, { id: string; name: string }> | null = null,
   sentryConfig: RuntimeSentryConfig = {},
 ): string {
