@@ -166,7 +166,16 @@ function useTmdbMovieSearchSuggestions(
     }
     const ac = new AbortController();
     setSuggestionsLoading(true);
-    const query = encodeURIComponent(debouncedTitle.trim());
+    const rawTitle = debouncedTitle.trim();
+    const safeTitle = rawTitle.replace(/[^a-zA-Z0-9\s\-'.()!]/g, "").slice(0, 200);
+    if (safeTitle.length < TMDB_MIN_LENGTH) {
+      setSuggestions([]);
+      setSuggestionsOpen(false);
+      setHighlightedIndex(-1);
+      setSuggestionsLoading(false);
+      return;
+    }
+    const query = encodeURIComponent(safeTitle);
     fetch(
       `${HTTP_API_PATHS.proxyPrefix}/https://api.themoviedb.org/3/search/movie?query=${query}`,
       {
