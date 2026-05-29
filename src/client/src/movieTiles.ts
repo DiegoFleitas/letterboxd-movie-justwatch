@@ -74,7 +74,8 @@ export function normalizeLetterboxdFilmLink(link: string): string {
   if (!link) return "";
   if (link.startsWith("http://") || link.startsWith("https://")) return link;
   if (link.startsWith("//")) return `https:${link}`;
-  return `https://letterboxd.com${link.startsWith("/") ? link : `/${link}`}`;
+  const normalizedPath = link.startsWith("/") ? link : `/${link}`;
+  return `https://letterboxd.com${normalizedPath}`;
 }
 
 /** Film page when `link` is set; otherwise Letterboxd title search. */

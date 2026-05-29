@@ -286,13 +286,13 @@ export function useLetterboxdList(
             globalThis.addEventListener("scroll", handleScroll, { passive: true });
           }
         } else {
-          toggleNotice(
+          const loadedMessage =
             totalPages === 1
               ? "Loaded 1 page!"
               : totalPages
                 ? `Loaded all ${totalPages} pages!`
-                : "Loaded all pages!",
-          );
+                : "Loaded all pages!";
+          toggleNotice(loadedMessage);
         }
       } catch (e) {
         captureFrontendException(e, {
