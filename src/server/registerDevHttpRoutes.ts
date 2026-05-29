@@ -33,13 +33,12 @@ function toDevCommandError(
   operation: string,
   fallback: string,
   error: unknown,
-): { error: string; stdout: string; stderr: string; operation: string; nextSteps: string[] } {
-  const err = error as { stdout?: string; stderr?: string; message?: string };
+): { error: string; operation: string; nextSteps: string[] } {
+  const err = error as { stderr?: string; message?: string };
+  console.error(`[dev] ${operation} failed:`, err.stderr || err.message || fallback);
   return {
     operation,
-    error: err.stderr || err.message || fallback,
-    stdout: err.stdout || "",
-    stderr: err.stderr || "",
+    error: fallback,
     nextSteps: [
       "Verify local Redis is running and reachable.",
       "Run the command manually from repo root for full logs.",
@@ -111,12 +110,10 @@ export function registerDevHttpRoutes(app: FastifyInstance): void {
       dev.post("/reset-redis", async (_request, reply) => {
         if (!devRedisApisAllowedOrReply(reply)) return;
         try {
-          const { stdout, stderr } = await runDevCommand("bun run redis:reset");
+          await runDevCommand("bun run redis:reset");
           reply.send({
             ok: true,
             message: "Redis reset completed. Snapshot was validated and Redis was seeded.",
-            stdout,
-            stderr,
           });
         } catch (error) {
           reply
@@ -130,8 +127,8 @@ export function registerDevHttpRoutes(app: FastifyInstance): void {
       dev.post("/export-redis", async (_request, reply) => {
         if (!devRedisApisAllowedOrReply(reply)) return;
         try {
-          const { stdout, stderr } = await runDevCommand("bun run export-redis");
-          reply.send({ ok: true, stdout, stderr });
+          await runDevCommand("bun run export-redis");
+          reply.send({ ok: true, message: "Redis export completed." });
         } catch (error) {
           reply
             .code(HTTP_STATUS_INTERNAL_SERVER_ERROR)
