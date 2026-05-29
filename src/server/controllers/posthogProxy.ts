@@ -43,7 +43,8 @@ export async function posthogProxyHandler(
 
     if (request.method !== "GET" && request.method !== "HEAD") {
       if (request.body) {
-        fetchOptions.body = JSON.stringify(request.body);
+        fetchOptions.body =
+          typeof request.body === "string" ? request.body : JSON.stringify(request.body);
       }
     }
 
