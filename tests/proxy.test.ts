@@ -23,6 +23,32 @@ vi.mock("@server/lib/redis.js", () => ({
 
 import { parseAllowedProxyUrl, PROXY_ALLOWED_HOSTNAMES, proxy } from "@server/controllers/proxy.js";
 
+function createMockRes() {
+  let statusCode = 0;
+  let jsonBody: unknown;
+  const headers: Record<string, string | number | readonly string[]> = {};
+  const res: HttpResponseContext = {
+    status(code: number) {
+      statusCode = code;
+      return this;
+    },
+    json(payload: unknown) {
+      jsonBody = payload;
+    },
+    send() {},
+    setHeader(name: string, value: string | number | readonly string[]) {
+      headers[name] = value;
+      return this;
+    },
+  };
+  return {
+    res,
+    getStatus: () => statusCode,
+    getJson: () => jsonBody,
+    getHeader: (name: string) => headers[name],
+  };
+}
+
 describe("parseAllowedProxyUrl", () => {
   it("allows HTTPS TMDb and OMDB hosts", () => {
     const tmdb = parseAllowedProxyUrl("https://api.themoviedb.org/3/search/movie?query=x");
@@ -71,32 +97,6 @@ describe("proxy handler", () => {
   afterEach(() => {
     vi.clearAllMocks();
   });
-
-  function createMockRes() {
-    let statusCode = 0;
-    let jsonBody: unknown;
-    const headers: Record<string, string | number | readonly string[]> = {};
-    const res: HttpResponseContext = {
-      status(code: number) {
-        statusCode = code;
-        return this;
-      },
-      json(payload: unknown) {
-        jsonBody = payload;
-      },
-      send() {},
-      setHeader(name: string, value: string | number | readonly string[]) {
-        headers[name] = value;
-        return this;
-      },
-    };
-    return {
-      res,
-      getStatus: () => statusCode,
-      getJson: () => jsonBody,
-      getHeader: (name: string) => headers[name],
-    };
-  }
 
   it("returns 403 and does not call axios for disallowed host", async () => {
     const req: HttpRequestContext = {

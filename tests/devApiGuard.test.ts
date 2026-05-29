@@ -98,21 +98,21 @@ describe("devApiGuard", () => {
     });
   });
 
-  describe("devRedisApisAllowedOrReply", () => {
-    function mockReply(): FastifyReply {
-      const state = { status: 0, payload: null as unknown };
-      return {
-        code(c: number) {
-          state.status = c;
-          return this as unknown as FastifyReply;
-        },
-        send(p: unknown) {
-          state.payload = p;
-        },
-        __state: state,
-      } as unknown as FastifyReply & { __state: typeof state };
-    }
+  function mockReply(): FastifyReply {
+    const state = { status: 0, payload: null as unknown };
+    return {
+      code(c: number) {
+        state.status = c;
+        return this as unknown as FastifyReply;
+      },
+      send(p: unknown) {
+        state.payload = p;
+      },
+      __state: state,
+    } as unknown as FastifyReply & { __state: typeof state };
+  }
 
+  describe("devRedisApisAllowedOrReply", () => {
     it("sends 404 in production", () => {
       vi.stubEnv("NODE_ENV", "production");
       const reply = mockReply() as FastifyReply & { __state: { status: number; payload: unknown } };
