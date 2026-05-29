@@ -51,6 +51,7 @@ export default [
       // tends to produce noise in this project.
       "import/no-unresolved": "off",
       "import/named": "off",
+      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
     },
   },
   {
