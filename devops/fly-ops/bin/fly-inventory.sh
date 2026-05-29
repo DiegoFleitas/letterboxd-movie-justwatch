@@ -45,8 +45,9 @@ while [[ $# -gt 0 ]]; do
 done
 
 need_cmd() {
-  command -v "$1" >/dev/null 2>&1 || {
-    echo "error: required command not found: $1" >&2
+  local cmd="$1"
+  command -v "$cmd" >/dev/null 2>&1 || {
+    echo "error: required command not found: $cmd" >&2
     exit 1
   }
 }
@@ -168,7 +169,7 @@ echo "$APPS_JSON" | jq -c '.[]' | while read -r row; do
   # Machines
   if ! mach_out=$(fly machines list -a "$app" --json 2>&1); then
     if [[ "$OUTPUT_JSON" -eq 0 ]]; then
-      echo "  (error: fly machines list)"
+      echo "  (error: fly machines list)" >&2
     fi
     mach_json="[]"
   else
@@ -190,7 +191,7 @@ echo "$APPS_JSON" | jq -c '.[]' | while read -r row; do
   # Volumes
   if ! vol_out=$(fly volumes list -a "$app" -j 2>&1); then
     if [[ "$OUTPUT_JSON" -eq 0 ]]; then
-      echo "  (error: fly volumes list)"
+      echo "  (error: fly volumes list)" >&2
     fi
     vol_json="[]"
   else

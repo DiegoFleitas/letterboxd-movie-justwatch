@@ -5,8 +5,9 @@
 set -euo pipefail
 
 need_cmd() {
-  command -v "$1" >/dev/null 2>&1 || {
-    echo "error: required command not found: $1" >&2
+  local cmd="$1"
+  command -v "$cmd" >/dev/null 2>&1 || {
+    echo "error: required command not found: $cmd" >&2
     exit 1
   }
 }
