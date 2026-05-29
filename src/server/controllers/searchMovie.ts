@@ -1,4 +1,4 @@
-import type { HttpHandler } from "../httpContext.js";
+import type { HttpHandler, HttpResponseContext } from "../httpContext.js";
 import type { AxiosInstance } from "axios";
 import axiosHelper from "../lib/axios.js";
 import { getCacheValue, setCacheValue } from "../lib/redis.js";
@@ -106,6 +106,134 @@ function isObjectLike(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+const JUSTWATCH_QUERY = `
+  query GetSuggestedTitles($country: Country!, $language: Language!, $first: Int!, $filter: TitleFilter) {
+    popularTitles(country: $country, first: $first, filter: $filter) {
+      edges {
+        node {
+          id
+          objectType
+          objectId
+          content(country: $country, language: $language) {
+            fullPath
+            title
+            originalReleaseYear
+            posterUrl
+            scoring {
+              imdbScore
+              __typename
+            }
+            externalIds {
+              imdbId
+              tmdbId
+              __typename
+            }
+            __typename
+          }
+          offers(country: $country, platform: WEB) {
+            monetizationType
+            availableToTime
+            availableFromTime
+            standardWebURL
+            package {
+              clearName
+              technicalName
+              icon
+            }
+          }
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+  }
+`;
+
+interface TmdbSearchResult {
+  data: TMDBResult | undefined;
+  tmdbLink: string | undefined;
+  tmdbPoster: string | null;
+  letterboxdStableLink: string | undefined;
+}
+
+async function searchTmdb(
+  title: string,
+  year: string | number | undefined,
+): Promise<TmdbSearchResult> {
+  const movieDbAPIKey = process.env.MOVIE_DB_API_KEY;
+  const encodedTitle = encodeURIComponent(title);
+  const yearParam = year ? `&year=${year}` : "";
+  const movieDbResponse = await axios.get(
+    `${PROXY}https://api.themoviedb.org/3/search/movie?query=${encodedTitle}${yearParam}&api_key=${movieDbAPIKey}`,
+  );
+  const results = (movieDbResponse.data as { results?: TMDBResult[] }).results;
+  const movieDbData = results?.[0];
+  const tmdbLink = movieDbData ? buildTmdbLink(movieDbData.id) : undefined;
+  const tmdbPoster = movieDbData?.poster_path
+    ? `https://image.tmdb.org/t/p/w500${movieDbData.poster_path}`
+    : null;
+  const letterboxdStableLink = movieDbData
+    ? buildLetterboxdStableFilmLink(undefined, movieDbData.id)
+    : undefined;
+  return { data: movieDbData, tmdbLink, tmdbPoster, letterboxdStableLink };
+}
+
+function buildErrorResponse(params: {
+  error: string;
+  title: string;
+  year: string | number | undefined;
+  tmdbData: TMDBResult | undefined;
+  tmdbPoster: string | null;
+  tmdbLink: string | undefined;
+  letterboxdStableLink: string | undefined;
+  cacheKey: string;
+  cacheTtl: number;
+  res: HttpResponseContext;
+}): void {
+  const {
+    error,
+    title,
+    year,
+    tmdbData,
+    tmdbPoster,
+    tmdbLink,
+    letterboxdStableLink,
+    cacheKey,
+    cacheTtl,
+    res,
+  } = params;
+  const response = {
+    error,
+    title: tmdbData?.title || title,
+    year: tmdbData?.release_date?.substring(0, 4) || year,
+    poster: tmdbPoster,
+    ...(letterboxdStableLink ? { link: letterboxdStableLink } : {}),
+    ...(tmdbLink ? { tmdbLink } : {}),
+  };
+  setCacheValue(cacheKey, response, cacheTtl, SEARCH_MOVIE_CACHE_CATEGORY);
+  res.json(response);
+}
+
+async function executeJustWatchQuery(
+  country: string,
+  language: string,
+  title: string,
+): Promise<{ data: { data: { popularTitles: { edges: JustWatchOfferEdge[] } } } }> {
+  const variables = { country, language, first: 4, filter: { searchQuery: title } };
+  return justWatchPost(axios, `${PROXY}https://apis.justwatch.com/graphql`, {
+    query: JUSTWATCH_QUERY,
+    variables,
+  });
+}
+
+function findMatchingJustWatchEdge(
+  edges: JustWatchOfferEdge[],
+  tmdbId: number,
+): JustWatchOfferEdge | undefined {
+  return edges.find((edge) => String(edge.node.content.externalIds?.tmdbId) === String(tmdbId));
+}
+
 export const searchMovie: HttpHandler = async ({ req, res }) => {
   const parsedBody = searchMovieBodySchema.safeParse(req.body ?? {});
   if (!parsedBody.success) {
@@ -127,130 +255,58 @@ export const searchMovie: HttpHandler = async ({ req, res }) => {
       return;
     }
 
-    const movieDbAPIKey = process.env.MOVIE_DB_API_KEY;
-    const encodedTitle = encodeURIComponent(title);
-    const yearParam = year ? `&year=${year}` : "";
-    const movieDbResponse = await axios.get(
-      `${PROXY}https://api.themoviedb.org/3/search/movie?query=${encodedTitle}${yearParam}&api_key=${movieDbAPIKey}`,
-    );
-
-    const results = (movieDbResponse.data as { results?: TMDBResult[] }).results;
-    const movieDbData = results?.[0];
-
-    if (!movieDbData) {
-      const response = {
-        error: "Movie not found (TMDB)",
-        title,
-        year,
-      };
+    const tmdbResult = await searchTmdb(title, year);
+    if (!tmdbResult.data) {
+      const response = { error: "Movie not found (TMDB)", title, year };
       await setCacheValue(cacheKey, response, cacheTtl, SEARCH_MOVIE_CACHE_CATEGORY);
       res.json(response);
       return;
     }
 
-    const tmdbId = movieDbData.id;
-    const tmdbLink = buildTmdbLink(tmdbId);
-    const tmdbPoster = movieDbData.poster_path
-      ? `https://image.tmdb.org/t/p/w500${movieDbData.poster_path}`
-      : null;
+    const tmdbId = tmdbResult.data.id;
 
     let justWatchResponse: { data: { data: { popularTitles: { edges: JustWatchOfferEdge[] } } } };
     try {
-      const query = `
-        query GetSuggestedTitles($country: Country!, $language: Language!, $first: Int!, $filter: TitleFilter) {
-          popularTitles(country: $country, first: $first, filter: $filter) {
-            edges {
-              node {
-                id
-                objectType
-                objectId
-                content(country: $country, language: $language) {
-                  fullPath
-                  title
-                  originalReleaseYear
-                  posterUrl
-                  fullPath
-                  scoring {
-                    imdbScore
-                    __typename
-                  }
-                  externalIds {
-                    imdbId
-                    tmdbId
-                    __typename
-                  }
-                  __typename
-                }
-                offers(country: $country, platform: WEB) {
-                  monetizationType
-                  availableToTime
-                  availableFromTime
-                  standardWebURL
-                  package {
-                    clearName
-                    technicalName
-                    icon
-                  }
-                }
-                __typename
-              }
-              __typename
-            }
-            __typename
-          }
-        }
-      `;
-
-      const variables = {
-        country,
-        language,
-        first: 4,
-        filter: { searchQuery: title },
-      };
-
-      justWatchResponse = await justWatchPost(axios, `${PROXY}https://apis.justwatch.com/graphql`, {
-        query,
-        variables,
-      });
+      justWatchResponse = await executeJustWatchQuery(country, language, title);
     } catch (error) {
       console.error(`JustWatch API error for ${title}:`, (error as Error).message);
-      const letterboxdStableLink = buildLetterboxdStableFilmLink(undefined, tmdbId);
-      const response = {
+      buildErrorResponse({
         error: "JustWatch API unavailable",
-        title: movieDbData.title || title,
-        year: movieDbData.release_date?.substring(0, 4) || year,
-        poster: tmdbPoster,
-        ...(letterboxdStableLink ? { link: letterboxdStableLink } : {}),
-        ...(tmdbLink ? { tmdbLink } : {}),
-      };
-      await setCacheValue(cacheKey, response, CACHE_TTL_UNAVAILABLE, SEARCH_MOVIE_CACHE_CATEGORY);
-      res.json(response);
+        title,
+        year,
+        tmdbData: tmdbResult.data,
+        tmdbPoster: tmdbResult.tmdbPoster,
+        tmdbLink: tmdbResult.tmdbLink,
+        letterboxdStableLink: tmdbResult.letterboxdStableLink,
+        cacheKey,
+        cacheTtl: CACHE_TTL_UNAVAILABLE,
+        res,
+      });
       return;
     }
 
     const edges = justWatchResponse.data.data.popularTitles.edges;
-    const movieData = edges.find(
-      (edge) => String(edge.node.content.externalIds?.tmdbId) === String(tmdbId),
-    );
+    const movieData = findMatchingJustWatchEdge(edges, tmdbId);
 
     if (!movieData) {
-      const letterboxdStableLink = buildLetterboxdStableFilmLink(undefined, tmdbId);
-      const response = {
+      buildErrorResponse({
         error: "Movie not found in JustWatch",
-        title: movieDbData.title || title,
-        year: movieDbData.release_date?.substring(0, 4) || year,
-        poster: tmdbPoster,
-        ...(letterboxdStableLink ? { link: letterboxdStableLink } : {}),
-        ...(tmdbLink ? { tmdbLink } : {}),
-      };
-      await setCacheValue(cacheKey, response, cacheTtl, SEARCH_MOVIE_CACHE_CATEGORY);
-      res.json(response);
+        title,
+        year,
+        tmdbData: tmdbResult.data,
+        tmdbPoster: tmdbResult.tmdbPoster,
+        tmdbLink: tmdbResult.tmdbLink,
+        letterboxdStableLink: tmdbResult.letterboxdStableLink,
+        cacheKey,
+        cacheTtl,
+        res,
+      });
       return;
     }
 
     const poster = movieData.node.content.posterUrl
       ? `https://images.justwatch.com${movieData.node.content.posterUrl.replace("{profile}", "s592").replace("{format}", "jpg")}`
-      : tmdbPoster;
+      : tmdbResult.tmdbPoster;
     const imdbId = movieData.node.content.externalIds?.imdbId;
     const imdbLink = buildImdbLink(imdbId);
     const letterboxdFallbackLink = buildLetterboxdStableFilmLink(imdbId, tmdbId);
@@ -262,7 +318,7 @@ export const searchMovie: HttpHandler = async ({ req, res }) => {
       poster,
       ...(letterboxdFallbackLink ? { link: letterboxdFallbackLink } : {}),
       ...(imdbLink ? { imdbLink } : {}),
-      ...(tmdbLink ? { tmdbLink } : {}),
+      ...(tmdbResult.tmdbLink ? { tmdbLink: tmdbResult.tmdbLink } : {}),
     };
 
     if (!movieData.node.offers?.length) {
@@ -303,7 +359,7 @@ export const searchMovie: HttpHandler = async ({ req, res }) => {
       poster,
       ...(letterboxdFallbackLink ? { link: letterboxdFallbackLink } : {}),
       ...(imdbLink ? { imdbLink } : {}),
-      ...(tmdbLink ? { tmdbLink } : {}),
+      ...(tmdbResult.tmdbLink ? { tmdbLink: tmdbResult.tmdbLink } : {}),
     };
 
     await setCacheValue(cacheKey, responsePayload, cacheTtl, SEARCH_MOVIE_CACHE_CATEGORY);
