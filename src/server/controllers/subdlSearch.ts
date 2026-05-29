@@ -2,6 +2,7 @@ import type { HttpHandler } from "../httpContext.js";
 import axiosHelper from "../lib/axios.js";
 import { alternativeSearchBodySchema, firstZodIssueMessage } from "../lib/apiSchemas.js";
 import { pickSubdlBrowseUrl, type SubdlResponse } from "../lib/subdlBrowseUrl.js";
+import { captureServerException } from "../lib/sentryCapture.js";
 import {
   HTTP_STATUS_BAD_REQUEST,
   HTTP_STATUS_INTERNAL_SERVER_ERROR,
@@ -63,6 +64,13 @@ export const subdlSearch: HttpHandler = async ({ req, res }) => {
       code: axiosError?.code,
       status: axiosError?.response?.status,
       statusText: axiosError?.response?.statusText,
+    });
+    captureServerException(error, {
+      route: "subdl-search",
+      extra: {
+        status: axiosError?.response?.status,
+        code: axiosError?.code,
+      },
     });
     res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: "Internal Server Error" });
   }

@@ -3,6 +3,7 @@ import { proxyTargetFromRequestUrl } from "../routes.js";
 import axiosHelper from "../lib/axios.js";
 import { getCacheValue, setCacheValue } from "../lib/redis.js";
 import { parseAllowedProxyUrl } from "../lib/apiSchemas.js";
+import { captureServerException } from "../lib/sentryCapture.js";
 import {
   HTTP_STATUS_INTERNAL_SERVER_ERROR,
   HTTP_STATUS_METHOD_NOT_ALLOWED,
@@ -59,6 +60,7 @@ export const proxy: HttpHandler = async ({ req, res }) => {
     res.status(response.status).json(response?.data);
   } catch (error) {
     console.error(error);
+    captureServerException(error, { route: "proxy" });
     res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: "Internal Server Error" });
   }
 };

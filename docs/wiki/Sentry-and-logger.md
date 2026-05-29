@@ -27,7 +27,7 @@ This document describes how server-side error reporting and HTTP logging work in
    - `environment`: `NODE_ENV` (default `development`)
    - `release`: `SENTRY_RELEASE`
    - `integrations`: `Sentry.fastifyIntegration()` for framework instrumentation
-   - `tracesSampleRate`: from `SENTRY_TRACES_SAMPLE_RATE` (clamped 0–1); defaults to **0** in `.env.example` unless you raise it
+   - `tracesSampleRate`: from `SENTRY_TRACES_SAMPLE_RATE` (clamped 0–1); defaults to **0.1** in production and **0** in development when unset (`resolveTracesSampleRate` in `src/server/lib/sentryTracesSampleRate.ts`)
    - `sendDefaultPii`: only when `SENTRY_SEND_DEFAULT_PII === "true"`
 
 4. **HTTP 5xx capture path** — Application-level exceptions and explicit backend captures go through `Sentry.captureException` in route/error-handler code. There is no extra middleware-level `captureMessage` bridge or active logger/middleware-level HTTP 5xx capture bridge.
@@ -50,6 +50,8 @@ Primary fields:
 - `NODE_ENV` (as frontend environment fallback via injected runtime value)
 
 Using runtime injection keeps one frontend artifact portable across environments without rebuilding for DSN/release changes.
+
+List-batch network failures (`flow: list-batch`) are captured at `warning` level with fingerprint `["list-batch", "search-movie", "network"]` only after client-side retries are exhausted.
 
 ## Sourcemaps and release alignment
 
@@ -83,12 +85,12 @@ The deploy workflow sets `SENTRY_RELEASE` from `${{ github.event.workflow_run.he
 
 ## Where exceptions are captured
 
-| Location                                         | Behavior                                                                                                  |
-| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
-| `src/server/createServer.ts` (`setErrorHandler`) | `captureException` with `extra: { method, url }`; also sends a subset to PostHog when configured          |
-| `src/server/controllers/letterboxdLists.ts`      | In `fetchList` catch (non-404 paths): `captureException` with `extra: { route: "letterboxd-list-fetch" }` |
-| `src/server/controllers/letterboxdPoster.ts`     | On errors other than 403/404: `captureException` with `extra: { route: "letterboxd-poster", filmSlug }`   |
-| `src/server/main.ts`                             | Top-level `main().catch`: `captureException` for startup failure                                          |
+| Location                                         | Behavior                                                                                                                           |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `src/server/createServer.ts` (`setErrorHandler`) | `captureException` with `extra: { method, url }`; also sends a subset to PostHog when configured                                   |
+| `src/server/lib/sentryCapture.ts`                | `captureServerException` — shared helper with `route` tag (used by controllers and error handler)                                  |
+| `src/server/controllers/*` (API catch blocks)    | `captureServerException` on 500 paths (`search-movie`, `alternative-search`, `subdl-search`, `poster`, `proxy`, Letterboxd routes) |
+| `src/server/main.ts`                             | Top-level `main().catch`: `captureException` for startup failure                                                                   |
 
 Most captures are guarded with `if (Sentry.getClient())` so behavior is safe when Sentry is disabled.
 
@@ -140,7 +142,7 @@ flowchart LR
 
 2. **Simpler dependency graph** — No external request-logging package or dynamic SDK import path for HTTP logging.
 
-3. **Traces** — With default `SENTRY_TRACES_SAMPLE_RATE=0`, performance traces are minimal unless you raise the rate deliberately in production.
+3. **Traces** — Production defaults to 10% sampling when `SENTRY_TRACES_SAMPLE_RATE` is unset; set explicitly to override (e.g. `0` to disable, `1` for full sampling while debugging).
 
 ## Related files
 

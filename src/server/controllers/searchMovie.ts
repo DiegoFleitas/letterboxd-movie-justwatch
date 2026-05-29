@@ -11,6 +11,7 @@ import {
   HTTP_STATUS_TOO_MANY_REQUESTS,
 } from "../httpStatusCodes.js";
 import { recordJustWatchHttpAttempt } from "../lib/justWatchOutbound.js";
+import { captureServerException } from "../lib/sentryCapture.js";
 
 const axios = axiosHelper();
 const cacheTtl = Number(process.env.CACHE_TTL) || 3600;
@@ -309,6 +310,10 @@ export const searchMovie: HttpHandler = async ({ req, res }) => {
     res.json(responsePayload);
   } catch (err) {
     console.error(err);
+    captureServerException(err, {
+      route: "search-movie",
+      extra: { title, year, country: countryCode },
+    });
     res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
       error: "Internal Server Error",
       title,

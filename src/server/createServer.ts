@@ -1,5 +1,5 @@
 import Fastify, { type FastifyInstance } from "fastify";
-import * as Sentry from "@sentry/node";
+import { captureServerException } from "./lib/sentryCapture.js";
 import compress from "@fastify/compress";
 import { disconnectRedis } from "./lib/redis.js";
 import { getCanonicalProviderMap } from "./lib/loadCanonicalProviders.js";
@@ -39,11 +39,10 @@ export async function createServer(): Promise<CreatedServer> {
   const posthog = getPosthog();
   app.setErrorHandler(async (err, request, reply) => {
     console.error(err);
-    if (Sentry.getClient()) {
-      Sentry.captureException(err, {
-        extra: { method: request.method, url: request.url },
-      });
-    }
+    captureServerException(err, {
+      route: "fastify-error-handler",
+      extra: { method: request.method, url: request.url },
+    });
     if (posthog) {
       try {
         await posthog.capture({

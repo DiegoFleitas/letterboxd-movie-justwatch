@@ -1,5 +1,5 @@
 import type { HttpHandler } from "../httpContext.js";
-import * as Sentry from "@sentry/node";
+import { captureServerException } from "../lib/sentryCapture.js";
 import { getCacheValue, setCacheValue } from "../lib/redis.js";
 import {
   LetterboxdHttpError,
@@ -69,9 +69,7 @@ export const letterboxdPoster: HttpHandler = async ({ req, res }) => {
       res.status(HTTP_STATUS_NOT_FOUND).json({ error: "Poster not available", fallback: true });
       return;
     }
-    if (Sentry.getClient()) {
-      Sentry.captureException(error, { extra: { route: "letterboxd-poster", filmSlug } });
-    }
+    captureServerException(error, { route: "letterboxd-poster", extra: { filmSlug } });
     res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
   }
 };
