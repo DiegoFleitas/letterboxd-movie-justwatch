@@ -31,7 +31,7 @@ export default defineConfig({
   root: "src/client",
   build: {
     outDir: "dist",
-    sourcemap: "hidden",
+    sourcemap: false,
     rollupOptions: {
       input: path.resolve(__dirname, "src", "client", "index.html"),
       output: {

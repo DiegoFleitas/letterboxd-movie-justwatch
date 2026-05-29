@@ -61,7 +61,7 @@ export function createFastifyHttpBinder(app: FastifyInstance): FastifyHttpBinder
 
   const setCacheControlFastify =
     (handler: HttpHandler) => async (request: FastifyRequest, reply: FastifyReply) => {
-      reply.header("Cache-Control", "public, max-age=3600");
+      reply.header("Cache-Control", "private, max-age=3600");
       await makeFastifyHandler(handler)(request, reply);
     };
 

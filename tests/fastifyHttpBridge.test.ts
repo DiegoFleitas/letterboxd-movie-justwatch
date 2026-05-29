@@ -53,7 +53,7 @@ describe("createFastifyHttpBinder", () => {
     const res = await app.inject({ method: "GET", url: "/cached" });
 
     expect(res.statusCode).toBe(200);
-    expect(res.headers["cache-control"]).toBe("public, max-age=3600");
+    expect(res.headers["cache-control"]).toBe("private, max-age=3600");
     expect(res.json()).toEqual({ done: true });
     await app.close();
   });
