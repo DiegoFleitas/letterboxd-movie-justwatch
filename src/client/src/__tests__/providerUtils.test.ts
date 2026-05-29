@@ -10,19 +10,19 @@ import {
 type CanonicalMap = Record<string, { id: string; name: string }>;
 
 function setCanonicalMap(map?: CanonicalMap): void {
-  const w = window as Window & { __CANONICAL_PROVIDERS_BY_NAME__?: CanonicalMap };
+  const w = globalThis as { __CANONICAL_PROVIDERS_BY_NAME__?: CanonicalMap } & typeof globalThis;
   if (map) w.__CANONICAL_PROVIDERS_BY_NAME__ = map;
   else delete w.__CANONICAL_PROVIDERS_BY_NAME__;
 }
 
 afterEach(() => {
-  setCanonicalMap(undefined);
+  setCanonicalMap();
 });
 
 describe("providerUtils", () => {
   describe("normalizedProviderKey", () => {
     it("returns empty string for nullish/empty inputs", () => {
-      setCanonicalMap(undefined);
+      setCanonicalMap();
       expect(normalizedProviderKey(undefined)).toBe("");
       expect(normalizedProviderKey(null)).toBe("");
       expect(normalizedProviderKey("")).toBe("");
@@ -41,7 +41,7 @@ describe("providerUtils", () => {
 
   describe("deduplicateProviderList", () => {
     it("returns valid entries unchanged when canonical map is unavailable", () => {
-      setCanonicalMap(undefined);
+      setCanonicalMap();
       const providers = [
         { id: "max", name: "HBO Max", icon: "https://a" },
         { id: "amazonmax", name: "HBO Max  Amazon Channel", icon: "https://b" },
@@ -75,7 +75,7 @@ describe("providerUtils", () => {
 
   describe("tileMatchesProviderFilter", () => {
     it("uses exact-name matching when canonical map is unavailable", () => {
-      setCanonicalMap(undefined);
+      setCanonicalMap();
       expect(tileMatchesProviderFilter(["HBO Max"], ["HBO Max"])).toBe(true);
       expect(tileMatchesProviderFilter(["HBO Max  Amazon Channel"], ["HBO Max"])).toBe(false);
     });
@@ -90,13 +90,13 @@ describe("providerUtils", () => {
     });
 
     it("returns true when there are no active filters", () => {
-      setCanonicalMap(undefined);
+      setCanonicalMap();
       expect(tileMatchesProviderFilter(["Netflix"], [])).toBe(true);
       expect(tileMatchesProviderFilter(["Netflix"], undefined as unknown as string[])).toBe(true);
     });
 
     it("returns false when filters are active but tile provider names are empty/non-array", () => {
-      setCanonicalMap(undefined);
+      setCanonicalMap();
       expect(tileMatchesProviderFilter([], ["Netflix"])).toBe(false);
       expect(tileMatchesProviderFilter(undefined as unknown as string[], ["Netflix"])).toBe(false);
     });

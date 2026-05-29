@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import fastifyStatic from "@fastify/static";
-import path from "path";
-import { fileURLToPath } from "url";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { HTTP_STATUS_NOT_FOUND } from "./httpStatusCodes.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -20,7 +20,7 @@ export function registerFastifyStaticAndIndex(
   });
 
   const publicDistPath = path.join(__dirname, "..", "client", "dist");
-  void app.register(fastifyStatic, {
+  app.register(fastifyStatic, {
     root: publicDistPath,
     prefix: "/",
   });

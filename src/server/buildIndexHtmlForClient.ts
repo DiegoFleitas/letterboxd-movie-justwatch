@@ -1,6 +1,6 @@
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { getCanonicalProviderByNames } from "./lib/loadCanonicalProviders.js";
 import { injectRuntimeConfig } from "./lib/injectRuntimeConfig.js";
 import { resolveTracesSampleRate } from "./lib/sentryTracesSampleRate.js";

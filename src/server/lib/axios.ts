@@ -1,5 +1,5 @@
 import axios, { type AxiosInstance, type InternalAxiosRequestConfig } from "axios";
-import https from "https";
+import https from "node:https";
 import { HTTP_STATUS_TOO_MANY_REQUESTS } from "../httpStatusCodes.js";
 
 const instance = axios.create({});

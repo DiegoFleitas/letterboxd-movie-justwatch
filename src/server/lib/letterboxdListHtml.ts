@@ -141,9 +141,9 @@ function parseFilmsCountFromText(text: string): number {
   const trimmed = text?.trim() ?? "";
   if (!trimmed) return 0;
   const filmsWord = trimmed.match(/\b(\d{1,6})\s+films?\b/i);
-  if (filmsWord) return parseInt(filmsWord[1], 10);
+  if (filmsWord) return Number.parseInt(filmsWord[1], 10);
   const listOf = trimmed.match(/\bA list of (\d{1,6}) films\b/i);
-  if (listOf) return parseInt(listOf[1], 10);
+  if (listOf) return Number.parseInt(listOf[1], 10);
   return 0;
 }
 

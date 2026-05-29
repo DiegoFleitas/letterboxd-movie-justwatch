@@ -1,6 +1,6 @@
-import { readFileSync, existsSync } from "fs";
-import { dirname, join } from "path";
-import { fileURLToPath } from "url";
+import { readFileSync, existsSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { CanonicalProviderMap } from "./types/index.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));

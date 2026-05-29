@@ -5,7 +5,7 @@ import { fetchCountryFromIp } from "../countryGeo";
 const COUNTRIES = [{ id: "country_US" }, { id: "country_AR" }, { id: "country_UY" }];
 
 function setNavigatorLanguage(language: string): void {
-  Object.defineProperty(window.navigator, "language", {
+  Object.defineProperty(globalThis.navigator, "language", {
     configurable: true,
     value: language,
   });

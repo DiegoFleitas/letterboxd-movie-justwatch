@@ -9,8 +9,8 @@ function PostHogWindowRef(): null {
   const posthog = usePostHog();
   useEffect(() => {
     if (posthog) {
-      if (import.meta.env.DEV && typeof window !== "undefined")
-        (window as { posthog?: unknown }).posthog = posthog;
+      if (import.meta.env.DEV && typeof globalThis !== "undefined")
+        (globalThis as { posthog?: unknown }).posthog = posthog;
       posthog.register({
         environment: import.meta.env.DEV ? "development" : "production",
       });
@@ -22,8 +22,8 @@ function PostHogWindowRef(): null {
 const rootEl = document.getElementById("root");
 if (rootEl) {
   initFrontendSentry();
-  if (typeof window !== "undefined") {
-    const params = new URLSearchParams(window.location.search);
+  if (typeof globalThis !== "undefined") {
+    const params = new URLSearchParams(globalThis.location.search);
     if (params.get("sentryDummyFe") === "1") {
       captureFrontendException(new Error("Dummy FE Sentry error"), {
         tags: { source: "dummy", layer: "frontend" },
@@ -44,13 +44,12 @@ if (rootEl) {
     }
   }
 
-  const key =
-    (typeof window !== "undefined" && window.__POSTHOG_KEY__) ||
-    import.meta.env.VITE_PUBLIC_POSTHOG_KEY;
-  const host =
-    (typeof window !== "undefined" && window.__POSTHOG_HOST__) ||
-    import.meta.env.VITE_PUBLIC_POSTHOG_HOST ||
-    "/api/reversa";
+  const glob =
+    typeof globalThis !== "undefined"
+      ? (globalThis as { __POSTHOG_KEY__?: string; __POSTHOG_HOST__?: string })
+      : undefined;
+  const key = glob?.__POSTHOG_KEY__ || import.meta.env.VITE_PUBLIC_POSTHOG_KEY;
+  const host = glob?.__POSTHOG_HOST__ || import.meta.env.VITE_PUBLIC_POSTHOG_HOST || "/api/reversa";
 
   const options = {
     api_host: host,
