@@ -23,7 +23,7 @@ export function runAlternativeSearch(
   toggleNotice(`Searching for ${title} (${year})...`);
   fetch(HTTP_API_PATHS.alternativeSearch, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "X-Requested-By": "MovieJustWatch" },
     body: JSON.stringify({ title, year }),
   })
     .then((res) => {
@@ -60,7 +60,7 @@ export function searchSubs(query: string, year?: string | number): void {
   if (!query) return;
   fetch(HTTP_API_PATHS.subdlSearch, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "X-Requested-By": "MovieJustWatch" },
     body: JSON.stringify({ title: query, year }),
   })
     .then((res) => res.json())

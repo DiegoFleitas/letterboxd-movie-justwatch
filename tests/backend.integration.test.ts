@@ -42,19 +42,34 @@ describe("backend integration (fastify)", () => {
     expect(text).toBe("OK");
   });
 
-  it("POST /api/search-movie without title returns JSON and sets cache headers", async () => {
+  it("POST /api/search-movie without title returns validation error (400)", async () => {
     const res = await fetch(`${baseUrl}${HTTP_API_PATHS.searchMovie}`, {
       method: "POST",
       headers: {
         "content-type": "application/json",
+        "x-requested-by": "MovieJustWatch",
       },
       body: JSON.stringify({}),
     });
 
     expect(res.headers.get("cache-control")).toBe("public, max-age=3600");
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { message?: string };
-    expect(body).toMatchObject({ message: "Movie not found" });
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { error?: string };
+    expect(body).toMatchObject({ error: "Title is required" });
+  });
+
+  it("POST /api/search-movie without CSRF header is rejected (400)", async () => {
+    const res = await fetch(`${baseUrl}${HTTP_API_PATHS.searchMovie}`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ title: "Inception" }),
+    });
+
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { error?: string };
+    expect(body.error).toBe("Bad Request");
   });
 
   it("GET /api/sentry-test?mode=response returns JSON error without throwing", async () => {
@@ -71,6 +86,7 @@ describe("backend integration (fastify)", () => {
         method: "POST",
         headers: {
           "content-type": "application/json",
+          "x-requested-by": "MovieJustWatch",
         },
         body: JSON.stringify({
           title: "Inception",

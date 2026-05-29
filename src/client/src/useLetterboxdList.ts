@@ -314,7 +314,7 @@ export function useLetterboxdList(
       try {
         const response = await fetch(HTTP_API_PATHS.letterboxdWatchlist, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", "X-Requested-By": "MovieJustWatch" },
           body: JSON.stringify(data),
           signal: AbortSignal.timeout(LIST_API_TIMEOUT_MS),
         });
@@ -353,7 +353,7 @@ export function useLetterboxdList(
       try {
         const response = await fetch(HTTP_API_PATHS.letterboxdCustomList, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", "X-Requested-By": "MovieJustWatch" },
           body: JSON.stringify(data),
           signal: AbortSignal.timeout(LIST_API_TIMEOUT_MS),
         });

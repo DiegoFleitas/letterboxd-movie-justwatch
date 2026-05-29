@@ -67,7 +67,7 @@ export async function fetchSearchMovie(
         : timeoutSignal;
       return await fetch(HTTP_API_PATHS.searchMovie, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-Requested-By": "MovieJustWatch" },
         body: JSON.stringify(body),
         signal,
       });

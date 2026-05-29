@@ -1,4 +1,4 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { HTTP_API_PATHS, HTTP_API_PROXY_ROUTE } from "./routes.js";
 import {
   searchMovie,
@@ -12,8 +12,18 @@ import {
 } from "./controllers/index.js";
 import { isHealthy, isRedisDisabled } from "./lib/redis.js";
 import type { FastifyHttpBinder } from "./fastifyHttpBridge.js";
-import { HTTP_STATUS_INTERNAL_SERVER_ERROR, HTTP_STATUS_OK } from "./httpStatusCodes.js";
+import {
+  HTTP_STATUS_BAD_REQUEST,
+  HTTP_STATUS_INTERNAL_SERVER_ERROR,
+  HTTP_STATUS_OK,
+} from "./httpStatusCodes.js";
 import rateLimit from "@fastify/rate-limit";
+
+async function csrfGuard(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+  if (request.method !== "POST") return;
+  if (request.headers["x-requested-by"] === "MovieJustWatch") return;
+  await reply.code(HTTP_STATUS_BAD_REQUEST).send({ error: "Bad Request" });
+}
 
 export async function registerFastifyAppApi(
   app: FastifyInstance,
@@ -38,6 +48,8 @@ export async function registerFastifyAppApi(
   });
 
   await app.register(async function apiRoutes(api: FastifyInstance) {
+    api.addHook("preHandler", csrfGuard);
+
     api.register(rateLimit, {
       max: 30,
       timeWindow: "1 minute",
