@@ -30,7 +30,8 @@ export function deduplicateProviderList(providers: ProviderLike[]): ProviderLike
   for (const p of all) {
     const canonical = byName[p.name];
     const id = canonical ? canonical.id : p.id;
-    if (!byCanonicalId.has(id) || (canonical && canonical.name === p.name)) byCanonicalId.set(id, p);
+    if (!byCanonicalId.has(id) || (canonical && canonical.name === p.name))
+      byCanonicalId.set(id, p);
   }
   return Array.from(byCanonicalId.values());
 }
