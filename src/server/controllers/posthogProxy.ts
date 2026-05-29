@@ -5,6 +5,8 @@ const POSTHOG_DEFAULT_HOST = "https://us.i.posthog.com";
 
 const POSTHOG_PROXY_PREFIX = "/api/reversa";
 
+const RECORDER_INNOCUOUS_NAME = "rec";
+
 function buildProxyHeaders(request: FastifyRequest): Record<string, string> {
   const headers: Record<string, string> = {};
 
@@ -20,16 +22,30 @@ function buildProxyHeaders(request: FastifyRequest): Record<string, string> {
   return headers;
 }
 
+function renameRecorderScriptInConfig(body: string): string {
+  return body.replace('"script":"posthog-recorder"', `"script":"${RECORDER_INNOCUOUS_NAME}"`);
+}
+
+function extractPath(request: FastifyRequest): string {
+  const prefixIndex = request.url.indexOf(POSTHOG_PROXY_PREFIX);
+  return prefixIndex === -1
+    ? request.url
+    : request.url.slice(prefixIndex + POSTHOG_PROXY_PREFIX.length);
+}
+
 export async function posthogProxyHandler(
   request: FastifyRequest,
   reply: FastifyReply,
 ): Promise<void> {
   const targetHost = process.env.POSTHOG_HOST || POSTHOG_DEFAULT_HOST;
 
-  const requestUrl = request.url;
-  const prefixIndex = requestUrl.indexOf(POSTHOG_PROXY_PREFIX);
-  const posthogPath =
-    prefixIndex === -1 ? requestUrl : requestUrl.slice(prefixIndex + POSTHOG_PROXY_PREFIX.length);
+  let posthogPath = extractPath(request);
+
+  const isConfigRequest = request.method === "GET" && posthogPath.endsWith("/config.js");
+
+  if (posthogPath === `/static/${RECORDER_INNOCUOUS_NAME}.js`) {
+    posthogPath = "/static/posthog-recorder.js";
+  }
 
   const targetUrl = `${targetHost}${posthogPath}`;
 
@@ -62,7 +78,12 @@ export async function posthogProxyHandler(
       reply.header("content-type", responseContentType);
     }
 
-    const body = await response.text();
+    let body = await response.text();
+
+    if (isConfigRequest) {
+      body = renameRecorderScriptInConfig(body);
+    }
+
     reply.send(body);
   } catch (err) {
     console.error("PostHog proxy error:", err);
