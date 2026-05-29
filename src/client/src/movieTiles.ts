@@ -86,6 +86,61 @@ export function letterboxdFilmUrlOrSearchUrl(link: string, title: string, year?:
   return `https://letterboxd.com/search/${encodeURIComponent(q)}/`;
 }
 
+function resolveTileId(
+  tiles: Record<string, TileData>,
+  id: string,
+  linkToMatch: string | null,
+): string {
+  if (tiles[id]) return id;
+  if (linkToMatch) {
+    for (const [stateId, tileData] of Object.entries(tiles)) {
+      if (tileData.link === linkToMatch) {
+        if (stateId !== id) {
+          tiles[id] = { ...tileData, id };
+          delete tiles[stateId];
+        }
+        return id;
+      }
+    }
+  }
+  return id;
+}
+
+function resolveTilePoster(
+  incomingPoster: string | null | undefined,
+  existingPoster: string | null | undefined,
+): string | null {
+  if (incomingPoster && (!isPlaceholderPoster(incomingPoster) || !existingPoster)) {
+    return incomingPoster;
+  }
+  return existingPoster ?? null;
+}
+
+function mergeStreamingProviders(
+  prevProviders: Record<string, TileProvider & { urls?: string[] }>,
+  movieProviders: TileProvider[],
+): Record<string, TileProvider & { urls?: string[] }> {
+  const providers = { ...prevProviders };
+  for (const provider of movieProviders) {
+    const existingP = providers[provider.id];
+    if (existingP) {
+      providers[provider.id] = {
+        ...existingP,
+        urls: [...(existingP.urls ?? []), provider.url],
+      };
+    } else {
+      providers[provider.id] = {
+        id: provider.id,
+        name: provider.name,
+        icon: provider.icon,
+        url: provider.url,
+        urls: [provider.url],
+      };
+    }
+  }
+  return providers;
+}
+
 export function mergeTileState(
   prev: TileState,
   title: string,
@@ -95,33 +150,14 @@ export function mergeTileState(
   const { movieTiles: prevTiles, streamingProviders: prevProviders } = prev;
   const id = normalizeId(title, year);
   const linkToMatch = data?.link?.trim() ? normalizeLetterboxdFilmLink(data.link.trim()) : null;
-
-  let existingId = id;
   const tiles = { ...prevTiles };
-
-  if (prevTiles[id]) {
-    existingId = id;
-  } else if (linkToMatch) {
-    for (const [stateId, tileData] of Object.entries(prevTiles)) {
-      if (tileData.link === linkToMatch) {
-        existingId = stateId;
-        if (stateId !== id) {
-          tiles[id] = { ...tileData, id };
-          delete tiles[stateId];
-        }
-        break;
-      }
-    }
-  }
+  const existingId = resolveTileId(tiles, id, linkToMatch);
 
   const existing = tiles[existingId];
   const incomingPoster = normalizePosterPath(data?.poster);
   const existingPoster = normalizePosterPath(existing?.poster);
   const rawLink = data?.link ?? existing?.link ?? "";
-  const resolvedPoster =
-    incomingPoster && (!isPlaceholderPoster(incomingPoster) || !existingPoster)
-      ? incomingPoster
-      : (existingPoster ?? null);
+  const resolvedPoster = resolveTilePoster(incomingPoster, existingPoster);
   const tileData: TileData = {
     id: existingId,
     title,
@@ -139,26 +175,9 @@ export function mergeTileState(
 
   tiles[existingId] = tileData;
 
-  const providers = { ...prevProviders };
-  if (data?.movieProviders?.length) {
-    for (const provider of data.movieProviders) {
-      const existingP = providers[provider.id];
-      if (existingP) {
-        providers[provider.id] = {
-          ...existingP,
-          urls: [...(existingP.urls ?? []), provider.url],
-        };
-      } else {
-        providers[provider.id] = {
-          id: provider.id,
-          name: provider.name,
-          icon: provider.icon,
-          url: provider.url,
-          urls: [provider.url],
-        };
-      }
-    }
-  }
+  const providers = data?.movieProviders?.length
+    ? mergeStreamingProviders(prevProviders, data.movieProviders)
+    : { ...prevProviders };
 
   return { movieTiles: tiles, streamingProviders: providers };
 }
