@@ -136,8 +136,10 @@ describe("proxy handler", () => {
 
     expect(mockGet).toHaveBeenCalledTimes(1);
     const calledUrl = String(mockGet.mock.calls[0]?.[0] ?? "");
+    const calledConfig = mockGet.mock.calls[0]?.[1] as { headers?: Record<string, string> };
     expect(calledUrl).toContain("api.themoviedb.org");
-    expect(calledUrl).toContain("api_key=");
+    expect(calledUrl).not.toContain("api_key=");
+    expect(calledConfig?.headers?.["Authorization"]).toMatch(/^Bearer /);
     expect(getStatus()).toBe(200);
     expect(getJson()).toEqual({ ok: true });
   });
