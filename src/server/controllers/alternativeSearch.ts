@@ -22,6 +22,32 @@ interface JackettResult {
   Details?: string;
 }
 
+function getJackettConfig(): { key: string; endpoint: string } | null {
+  const jackettKey = process.env.JACKETT_API_KEY;
+  const jackettEndpoint = process.env.JACKETT_API_ENDPOINT;
+  if (!jackettKey?.trim() || !jackettEndpoint?.trim()) return null;
+  return { key: jackettKey, endpoint: jackettEndpoint };
+}
+
+async function searchJackett(baseUrl: string, searchQuery: string): Promise<JackettResult[]> {
+  const { data } = await axios.get<{ Results?: JackettResult[] }>(
+    `${baseUrl}&Query=${searchQuery}`,
+  );
+  return data.Results ?? [];
+}
+
+function findBestJackettResult(results: JackettResult[]): JackettResult | null {
+  let maxSeeders = 0;
+  let bestResult: JackettResult | null = null;
+  for (const result of results) {
+    if ((result.Seeders ?? 0) > maxSeeders && !containsBlacklistedWord(result.Title ?? "")) {
+      maxSeeders = result.Seeders ?? 0;
+      bestResult = result;
+    }
+  }
+  return bestResult;
+}
+
 export const alternativeSearch: HttpHandler = async ({ req, res }) => {
   const parsedBody = alternativeSearchBodySchema.safeParse(req.body ?? {});
   if (!parsedBody.success) {
@@ -30,9 +56,8 @@ export const alternativeSearch: HttpHandler = async ({ req, res }) => {
   }
   const { title, year } = parsedBody.data;
 
-  const jackettKey = process.env.JACKETT_API_KEY;
-  const jackettEndpoint = process.env.JACKETT_API_ENDPOINT;
-  if (!jackettKey?.trim() || !jackettEndpoint?.trim()) {
+  const jackettConfig = getJackettConfig();
+  if (!jackettConfig) {
     res
       .status(HTTP_STATUS_SERVICE_UNAVAILABLE)
       .json({ error: "Alternative search is not configured" });
@@ -56,28 +81,15 @@ export const alternativeSearch: HttpHandler = async ({ req, res }) => {
     }
 
     const categories = { film: 2000 };
-    const baseUrl = `${jackettEndpoint}/api/v2.0/indexers/all/results?apikey=${jackettKey}&Category=${categories.film}`;
-    let { data } = await axios.get<{ Results?: JackettResult[] }>(
-      `${baseUrl}&Query=${searchQuery}`,
-    );
-    let results = data.Results ?? [];
+    const baseUrl = `${jackettConfig.endpoint}/api/v2.0/indexers/all/results?apikey=${jackettConfig.key}&Category=${categories.film}`;
+    let results = await searchJackett(baseUrl, searchQuery);
     if (results.length === 0) {
       console.log(`No results found, trying again without year (${title} ${year})`);
       searchQuery = `${title}`.replace(/ /g, "+");
-      const retry = await axios.get<{ Results?: JackettResult[] }>(
-        `${baseUrl}&Query=${searchQuery}`,
-      );
-      results = retry.data.Results ?? [];
+      results = await searchJackett(baseUrl, searchQuery);
     }
 
-    let maxSeeders = 0;
-    let bestResult: JackettResult | null = null;
-    for (const result of results) {
-      if ((result.Seeders ?? 0) > maxSeeders && !containsBlacklistedWord(result.Title ?? "")) {
-        maxSeeders = result.Seeders ?? 0;
-        bestResult = result;
-      }
-    }
+    const bestResult = findBestJackettResult(results);
 
     if (bestResult) {
       console.log(bestResult);
