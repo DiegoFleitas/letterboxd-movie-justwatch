@@ -72,6 +72,22 @@ describe("backend integration (fastify)", () => {
     expect(body.error).toBe("Bad Request");
   });
 
+  it.each([undefined, "gzip", "br", "zstd", "gzip, deflate, br, zstd"])(
+    "GET / with Accept-Encoding=%s returns non-empty HTML",
+    async (encoding) => {
+      const headers: Record<string, string> = {};
+      if (encoding) {
+        headers["accept-encoding"] = encoding;
+      }
+      const res = await fetch(`${baseUrl}/`, { headers });
+      const text = await res.text();
+      expect(res.status).toBe(200);
+      expect(res.headers.get("content-type")).toContain("text/html");
+      expect(text.length).toBeGreaterThan(0);
+      expect(text).toContain("</html>");
+    },
+  );
+
   it("GET /api/sentry-test?mode=response returns JSON error without throwing", async () => {
     const res = await fetch(`${baseUrl}${HTTP_API_PATHS.sentryTest}?mode=response`);
     expect(res.status).toBe(500);
