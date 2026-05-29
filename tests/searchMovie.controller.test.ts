@@ -96,11 +96,12 @@ describe("searchMovie controller", () => {
     vi.unstubAllEnvs();
   });
 
-  it("returns movie not found when title is missing", async () => {
+  it("returns validation error when title is missing", async () => {
     const args = ctx({});
     await searchMovie(args);
+    expect(args.res.statusCode).toBe(400);
     expect(args.res.jsonMock).toHaveBeenCalledWith(
-      expect.objectContaining({ message: "Movie not found" }),
+      expect.objectContaining({ error: "Title is required" }),
     );
     expect(axiosMocks.get).not.toHaveBeenCalled();
   });

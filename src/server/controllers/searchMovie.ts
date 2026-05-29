@@ -3,10 +3,12 @@ import type { AxiosInstance } from "axios";
 import axiosHelper from "../lib/axios.js";
 import { getCacheValue, setCacheValue } from "../lib/redis.js";
 import { processOffers } from "../lib/processOffers.js";
+import { searchMovieBodySchema, firstZodIssueMessage } from "../lib/apiSchemas.js";
 import type { CanonicalProviderMap, JustWatchOffer } from "../lib/types/index.js";
 import { getRandomScrapeUserAgent } from "../lib/scrapeUserAgent.js";
 import { buildLetterboxdStableFilmLink } from "../lib/letterboxdStableFilmLink.js";
 import {
+  HTTP_STATUS_BAD_REQUEST,
   HTTP_STATUS_INTERNAL_SERVER_ERROR,
   HTTP_STATUS_TOO_MANY_REQUESTS,
 } from "../httpStatusCodes.js";
@@ -105,20 +107,17 @@ function isObjectLike(value: unknown): value is Record<string, unknown> {
 }
 
 export const searchMovie: HttpHandler = async ({ req, res }) => {
-  const body = req.body as { title?: string; year?: string | number; country?: string } | undefined;
-  const title = body?.title;
-  const year = body?.year;
-  const countryCode = body?.country;
+  const parsedBody = searchMovieBodySchema.safeParse(req.body ?? {});
+  if (!parsedBody.success) {
+    res.status(HTTP_STATUS_BAD_REQUEST).json({ error: firstZodIssueMessage(parsedBody.error) });
+    return;
+  }
+  const { title, year: rawYear, country: countryCode } = parsedBody.data;
+  const year = rawYear ?? undefined;
   const [, country] = (countryCode || "es_UY").split("_");
   const language = "en";
 
   try {
-    if (!title) {
-      console.log("No movie title");
-      res.json({ message: "Movie not found", title, year });
-      return;
-    }
-
     const cacheKey = `search-movie:${title}:${year}:${country}`;
     const cachedResponse = await getCacheValue(cacheKey);
 
