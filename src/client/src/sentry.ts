@@ -1,16 +1,21 @@
 import * as Sentry from "@sentry/react";
 
+/** Matches server default in `src/server/lib/sentryTracesSampleRate.ts`. */
+const PRODUCTION_TRACES_SAMPLE_RATE = 0.1;
+
 type SentryContext = {
   tags?: Record<string, string>;
   extra?: Record<string, unknown>;
   level?: Sentry.SeverityLevel;
 };
 
-function parseSampleRate(value: string | undefined, fallback: number): number {
-  if (!value) return fallback;
-  const parsed = Number.parseFloat(value);
-  if (!Number.isFinite(parsed)) return fallback;
-  return Math.min(Math.max(parsed, 0), 1);
+function resolveTracesSampleRate(raw: string | undefined, environment: string): number {
+  const trimmed = raw?.trim();
+  if (trimmed) {
+    const parsed = Number.parseFloat(trimmed);
+    if (Number.isFinite(parsed)) return Math.min(Math.max(parsed, 0), 1);
+  }
+  return environment === "production" ? PRODUCTION_TRACES_SAMPLE_RATE : 0;
 }
 
 function getRuntimeString(value: unknown): string {
@@ -29,10 +34,10 @@ export function initFrontendSentry(): void {
   const release =
     getRuntimeString(window.__SENTRY_RELEASE__) ||
     getRuntimeString(import.meta.env.VITE_SENTRY_RELEASE);
-  const tracesSampleRate = parseSampleRate(
+  const tracesSampleRate = resolveTracesSampleRate(
     getRuntimeString(window.__SENTRY_TRACES_SAMPLE_RATE__) ||
       getRuntimeString(import.meta.env.VITE_SENTRY_TRACES_SAMPLE_RATE),
-    0,
+    environment,
   );
   const sendDefaultPii =
     getRuntimeString(window.__SENTRY_SEND_DEFAULT_PII__) === "true" ||
@@ -45,13 +50,13 @@ export function initFrontendSentry(): void {
     tracesSampleRate,
     sendDefaultPii,
     integrations: [Sentry.browserTracingIntegration()],
-    tracePropagationTargets: [/^\//, "localhost", "127.0.0.1"],
+    tracePropagationTargets: [/^\//, /\.fly\.dev$/i, "localhost", "127.0.0.1"],
   });
 }
 
 export function captureFrontendException(
   error: unknown,
-  context: SentryContext & { transactionName?: string } = {},
+  context: SentryContext & { transactionName?: string; fingerprint?: string[] } = {},
 ): string {
   if (!Sentry.getClient()) return "";
   const normalizedError = error instanceof Error ? error : new Error(String(error));
@@ -60,6 +65,7 @@ export function captureFrontendException(
     tags: context.tags,
     extra: context.extra,
     ...(context.transactionName ? { transactionName: context.transactionName } : {}),
+    ...(context.fingerprint ? { fingerprint: context.fingerprint } : {}),
   });
 }
 

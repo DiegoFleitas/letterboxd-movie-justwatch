@@ -44,6 +44,15 @@ describe("frontend sentry helpers", () => {
     expect(init.mock.calls[0][0]).toMatchObject({ dsn: "https://k@sentry.io/1" });
   });
 
+  it("uses 10% trace sampling in production when rate is unset", async () => {
+    (window as { __SENTRY_DSN__?: string; __SENTRY_ENVIRONMENT__?: string }).__SENTRY_DSN__ =
+      "https://k@sentry.io/1";
+    (window as { __SENTRY_ENVIRONMENT__?: string }).__SENTRY_ENVIRONMENT__ = "production";
+    const { initFrontendSentry } = await import("../sentry");
+    initFrontendSentry();
+    expect(init.mock.calls[0][0]).toMatchObject({ tracesSampleRate: 0.1 });
+  });
+
   it("captureFrontendException returns empty when no client", async () => {
     getClient.mockReturnValue(null);
     const { captureFrontendException } = await import("../sentry");
