@@ -24,17 +24,24 @@ Order before PR: `bun run lint && bun run typecheck && bun run knip && bun run t
 
 ## Test shortcuts
 
+- `bunx vitest run tests/someFeature.test.ts` — run a single test file
 - `bun run test:backend` — Fastify integration tests only
 - `bun run test:redis`, `test:dedupe`, `test:filter`, `test:state`, `test:posthog` — single files
-- `bun run test:e2e` — Playwright (`tests/e2e/*.spec.ts`). Two kinds: **mocked UI flows** (route-intercept `/api/*`) and **`backend-smoke.spec.ts`** (real HTTP to Fastify).
+- `bun run test:e2e` — Playwright (`tests/e2e/*.spec.ts`). Two kinds: **mocked UI flows** (route-intercept `/api/*`) and **`backend-smoke.spec.ts`** (real HTTP to Fastify; requires `bun run dev` running first).
+- **Fixtures**: `tests/fixtures/` — HTML/JSON used by unit tests. Update with `bun run update:letterboxd-fixtures`.
+- **Goldens**: `tests/goldens/` — optional JSON golden files for snapshot-style assertions.
+- Two Vitest files import client modules (`@/` alias): `stateTileManagement.test.ts` (`@/movieTiles`) and `providerDeduplication.test.ts` (`@/providerUtils`). If those modules are renamed, run both test suites.
 
 ## Architecture
 
-- **Backend**: Bun + Fastify, entry `src/server/main.ts` → `createServer.ts`. Controllers in `src/server/controllers/`. Wiring: `registerFastifyWiring.ts` calls session, static, API, dev, and Sentry route registrations.
+- **Backend**: Bun + Fastify, entry `src/server/main.ts` → `createServer.ts`. Wiring: `registerFastifyWiring.ts` orchestrates all plugin/route registrations (session, static, API, dev routes, Sentry).
 - **Frontend**: React 19 + Vite, root `src/client/`, entry `src/client/index.html`
+- **Controllers** (`src/server/controllers/`): HTTP handlers — lists, search, posters, PostHog proxy, HTTPS proxy, Jackett alternative search, subdl.
+- **Lib** (`src/server/lib/`): Shared backend utilities — axios config, Redis client, Letterboxd scraping (Cheerio), canonical provider loading, API schemas (Zod), PostHog, Sentry capture helpers. Domain/API types in `src/server/lib/types/`.
+- **Route constants** (`src/server/routes.ts`): All API path strings, shared between Fastify and the Vite client via `@server/routes` import.
 - **Two `tsconfig.json`** files: root (server, NodeNext) and `src/client/tsconfig.json` (client, ESNext/bundler)
-- **Path aliases**: `@server/*` → `src/server/*`, `@/*` → `src/client/src/*`. Both `tsconfig.json` and `vitest.config.ts` mirror these.
-- **Client import boundary**: Only `@server/lib/letterboxdListUrl` is imported from the client app. Avoid pulling more server modules into the browser bundle.
+- **Path aliases**: `@server/*` → `src/server/*`, `@/*` → `src/client/src/*`. Defined in root `tsconfig.json`, `src/client/tsconfig.json`, `vite.config.ts`, and `vitest.config.ts`.
+- **Client import boundary**: Only `@server/lib/letterboxdListUrl` is imported from the client app. Do not pull additional server modules into the browser bundle.
 - **Redis** caching with snapshot export/seed scripts (`redis/scripts/`). See `bun run redis:reset` and `redis/README.md`.
 
 ## Git conventions
@@ -63,6 +70,30 @@ Order before PR: `bun run lint && bun run typecheck && bun run knip && bun run t
   - `bun run fly:volumes:prune` — dry-run destroy unattached volumes
   - Requires `flyctl` + `jq` on PATH.
 - Weekly cost report via `.github/workflows/fly-cost-report.yml` (Monday 9am UTC, needs `FLY_API_TOKEN` secret).
+
+## Redis local dev
+
+```bash
+bun run redis:reset   # validate + seed (or export + validate + seed if snapshot missing)
+bun run export-redis  # export running Redis → redis/data/redis-snapshot.json
+bun run seed-redis    # restore snapshot → local Redis
+```
+
+Scripts reject non-local hosts by default; set `ALLOW_NON_LOCAL_REDIS=1` to override. Key prefix controlled by `FLY_APP_NAME` (defaults to `app`).
+
+## Key environment variables
+
+| Variable                                   | Notes                                                 |
+| ------------------------------------------ | ----------------------------------------------------- |
+| `FLYIO_REDIS_URL`                          | e.g. `redis://localhost:6379`                         |
+| `DISABLE_REDIS`                            | `1` skips Redis (used in CI and production)           |
+| `OMDB_API_KEY`                             | Poster lookups                                        |
+| `MOVIE_DB_API_KEY`                         | TMDb search; enables extra integration coverage in CI |
+| `APP_SECRET_KEY`                           | ≥32 chars, required in production for sessions        |
+| `JACKETT_API_KEY` / `JACKETT_API_ENDPOINT` | Optional alternative search                           |
+| `PORT`                                     | Backend port (default 3000)                           |
+
+Full list: `.env.example`.
 
 ## 2026-05-28 Cost reduction
 
