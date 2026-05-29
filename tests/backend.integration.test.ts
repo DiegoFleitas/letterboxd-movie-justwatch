@@ -33,6 +33,16 @@ describe("backend integration (fastify)", () => {
     expect(text).toBe("OK");
   });
 
+  it("security headers — HSTS and CSP are present", async () => {
+    const res = await fetch(`${baseUrl}/healthcheck`);
+    const hsts = res.headers.get("strict-transport-security");
+    const csp = res.headers.get("content-security-policy");
+    expect(hsts).toContain("max-age=31536000");
+    expect(hsts).toContain("includeSubDomains");
+    expect(csp).toContain("default-src");
+    expect(csp).toContain("frame-ancestors");
+  });
+
   it("GET /redis-healthcheck returns OK with mocked Redis", async () => {
     const res = await fetch(`${baseUrl}/redis-healthcheck`);
     const text = await res.text();
@@ -52,7 +62,7 @@ describe("backend integration (fastify)", () => {
       body: JSON.stringify({}),
     });
 
-    expect(res.headers.get("cache-control")).toBe("public, max-age=3600");
+    expect(res.headers.get("cache-control")).toBe("private, max-age=3600");
     expect(res.status).toBe(400);
     const body = (await res.json()) as { error?: string };
     expect(body).toMatchObject({ error: "Title is required" });

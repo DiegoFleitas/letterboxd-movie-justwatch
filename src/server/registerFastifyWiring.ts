@@ -46,6 +46,11 @@ export async function registerFastifyWiring(
     },
     crossOriginOpenerPolicy: { policy: "same-origin" },
     crossOriginEmbedderPolicy: false,
+    strictTransportSecurity: {
+      maxAge: 31536000,
+      includeSubDomains: true,
+      preload: true,
+    },
   });
 
   await app.register(cors, {
