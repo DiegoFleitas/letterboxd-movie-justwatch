@@ -322,6 +322,27 @@ describe("posthogProxyHandler", () => {
     expect(getBody()).toBe("recorder script content");
   });
 
+  it("rewrites /static/rec.js with query string to posthog-recorder upstream", async () => {
+    fetchSpy.mockResolvedValue(
+      new Response("recorder script content", {
+        status: 200,
+        headers: { "content-type": "application/javascript" },
+      }),
+    );
+
+    const req = createMockRequest({
+      url: `${PROXY_PREFIX}/static/rec.js?v=1.374.2`,
+      method: "GET",
+      body: undefined,
+    });
+    const { reply } = createMockReply();
+
+    await posthogProxyHandler(req, reply);
+
+    const fetchUrl = fetchSpy.mock.calls[0]?.[0];
+    expect(fetchUrl).toBe(`${POSTHOG_HOST}/static/posthog-recorder.js?v=1.374.2`);
+  });
+
   it("forwards upstream non-JSON (text) response body", async () => {
     fetchSpy.mockResolvedValue(
       new Response("plain text body", {

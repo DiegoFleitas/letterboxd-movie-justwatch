@@ -56,7 +56,8 @@ export async function registerFastifyWiring(
   registerFastifyStaticAndIndex(app, cachedIndexHtml);
   registerFastifySessionPlugins(app);
 
-  app.addContentTypeParser(/^text\/plain/, { parseAs: "buffer" }, (_req, body, done) => {
+  app.removeContentTypeParser("text/plain");
+  app.addContentTypeParser("text/plain", { parseAs: "buffer" }, (_req, body, done) => {
     done(null, body);
   });
 
