@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
+  HTTP_STATUS_BAD_REQUEST,
   HTTP_STATUS_INTERNAL_SERVER_ERROR,
   HTTP_STATUS_NOT_FOUND,
   HTTP_STATUS_OK,
@@ -52,12 +53,15 @@ describe("poster controller", () => {
     expect(axiosMocks.get).not.toHaveBeenCalled();
   });
 
-  it("returns 404 when title missing", async () => {
+  it("returns 400 when title missing", async () => {
     redisMocks.getCacheValue.mockResolvedValue(null);
     const args = ctx({ year: 2000 });
     await poster(args);
     const r = args.res;
-    expect(r.statusCode).toBe(HTTP_STATUS_NOT_FOUND);
+    expect(r.statusCode).toBe(HTTP_STATUS_BAD_REQUEST);
+    expect(r.jsonMock).toHaveBeenCalledWith(
+      expect.objectContaining({ error: "Title is required" }),
+    );
   });
 
   it("strips sequel segment after colon in title before OMDB", async () => {

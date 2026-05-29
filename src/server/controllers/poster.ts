@@ -1,8 +1,10 @@
 import type { HttpHandler } from "../httpContext.js";
 import axiosHelper from "../lib/axios.js";
 import { getCacheValue, setCacheValue } from "../lib/redis.js";
+import { posterBodySchema, firstZodIssueMessage } from "../lib/apiSchemas.js";
 import { captureServerException } from "../lib/sentryCapture.js";
 import {
+  HTTP_STATUS_BAD_REQUEST,
   HTTP_STATUS_INTERNAL_SERVER_ERROR,
   HTTP_STATUS_NOT_FOUND,
   HTTP_STATUS_OK,
@@ -12,8 +14,13 @@ const axios = axiosHelper();
 const cacheTtl = Number(process.env.CACHE_TTL) || 60;
 
 export const poster: HttpHandler = async ({ req, res }) => {
+  const parsedBody = posterBodySchema.safeParse(req.body ?? {});
+  if (!parsedBody.success) {
+    res.status(HTTP_STATUS_BAD_REQUEST).json({ error: firstZodIssueMessage(parsedBody.error) });
+    return;
+  }
+  let { title, year } = parsedBody.data;
   const omdbApiKey = process.env.OMDB_API_KEY;
-  let { title, year } = (req.body as { title?: string; year?: string | number }) ?? {};
   const cacheKey = `poster:${title}:${year}`;
   try {
     const cachedPoster = await getCacheValue(cacheKey);
@@ -38,7 +45,7 @@ export const poster: HttpHandler = async ({ req, res }) => {
 
     const encodedTitle = encodeURIComponent(title);
     const response = await axios.get(
-      `http://www.omdbapi.com/?t=${encodedTitle}&y=${year}&apikey=${omdbApiKey}`,
+      `https://www.omdbapi.com/?t=${encodedTitle}&y=${year}&apikey=${omdbApiKey}`,
     );
 
     const data = response?.data as
