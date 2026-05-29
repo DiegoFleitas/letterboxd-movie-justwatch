@@ -12,6 +12,9 @@ src/client/dist
 # editor and IDE files
 .vscode/
 
+# AI tool local overrides
+.claude/settings.local.json
+
 # misc
 *.log
 *.har
