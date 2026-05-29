@@ -83,20 +83,17 @@ function logEmptyPage(pageUrl: string, baseUrl: string, lastHtml: string): void 
   }
 }
 
-async function handleErrorCache(
-  haveFilmTotal: boolean,
+async function cacheEmptyPage(
   cacheKey: string,
   cacheCategories: string[],
-  currentPage: number,
-  page: number,
 ): Promise<void> {
-  if (haveFilmTotal) {
-    await setCacheValue(cacheKey, [], cacheTtl, cacheCategories);
-  } else if (currentPage === page) {
-    console.log(
-      `[LIST_CACHE_SKIP] No parsable films for starting page ${page} (${cacheKey}); not caching. Often markup changed, blocked HTML, or an empty watchlist.`,
-    );
-  }
+  await setCacheValue(cacheKey, [], cacheTtl, cacheCategories);
+}
+
+function logSkipCache(cacheKey: string, page: number): void {
+  console.log(
+    `[LIST_CACHE_SKIP] No parsable films for starting page ${page} (${cacheKey}); not caching. Often markup changed, blocked HTML, or an empty watchlist.`,
+  );
 }
 
 async function handlePageFilms(
@@ -163,7 +160,11 @@ const fetchList = async ({ url, cacheKeyPrefix, req, res }: FetchListArgs): Prom
 
       if (pageFilms.length === 0) {
         logEmptyPage(pageUrl, baseUrl, lastHtml);
-        await handleErrorCache(haveFilmTotal, cacheKey, cacheCategories, currentPage, page);
+        if (haveFilmTotal) {
+          await cacheEmptyPage(cacheKey, cacheCategories);
+        } else if (currentPage === page) {
+          logSkipCache(cacheKey, page);
+        }
         break;
       }
 
@@ -182,7 +183,7 @@ const fetchList = async ({ url, cacheKeyPrefix, req, res }: FetchListArgs): Prom
       filmsPromises = filmsPromises.concat(pageFilms);
     }
 
-    const films = await Promise.all(filmsPromises);
+    const films = filmsPromises;
     res.status(HTTP_STATUS_OK).json({
       message: "List found",
       watchlist: films,

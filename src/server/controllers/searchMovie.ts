@@ -129,8 +129,9 @@ export const searchMovie: HttpHandler = async ({ req, res }) => {
 
     const movieDbAPIKey = process.env.MOVIE_DB_API_KEY;
     const encodedTitle = encodeURIComponent(title);
+    const yearParam = year ? `&year=${year}` : "";
     const movieDbResponse = await axios.get(
-      `${PROXY}https://api.themoviedb.org/3/search/movie?query=${encodedTitle}${year ? `&year=${year}` : ""}&api_key=${movieDbAPIKey}`,
+      `${PROXY}https://api.themoviedb.org/3/search/movie?query=${encodedTitle}${yearParam}&api_key=${movieDbAPIKey}`,
     );
 
     const results = (movieDbResponse.data as { results?: TMDBResult[] }).results;
@@ -264,7 +265,7 @@ export const searchMovie: HttpHandler = async ({ req, res }) => {
       ...(tmdbLink ? { tmdbLink } : {}),
     };
 
-    if (!movieData.node.offers || !movieData.node.offers.length) {
+    if (!movieData.node.offers?.length) {
       await setCacheValue(
         cacheKey,
         noStreamingServicesResponse,

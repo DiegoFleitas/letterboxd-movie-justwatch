@@ -36,9 +36,7 @@ export function buildCanonicalProviderMaps(packages: PackageItem[]): {
     if (!key) continue;
     const existing = byKey.get(key);
     const canonical = { id: p.technicalName, name: p.clearName || p.technicalName };
-    if (!existing) {
-      byKey.set(key, canonical);
-    } else if (preferMainName(p.clearName ?? "") && !preferMainName(existing.name)) {
+    if (!existing || (preferMainName(p.clearName ?? "") && !preferMainName(existing.name))) {
       byKey.set(key, canonical);
     }
   }
