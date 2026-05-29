@@ -1,5 +1,5 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
-import { HTTP_API_PATHS, HTTP_API_PROXY_ROUTE } from "./routes.js";
+import { HTTP_API_PATHS, HTTP_API_POSTHOG_PROXY_ROUTE, HTTP_API_PROXY_ROUTE } from "./routes.js";
 import {
   searchMovie,
   poster,
@@ -9,6 +9,7 @@ import {
   alternativeSearch,
   subdlSearch,
   proxy,
+  posthogProxyHandler,
 } from "./controllers/index.js";
 import { isHealthy, isRedisDisabled } from "./lib/redis.js";
 import type { FastifyHttpBinder } from "./fastifyHttpBridge.js";
@@ -73,4 +74,6 @@ export async function registerFastifyAppApi(
 
     api.all(HTTP_API_PROXY_ROUTE, makeFastifyHandler(proxy));
   });
+
+  app.all(HTTP_API_POSTHOG_PROXY_ROUTE, posthogProxyHandler);
 }

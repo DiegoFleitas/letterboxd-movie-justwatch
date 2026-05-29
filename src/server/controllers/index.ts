@@ -5,6 +5,7 @@ import { letterboxdPoster } from "./letterboxdPoster.js";
 import { alternativeSearch } from "./alternativeSearch.js";
 import { subdlSearch } from "./subdlSearch.js";
 import { proxy } from "./proxy.js";
+import { posthogProxyHandler } from "./posthogProxy.js";
 
 export {
   searchMovie,
@@ -15,4 +16,5 @@ export {
   alternativeSearch,
   subdlSearch,
   proxy,
+  posthogProxyHandler,
 };

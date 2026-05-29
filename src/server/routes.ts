@@ -16,11 +16,15 @@ export const HTTP_API_PATHS = {
   alternativeSearch: "/api/alternative-search",
   subdlSearch: "/api/subdl-search",
   proxyPrefix: "/api/proxy",
+  posthogProxyPrefix: "/api/reversa",
   sentryTest: "/api/sentry-test",
 } as const;
 
 /** Fastify `app.all` pattern for the HTTPS proxy (must end with `/*`). */
 export const HTTP_API_PROXY_ROUTE = `${HTTP_API_PATHS.proxyPrefix}/*` as const;
+
+/** Fastify `app.all` pattern for the PostHog reverse proxy (must end with `/*`). */
+export const HTTP_API_POSTHOG_PROXY_ROUTE = `${HTTP_API_PATHS.posthogProxyPrefix}/*` as const;
 
 /** Strip our proxy mount from `req.url` to recover the target URL string. */
 export function proxyTargetFromRequestUrl(requestUrl: string): string {
