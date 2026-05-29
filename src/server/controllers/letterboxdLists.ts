@@ -111,6 +111,52 @@ async function handlePageFilms(
   return { filmsCount, totalPages, haveFilmTotal: false };
 }
 
+interface PageFetchResult {
+  $: cheerio.CheerioAPI;
+  pageFilms: PageFilm[];
+  lastHtml: string;
+}
+
+async function fetchListPage(
+  pageUrl: string,
+  baseUrl: string,
+  listHeaders: Record<string, string>,
+): Promise<PageFetchResult> {
+  const html = await fetchLetterboxdHtml(pageUrl, listHeaders);
+  const $ = cheerio.load(html);
+  let pageFilms = getPageFilms($);
+  let lastHtml = html;
+
+  if (pageFilms.length === 0 && baseUrl.includes("/list/")) {
+    const esiResult = await tryEsiFallback(pageUrl, listHeaders, $);
+    return {
+      $: esiResult.$,
+      pageFilms: esiResult.pageFilms,
+      lastHtml: esiResult.html || lastHtml,
+    };
+  }
+
+  return { $, pageFilms, lastHtml };
+}
+
+async function handleEmptyPage(
+  pageUrl: string,
+  baseUrl: string,
+  lastHtml: string,
+  cacheKey: string,
+  cacheCategories: string[],
+  haveFilmTotal: boolean,
+  currentPage: number,
+  page: number,
+): Promise<void> {
+  logEmptyPage(pageUrl, baseUrl, lastHtml);
+  if (haveFilmTotal) {
+    await cacheEmptyPage(cacheKey, cacheCategories);
+  } else if (currentPage === page) {
+    logSkipCache(cacheKey, page);
+  }
+}
+
 const fetchList = async ({ url, cacheKeyPrefix, req, res }: FetchListArgs): Promise<void> => {
   try {
     const baseUrl = url.replace(/\/+$/, "");
@@ -143,25 +189,19 @@ const fetchList = async ({ url, cacheKeyPrefix, req, res }: FetchListArgs): Prom
 
       const pageUrl = `${baseUrl}/page/${currentPage}/`;
       const listHeaders = buildLetterboxdHtmlRequestHeaders(getRandomScrapeUserAgent());
-      const html = await fetchLetterboxdHtml(pageUrl, listHeaders);
-      let $ = cheerio.load(html);
-      let pageFilms = getPageFilms($);
-      let lastHtml: string = html;
-
-      if (pageFilms.length === 0 && baseUrl.includes("/list/")) {
-        const esiResult = await tryEsiFallback(pageUrl, listHeaders, $);
-        $ = esiResult.$;
-        pageFilms = esiResult.pageFilms;
-        if (esiResult.html) lastHtml = esiResult.html;
-      }
+      const { $, pageFilms, lastHtml } = await fetchListPage(pageUrl, baseUrl, listHeaders);
 
       if (pageFilms.length === 0) {
-        logEmptyPage(pageUrl, baseUrl, lastHtml);
-        if (haveFilmTotal) {
-          await cacheEmptyPage(cacheKey, cacheCategories);
-        } else if (currentPage === page) {
-          logSkipCache(cacheKey, page);
-        }
+        await handleEmptyPage(
+          pageUrl,
+          baseUrl,
+          lastHtml,
+          cacheKey,
+          cacheCategories,
+          haveFilmTotal,
+          currentPage,
+          page,
+        );
         break;
       }
 
