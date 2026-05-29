@@ -29,9 +29,16 @@ function getJackettConfig(): { key: string; endpoint: string } | null {
   return { key: jackettKey, endpoint: jackettEndpoint };
 }
 
-async function searchJackett(baseUrl: string, searchQuery: string): Promise<JackettResult[]> {
+async function searchJackett(
+  baseUrl: string,
+  searchQuery: string,
+  apiKey: string,
+): Promise<JackettResult[]> {
   const { data } = await axios.get<{ Results?: JackettResult[] }>(
     `${baseUrl}&Query=${searchQuery}`,
+    {
+      headers: { "X-Api-Key": apiKey },
+    },
   );
   return data.Results ?? [];
 }
@@ -81,12 +88,12 @@ export const alternativeSearch: HttpHandler = async ({ req, res }) => {
     }
 
     const categories = { film: 2000 };
-    const baseUrl = `${jackettConfig.endpoint}/api/v2.0/indexers/all/results?apikey=${jackettConfig.key}&Category=${categories.film}`;
-    let results = await searchJackett(baseUrl, searchQuery);
+    const baseUrl = `${jackettConfig.endpoint}/api/v2.0/indexers/all/results?Category=${categories.film}`;
+    let results = await searchJackett(baseUrl, searchQuery, jackettConfig.key);
     if (results.length === 0) {
       console.log(`No results found, trying again without year (${title} ${year})`);
       searchQuery = `${title}`.replace(/ /g, "+");
-      results = await searchJackett(baseUrl, searchQuery);
+      results = await searchJackett(baseUrl, searchQuery, jackettConfig.key);
     }
 
     const bestResult = findBestJackettResult(results);
