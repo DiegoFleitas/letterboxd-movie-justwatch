@@ -52,9 +52,8 @@ export const poster: HttpHandler = async ({ req, res }) => {
       | { Error?: string; Poster?: string; Year?: string; Released?: string }
       | undefined;
     if (!response || !data || data.Error) {
-      const errorMessage = data?.Error || "Movie not found";
-      console.log("Movie not found", errorMessage);
-      res.status(HTTP_STATUS_NOT_FOUND).json({ error: errorMessage });
+      console.log("Movie not found", data?.Error);
+      res.status(HTTP_STATUS_NOT_FOUND).json({ error: "Movie not found" });
       return;
     }
 
