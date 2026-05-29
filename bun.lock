@@ -7,7 +7,9 @@
       "dependencies": {
         "@fastify/compress": "^8.3.1",
         "@fastify/cookie": "^11.0.2",
+        "@fastify/cors": "^11.2.0",
         "@fastify/formbody": "^8.0.2",
+        "@fastify/helmet": "^13.0.2",
         "@fastify/rate-limit": "^10.3.0",
         "@fastify/session": "^11.1.1",
         "@fastify/static": "^9.1.3",
@@ -219,6 +221,8 @@
 
     "@fastify/cookie": ["@fastify/cookie@11.0.2", "", { "dependencies": { "cookie": "^1.0.0", "fastify-plugin": "^5.0.0" } }, "sha512-GWdwdGlgJxyvNv+QcKiGNevSspMQXncjMZ1J8IvuDQk0jvkzgWWZFNC2En3s+nHndZBGV8IbLwOI/sxCZw/mzA=="],
 
+    "@fastify/cors": ["@fastify/cors@11.2.0", "", { "dependencies": { "fastify-plugin": "^5.0.0", "toad-cache": "^3.7.0" } }, "sha512-LbLHBuSAdGdSFZYTLVA3+Ch2t+sA6nq3Ejc6XLAKiQ6ViS2qFnvicpj0htsx03FyYeLs04HfRNBsz/a8SvbcUw=="],
+
     "@fastify/error": ["@fastify/error@4.2.0", "", {}, "sha512-RSo3sVDXfHskiBZKBPRgnQTtIqpi/7zhJOEmAxCiBcM7d0uwdGdxLlsCaLzGs8v8NnxIRlfG0N51p5yFaOentQ=="],
 
     "@fastify/fast-json-stringify-compiler": ["@fastify/fast-json-stringify-compiler@5.0.3", "", { "dependencies": { "fast-json-stringify": "^6.0.0" } }, "sha512-uik7yYHkLr6fxd8hJSZ8c+xF4WafPK+XzneQDPU+D10r5X19GW8lJcom2YijX2+qtFF1ENJlHXKFM9ouXNJYgQ=="],
@@ -226,6 +230,8 @@
     "@fastify/formbody": ["@fastify/formbody@8.0.2", "", { "dependencies": { "fast-querystring": "^1.1.2", "fastify-plugin": "^5.0.0" } }, "sha512-84v5J2KrkXzjgBpYnaNRPqwgMsmY7ZDjuj0YVuMR3NXCJRCgKEZy/taSP1wUYGn0onfxJpLyRGDLa+NMaDJtnA=="],
 
     "@fastify/forwarded": ["@fastify/forwarded@3.0.1", "", {}, "sha512-JqDochHFqXs3C3Ml3gOY58zM7OqO9ENqPo0UqAjAjH8L01fRZqwX9iLeX34//kiJubF7r2ZQHtBRU36vONbLlw=="],
+
+    "@fastify/helmet": ["@fastify/helmet@13.0.2", "", { "dependencies": { "fastify-plugin": "^5.0.0", "helmet": "^8.0.0" } }, "sha512-tO1QMkOfNeCt9l4sG/FiWErH4QMm+RjHzbMTrgew1DYOQ2vb/6M1G2iNABBrD7Xq6dUk+HLzWW8u+rmmhQHifA=="],
 
     "@fastify/merge-json-schemas": ["@fastify/merge-json-schemas@0.2.1", "", { "dependencies": { "dequal": "^2.0.3" } }, "sha512-OA3KGBCy6KtIvLf8DINC5880o5iBlDX4SxzLQS8HorJAbqluzLRn80UXU0bxZn7UOFhFgpRJDasfwn9nG4FG4A=="],
 
@@ -1036,6 +1042,8 @@
     "has-tostringtag": ["has-tostringtag@1.0.2", "", { "dependencies": { "has-symbols": "^1.0.3" } }, "sha512-NqADB8VjPFLM2V0VvHUewwwsw0ZWBaIdgo+ieHtK3hasLz4qeCRjYcqfB6AQrBggRKppKF8L52/VqdVsO47Dlw=="],
 
     "hasown": ["hasown@2.0.2", "", { "dependencies": { "function-bind": "^1.1.2" } }, "sha512-0hJU9SCPvmMzIBdZFqNPXWa6dqh7WdH0cII9y+CyS8rG3nL48Bclra9HmKhVVUHyPWNH5Y7xDwAB7bfgSjkUMQ=="],
+
+    "helmet": ["helmet@8.2.0", "", {}, "sha512-DRgTIUgnWcJ62KyarxxziuqYxKGnR6Rgg19BlbucN/dpmJbl1XOit6qvoOX0ZT+HhWe5OUVhU/a1zpGyc1xA0Q=="],
 
     "hermes-estree": ["hermes-estree@0.25.1", "", {}, "sha512-0wUoCcLp+5Ev5pDW2OriHC2MJCbwLwuRx+gAqMTOkGKJJiBCLjtrvy4PWUGn6MIVefecRpzoOZ/UV6iGdOr+Cw=="],
 
