@@ -19,6 +19,14 @@ function buildProxyHeaders(request: FastifyRequest): Record<string, string> {
   const ua = request.headers["user-agent"];
   if (ua) headers["user-agent"] = Array.isArray(ua) ? ua[0] : ua;
 
+  const flyClientIp = request.headers["fly-client-ip"];
+  const xForwardedFor = request.headers["x-forwarded-for"];
+  const clientIp =
+    (Array.isArray(flyClientIp) ? flyClientIp[0] : flyClientIp) ||
+    (Array.isArray(xForwardedFor) ? xForwardedFor[0] : xForwardedFor?.split(",")[0]?.trim()) ||
+    request.ip;
+  if (clientIp) headers["x-forwarded-for"] = clientIp;
+
   return headers;
 }
 

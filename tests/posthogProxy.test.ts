@@ -239,6 +239,94 @@ describe("posthogProxyHandler", () => {
     expect(headers["origin"]).toBeUndefined();
   });
 
+  describe("client IP forwarding for geolocation", () => {
+    it("uses fly-client-ip as X-Forwarded-For (primary path)", async () => {
+      const req = {
+        ...createMockRequest({ method: "POST", body: { event: "test" } }),
+        headers: {
+          "content-type": "application/json",
+          accept: "application/json",
+          "user-agent": "test-agent",
+          "fly-client-ip": "203.0.113.42",
+        },
+        ip: "10.0.0.1",
+      } as unknown as Parameters<typeof posthogProxyHandler>[0];
+      const { reply } = createMockReply();
+
+      await posthogProxyHandler(req, reply);
+
+      const headers = (fetchSpy.mock.calls[0]?.[1] as RequestInit).headers as Record<
+        string,
+        string
+      >;
+      expect(headers["x-forwarded-for"]).toBe("203.0.113.42");
+    });
+
+    it("falls back to first segment of x-forwarded-for when fly-client-ip absent", async () => {
+      const req = {
+        ...createMockRequest({ method: "POST", body: { event: "test" } }),
+        headers: {
+          "content-type": "application/json",
+          accept: "application/json",
+          "user-agent": "test-agent",
+          "x-forwarded-for": "198.51.100.7, 10.0.0.1",
+        },
+        ip: "10.0.0.1",
+      } as unknown as Parameters<typeof posthogProxyHandler>[0];
+      const { reply } = createMockReply();
+
+      await posthogProxyHandler(req, reply);
+
+      const headers = (fetchSpy.mock.calls[0]?.[1] as RequestInit).headers as Record<
+        string,
+        string
+      >;
+      expect(headers["x-forwarded-for"]).toBe("198.51.100.7");
+    });
+
+    it("falls back to request.ip when no IP headers present", async () => {
+      const req = {
+        ...createMockRequest({ method: "POST", body: { event: "test" } }),
+        headers: {
+          "content-type": "application/json",
+          accept: "application/json",
+          "user-agent": "test-agent",
+        },
+        ip: "192.0.2.55",
+      } as unknown as Parameters<typeof posthogProxyHandler>[0];
+      const { reply } = createMockReply();
+
+      await posthogProxyHandler(req, reply);
+
+      const headers = (fetchSpy.mock.calls[0]?.[1] as RequestInit).headers as Record<
+        string,
+        string
+      >;
+      expect(headers["x-forwarded-for"]).toBe("192.0.2.55");
+    });
+
+    it("omits X-Forwarded-For when no IP source is available", async () => {
+      const req = {
+        ...createMockRequest({ method: "POST", body: { event: "test" } }),
+        headers: {
+          "content-type": "application/json",
+          accept: "application/json",
+          "user-agent": "test-agent",
+        },
+        ip: "",
+      } as unknown as Parameters<typeof posthogProxyHandler>[0];
+      const { reply } = createMockReply();
+
+      await posthogProxyHandler(req, reply);
+
+      const headers = (fetchSpy.mock.calls[0]?.[1] as RequestInit).headers as Record<
+        string,
+        string
+      >;
+      expect(headers["x-forwarded-for"]).toBeUndefined();
+    });
+  });
+
   it("forwards upstream content-type to the client", async () => {
     fetchSpy.mockResolvedValue(
       new Response("posthog.array(...)", {
