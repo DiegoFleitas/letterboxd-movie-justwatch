@@ -27,6 +27,14 @@
     "sequential-thinking": {
       "type": "local",
       "command": ["npx", "-y", "@modelcontextprotocol/server-sequential-thinking"]
+    },
+    "sonarqube": {
+      "type": "remote",
+      "url": "https://api.sonarcloud.io/mcp",
+      "headers": {
+        "Authorization": "Bearer {env:SONARQUBE_TOKEN}",
+        "SONARQUBE_ORG": "{env:SONARQUBE_ORG}"
+      }
     }
   }
 }
