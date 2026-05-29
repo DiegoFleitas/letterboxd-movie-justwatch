@@ -69,7 +69,7 @@ export function searchSubs(query: string, year?: string | number): void {
         showError(response.error || "No subtitles found.");
         return;
       }
-      window.open(response.url, "_blank", "noopener,noreferrer");
+      globalThis.open(response.url, "_blank", "noopener,noreferrer");
     })
     .catch((err) => {
       captureFrontendException(err, {
