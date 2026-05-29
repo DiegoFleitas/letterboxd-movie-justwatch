@@ -40,7 +40,7 @@ describe("MovieTile coverage", () => {
   });
 
   it("opens JustWatch proxy URL when a streaming provider button is clicked", async () => {
-    const openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
+    const openSpy = vi.spyOn(globalThis, "open").mockImplementation(() => null);
     const container = document.createElement("div");
     const root = createRoot(container);
     const jwUrl = "https://www.justwatch.com/us/movie/foo";
@@ -104,7 +104,7 @@ describe("MovieTile coverage", () => {
   });
 
   it("opens TMDB and IMDb URLs from external buttons", async () => {
-    const openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
+    const openSpy = vi.spyOn(globalThis, "open").mockImplementation(() => null);
     const container = document.createElement("div");
     const root = createRoot(container);
     const tmdb = "https://www.themoviedb.org/movie/1";

@@ -23,7 +23,7 @@ describe("frontend sentry helpers", () => {
     captureException.mockClear();
     captureMessage.mockClear();
     getClient.mockReturnValue(null);
-    delete (window as { __SENTRY_DSN__?: string }).__SENTRY_DSN__;
+    delete (globalThis as { __SENTRY_DSN__?: string }).__SENTRY_DSN__;
   });
 
   afterEach(() => {
@@ -37,7 +37,7 @@ describe("frontend sentry helpers", () => {
   });
 
   it("initFrontendSentry calls Sentry.init when window DSN is set", async () => {
-    (window as { __SENTRY_DSN__?: string }).__SENTRY_DSN__ = "https://k@sentry.io/1";
+    (globalThis as { __SENTRY_DSN__?: string }).__SENTRY_DSN__ = "https://k@sentry.io/1";
     const { initFrontendSentry } = await import("../sentry");
     initFrontendSentry();
     expect(init).toHaveBeenCalled();
@@ -45,9 +45,9 @@ describe("frontend sentry helpers", () => {
   });
 
   it("uses 10% trace sampling in production when rate is unset", async () => {
-    (window as { __SENTRY_DSN__?: string; __SENTRY_ENVIRONMENT__?: string }).__SENTRY_DSN__ =
+    (globalThis as { __SENTRY_DSN__?: string; __SENTRY_ENVIRONMENT__?: string }).__SENTRY_DSN__ =
       "https://k@sentry.io/1";
-    (window as { __SENTRY_ENVIRONMENT__?: string }).__SENTRY_ENVIRONMENT__ = "production";
+    (globalThis as { __SENTRY_ENVIRONMENT__?: string }).__SENTRY_ENVIRONMENT__ = "production";
     const { initFrontendSentry } = await import("../sentry");
     initFrontendSentry();
     expect(init.mock.calls[0][0]).toMatchObject({ tracesSampleRate: 0.1 });
