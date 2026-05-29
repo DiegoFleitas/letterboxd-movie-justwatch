@@ -94,12 +94,12 @@ describe("searchSubs", () => {
   });
 
   it("opens window when subtitles url returned", async () => {
-    vi.spyOn(window, "open").mockImplementation(() => null);
+    vi.spyOn(globalThis, "open").mockImplementation(() => null);
     vi.mocked(globalThis.fetch).mockResolvedValue(jsonResponse({ url: "https://subdl.com/x" }));
     const { searchSubs } = await import("../alternativeSearch");
     searchSubs("Film");
     await vi.waitFor(() =>
-      expect(window.open).toHaveBeenCalledWith(
+      expect(globalThis.open).toHaveBeenCalledWith(
         "https://subdl.com/x",
         "_blank",
         "noopener,noreferrer",

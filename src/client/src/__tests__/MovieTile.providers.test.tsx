@@ -27,7 +27,7 @@ describe("MovieTile providers and actions", () => {
 
   beforeEach(() => {
     stubMatchMedia(false);
-    vi.spyOn(window, "open").mockImplementation(() => null);
+    vi.spyOn(globalThis, "open").mockImplementation(() => null);
   });
 
   afterEach(() => {
@@ -43,8 +43,8 @@ describe("MovieTile providers and actions", () => {
     );
     const providerBtn = screen.getByTitle("Netflix");
     fireEvent.click(providerBtn);
-    expect(window.open).toHaveBeenCalled();
-    const opened = (window.open as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(globalThis.open).toHaveBeenCalled();
+    const opened = (globalThis.open as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
     expect(opened).toContain("click.justwatch.com");
     expect(opened).toContain("netflix.com");
   });
@@ -89,8 +89,8 @@ describe("MovieTile providers and actions", () => {
 
     fireEvent.click(hiddenBtn);
 
-    expect(window.open).toHaveBeenCalled();
-    const opened = (window.open as ReturnType<typeof vi.fn>).mock.calls.pop()?.[0] as string;
+    expect(globalThis.open).toHaveBeenCalled();
+    const opened = (globalThis.open as ReturnType<typeof vi.fn>).mock.calls.pop()?.[0] as string;
     expect(opened).toContain("click.justwatch.com");
     expect(opened).toContain("jw.example/4");
 
