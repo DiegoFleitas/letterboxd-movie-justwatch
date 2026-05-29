@@ -12,7 +12,7 @@ function getCanonicalByNames(): CanonicalByNames | null | undefined {
 export function normalizedProviderKey(name: string | null | undefined): string {
   if (!name || typeof name !== "string") return "";
   const byName = getCanonicalByNames();
-  if (byName && byName[name]) return byName[name].id;
+  if (byName?.[name]) return byName[name].id;
   return name;
 }
 
@@ -30,8 +30,7 @@ export function deduplicateProviderList(providers: ProviderLike[]): ProviderLike
   for (const p of all) {
     const canonical = byName[p.name];
     const id = canonical ? canonical.id : p.id;
-    if (!byCanonicalId.has(id)) byCanonicalId.set(id, p);
-    else if (canonical && canonical.name === p.name) byCanonicalId.set(id, p);
+    if (!byCanonicalId.has(id) || (canonical && canonical.name === p.name)) byCanonicalId.set(id, p);
   }
   return Array.from(byCanonicalId.values());
 }

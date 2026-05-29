@@ -34,13 +34,13 @@ if (rootEl) {
       });
     }
     if (params.get("sentryDummyBe") === "1") {
-      fetch(`${HTTP_API_PATHS.sentryTest}?mode=throw`)
-        .then(() => {})
-        .catch((err: unknown) => {
-          captureFrontendException(err, {
-            tags: { source: "dummy", layer: "frontend", endpoint: HTTP_API_PATHS.sentryTest },
-          });
+      try {
+        await fetch(`${HTTP_API_PATHS.sentryTest}?mode=throw`);
+      } catch (err: unknown) {
+        captureFrontendException(err, {
+          tags: { source: "dummy", layer: "frontend", endpoint: HTTP_API_PATHS.sentryTest },
         });
+      }
     }
   }
 

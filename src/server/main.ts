@@ -30,11 +30,13 @@ async function main() {
   process.on("SIGINT", gracefulShutdown);
 }
 
-main().catch(async (err) => {
+try {
+  await main();
+} catch (err) {
   console.error("Failed to start fastify server:", err);
   if (Sentry.getClient()) {
     Sentry.captureException(err);
     await Sentry.close(2000);
   }
   process.exit(1);
-});
+}
