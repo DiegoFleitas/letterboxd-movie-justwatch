@@ -14,6 +14,7 @@ src/client/dist
 
 # misc
 *.log
+*.har
 # Large optional Redis dump (canonical JSON stays tracked)
 /redis/data/redis-snapshot.json
 
