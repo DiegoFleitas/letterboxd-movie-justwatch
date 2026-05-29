@@ -21,7 +21,7 @@ import {
   SEARCH_MOVIE_TOTAL_ATTEMPTS,
 } from "./fetchSearchMovie";
 
-export const SEARCH_CONCURRENCY_DEFAULT = 4;
+const SEARCH_CONCURRENCY_DEFAULT = 4;
 export const SEARCH_CONCURRENCY_MOBILE = 2;
 
 /** Max wait for list API (server may chain many outbound Letterboxd fetches). */
