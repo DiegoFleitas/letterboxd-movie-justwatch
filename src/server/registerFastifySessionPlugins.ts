@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import type { FastifyInstance } from "fastify";
 import fastifyCookie from "@fastify/cookie";
 import fastifySession from "@fastify/session";
@@ -8,8 +9,7 @@ export function registerFastifySessionPlugins(app: FastifyInstance): void {
   if (!appSecretKey && process.env.NODE_ENV === "production") {
     throw new Error("APP_SECRET_KEY environment variable must be set in production.");
   }
-  /** @fastify/session requires secret length ≥ 32 */
-  const sessionSecret = appSecretKey || "dev-only-session-secret-do-not-use-in-production!!";
+  const sessionSecret = appSecretKey || randomBytes(32).toString("hex");
 
   void app.register(fastifyCookie, {
     secret: sessionSecret,
@@ -19,7 +19,7 @@ export function registerFastifySessionPlugins(app: FastifyInstance): void {
     secret: sessionSecret,
     cookie: {
       maxAge: 24 * 60 * 60 * 1000,
-      sameSite: "lax",
+      sameSite: "strict",
       secure: true,
       httpOnly: true,
     },
