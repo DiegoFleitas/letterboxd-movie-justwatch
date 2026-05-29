@@ -40,7 +40,8 @@ export const alternativeSearch: HttpHandler = async ({ req, res }) => {
   }
 
   try {
-    let searchQuery = `${title}${year != null && year !== "" ? ` ${year}` : ""}`.replace(/ /g, "+");
+    const suffix = year != null && year !== "" ? ` ${year}` : "";
+    let searchQuery = `${title}${suffix}`.replace(/ /g, "+");
 
     const cacheKey = `jackett:${searchQuery}:`;
     const cachedResponse = (await getCacheValue(cacheKey)) as
