@@ -352,7 +352,7 @@ describe("posthogProxyHandler", () => {
     );
 
     const req = createMockRequest({
-      url: `${PROXY_PREFIX}/some-text-endpoint`,
+      url: `${PROXY_PREFIX}/capture/`,
       method: "GET",
       body: undefined,
     });
@@ -377,5 +377,50 @@ describe("posthogProxyHandler", () => {
 
     const fetchUrl = fetchSpy.mock.calls[0]?.[0];
     expect(fetchUrl).toBe("https://eu.posthog.com/capture/");
+  });
+
+  describe("path allowlist", () => {
+    it("allows /capture/", async () => {
+      fetchSpy.mockResolvedValue(new Response("{}", { status: 200 }));
+      const req = createMockRequest({ url: `${PROXY_PREFIX}/capture/`, method: "POST" });
+      const { reply, getStatus } = createMockReply();
+      await posthogProxyHandler(req, reply);
+      expect(getStatus()).toBe(200);
+    });
+
+    it("rejects path traversal /../", async () => {
+      const req = createMockRequest({
+        url: `${PROXY_PREFIX}/../etc/passwd`,
+        method: "GET",
+        body: undefined,
+      });
+      const { reply, getStatus, getBody } = createMockReply();
+      await posthogProxyHandler(req, reply);
+      expect(getStatus()).toBe(400);
+      expect(getBody()).toEqual({ error: "Bad Request" });
+    });
+
+    it("rejects URL-encoded dot traversal %2e%2e", async () => {
+      const req = createMockRequest({
+        url: `${PROXY_PREFIX}/%2e%2e/etc/passwd`,
+        method: "GET",
+        body: undefined,
+      });
+      const { reply, getStatus, getBody } = createMockReply();
+      await posthogProxyHandler(req, reply);
+      expect(getStatus()).toBe(400);
+      expect(getBody()).toEqual({ error: "Bad Request" });
+    });
+
+    it("rejects unknown paths like /admin", async () => {
+      const req = createMockRequest({
+        url: `${PROXY_PREFIX}/admin`,
+        method: "GET",
+        body: undefined,
+      });
+      const { reply, getStatus } = createMockReply();
+      await posthogProxyHandler(req, reply);
+      expect(getStatus()).toBe(400);
+    });
   });
 });
