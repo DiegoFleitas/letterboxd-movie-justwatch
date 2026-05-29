@@ -132,6 +132,30 @@ describe("posthogProxyHandler", () => {
     );
   });
 
+  it("forwards POST request with text/plain body as-is (no JSON.stringify)", async () => {
+    const req = createMockRequest({
+      url: `${PROXY_PREFIX}/capture/`,
+      method: "POST",
+      headers: {
+        "content-type": "text/plain; charset=UTF-8",
+        accept: "application/json",
+        "user-agent": "test-agent",
+      },
+      body: '{"event":"$pageview","api_key":"phc_test","distinct_id":"user-1"}',
+    });
+    const { reply, getStatus, getBody } = createMockReply();
+
+    await posthogProxyHandler(req, reply);
+
+    expect(getStatus()).toBe(200);
+    expect(getBody()).toBe(JSON.stringify({ status: "ok" }));
+
+    const fetchInit = fetchSpy.mock.calls[0]?.[1] as RequestInit;
+    expect(fetchInit.body).toBe(
+      '{"event":"$pageview","api_key":"phc_test","distinct_id":"user-1"}',
+    );
+  });
+
   it("forwards POST request without body", async () => {
     const req = createMockRequest({
       url: `${PROXY_PREFIX}/capture/`,
