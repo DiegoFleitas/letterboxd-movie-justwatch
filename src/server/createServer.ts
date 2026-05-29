@@ -1,6 +1,5 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import { captureServerException } from "./lib/sentryCapture.js";
-import compress from "@fastify/compress";
 import { disconnectRedis } from "./lib/redis.js";
 import { getCanonicalProviderMap } from "./lib/loadCanonicalProviders.js";
 import { getPosthog, shutdownPosthog } from "./lib/posthog.js";
@@ -24,8 +23,6 @@ export async function createServer(): Promise<CreatedServer> {
   const app: FastifyInstance = Fastify({
     logger: true,
   });
-
-  await app.register(compress, { global: true, threshold: 1024 });
 
   const canonicalProviderMap = getCanonicalProviderMap();
   (app as FastifyInstance & { locals?: { [key: string]: unknown } }).locals = {
