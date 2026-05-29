@@ -1,0 +1,5 @@
+{
+  "permissions": {
+    "allow": ["Skill(update-config)", "Bash(xargs ls -t)"]
+  }
+}
