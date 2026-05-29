@@ -42,14 +42,14 @@ export const proxy: HttpHandler = async ({ req, res }) => {
       return;
     }
 
-    const finalUrl = addApiKeyToUrl(targetUrl);
+    const { url: finalUrl, headers: authHeaders } = prepareRequest(targetUrl);
 
     switch (method) {
       case "GET":
-        response = await axios.get(finalUrl);
+        response = await axios.get(finalUrl, { headers: authHeaders });
         break;
       case "POST":
-        response = await axios.post(finalUrl, postBodyForAxios(req.body));
+        response = await axios.post(finalUrl, postBodyForAxios(req.body), { headers: authHeaders });
         break;
       default:
         res.setHeader("Allow", "GET, POST");
@@ -65,18 +65,19 @@ export const proxy: HttpHandler = async ({ req, res }) => {
   }
 };
 
-function addApiKeyToUrl(url: string): string {
+function prepareRequest(url: string): { url: string; headers: Record<string, string> } {
   const urlObj = new URL(url);
-  const domain = urlObj.hostname;
-  switch (domain) {
+  const headers: Record<string, string> = {};
+  switch (urlObj.hostname) {
     case "www.omdbapi.com":
+      // OMDb has no header-based auth; query param is the only option
       urlObj.searchParams.append("apikey", process.env.OMDB_API_KEY ?? "");
       break;
     case "api.themoviedb.org":
-      urlObj.searchParams.append("api_key", process.env.MOVIE_DB_API_KEY ?? "");
+      headers["Authorization"] = `Bearer ${process.env.MOVIE_DB_API_KEY ?? ""}`;
       break;
     default:
       break;
   }
-  return urlObj.toString();
+  return { url: urlObj.toString(), headers };
 }
