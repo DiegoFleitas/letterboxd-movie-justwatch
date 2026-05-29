@@ -83,10 +83,7 @@ function logEmptyPage(pageUrl: string, baseUrl: string, lastHtml: string): void 
   }
 }
 
-async function cacheEmptyPage(
-  cacheKey: string,
-  cacheCategories: string[],
-): Promise<void> {
+async function cacheEmptyPage(cacheKey: string, cacheCategories: string[]): Promise<void> {
   await setCacheValue(cacheKey, [], cacheTtl, cacheCategories);
 }
 
