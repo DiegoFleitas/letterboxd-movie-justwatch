@@ -74,7 +74,7 @@ function prepareRequest(url: string): { url: string; headers: Record<string, str
       urlObj.searchParams.append("apikey", process.env.OMDB_API_KEY ?? "");
       break;
     case "api.themoviedb.org":
-      headers["Authorization"] = `Bearer ${process.env.MOVIE_DB_API_KEY ?? ""}`;
+      urlObj.searchParams.append("api_key", process.env.MOVIE_DB_API_KEY ?? "");
       break;
     default:
       break;
