@@ -43,8 +43,11 @@ export async function posthogProxyHandler(
 
   const isConfigRequest = request.method === "GET" && posthogPath.endsWith("/config.js");
 
-  if (posthogPath === `/static/${RECORDER_INNOCUOUS_NAME}.js`) {
-    posthogPath = "/static/posthog-recorder.js";
+  const queryIndex = posthogPath.indexOf("?");
+  const pathname = queryIndex === -1 ? posthogPath : posthogPath.slice(0, queryIndex);
+  if (pathname === `/static/${RECORDER_INNOCUOUS_NAME}.js`) {
+    const query = queryIndex === -1 ? "" : posthogPath.slice(queryIndex);
+    posthogPath = `/static/posthog-recorder.js${query}`;
   }
 
   const targetUrl = `${targetHost}${posthogPath}`;
