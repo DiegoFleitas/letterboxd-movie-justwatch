@@ -47,12 +47,12 @@ This application connects **Letterboxd** lists to **streaming availability** for
 
 ## Tech stack
 
-| Area            | Stack                                                                                                 |
-| --------------- | ----------------------------------------------------------------------------------------------------- |
-| **Frontend**    | React 19, Vite (`src/client/`)                                                                        |
-| **Backend**     | Bun, Fastify, TypeScript (`src/server/main.ts`, `src/server/createServer.ts`)                         |
-| **Data & HTTP** | Cheerio (Letterboxd), axios, ioredis; sessions via Fastify                                            |
-| **Quality**     | Vitest, Playwright, ESLint, Prettier, Husky, [Knip](https://knip.dev) (unused files / deps / exports) |
+| Area            | Stack                                                                                                                                                        |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Frontend**    | React 19, Vite (`src/client/`)                                                                                                                               |
+| **Backend**     | Bun, Fastify, TypeScript (`src/server/main.ts`, `src/server/createServer.ts`)                                                                                |
+| **Data & HTTP** | Cheerio (Letterboxd), axios, ioredis; sessions via Fastify                                                                                                   |
+| **Quality**     | Vitest, Playwright, ESLint, Prettier, Husky, [Knip](https://knip.dev) (unused files / deps / exports), **SonarCloud** (remote quality gate via opencode MCP) |
 
 ## Prerequisites
 
