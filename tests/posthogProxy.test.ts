@@ -271,6 +271,57 @@ describe("posthogProxyHandler", () => {
     expect(getBody()).toEqual({ error: "PostHog upstream unavailable" });
   });
 
+  it('rewrites "posthog-recorder" to "rec" in config.js response to bypass adblockers', async () => {
+    const upstreamBody = `
+(function() {
+  window._POSTHOG_REMOTE_CONFIG['phc_test'] = {
+    config: {"sessionRecording":{"scriptConfig":{"script":"posthog-recorder"}}}
+  };
+})();`;
+
+    fetchSpy.mockResolvedValue(
+      new Response(upstreamBody, {
+        status: 200,
+        headers: { "content-type": "application/javascript" },
+      }),
+    );
+
+    const req = createMockRequest({
+      url: `${PROXY_PREFIX}/array/phc_test/config.js`,
+      method: "GET",
+      body: undefined,
+    });
+    const { reply, getBody } = createMockReply();
+
+    await posthogProxyHandler(req, reply);
+
+    const body = getBody() as string;
+    expect(body).toContain('"script":"rec"');
+    expect(body).not.toContain('"script":"posthog-recorder"');
+  });
+
+  it("rewrites /static/rec.js upstream to /static/posthog-recorder.js", async () => {
+    fetchSpy.mockResolvedValue(
+      new Response("recorder script content", {
+        status: 200,
+        headers: { "content-type": "application/javascript" },
+      }),
+    );
+
+    const req = createMockRequest({
+      url: `${PROXY_PREFIX}/static/rec.js`,
+      method: "GET",
+      body: undefined,
+    });
+    const { reply, getBody } = createMockReply();
+
+    await posthogProxyHandler(req, reply);
+
+    const fetchUrl = fetchSpy.mock.calls[0]?.[0];
+    expect(fetchUrl).toBe(`${POSTHOG_HOST}/static/posthog-recorder.js`);
+    expect(getBody()).toBe("recorder script content");
+  });
+
   it("forwards upstream non-JSON (text) response body", async () => {
     fetchSpy.mockResolvedValue(
       new Response("plain text body", {
