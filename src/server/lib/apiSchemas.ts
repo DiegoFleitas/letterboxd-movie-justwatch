@@ -141,29 +141,20 @@ export const letterboxdCustomListBodySchema = z
 export type LetterboxdCustomListBodyOut = z.infer<typeof letterboxdCustomListBodySchema>;
 
 export const alternativeSearchBodySchema = z.object({
-  title: z.preprocess(
-    (v) => (v === undefined || v === null ? "" : v),
-    z.string().min(1, "Title is required"),
-  ),
+  title: z.preprocess((v) => v ?? "", z.string().min(1, "Title is required")),
   year: z.union([z.string(), z.number()]).optional(),
 });
 
 export type AlternativeSearchBody = z.infer<typeof alternativeSearchBodySchema>;
 
 export const searchMovieBodySchema = z.object({
-  title: z.preprocess(
-    (v) => (v === undefined || v === null ? "" : v),
-    z.string().min(1, "Title is required"),
-  ),
+  title: z.preprocess((v) => v ?? "", z.string().min(1, "Title is required")),
   year: z.union([z.string(), z.number()]).optional(),
   country: z.string().optional(),
 });
 
 export const posterBodySchema = z.object({
-  title: z.preprocess(
-    (v) => (v === undefined || v === null ? "" : v),
-    z.string().min(1, "Title is required"),
-  ),
+  title: z.preprocess((v) => v ?? "", z.string().min(1, "Title is required")),
   year: z.union([z.string(), z.number()]).optional(),
 });
 

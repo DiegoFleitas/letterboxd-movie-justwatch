@@ -37,7 +37,8 @@ export function useLetterboxdListWithMergedTiles() {
   const listTileStateRef = useRef<TileState>(createInitialTileState());
   const mergeTile = useCallback(
     (title: string, year: string | number | null, data?: MergeData | null) => {
-      const next = mergeTileState(listTileStateRef.current, title, year, data ?? undefined);
+      const resolvedData = data ?? undefined;
+      const next = mergeTileState(listTileStateRef.current, title, year, resolvedData);
       listTileStateRef.current = next;
       listMovieTilesRef.current = next.movieTiles;
     },

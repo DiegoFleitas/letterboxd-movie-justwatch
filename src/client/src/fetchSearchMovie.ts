@@ -21,7 +21,7 @@ function sleep(ms: number): Promise<void> {
 }
 
 function retryDelayMs(attemptIndex: number): number {
-  const delay = RETRY_DELAYS_MS[attemptIndex] ?? RETRY_DELAYS_MS[RETRY_DELAYS_MS.length - 1];
+  const delay = RETRY_DELAYS_MS[attemptIndex] ?? RETRY_DELAYS_MS.at(-1)!;
   return Math.min(delay, MAX_RETRY_DELAY_MS);
 }
 

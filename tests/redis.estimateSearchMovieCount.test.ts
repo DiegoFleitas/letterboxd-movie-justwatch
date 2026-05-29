@@ -4,12 +4,8 @@ let pipelinePhase = 0;
 
 vi.mock("ioredis", () => ({
   default: class FakeRedis {
-    constructor(url: string, opts?: unknown) {
-      void url;
-      void opts;
-    }
-    scanStream(opts: { match: string; count: number }) {
-      void opts;
+    constructor(_url: string, _opts?: unknown) {}
+    scanStream(_opts: { match: string; count: number }) {
       const stream = {
         pause: vi.fn(),
         resume: vi.fn(),
