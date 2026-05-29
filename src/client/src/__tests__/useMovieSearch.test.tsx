@@ -1,11 +1,18 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { act, renderHook, waitFor } from "@testing-library/react";
+import { HTTP_API_PATHS } from "@server/routes";
 import { useMovieSearch } from "../useMovieSearch";
 import { showError } from "../showError";
 import { showMessage } from "../showMessage";
 import { captureFrontendMessage } from "../sentry";
 import { jsonResponse } from "./jsonResponse";
+
+const fetchSearchMovieMock = vi.fn();
+
+vi.mock("../fetchSearchMovie", () => ({
+  fetchSearchMovie: (body: unknown) => fetchSearchMovieMock(body),
+}));
 
 vi.mock("../showMessage", () => ({
   showMessage: vi.fn(),
@@ -25,6 +32,13 @@ describe("useMovieSearch", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    fetchSearchMovieMock.mockImplementation((body) =>
+      globalThis.fetch(HTTP_API_PATHS.searchMovie, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      }),
+    );
   });
 
   afterEach(() => {
@@ -32,7 +46,7 @@ describe("useMovieSearch", () => {
   });
 
   it("shows already-working message when a search is in flight", async () => {
-    globalThis.fetch = vi.fn(() => new Promise<Response>(() => {}));
+    fetchSearchMovieMock.mockImplementation(() => new Promise<Response>(() => {}));
     const { result } = renderHook(() => useMovieSearch());
     await act(async () => {
       result.current({ title: "First", country: "US" });
@@ -44,7 +58,7 @@ describe("useMovieSearch", () => {
   });
 
   it("shows an error toast when network request fails", async () => {
-    globalThis.fetch = vi.fn().mockRejectedValue(new TypeError("Failed to fetch"));
+    fetchSearchMovieMock.mockRejectedValue(new TypeError("Failed to fetch"));
 
     const { result } = renderHook(() => useMovieSearch());
 
@@ -60,7 +74,7 @@ describe("useMovieSearch", () => {
   });
 
   it("shows an error toast when response cannot be parsed", async () => {
-    globalThis.fetch = vi.fn().mockResolvedValue(
+    fetchSearchMovieMock.mockResolvedValue(
       new Response("<html>error</html>", {
         status: 500,
         headers: { "content-type": "text/html" },
@@ -79,7 +93,7 @@ describe("useMovieSearch", () => {
   });
 
   it("shows API error message and merges tile when payload contains error", async () => {
-    globalThis.fetch = vi.fn().mockResolvedValue(
+    fetchSearchMovieMock.mockResolvedValue(
       jsonResponse({
         error: "Movie not found",
         title: "Unknown",
@@ -112,7 +126,7 @@ describe("useMovieSearch", () => {
   });
 
   it("captures message when upstream returns 5xx", async () => {
-    globalThis.fetch = vi.fn().mockResolvedValue(
+    fetchSearchMovieMock.mockResolvedValue(
       jsonResponse(
         {
           title: "The Matrix",

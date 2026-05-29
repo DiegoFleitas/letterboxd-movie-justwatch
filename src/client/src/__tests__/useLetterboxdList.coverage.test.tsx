@@ -1,12 +1,20 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { act, renderHook } from "@testing-library/react";
-import { useLetterboxdList } from "../useLetterboxdList";
+import {
+  useLetterboxdList,
+  resolveSearchConcurrency,
+  SEARCH_CONCURRENCY_MOBILE,
+} from "../useLetterboxdList";
 import { showError, showBatchErrors } from "../showError";
 import { toggleNotice } from "../noticeFunctions";
 import { captureFrontendException } from "../sentry";
 import { HTTP_API_PATHS } from "@server/routes";
 import { PLACEHOLDER_POSTER } from "../movieTiles";
+import {
+  SEARCH_MOVIE_NETWORK_ERROR_MESSAGE,
+  SEARCH_MOVIE_TOTAL_ATTEMPTS,
+} from "../fetchSearchMovie";
 import {
   createListAndSearchFetchMock,
   customListUrl,
@@ -293,5 +301,174 @@ describe("useLetterboxdList coverage", () => {
       );
       await firstLoad!;
     });
+  });
+
+  it("resolveSearchConcurrency returns 2 on Android", () => {
+    vi.stubGlobal("navigator", {
+      userAgent: "Mozilla/5.0 (Linux; Android 10) Chrome/148.0.0.0 Mobile",
+    });
+    expect(resolveSearchConcurrency()).toBe(SEARCH_CONCURRENCY_MOBILE);
+  });
+
+  it("shows batch network error when search fetch fails all retries", async () => {
+    vi.useFakeTimers();
+    const networkError = new TypeError("Failed to fetch");
+    globalThis.fetch = vi.fn((input: RequestInfo | URL) => {
+      const url = typeof input === "string" ? input : String(input);
+      if (url.includes(HTTP_API_PATHS.letterboxdWatchlist)) {
+        return Promise.resolve(
+          jsonResponse({
+            watchlist: [{ title: "Gozu", year: "2003", link: "https://letterboxd.com/film/gozu/" }],
+            lastPage: 1,
+            totalPages: 1,
+          }),
+        );
+      }
+      if (url.includes(HTTP_API_PATHS.searchMovie)) {
+        return Promise.reject(networkError);
+      }
+      return Promise.reject(new Error(`unexpected fetch: ${url}`));
+    }) as unknown as typeof fetch;
+
+    const { result } = renderHook(() => useLetterboxdList(vi.fn(), undefined, null));
+
+    await act(async () => {
+      const load = result.current(watchlistUrl, "US");
+      await vi.advanceTimersByTimeAsync(500);
+      await vi.advanceTimersByTimeAsync(1500);
+      await load;
+    });
+
+    expect(mockedShowBatchErrors).toHaveBeenCalledWith([
+      expect.objectContaining({
+        title: "Gozu",
+        year: "2003",
+        message: SEARCH_MOVIE_NETWORK_ERROR_MESSAGE,
+      }),
+    ]);
+    expect(mockedCapture).toHaveBeenCalledWith(
+      networkError,
+      expect.objectContaining({
+        level: "warning",
+        fingerprint: ["list-batch", "search-movie", "network"],
+        tags: expect.objectContaining({
+          retriesExhausted: "true",
+          attempts: String(SEARCH_MOVIE_TOTAL_ATTEMPTS),
+        }),
+      }),
+    );
+    vi.useRealTimers();
+  });
+
+  it("merges tile without Sentry when search fetch succeeds after one retry", async () => {
+    vi.useFakeTimers();
+    let searchAttempts = 0;
+    globalThis.fetch = vi.fn((input: RequestInfo | URL) => {
+      const url = typeof input === "string" ? input : String(input);
+      if (url.includes(HTTP_API_PATHS.letterboxdWatchlist)) {
+        return Promise.resolve(
+          jsonResponse({
+            watchlist: [{ title: "Gozu", year: "2003", link: "https://letterboxd.com/film/gozu/" }],
+            lastPage: 1,
+            totalPages: 1,
+          }),
+        );
+      }
+      if (url.includes(HTTP_API_PATHS.searchMovie)) {
+        searchAttempts++;
+        if (searchAttempts === 1) {
+          return Promise.reject(new TypeError("Failed to fetch"));
+        }
+        return Promise.resolve(
+          jsonResponse({
+            title: "Gozu",
+            year: "2003",
+            poster: PLACEHOLDER_POSTER,
+            link: "https://letterboxd.com/film/gozu/",
+            movieProviders: [{ id: "1", name: "Netflix", url: "https://example.com" }],
+          }),
+        );
+      }
+      return Promise.reject(new Error(`unexpected fetch: ${url}`));
+    }) as unknown as typeof fetch;
+
+    const mergeTile = vi.fn();
+    const { result } = renderHook(() => useLetterboxdList(mergeTile, undefined, null));
+
+    await act(async () => {
+      const load = result.current(watchlistUrl, "US");
+      await vi.advanceTimersByTimeAsync(500);
+      await load;
+    });
+
+    expect(mergeTile).toHaveBeenCalledWith(
+      "Gozu",
+      "2003",
+      expect.objectContaining({ movieProviders: expect.any(Array) }),
+    );
+    expect(mockedCapture).not.toHaveBeenCalled();
+    expect(mockedShowBatchErrors).toHaveBeenCalledWith([]);
+    vi.useRealTimers();
+  });
+
+  it("limits concurrent search-movie requests to 2 on Android", async () => {
+    vi.stubGlobal("navigator", {
+      userAgent: "Mozilla/5.0 (Linux; Android 10) Chrome/148.0.0.0 Mobile",
+    });
+
+    let inFlight = 0;
+    let maxInFlight = 0;
+    const releaseQueue: Array<() => void> = [];
+
+    globalThis.fetch = vi.fn((input: RequestInfo | URL) => {
+      const url = typeof input === "string" ? input : String(input);
+      if (url.includes(HTTP_API_PATHS.letterboxdWatchlist)) {
+        return Promise.resolve(
+          jsonResponse({
+            watchlist: [
+              { title: "A", year: "2001", link: "https://letterboxd.com/film/a/" },
+              { title: "B", year: "2002", link: "https://letterboxd.com/film/b/" },
+              { title: "C", year: "2003", link: "https://letterboxd.com/film/c/" },
+              { title: "D", year: "2004", link: "https://letterboxd.com/film/d/" },
+            ],
+            lastPage: 1,
+            totalPages: 1,
+          }),
+        );
+      }
+      if (url.includes(HTTP_API_PATHS.searchMovie)) {
+        inFlight++;
+        maxInFlight = Math.max(maxInFlight, inFlight);
+        return new Promise<Response>((resolve) => {
+          releaseQueue.push(() => {
+            inFlight--;
+            resolve(
+              jsonResponse({
+                title: "Film",
+                year: "2000",
+                poster: PLACEHOLDER_POSTER,
+                link: "",
+                movieProviders: [],
+              }),
+            );
+          });
+        });
+      }
+      return Promise.reject(new Error(`unexpected fetch: ${url}`));
+    }) as unknown as typeof fetch;
+
+    const { result } = renderHook(() => useLetterboxdList(vi.fn(), undefined, null));
+
+    await act(async () => {
+      const load = result.current(watchlistUrl, "US");
+      await Promise.resolve();
+      while (releaseQueue.length > 0) {
+        releaseQueue.shift()?.();
+        await Promise.resolve();
+      }
+      await load;
+    });
+
+    expect(maxInFlight).toBeLessThanOrEqual(SEARCH_CONCURRENCY_MOBILE);
   });
 });
