@@ -1,6 +1,7 @@
 import type { HttpHandler } from "../httpContext.js";
 import axiosHelper from "../lib/axios.js";
 import { getCacheValue, setCacheValue } from "../lib/redis.js";
+import { captureServerException } from "../lib/sentryCapture.js";
 import {
   HTTP_STATUS_INTERNAL_SERVER_ERROR,
   HTTP_STATUS_NOT_FOUND,
@@ -66,6 +67,7 @@ export const poster: HttpHandler = async ({ req, res }) => {
     });
   } catch (error) {
     console.error(error);
+    captureServerException(error, { route: "poster" });
     res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: "Internal Server Error" });
   }
 };

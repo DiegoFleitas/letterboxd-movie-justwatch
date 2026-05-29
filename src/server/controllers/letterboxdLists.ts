@@ -1,5 +1,5 @@
 import type { HttpHandler } from "../httpContext.js";
-import * as Sentry from "@sentry/node";
+import { captureServerException } from "../lib/sentryCapture.js";
 import * as cheerio from "cheerio";
 import { getCacheValue, indexCacheKeyByCategory, setCacheValue } from "../lib/redis.js";
 import {
@@ -143,9 +143,7 @@ const fetchList = async ({
       res.status(HTTP_STATUS_NOT_FOUND).json({ error: "List not found" });
       return;
     }
-    if (Sentry.getClient()) {
-      Sentry.captureException(error, { extra: { route: "letterboxd-list-fetch" } });
-    }
+    captureServerException(error, { route: "letterboxd-list-fetch" });
     res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: "Internal Server Error" });
   }
 };

@@ -2,6 +2,7 @@ import type { HttpHandler } from "../httpContext.js";
 import axiosHelper from "../lib/axios.js";
 import { getCacheValue, setCacheValue } from "../lib/redis.js";
 import { alternativeSearchBodySchema, firstZodIssueMessage } from "../lib/apiSchemas.js";
+import { captureServerException } from "../lib/sentryCapture.js";
 import {
   HTTP_STATUS_BAD_REQUEST,
   HTTP_STATUS_INTERNAL_SERVER_ERROR,
@@ -103,6 +104,7 @@ export const alternativeSearch: HttpHandler = async ({ req, res }) => {
       return;
     }
     console.error(error);
+    captureServerException(error, { route: "alternative-search" });
     res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: "Internal Server Error" });
   }
 };
