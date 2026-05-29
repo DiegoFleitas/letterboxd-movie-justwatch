@@ -156,6 +156,29 @@ describe("posthogProxyHandler", () => {
     );
   });
 
+  it("forwards POST request with Buffer body (gzip-compressed binary) as-is", async () => {
+    const compressedBody = Buffer.from([0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00]);
+
+    const req = createMockRequest({
+      url: `${PROXY_PREFIX}/i/v0/e/?compression=gzip-js`,
+      method: "POST",
+      headers: {
+        "content-type": "text/plain; charset=UTF-8",
+        accept: "application/json",
+        "user-agent": "test-agent",
+      },
+      body: compressedBody,
+    });
+    const { reply, getStatus } = createMockReply();
+
+    await posthogProxyHandler(req, reply);
+
+    expect(getStatus()).toBe(200);
+
+    const fetchInit = fetchSpy.mock.calls[0]?.[1] as RequestInit;
+    expect(fetchInit.body).toBe(compressedBody);
+  });
+
   it("forwards POST request without body", async () => {
     const req = createMockRequest({
       url: `${PROXY_PREFIX}/capture/`,
