@@ -6,6 +6,7 @@ import { captureFrontendException, captureFrontendMessage } from "./sentry";
 import { SafeJsonResponseError, safeJsonResponse } from "./safeJsonResponse";
 import { HTTP_API_PATHS } from "@server/routes";
 import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from "@server/httpStatusCodes";
+import { fetchSearchMovie } from "./fetchSearchMovie";
 
 export interface MovieSearchResponse {
   error?: string;
@@ -50,11 +51,7 @@ export function useMovieSearch(
       }
       isInFlightRef.current = true;
       setMovieSearchLoading?.(true);
-      fetch(HTTP_API_PATHS.searchMovie, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      })
+      fetchSearchMovie(data)
         .then((response) => {
           setShowAltSearchButton?.(true);
           if (response.status >= HTTP_STATUS_INTERNAL_SERVER_ERROR) {

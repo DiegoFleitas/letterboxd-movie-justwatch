@@ -15,11 +15,24 @@ import {
 import { HTTP_API_PATHS } from "@server/routes";
 import { captureFrontendException } from "./sentry";
 import { safeJsonResponse } from "./safeJsonResponse";
+import {
+  fetchSearchMovie,
+  SEARCH_MOVIE_NETWORK_ERROR_MESSAGE,
+  SEARCH_MOVIE_TOTAL_ATTEMPTS,
+} from "./fetchSearchMovie";
 
-const SEARCH_CONCURRENCY = 4;
+export const SEARCH_CONCURRENCY_DEFAULT = 4;
+export const SEARCH_CONCURRENCY_MOBILE = 2;
 
 /** Max wait for list API (server may chain many outbound Letterboxd fetches). */
 const LIST_API_TIMEOUT_MS = 120_000;
+
+export function resolveSearchConcurrency(): number {
+  if (typeof navigator !== "undefined" && /Android/i.test(navigator.userAgent)) {
+    return SEARCH_CONCURRENCY_MOBILE;
+  }
+  return SEARCH_CONCURRENCY_DEFAULT;
+}
 
 function isListFetchTimedOut(e: unknown): boolean {
   if (e instanceof DOMException) {
@@ -41,6 +54,19 @@ function runWithConcurrency(tasks: (() => Promise<unknown>)[], limit: number): P
   return Promise.all(
     Array.from({ length: Math.min(limit, tasks.length) }, runNext),
   ) as Promise<unknown> as Promise<void>;
+}
+
+function fetchLetterboxdPoster(
+  posterPath: string,
+  title: string,
+  year: string | number | null,
+  link: string | undefined,
+  mergeTile: MergeTileFn | null | undefined,
+): void {
+  fetch(`https://letterboxd.com${posterPath}poster/std/230/`)
+    .then((res) => res.json())
+    .then((d: { url?: string }) => d?.url && mergeTile?.(title, year, { poster: d.url, link }))
+    .catch(() => {});
 }
 
 interface WatchlistElement {
@@ -67,6 +93,15 @@ interface LoadData {
 }
 
 type MergeTileFn = (title: string, year: string | number | null, data?: MergeData | null) => void;
+
+type SearchMovieResponse = {
+  error?: string;
+  title?: string;
+  year?: string | number;
+  poster?: string;
+  link?: string;
+  movieProviders?: unknown[];
+};
 
 export function useLetterboxdList(
   mergeTile: MergeTileFn | null | undefined,
@@ -142,74 +177,84 @@ export function useLetterboxdList(
           }, NO_POSTER_REPORT_DELAY_MS);
         };
 
+        const completeBatchItem = (
+          batch: NonNullable<ReturnType<typeof batchMapRef.current.get>>,
+        ): void => {
+          batch.completed++;
+          if (batch.completed === batch.total) {
+            showBatchErrors(batch.errors);
+            batchMapRef.current.delete(batchId);
+            scheduleListReportNudge();
+          }
+        };
+
         for (const element of watchlist) {
-          let { title, year, posterPath, poster, link } = element;
+          let { title, year, poster, link } = element;
           poster = normalizePosterPath(poster) || PLACEHOLDER_POSTER;
           mergeTile?.(title ?? "", year ?? null, { poster, link });
-          if (posterPath) {
-            fetch(`https://letterboxd.com${posterPath}poster/std/230/`)
-              .then((res) => res.json())
-              .then(
-                (d: { url?: string }) =>
-                  d?.url && mergeTile?.(title ?? "", year ?? null, { poster: d.url, link }),
-              )
-              .catch(() => {});
-          }
         }
+
         const searchTasks = watchlist.map((element) => {
-          const { title, year } = element;
+          const { title, year, posterPath, link } = element;
           const movieData = { title, year, country: data.country ?? "" };
+          const enrichPoster = (t: string, y: string | number | null): void => {
+            if (posterPath) {
+              fetchLetterboxdPoster(posterPath, t, y, link, mergeTile);
+            }
+          };
           return () =>
-            fetch(HTTP_API_PATHS.searchMovie, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(movieData),
-            })
-              .then((r) =>
-                safeJsonResponse<{
-                  error?: string;
-                  title?: string;
-                  year?: string | number;
-                  poster?: string;
-                  link?: string;
-                  movieProviders?: unknown[];
-                }>(r),
-              )
+            fetchSearchMovie(movieData)
+              .then((r) => safeJsonResponse<SearchMovieResponse>(r))
               .then((response) => {
                 const { error: err, title: t, year: y, poster: p, link: l } = response;
                 const batch = batchMapRef.current.get(batchId);
                 if (!batch) return;
-                batch.completed++;
+                const resolvedTitle = t ?? title ?? "";
+                const resolvedYear = y ?? year ?? null;
                 if (err) {
-                  batch.errors.push({ title: t ?? "", year: y ?? "", message: err });
-                  mergeTile?.(t ?? "", y ?? null, { poster: p, link: l, movieProviders: [] });
+                  batch.errors.push({
+                    title: resolvedTitle,
+                    year: resolvedYear ?? "",
+                    message: err,
+                  });
+                  mergeTile?.(resolvedTitle, resolvedYear, {
+                    poster: p,
+                    link: l,
+                    movieProviders: [],
+                  });
                 } else {
-                  mergeTile?.(t ?? "", y ?? null, { ...response, link: l } as MergeData);
+                  mergeTile?.(resolvedTitle, resolvedYear, { ...response, link: l } as MergeData);
                 }
-                if (batch.completed === batch.total) {
-                  showBatchErrors(batch.errors);
-                  batchMapRef.current.delete(batchId);
-                  scheduleListReportNudge();
-                }
+                enrichPoster(resolvedTitle, resolvedYear);
+                completeBatchItem(batch);
               })
               .catch((e) => {
                 const batch = batchMapRef.current.get(batchId);
                 if (batch) {
-                  batch.completed++;
-                  if (batch.completed === batch.total) {
-                    showBatchErrors(batch.errors);
-                    batchMapRef.current.delete(batchId);
-                    scheduleListReportNudge();
-                  }
+                  batch.errors.push({
+                    title: title ?? "",
+                    year: year ?? "",
+                    message: SEARCH_MOVIE_NETWORK_ERROR_MESSAGE,
+                  });
+                  completeBatchItem(batch);
                 }
+                enrichPoster(title ?? "", year ?? null);
                 captureFrontendException(e, {
-                  tags: { source: "api", endpoint: HTTP_API_PATHS.searchMovie, flow: "list-batch" },
+                  level: "warning",
+                  fingerprint: ["list-batch", "search-movie", "network"],
+                  tags: {
+                    source: "api",
+                    endpoint: HTTP_API_PATHS.searchMovie,
+                    flow: "list-batch",
+                    retriesExhausted: "true",
+                    attempts: String(SEARCH_MOVIE_TOTAL_ATTEMPTS),
+                  },
                   extra: { title, year, country: data.country, listUrl: data.listUrl },
                 });
                 console.error(e);
               });
         });
-        runWithConcurrency(searchTasks, SEARCH_CONCURRENCY);
+        runWithConcurrency(searchTasks, resolveSearchConcurrency());
         data.page = lastPage;
         dataRef.current = data;
         if (!allPagesLoadedRef.current) {
