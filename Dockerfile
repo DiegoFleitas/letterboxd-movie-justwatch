@@ -34,7 +34,7 @@ RUN rm -rf node_modules && bun install --frozen-lockfile --production
 # Final stage for app image
 FROM base
 
-RUN addgroup --system app && adduser --system --ingroup app app
+RUN groupadd -r app && useradd -r -g app app
 
 COPY --from=build /app /app
 
