@@ -28,12 +28,7 @@ import {
 
 const cacheTtl = Number(process.env.CACHE_TTL) || 300;
 
-const fetchList = async ({
-  url,
-  cacheKeyPrefix,
-  req,
-  res,
-}: {
+interface FetchListArgs {
   url: string;
   cacheKeyPrefix: string;
   req: { body: unknown };
@@ -41,7 +36,88 @@ const fetchList = async ({
     status: (code: number) => { json: (payload: unknown) => void };
     json: (payload: unknown) => void;
   };
-}): Promise<void> => {
+}
+
+async function fetchFromCache(
+  cacheKey: string,
+  cacheCategories: string[],
+): Promise<PageFilm[] | null> {
+  const cachedList = (await getCacheValue(cacheKey)) as PageFilm[] | null | undefined;
+  if (cachedList && Array.isArray(cachedList)) {
+    await indexCacheKeyByCategory(cacheKey, cacheCategories);
+    return cachedList;
+  }
+  return null;
+}
+
+function getCacheCategories(cacheKeyPrefix: string): string[] {
+  return cacheKeyPrefix.startsWith("watchlist:") ? ["list", "watchlist"] : ["list"];
+}
+
+async function tryEsiFallback(
+  pageUrl: string,
+  listHeaders: Record<string, string>,
+  cheerioInstance: cheerio.CheerioAPI,
+): Promise<{ $: cheerio.CheerioAPI; pageFilms: PageFilm[]; html: string }> {
+  const esiUrl = pageUrl + (pageUrl.includes("?") ? "&" : "?") + "esiAllowFilters=true";
+  try {
+    const esiHtml = await fetchLetterboxdHtml(esiUrl, listHeaders);
+    const $esi = cheerio.load(esiHtml);
+    const esiFilms = getPageFilms($esi);
+    return { $: $esi, pageFilms: esiFilms, html: esiHtml };
+  } catch (esiErr) {
+    console.warn("ESI retry failed for", esiUrl, (esiErr as Error).message);
+    return { $: cheerioInstance, pageFilms: [], html: "" };
+  }
+}
+
+function logEmptyPage(pageUrl: string, baseUrl: string, lastHtml: string): void {
+  if (baseUrl.includes("/list/")) {
+    const presence = getContentPresence(lastHtml);
+    const parts = Object.entries(presence)
+      .map(([k, v]) => `${k}: ${v}`)
+      .join(", ");
+    console.log(`Page ${pageUrl} has no content (${parts}), stopping pagination.`);
+  } else {
+    console.log(`Page ${pageUrl} has no content, stopping pagination.`);
+  }
+}
+
+async function handleErrorCache(
+  haveFilmTotal: boolean,
+  cacheKey: string,
+  cacheCategories: string[],
+  currentPage: number,
+  page: number,
+): Promise<void> {
+  if (haveFilmTotal) {
+    await setCacheValue(cacheKey, [], cacheTtl, cacheCategories);
+  } else if (currentPage === page) {
+    console.log(
+      `[LIST_CACHE_SKIP] No parsable films for starting page ${page} (${cacheKey}); not caching. Often markup changed, blocked HTML, or an empty watchlist.`,
+    );
+  }
+}
+
+async function handlePageFilms(
+  $: cheerio.CheerioAPI,
+  filmsCount: number,
+  totalPages: number,
+  filmsPerPage: number,
+): Promise<{ filmsCount: number; totalPages: number; haveFilmTotal: boolean }> {
+  const parsedCount = getFilmsCount($);
+  if (parsedCount > 0) {
+    const newTotalPages = Math.ceil(parsedCount / filmsPerPage) || 1;
+    return {
+      filmsCount: parsedCount,
+      totalPages: newTotalPages,
+      haveFilmTotal: true,
+    };
+  }
+  return { filmsCount, totalPages, haveFilmTotal: false };
+}
+
+const fetchList = async ({ url, cacheKeyPrefix, req, res }: FetchListArgs): Promise<void> => {
   try {
     const baseUrl = url.replace(/\/+$/, "");
     const body = (req.body as { page?: number }) ?? {};
@@ -56,78 +132,54 @@ const fetchList = async ({
     let totalPages = 1;
     let currentPage = 0;
     let filmsCount = 0;
-    /** When true, {@link filmsCount} / {@link totalPages} came from the page (not default). */
     let haveFilmTotal = false;
     let filmsPromises: PageFilm[] = [];
     let lastPage: number | null = null;
-    const cacheCategories: string[] = cacheKeyPrefix.startsWith("watchlist:")
-      ? ["list", "watchlist"]
-      : ["list"];
+    const cacheCategories = getCacheCategories(cacheKeyPrefix);
 
     for (let index = 0; index < maxPages; index++) {
       currentPage = Number(page) + index;
       const cacheKey = `${cacheKeyPrefix}:page:${currentPage}`;
-      const cachedList = (await getCacheValue(cacheKey)) as PageFilm[] | null | undefined;
-
-      if (cachedList && Array.isArray(cachedList)) {
+      const cachedFilms = await fetchFromCache(cacheKey, cacheCategories);
+      if (cachedFilms) {
         console.log(`List for page ${currentPage} found (cached)`);
-        await indexCacheKeyByCategory(cacheKey, cacheCategories);
-        filmsPromises = filmsPromises.concat(cachedList);
-      } else {
-        const pageUrl = `${baseUrl}/page/${currentPage}/`;
-        const listHeaders = buildLetterboxdHtmlRequestHeaders(getRandomScrapeUserAgent());
-        const html = await fetchLetterboxdHtml(pageUrl, listHeaders);
-        let $ = cheerio.load(html);
-        let pageFilmsPromise = getPageFilms($);
-        let lastHtml: string = html;
-        if (pageFilmsPromise.length === 0 && baseUrl.includes("/list/")) {
-          const esiUrl = pageUrl + (pageUrl.includes("?") ? "&" : "?") + "esiAllowFilters=true";
-          try {
-            const esiHtml = await fetchLetterboxdHtml(esiUrl, listHeaders);
-            $ = cheerio.load(esiHtml);
-            pageFilmsPromise = getPageFilms($);
-            lastHtml = esiHtml;
-          } catch (esiErr) {
-            console.warn("ESI retry failed for", esiUrl, (esiErr as Error).message);
-          }
-        }
-        if (pageFilmsPromise.length === 0) {
-          if (baseUrl.includes("/list/")) {
-            const presence = getContentPresence(lastHtml);
-            const parts = Object.entries(presence)
-              .map(([k, v]) => `${k}: ${v}`)
-              .join(", ");
-            console.log(`Page ${pageUrl} has no content (${parts}), stopping pagination.`);
-          } else {
-            console.log(`Page ${pageUrl} has no content, stopping pagination.`);
-          }
-          // Avoid repeated Letterboxd fetches for "past end" pages once we know the list size.
-          if (haveFilmTotal) {
-            await setCacheValue(cacheKey, [], cacheTtl, cacheCategories);
-          } else if (currentPage === page) {
-            console.log(
-              `[LIST_CACHE_SKIP] No parsable films for starting page ${page} (${cacheKey}); not caching. Often markup changed, blocked HTML, or an empty watchlist.`,
-            );
-          }
-          break;
-        }
-
-        if (!haveFilmTotal) {
-          const parsedCount = getFilmsCount($);
-          if (parsedCount > 0) {
-            filmsCount = parsedCount;
-            totalPages = Math.ceil(filmsCount / filmsPerPage) || 1;
-            haveFilmTotal = true;
-            if (currentPage > totalPages) {
-              res.status(HTTP_STATUS_NOT_FOUND).json({ error: "Invalid list page" });
-              return;
-            }
-          }
-        }
-
-        await setCacheValue(cacheKey, pageFilmsPromise, cacheTtl, cacheCategories);
-        filmsPromises = filmsPromises.concat(pageFilmsPromise);
+        filmsPromises = filmsPromises.concat(cachedFilms);
+        continue;
       }
+
+      const pageUrl = `${baseUrl}/page/${currentPage}/`;
+      const listHeaders = buildLetterboxdHtmlRequestHeaders(getRandomScrapeUserAgent());
+      const html = await fetchLetterboxdHtml(pageUrl, listHeaders);
+      let $ = cheerio.load(html);
+      let pageFilms = getPageFilms($);
+      let lastHtml: string = html;
+
+      if (pageFilms.length === 0 && baseUrl.includes("/list/")) {
+        const esiResult = await tryEsiFallback(pageUrl, listHeaders, $);
+        $ = esiResult.$;
+        pageFilms = esiResult.pageFilms;
+        if (esiResult.html) lastHtml = esiResult.html;
+      }
+
+      if (pageFilms.length === 0) {
+        logEmptyPage(pageUrl, baseUrl, lastHtml);
+        await handleErrorCache(haveFilmTotal, cacheKey, cacheCategories, currentPage, page);
+        break;
+      }
+
+      if (!haveFilmTotal) {
+        const result = await handlePageFilms($, filmsCount, totalPages, filmsPerPage);
+        filmsCount = result.filmsCount;
+        totalPages = result.totalPages;
+        haveFilmTotal = result.haveFilmTotal;
+        if (haveFilmTotal && currentPage > totalPages) {
+          res.status(HTTP_STATUS_NOT_FOUND).json({ error: "Invalid list page" });
+          return;
+        }
+      }
+
+      await setCacheValue(cacheKey, pageFilms, cacheTtl, cacheCategories);
+      filmsPromises = filmsPromises.concat(pageFilms);
     }
 
     const films = await Promise.all(filmsPromises);
