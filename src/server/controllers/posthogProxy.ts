@@ -1,5 +1,5 @@
 import type { FastifyRequest, FastifyReply } from "fastify";
-import { HTTP_STATUS_BAD_GATEWAY } from "../httpStatusCodes.js";
+import { HTTP_STATUS_BAD_GATEWAY, HTTP_STATUS_BAD_REQUEST } from "../httpStatusCodes.js";
 
 const POSTHOG_DEFAULT_HOST = "https://us.i.posthog.com";
 
@@ -20,6 +20,26 @@ function buildProxyHeaders(request: FastifyRequest): Record<string, string> {
   if (ua) headers["user-agent"] = Array.isArray(ua) ? ua[0] : ua;
 
   return headers;
+}
+
+const POSTHOG_ALLOWED_PREFIXES = [
+  "/capture/",
+  "/e/",
+  "/batch/",
+  "/decide/",
+  "/flags/",
+  "/static/",
+  "/array/",
+  "/surveys/",
+  "/i/v0/",
+  "/s/",
+];
+
+function isAllowedPosthogPath(pathname: string): boolean {
+  if (pathname.includes("..") || pathname.includes("%2e") || pathname.includes("%2E")) return false;
+  if (pathname.endsWith("/config.js")) return true;
+  const normalized = pathname.endsWith("/") ? pathname : `${pathname}/`;
+  return POSTHOG_ALLOWED_PREFIXES.some((prefix) => normalized.startsWith(prefix));
 }
 
 function renameRecorderScriptInConfig(body: string): string {
@@ -45,6 +65,12 @@ export async function posthogProxyHandler(
 
   const queryIndex = posthogPath.indexOf("?");
   const pathname = queryIndex === -1 ? posthogPath : posthogPath.slice(0, queryIndex);
+
+  if (!isAllowedPosthogPath(pathname)) {
+    await reply.code(HTTP_STATUS_BAD_REQUEST).send({ error: "Bad Request" });
+    return;
+  }
+
   if (pathname === `/static/${RECORDER_INNOCUOUS_NAME}.js`) {
     const query = queryIndex === -1 ? "" : posthogPath.slice(queryIndex);
     posthogPath = `/static/posthog-recorder.js${query}`;
