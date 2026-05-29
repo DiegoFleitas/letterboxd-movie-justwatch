@@ -34,7 +34,13 @@ RUN rm -rf node_modules && bun install --frozen-lockfile --production
 # Final stage for app image
 FROM base
 
+RUN addgroup --system app && adduser --system --ingroup app app
+
 COPY --from=build /app /app
+
+RUN chown -R app:app /app
+
+USER app
 
 EXPOSE 3000
 CMD ["bun", "run", "start"]
