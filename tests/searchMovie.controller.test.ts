@@ -57,10 +57,8 @@ function mockRes(): MockRes {
 
 type HandlerCtx = Omit<HttpHandlerArgs, "res"> & { res: MockRes };
 
-function ctx(
-  body: unknown,
-  appLocals: HttpHandlerArgs["req"]["appLocals"] = { canonicalProviderMap: {} },
-): HandlerCtx {
+function ctx(body: unknown, appLocals?: HttpHandlerArgs["req"]["appLocals"]): HandlerCtx {
+  appLocals ??= { canonicalProviderMap: {} };
   const res = mockRes();
   return {
     req: {

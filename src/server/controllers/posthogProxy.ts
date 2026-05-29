@@ -5,6 +5,21 @@ const POSTHOG_DEFAULT_HOST = "https://us.i.posthog.com";
 
 const POSTHOG_PROXY_PREFIX = "/api/reversa";
 
+function buildProxyHeaders(request: FastifyRequest): Record<string, string> {
+  const headers: Record<string, string> = {};
+
+  const ct = request.headers["content-type"];
+  if (ct) headers["content-type"] = Array.isArray(ct) ? ct[0] : ct;
+
+  const accept = request.headers["accept"];
+  if (accept) headers["accept"] = Array.isArray(accept) ? accept[0] : accept;
+
+  const ua = request.headers["user-agent"];
+  if (ua) headers["user-agent"] = Array.isArray(ua) ? ua[0] : ua;
+
+  return headers;
+}
+
 export async function posthogProxyHandler(
   request: FastifyRequest,
   reply: FastifyReply,
@@ -14,21 +29,12 @@ export async function posthogProxyHandler(
   const requestUrl = request.url;
   const prefixIndex = requestUrl.indexOf(POSTHOG_PROXY_PREFIX);
   const posthogPath =
-    prefixIndex !== -1 ? requestUrl.slice(prefixIndex + POSTHOG_PROXY_PREFIX.length) : requestUrl;
+    prefixIndex === -1 ? requestUrl : requestUrl.slice(prefixIndex + POSTHOG_PROXY_PREFIX.length);
 
   const targetUrl = `${targetHost}${posthogPath}`;
 
   try {
-    const headers: Record<string, string> = {};
-
-    const ct = request.headers["content-type"];
-    if (ct) headers["content-type"] = Array.isArray(ct) ? ct[0] : ct;
-
-    const accept = request.headers["accept"];
-    if (accept) headers["accept"] = Array.isArray(accept) ? accept[0] : accept;
-
-    const ua = request.headers["user-agent"];
-    if (ua) headers["user-agent"] = Array.isArray(ua) ? ua[0] : ua;
+    const headers = buildProxyHeaders(request);
 
     const fetchOptions: RequestInit = {
       method: request.method,
