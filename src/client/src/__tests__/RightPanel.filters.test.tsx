@@ -2,25 +2,25 @@
 import React from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
-import { AppStateProvider, useAppState } from "../AppStateContext";
-import { RightPanel } from "../RightPanel";
+import { AppStateProvider, useAppState } from "../components/AppStateContext";
+import { RightPanel } from "../components/RightPanel";
 import { jsonResponse } from "./jsonResponse";
 
-vi.mock("../showMessage", () => ({
+vi.mock("../utils/showMessage", () => ({
   showMessage: vi.fn(),
 }));
 
-vi.mock("../showError", () => ({
+vi.mock("../utils/showError", () => ({
   showError: vi.fn(),
   showBatchErrors: vi.fn(),
 }));
 
-vi.mock("../noticeFunctions", () => ({
+vi.mock("../utils/noticeFunctions", () => ({
   toggleNotice: vi.fn(),
   setNoticeImpl: vi.fn(),
 }));
 
-vi.mock("../sentry", () => ({
+vi.mock("../utils/sentry", () => ({
   captureFrontendException: vi.fn(),
   captureFrontendMessage: vi.fn(),
 }));

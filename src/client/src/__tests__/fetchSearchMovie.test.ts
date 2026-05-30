@@ -5,7 +5,7 @@ import {
   fetchSearchMovie,
   isRetryableFetchError,
   SEARCH_MOVIE_TOTAL_ATTEMPTS,
-} from "../fetchSearchMovie";
+} from "../utils/fetchSearchMovie";
 import { jsonResponse } from "./jsonResponse";
 
 describe("fetchSearchMovie", () => {

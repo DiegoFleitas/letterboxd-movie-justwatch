@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { DEV_HTTP_API_PREFIX } from "@server/routes";
 import { useAppState } from "./AppStateContext";
-import { isDevDebugBarEnabled } from "./devDebugBarEnv";
+import { isDevDebugBarEnabled } from "../utils/devDebugBarEnv";
 import "./DevDebugBar.css";
 
 type DevPostJson = { ok?: boolean; error?: string; cleared?: number; stdout?: string };

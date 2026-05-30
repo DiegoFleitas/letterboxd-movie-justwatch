@@ -2,9 +2,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { createRoot } from "react-dom/client";
 import { act } from "react";
-import { AppStateProvider } from "../AppStateContext";
-import { MovieTile } from "../MovieTile";
-import type { TileData } from "../movieTiles";
+import { AppStateProvider } from "../components/AppStateContext";
+import { MovieTile } from "../components/MovieTile";
+import type { TileData } from "../utils/movieTiles";
 import { stubMatchMedia } from "./mockMatchMedia";
 
 describe("MovieTile external links accessibility label", () => {

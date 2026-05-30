@@ -31,14 +31,14 @@ describe("frontend sentry helpers", () => {
   });
 
   it("initFrontendSentry is a no-op without DSN", async () => {
-    const { initFrontendSentry } = await import("../sentry");
+    const { initFrontendSentry } = await import("../utils/sentry");
     initFrontendSentry();
     expect(init).not.toHaveBeenCalled();
   });
 
   it("initFrontendSentry calls Sentry.init when window DSN is set", async () => {
     (globalThis as { __SENTRY_DSN__?: string }).__SENTRY_DSN__ = "https://k@sentry.io/1";
-    const { initFrontendSentry } = await import("../sentry");
+    const { initFrontendSentry } = await import("../utils/sentry");
     initFrontendSentry();
     expect(init).toHaveBeenCalled();
     expect(init.mock.calls[0][0]).toMatchObject({ dsn: "https://k@sentry.io/1" });
@@ -48,20 +48,20 @@ describe("frontend sentry helpers", () => {
     (globalThis as { __SENTRY_DSN__?: string; __SENTRY_ENVIRONMENT__?: string }).__SENTRY_DSN__ =
       "https://k@sentry.io/1";
     (globalThis as { __SENTRY_ENVIRONMENT__?: string }).__SENTRY_ENVIRONMENT__ = "production";
-    const { initFrontendSentry } = await import("../sentry");
+    const { initFrontendSentry } = await import("../utils/sentry");
     initFrontendSentry();
     expect(init.mock.calls[0][0]).toMatchObject({ tracesSampleRate: 0.1 });
   });
 
   it("captureFrontendException returns empty when no client", async () => {
     getClient.mockReturnValue(null);
-    const { captureFrontendException } = await import("../sentry");
+    const { captureFrontendException } = await import("../utils/sentry");
     expect(captureFrontendException(new Error("x"))).toBe("");
   });
 
   it("captureFrontendException forwards to Sentry when client exists", async () => {
     getClient.mockReturnValue({} as never);
-    const { captureFrontendException } = await import("../sentry");
+    const { captureFrontendException } = await import("../utils/sentry");
     const id = captureFrontendException(new Error("e"), { tags: { a: "b" } });
     expect(captureException).toHaveBeenCalled();
     expect(id).toBe("evt");
@@ -69,13 +69,13 @@ describe("frontend sentry helpers", () => {
 
   it("captureFrontendMessage returns empty when no client", async () => {
     getClient.mockReturnValue(null);
-    const { captureFrontendMessage } = await import("../sentry");
+    const { captureFrontendMessage } = await import("../utils/sentry");
     expect(captureFrontendMessage("m")).toBe("");
   });
 
   it("captureFrontendMessage uses Sentry when client exists", async () => {
     getClient.mockReturnValue({} as never);
-    const { captureFrontendMessage } = await import("../sentry");
+    const { captureFrontendMessage } = await import("../utils/sentry");
     expect(captureFrontendMessage("hello", { level: "warning" })).toBe("msg");
     expect(captureMessage).toHaveBeenCalledWith(
       "hello",

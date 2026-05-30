@@ -1,6 +1,6 @@
 import * as Sentry from "@sentry/react";
 
-/** Matches server default in `src/server/lib/sentryTracesSampleRate.ts`. */
+/** Matches server default in `src/server/lib/sentryCapture.ts`. */
 const PRODUCTION_TRACES_SAMPLE_RATE = 0.1;
 
 type SentryContext = {

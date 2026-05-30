@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { escapeHtml, sanitizeHrefForToast } from "../htmlSafeForToast";
+import { escapeHtml, sanitizeHrefForToast } from "../utils/htmlSafeForToast";
 
 describe("escapeHtml", () => {
   it("escapes HTML special characters", () => {

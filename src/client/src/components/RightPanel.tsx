@@ -1,17 +1,17 @@
 import React, { useState, useMemo } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { motionTransition } from "./animation/timing";
+import { motionTransition } from "../animation/timing";
 import { useAppState } from "./AppStateContext";
-import alternativeSearchIcon from "./assets/alternative-search.svg";
-import { getTileProviderNames } from "./movieTiles";
-import type { TileData } from "./movieTiles";
+import alternativeSearchIcon from "../assets/alternative-search.svg";
+import { getTileProviderNames } from "../utils/movieTiles";
+import type { TileData } from "../utils/movieTiles";
 import { MovieTile } from "./MovieTile";
 import { WaitCue } from "./WaitCue";
 import {
   deduplicateProviderList,
   tileMatchesProviderFilter,
   type ProviderLike,
-} from "./providerUtils";
+} from "../utils/providerUtils";
 
 const FOOTER_MESSAGES = [
   "Star me on GitHub!",

@@ -8,10 +8,10 @@ const toggleNotice = vi.fn();
 const captureFrontendException = vi.fn();
 const captureFrontendMessage = vi.fn();
 
-vi.mock("../showMessage", () => ({ showMessage }));
-vi.mock("../showError", () => ({ showError }));
-vi.mock("../noticeFunctions", () => ({ toggleNotice }));
-vi.mock("../sentry", () => ({
+vi.mock("../utils/showMessage", () => ({ showMessage }));
+vi.mock("../utils/showError", () => ({ showError }));
+vi.mock("../utils/noticeFunctions", () => ({ toggleNotice }));
+vi.mock("../utils/sentry", () => ({
   captureFrontendException,
   captureFrontendMessage,
 }));
@@ -28,13 +28,13 @@ describe("runAlternativeSearch", () => {
   });
 
   it("returns early when title is empty", async () => {
-    const { runAlternativeSearch } = await import("../alternativeSearch");
+    const { runAlternativeSearch } = await import("../utils/alternativeSearch");
     runAlternativeSearch("");
     expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
   it("shows message when a search is already in flight", async () => {
-    const { runAlternativeSearch } = await import("../alternativeSearch");
+    const { runAlternativeSearch } = await import("../utils/alternativeSearch");
     vi.mocked(globalThis.fetch).mockImplementation(
       () => new Promise(() => {}), // never resolves
     );
@@ -47,7 +47,7 @@ describe("runAlternativeSearch", () => {
     vi.mocked(globalThis.fetch).mockResolvedValue(
       jsonResponse({ text: "found", url: "https://x", title: "A" }),
     );
-    const { runAlternativeSearch } = await import("../alternativeSearch");
+    const { runAlternativeSearch } = await import("../utils/alternativeSearch");
     const setLoading = vi.fn();
     runAlternativeSearch("A", 2000, { setAlternativeSearchLoading: setLoading });
     await vi.waitFor(() => expect(showMessage).toHaveBeenCalled());
@@ -57,7 +57,7 @@ describe("runAlternativeSearch", () => {
 
   it("shows error when fetch rejects", async () => {
     vi.mocked(globalThis.fetch).mockRejectedValue(new Error("network"));
-    const { runAlternativeSearch } = await import("../alternativeSearch");
+    const { runAlternativeSearch } = await import("../utils/alternativeSearch");
     runAlternativeSearch("T");
     await vi.waitFor(() => expect(showError).toHaveBeenCalledWith("Alternative search failed."));
     expect(captureFrontendException).toHaveBeenCalled();
@@ -70,7 +70,7 @@ describe("runAlternativeSearch", () => {
         headers: { "Content-Type": "application/json" },
       }),
     );
-    const { runAlternativeSearch } = await import("../alternativeSearch");
+    const { runAlternativeSearch } = await import("../utils/alternativeSearch");
     runAlternativeSearch("T");
     await vi.waitFor(() => expect(captureFrontendMessage).toHaveBeenCalled());
   });
@@ -88,7 +88,7 @@ describe("searchSubs", () => {
   });
 
   it("returns early when query empty", async () => {
-    const { searchSubs } = await import("../alternativeSearch");
+    const { searchSubs } = await import("../utils/alternativeSearch");
     searchSubs("");
     expect(globalThis.fetch).not.toHaveBeenCalled();
   });
@@ -96,7 +96,7 @@ describe("searchSubs", () => {
   it("opens window when subtitles url returned", async () => {
     vi.spyOn(globalThis, "open").mockImplementation(() => null);
     vi.mocked(globalThis.fetch).mockResolvedValue(jsonResponse({ url: "https://subdl.com/x" }));
-    const { searchSubs } = await import("../alternativeSearch");
+    const { searchSubs } = await import("../utils/alternativeSearch");
     searchSubs("Film");
     await vi.waitFor(() =>
       expect(globalThis.open).toHaveBeenCalledWith(
@@ -109,14 +109,14 @@ describe("searchSubs", () => {
 
   it("shows error when API returns error", async () => {
     vi.mocked(globalThis.fetch).mockResolvedValue(jsonResponse({ error: "nope" }));
-    const { searchSubs } = await import("../alternativeSearch");
+    const { searchSubs } = await import("../utils/alternativeSearch");
     searchSubs("Film");
     await vi.waitFor(() => expect(showError).toHaveBeenCalledWith("nope"));
   });
 
   it("shows error when subtitles fetch rejects", async () => {
     vi.mocked(globalThis.fetch).mockRejectedValue(new Error("down"));
-    const { searchSubs } = await import("../alternativeSearch");
+    const { searchSubs } = await import("../utils/alternativeSearch");
     searchSubs("Film");
     await vi.waitFor(() => expect(showError).toHaveBeenCalledWith("Failed to search subtitles."));
     expect(captureFrontendException).toHaveBeenCalled();

@@ -11,7 +11,7 @@ import {
   tileMatchesProviderFilter,
   normalizedProviderKey,
   deduplicateProviderList,
-} from "@/providerUtils.js";
+} from "@/utils/providerUtils.js";
 
 function makeOffer(
   technicalName: string,

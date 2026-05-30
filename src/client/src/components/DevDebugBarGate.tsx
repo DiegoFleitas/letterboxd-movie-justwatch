@@ -1,5 +1,5 @@
 import React, { Suspense, type LazyExoticComponent, type ReactElement } from "react";
-import { isDevDebugBarEnabled } from "./devDebugBarEnv";
+import { isDevDebugBarEnabled } from "../utils/devDebugBarEnv";
 
 let LazyDevDebugBar: LazyExoticComponent<() => ReactElement | null> | null = null;
 

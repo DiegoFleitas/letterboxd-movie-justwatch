@@ -5,7 +5,7 @@ import {
   normalizedProviderKey,
   tileMatchesProviderFilter,
   type ProviderLike,
-} from "../providerUtils";
+} from "../utils/providerUtils";
 
 type CanonicalMap = Record<string, { id: string; name: string }>;
 

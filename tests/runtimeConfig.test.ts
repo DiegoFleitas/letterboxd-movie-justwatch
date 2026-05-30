@@ -141,7 +141,7 @@ describe("Runtime config + PostHog", () => {
   });
 
   it("frontend sentry.ts reads runtime Sentry globals with VITE fallback", () => {
-    const sentryPath = path.join(__dirname, "..", "src", "client", "src", "sentry.ts");
+    const sentryPath = path.join(__dirname, "..", "src", "client", "src", "utils", "sentry.ts");
     const source = fs.readFileSync(sentryPath, "utf8");
     expect(source).toContain("__SENTRY_DSN__");
     expect(source).toContain("__SENTRY_RELEASE__");

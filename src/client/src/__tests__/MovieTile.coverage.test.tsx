@@ -2,9 +2,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createRoot } from "react-dom/client";
 import { act } from "@testing-library/react";
-import { AppStateProvider } from "../AppStateContext";
-import { MovieTile } from "../MovieTile";
-import type { TileData } from "../movieTiles";
+import { AppStateProvider } from "../components/AppStateContext";
+import { MovieTile } from "../components/MovieTile";
+import type { TileData } from "../utils/movieTiles";
 import { stubMatchMedia } from "./mockMatchMedia";
 
 describe("MovieTile coverage", () => {

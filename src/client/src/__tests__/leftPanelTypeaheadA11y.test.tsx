@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import { AppStateProvider } from "../AppStateContext";
-import { LeftPanel } from "../LeftPanel";
+import { AppStateProvider } from "../components/AppStateContext";
+import { LeftPanel } from "../components/LeftPanel";
 import { mockFetchUrl } from "./reactRootTestUtils";
 
 const COUNTRY_STORAGE_KEY = "letterboxd-justwatch-country";

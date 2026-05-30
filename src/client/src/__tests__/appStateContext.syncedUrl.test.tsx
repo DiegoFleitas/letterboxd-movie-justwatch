@@ -3,17 +3,17 @@ import React from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createRoot } from "react-dom/client";
 import { act } from "@testing-library/react";
-import { AppStateProvider, useAppState } from "../AppStateContext";
+import { AppStateProvider, useAppState } from "../components/AppStateContext";
 
 const hoisted = vi.hoisted(() => ({
   loadLetterboxdListRaw: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("../useLetterboxdList", () => ({
+vi.mock("../hooks/useLetterboxdList", () => ({
   useLetterboxdList: vi.fn(() => hoisted.loadLetterboxdListRaw),
 }));
 
-vi.mock("../useMovieSearch", () => ({
+vi.mock("../hooks/useMovieSearch", () => ({
   useMovieSearch: vi.fn(() => vi.fn()),
 }));
 

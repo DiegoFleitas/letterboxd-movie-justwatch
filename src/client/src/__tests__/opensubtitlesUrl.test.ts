@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildOpenSubtitlesBrowseUrl } from "../opensubtitlesUrl";
+import { buildOpenSubtitlesBrowseUrl } from "../utils/opensubtitlesUrl";
 
 const TAIL = "/hearing_impaired-include/machine_translated-/trusted_sources-";
 const BASE = "https://www.opensubtitles.com/en/en/search-all";

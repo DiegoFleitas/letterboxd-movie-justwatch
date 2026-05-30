@@ -6,7 +6,7 @@ Unit and integration tests use **[Vitest](https://vitest.dev/)**. Browser end-to
 
 | Command                                                                          | What it runs                                                                                                                                                                                                                                                                          |
 | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bun run test` / `bun run test:unit`                                             | All Vitest tests matching `test.include` in [`vitest.config.ts`](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/blob/master/vitest.config.ts)                                                                                                                             |
+| `bun run test`                                                                   | All Vitest tests matching `test.include` in [`vitest.config.ts`](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/blob/master/vitest.config.ts)                                                                                                                             |
 | `bun run test:coverage`                                                          | Same Vitest run with **v8 coverage** (`text`, `text-summary`, `json-summary`, `json`, `lcov`, `html` under `coverage/`; CI uses [vitest-coverage-report-action](https://github.com/davelosert/vitest-coverage-report-action) for the job summary and uploads the `coverage` artifact) |
 | `bun run test:backend`                                                           | Fastify integration tests only                                                                                                                                                                                                                                                        |
 | `bun run test:filter`, `test:state`, `test:posthog`, `test:redis`, `test:dedupe` | Single Vitest entry points                                                                                                                                                                                                                                                            |
@@ -35,10 +35,10 @@ See root [`tsconfig.json`](https://github.com/DiegoFleitas/letterboxd-movie-just
 
 Some Vitest files import **client app** modules on purpose so logic stays single-sourced:
 
-| Test file                       | Imports (`@/` alias) |
-| ------------------------------- | -------------------- |
-| `stateTileManagement.test.ts`   | `@/movieTiles`       |
-| `providerDeduplication.test.ts` | `@/providerUtils`    |
+| Test file                       | Imports (`@/` alias)    |
+| ------------------------------- | ----------------------- |
+| `stateTileManagement.test.ts`   | `@/utils/movieTiles`    |
+| `providerDeduplication.test.ts` | `@/utils/providerUtils` |
 
 If you rename those modules, run **`bun run test`** and the **frontend** tests under `src/client/src/__tests__/` together.
 

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { hideNotice, setNoticeImpl, toggleNotice } from "../noticeFunctions";
-import { setToastImpl } from "../toastApi";
+import { hideNotice, setNoticeImpl, toggleNotice } from "../utils/noticeFunctions";
+import { setToastImpl } from "../utils/toastApi";
 
 describe("noticeFunctions", () => {
   afterEach(() => {

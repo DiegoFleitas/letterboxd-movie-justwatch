@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getPublicAssetPath } from "../assetPath";
+import { getPublicAssetPath } from "../utils/assetPath";
 
 describe("getPublicAssetPath", () => {
   it("prefixes icon paths with BASE_URL when app is deployed under a subpath", () => {

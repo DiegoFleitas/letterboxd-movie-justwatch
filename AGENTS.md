@@ -6,19 +6,19 @@ Bun only (`packageManager: bun@1.3.11`). No Node/nvm version pin.
 
 ## Essential commands
 
-| Command                              | What                                                                                                               |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
-| `bun run dev`                        | Vite (5173) + Fastify (3000) concurrently (see `concurrently` in scripts). Vite proxies `/api` → `localhost:3000`. |
-| `bun run fe:dev`                     | Vite only (frontend dev server on 5173).                                                                           |
-| `bun run be:dev`                     | Fastify only (`bun --hot src/server/main.ts`).                                                                     |
-| `bun run typecheck`                  | Runs **two** separate `tsc --noEmit` — once at root, once inside `src/client/`.                                    |
-| `bun run lint`                       | ESLint (`.ts,.tsx`).                                                                                               |
-| `bun run format:check`               | Prettier check across all file types.                                                                              |
-| `bun run format:write`               | Prettier write across all file types.                                                                              |
-| `bun run knip`                       | Unused deps/files/exports (does NOT flag type exports — `rules.types: off` in `knip.json`).                        |
-| `bun run test` / `bun run test:unit` | All Vitest tests.                                                                                                  |
-| `bun run test:coverage`              | Vitest with coverage (80% threshold on statements/lines only).                                                     |
-| `bun run build:providers`            | Rebuild canonical provider map from remote data source.                                                            |
+| Command                   | What                                                                                                               |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `bun run dev`             | Vite (5173) + Fastify (3000) concurrently (see `concurrently` in scripts). Vite proxies `/api` → `localhost:3000`. |
+| `bun run fe:dev`          | Vite only (frontend dev server on 5173).                                                                           |
+| `bun run be:dev`          | Fastify only (`bun --hot src/server/main.ts`).                                                                     |
+| `bun run typecheck`       | Runs **two** separate `tsc --noEmit` — once at root, once inside `src/client/`.                                    |
+| `bun run lint`            | ESLint (`.ts,.tsx`).                                                                                               |
+| `bun run format:check`    | Prettier check across all file types.                                                                              |
+| `bun run format:write`    | Prettier write across all file types.                                                                              |
+| `bun run knip`            | Unused deps/files/exports (does NOT flag type exports — `rules.types: off` in `knip.json`).                        |
+| `bun run test`            | All Vitest tests.                                                                                                  |
+| `bun run test:coverage`   | Vitest with coverage (80% threshold on statements/lines only).                                                     |
+| `bun run build:providers` | Rebuild canonical provider map from remote data source.                                                            |
 
 Order before PR: `bun run lint && bun run typecheck && bun run knip && bun run test`.
 
@@ -30,7 +30,7 @@ Order before PR: `bun run lint && bun run typecheck && bun run knip && bun run t
 - `bun run test:e2e` — Playwright (`tests/e2e/*.spec.ts`). Two kinds: **mocked UI flows** (route-intercept `/api/*`) and **`backend-smoke.spec.ts`** (real HTTP to Fastify; requires `bun run dev` running first).
 - **Fixtures**: `tests/fixtures/` — HTML/JSON used by unit tests. Update with `bun run update:letterboxd-fixtures`.
 - **Goldens**: `tests/goldens/` — optional JSON golden files for snapshot-style assertions.
-- Two Vitest files import client modules (`@/` alias): `stateTileManagement.test.ts` (`@/movieTiles`) and `providerDeduplication.test.ts` (`@/providerUtils`). If those modules are renamed, run both test suites.
+- Two Vitest files import client modules (`@/` alias): `stateTileManagement.test.ts` (`@/utils/movieTiles`) and `providerDeduplication.test.ts` (`@/utils/providerUtils`). If those modules are renamed, run both test suites.
 
 ## Architecture
 
@@ -43,6 +43,108 @@ Order before PR: `bun run lint && bun run typecheck && bun run knip && bun run t
 - **Path aliases**: `@server/*` → `src/server/*`, `@/*` → `src/client/src/*`. Defined in root `tsconfig.json`, `src/client/tsconfig.json`, `vite.config.ts`, and `vitest.config.ts`.
 - **Client import boundary**: Only `@server/lib/letterboxdListUrl` is imported from the client app. Do not pull additional server modules into the browser bundle.
 - **Redis** caching with snapshot export/seed scripts (`redis/scripts/`). See `bun run redis:reset` and `redis/README.md`.
+
+## Project structure
+
+```
+letterboxd-movie-justwatch/
+├── src/
+│   ├── server/                          # Fastify backend
+│   │   ├── main.ts                      # Entry point
+│   │   ├── createServer.ts              # Server factory
+│   │   ├── registerFastifyWiring.ts     # Plugin/route orchestration
+│   │   ├── routes.ts                    # API path constants (shared with client via @server/routes)
+│   │   ├── buildIndexHtmlForClient.ts
+│   │   ├── fastifyHttpBridge.ts
+│   │   ├── httpContext.ts
+│   │   ├── httpStatusCodes.ts
+│   │   ├── instrument.ts                # Sentry init
+│   │   ├── registerFastifyAppApi.ts
+│   │   ├── registerFastifySessionPlugins.ts
+│   │   ├── registerFastifyStaticAndIndex.ts
+│   │   ├── registerDevHttpRoutes.ts
+│   │   ├── controllers/                 # HTTP handlers
+│   │   │   ├── letterboxdLists.ts       # Letterboxd list scraping + JustWatch enrichment
+│   │   │   ├── searchMovie.ts           # TMDb movie search
+│   │   │   ├── poster.ts                # OMDb poster lookup
+│   │   │   ├── letterboxdPoster.ts      # Letterboxd poster scraping
+│   │   │   ├── posthogProxy.ts          # PostHog analytics proxy
+│   │   │   ├── proxy.ts                 # Generic HTTPS proxy
+│   │   │   ├── alternativeSearch.ts     # Jackett torrent search
+│   │   │   └── subdlSearch.ts           # Subdl subtitle search
+│   │   └── lib/                         # Shared backend utilities
+│   │       ├── apiSchemas.ts            # Zod request/response schemas
+│   │       ├── axios.ts                 # Axios instance config
+│   │       ├── redis.ts                 # Redis client
+│   │       ├── memoryCache.ts           # In-process cache (used when DISABLE_REDIS=1)
+│   │       ├── canonicalProviders.ts    # Provider map data
+│   │       ├── loadCanonicalProviders.ts
+│   │       ├── letterboxdListHtml.ts    # Cheerio HTML scraping
+│   │       ├── letterboxdHttp.ts        # Letterboxd HTTP client
+│   │       ├── letterboxdListUrl.ts     # URL parsing (also imported by client)
+│   │       ├── letterboxdFetchTimeout.ts
+│   │       ├── letterboxdStableFilmLink.ts
+│   │       ├── justWatchOutbound.ts     # JustWatch GraphQL client
+│   │       ├── processOffers.ts         # JustWatch offer normalisation
+│   │       ├── posthog.ts
+│   │       ├── sentryCapture.ts              # Sentry capture helpers + traces sample rate
+│   │       ├── devApiGuard.ts
+│   │       ├── injectRuntimeConfig.ts
+│   │       ├── scrapeUserAgent.ts
+│   │       ├── subdlBrowseUrl.ts
+│   │       └── types/index.ts           # Domain/API types
+│   └── client/                          # React 19 + Vite frontend
+│       ├── index.html                   # Vite entry point
+│       ├── tsconfig.json                # Client TS config (ESNext/bundler)
+│       ├── css/                         # Component stylesheets
+│       ├── icons/                       # SVG icons (static)
+│       ├── assets/                      # SVG icon imports (via Vite)
+│       └── src/
+│           ├── main.tsx                 # React root
+│           ├── App.tsx                  # Root component; wires panels + context
+│           ├── components/              # React UI components
+│           │   ├── AppStateContext.tsx  # Global state (list URL, country, tiles, filters)
+│           │   ├── LeftPanel.tsx        # List URL form + movie search tab
+│           │   ├── RightPanel.tsx       # Movie tile grid + filters
+│           │   ├── MovieTile.tsx        # Individual movie card
+│           │   ├── CountrySelector.tsx
+│           │   ├── DevDebugBar.tsx / DevDebugBarGate.tsx
+│           │   └── ToastProvider.tsx / WaitCue.tsx / SimpleWaitDots.tsx
+│           ├── hooks/                   # Custom React hooks
+│           │   ├── useLetterboxdList.ts # Primary data-fetching hook
+│           │   ├── useMovieSearch.ts    # Movie search hook
+│           │   └── useMobilePosterLayout.ts
+│           ├── utils/                   # Pure utilities (no DOM/React deps)
+│           │   ├── movieTiles.ts        # Tile state management
+│           │   ├── providerUtils.ts     # Provider deduplication logic
+│           │   ├── alternativeSearch.ts
+│           │   ├── fetchSearchMovie.ts
+│           │   └── showError.ts / showMessage.ts / sentry.ts / …
+│           ├── data/                    # Static data / app-wide constants
+│           │   ├── countries.ts / countryGeo.ts
+│           │   ├── genres.ts / consts.ts
+│           ├── animation/timing.ts
+│           └── __tests__/              # Client-side Vitest tests
+├── tests/                              # Backend/shared Vitest tests
+│   ├── e2e/                            # Playwright specs (mocked UI + backend-smoke)
+│   ├── fixtures/                       # HTML/JSON used by unit tests
+│   └── goldens/                        # Optional JSON golden files
+├── scripts/                            # Utility scripts
+│   ├── updateLetterboxdFixtures.ts
+│   └── syncApiFixturesFromRedisSnapshot.ts
+├── redis/                              # Redis tooling
+│   ├── Dockerfile / entrypoint.sh
+│   └── scripts/                        # export / seed / validate / buildCanonicalProviders
+├── devops/fly-ops/                     # Fly.io management scripts
+├── .github/workflows/                  # CI (ci.yml) + deploy (fly-deploy.yml) + cost report
+├── tsconfig.json                       # Root TS config (server, NodeNext)
+├── vite.config.ts
+├── vitest.config.ts
+├── playwright.config.ts
+├── eslint.config.mjs / knip.json
+├── fly.toml / Dockerfile / docker-compose.yml
+└── .env.example
+```
 
 ## Git conventions
 

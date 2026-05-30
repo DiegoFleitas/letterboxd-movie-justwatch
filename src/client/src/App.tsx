@@ -1,10 +1,10 @@
 import type { ReactElement } from "react";
 import { ErrorBoundary } from "@sentry/react";
-import { ToastProvider } from "./ToastProvider";
-import { AppStateProvider } from "./AppStateContext";
-import { DevDebugBarGate } from "./DevDebugBarGate";
-import { LeftPanel } from "./LeftPanel";
-import { RightPanel } from "./RightPanel";
+import { ToastProvider } from "./components/ToastProvider";
+import { AppStateProvider } from "./components/AppStateContext";
+import { DevDebugBarGate } from "./components/DevDebugBarGate";
+import { LeftPanel } from "./components/LeftPanel";
+import { RightPanel } from "./components/RightPanel";
 
 export function App(): ReactElement {
   return (

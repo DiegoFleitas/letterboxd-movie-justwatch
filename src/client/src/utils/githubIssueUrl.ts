@@ -1,4 +1,4 @@
-import { NO_POSTER_REPORT_DELAY_MS } from "./animation/timing";
+import { NO_POSTER_REPORT_DELAY_MS } from "../animation/timing";
 import type { ListReportSymptom } from "./movieTiles";
 
 export interface ListGithubIssueContext {

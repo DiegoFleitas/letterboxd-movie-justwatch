@@ -3,8 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, cleanup, waitFor } from "@testing-library/react";
 import { renderToStaticMarkup } from "react-dom/server";
 import React from "react";
-import { ToastProvider } from "../ToastProvider";
-import { getToastImpl } from "../toastApi";
+import { ToastProvider } from "../components/ToastProvider";
+import { getToastImpl } from "../utils/toastApi";
 
 /** Registered impl accepts broader payloads than `ToastApi` types (see ToastProvider). */
 function messageWithLinkPayload(

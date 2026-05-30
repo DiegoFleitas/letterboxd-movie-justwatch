@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import type { SubmitEventHandler } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { INTERACTION_FAST_S, motionTransition, TMDB_DEBOUNCE_MS } from "./animation/timing";
+import { INTERACTION_FAST_S, motionTransition, TMDB_DEBOUNCE_MS } from "../animation/timing";
 import { useAppState } from "./AppStateContext";
-import { countries, genres } from "./consts";
+import { countries, genres } from "../data/consts";
 import { CountrySelector } from "./CountrySelector";
-import { fetchCountryFromIp } from "./countryGeo";
+import { fetchCountryFromIp } from "../data/countryGeo";
 import { SimpleWaitDots } from "./SimpleWaitDots";
 import { HTTP_API_PATHS } from "@server/routes";
 import { WaitCue } from "./WaitCue";
