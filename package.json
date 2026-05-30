@@ -9,7 +9,6 @@
     "prepare": "husky || true",
     "typecheck": "bunx tsc --noEmit && cd src/client && bunx tsc --noEmit",
     "test": "bunx vitest run",
-    "test:unit": "bunx vitest run",
     "test:coverage": "bunx vitest run --coverage",
     "test:backend": "bunx vitest run tests/backend.integration.test.ts",
     "test:filter": "bunx vitest run tests/filterLogic.test.ts",
