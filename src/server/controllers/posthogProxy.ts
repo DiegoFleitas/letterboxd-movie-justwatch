@@ -1,4 +1,4 @@
-import type { FastifyRequest, FastifyReply } from "fastify";
+import type { HttpHandler } from "../httpContext.js";
 import { HTTP_STATUS_BAD_GATEWAY, HTTP_STATUS_BAD_REQUEST } from "../httpStatusCodes.js";
 
 const POSTHOG_DEFAULT_HOST = "https://us.i.posthog.com";
@@ -7,27 +7,30 @@ const POSTHOG_PROXY_PREFIX = "/api/reversa";
 
 const RECORDER_INNOCUOUS_NAME = "rec";
 
-function buildProxyHeaders(request: FastifyRequest): Record<string, string> {
-  const headers: Record<string, string> = {};
+function buildProxyHeaders(
+  headers: Record<string, unknown>,
+  ip: string | undefined,
+): Record<string, string> {
+  const result: Record<string, string> = {};
 
-  const ct = request.headers["content-type"];
-  if (ct) headers["content-type"] = Array.isArray(ct) ? ct[0] : ct;
+  const ct = headers["content-type"] as string | string[] | undefined;
+  if (ct) result["content-type"] = Array.isArray(ct) ? ct[0] : ct;
 
-  const accept = request.headers["accept"];
-  if (accept) headers["accept"] = Array.isArray(accept) ? accept[0] : accept;
+  const accept = headers["accept"] as string | string[] | undefined;
+  if (accept) result["accept"] = Array.isArray(accept) ? accept[0] : accept;
 
-  const ua = request.headers["user-agent"];
-  if (ua) headers["user-agent"] = Array.isArray(ua) ? ua[0] : ua;
+  const ua = headers["user-agent"] as string | string[] | undefined;
+  if (ua) result["user-agent"] = Array.isArray(ua) ? ua[0] : ua;
 
-  const flyClientIp = request.headers["fly-client-ip"];
-  const xForwardedFor = request.headers["x-forwarded-for"];
+  const flyClientIp = headers["fly-client-ip"] as string | string[] | undefined;
+  const xForwardedFor = headers["x-forwarded-for"] as string | string[] | undefined;
   const clientIp =
     (Array.isArray(flyClientIp) ? flyClientIp[0] : flyClientIp) ||
     (Array.isArray(xForwardedFor) ? xForwardedFor[0] : xForwardedFor?.split(",")[0]?.trim()) ||
-    request.ip;
-  if (clientIp) headers["x-forwarded-for"] = clientIp;
+    ip;
+  if (clientIp) result["x-forwarded-for"] = clientIp;
 
-  return headers;
+  return result;
 }
 
 const POSTHOG_ALLOWED_PREFIXES = [
@@ -54,28 +57,23 @@ function renameRecorderScriptInConfig(body: string): string {
   return body.replace('"script":"posthog-recorder"', `"script":"${RECORDER_INNOCUOUS_NAME}"`);
 }
 
-function extractPath(request: FastifyRequest): string {
-  const prefixIndex = request.url.indexOf(POSTHOG_PROXY_PREFIX);
-  return prefixIndex === -1
-    ? request.url
-    : request.url.slice(prefixIndex + POSTHOG_PROXY_PREFIX.length);
+function extractPath(url: string): string {
+  const prefixIndex = url.indexOf(POSTHOG_PROXY_PREFIX);
+  return prefixIndex === -1 ? url : url.slice(prefixIndex + POSTHOG_PROXY_PREFIX.length);
 }
 
-export async function posthogProxyHandler(
-  request: FastifyRequest,
-  reply: FastifyReply,
-): Promise<void> {
+export const posthogProxyHandler: HttpHandler = async ({ req, res }) => {
   const targetHost = process.env.POSTHOG_HOST || POSTHOG_DEFAULT_HOST;
 
-  let posthogPath = extractPath(request);
+  let posthogPath = extractPath(req.url);
 
-  const isConfigRequest = request.method === "GET" && posthogPath.endsWith("/config.js");
+  const isConfigRequest = req.method === "GET" && posthogPath.endsWith("/config.js");
 
   const queryIndex = posthogPath.indexOf("?");
   const pathname = queryIndex === -1 ? posthogPath : posthogPath.slice(0, queryIndex);
 
   if (!isAllowedPosthogPath(pathname)) {
-    await reply.code(HTTP_STATUS_BAD_REQUEST).send({ error: "Bad Request" });
+    res.status(HTTP_STATUS_BAD_REQUEST).send({ error: "Bad Request" });
     return;
   }
 
@@ -87,32 +85,32 @@ export async function posthogProxyHandler(
   const targetUrl = `${targetHost}${posthogPath}`;
 
   try {
-    const headers = buildProxyHeaders(request);
+    const headers = buildProxyHeaders(req.headers, req.ip);
 
     const fetchOptions: RequestInit = {
-      method: request.method,
+      method: req.method,
       headers,
     };
 
-    if (request.method !== "GET" && request.method !== "HEAD") {
-      if (request.body) {
-        if (typeof request.body === "string") {
-          fetchOptions.body = request.body;
-        } else if (Buffer.isBuffer(request.body)) {
-          fetchOptions.body = request.body as BodyInit;
+    if (req.method !== "GET" && req.method !== "HEAD") {
+      if (req.body) {
+        if (typeof req.body === "string") {
+          fetchOptions.body = req.body;
+        } else if (Buffer.isBuffer(req.body)) {
+          fetchOptions.body = req.body as BodyInit;
         } else {
-          fetchOptions.body = JSON.stringify(request.body);
+          fetchOptions.body = JSON.stringify(req.body);
         }
       }
     }
 
     const response = await fetch(targetUrl, fetchOptions);
 
-    reply.code(response.status);
+    res.status(response.status);
 
     const responseContentType = response.headers.get("content-type");
     if (responseContentType) {
-      reply.header("content-type", responseContentType);
+      res.setHeader("content-type", responseContentType);
     }
 
     let body = await response.text();
@@ -121,9 +119,9 @@ export async function posthogProxyHandler(
       body = renameRecorderScriptInConfig(body);
     }
 
-    reply.send(body);
+    res.send(body);
   } catch (err) {
     console.error("PostHog proxy error:", err);
-    reply.code(HTTP_STATUS_BAD_GATEWAY).send({ error: "PostHog upstream unavailable" });
+    res.status(HTTP_STATUS_BAD_GATEWAY).send({ error: "PostHog upstream unavailable" });
   }
-}
+};
