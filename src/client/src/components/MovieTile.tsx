@@ -6,22 +6,22 @@ import {
   type TileData,
   type TileProvider,
   type TileYear,
-} from "./movieTiles";
-import { buildOpenSubtitlesBrowseUrl } from "./opensubtitlesUrl";
+} from "../utils/movieTiles";
+import { buildOpenSubtitlesBrowseUrl } from "../utils/opensubtitlesUrl";
 import {
   POSTER_IMAGE_TRANSFORM_S,
   POSTER_OVERLAY_OPACITY_S,
   POSTER_HOVER_TRANSFORM_S,
   motionTransition,
-} from "./animation/timing";
-import alternativeSearchIcon from "./assets/alternative-search.svg";
-import imdbIcon from "./assets/imdb-icon.svg";
-import letterboxdIcon from "./assets/letterboxd-icon.svg";
-import tmdbIcon from "./assets/tmdb-icon.svg";
-import openSubtitlesIcon from "./assets/opensubtitles-icon.svg";
-import subdlIcon from "./assets/subdl-icon.svg";
+} from "../animation/timing";
+import alternativeSearchIcon from "../assets/alternative-search.svg";
+import imdbIcon from "../assets/imdb-icon.svg";
+import letterboxdIcon from "../assets/letterboxd-icon.svg";
+import tmdbIcon from "../assets/tmdb-icon.svg";
+import openSubtitlesIcon from "../assets/opensubtitles-icon.svg";
+import subdlIcon from "../assets/subdl-icon.svg";
 import { WaitCue } from "./WaitCue";
-import { useMobilePosterLayout } from "./useMobilePosterLayout";
+import { useMobilePosterLayout } from "../hooks/useMobilePosterLayout";
 
 const JUSTWATCH_PROXY = "https://click.justwatch.com/a?r=";
 

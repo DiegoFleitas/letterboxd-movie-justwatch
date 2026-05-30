@@ -5,38 +5,38 @@ import {
   useLetterboxdList,
   resolveSearchConcurrency,
   SEARCH_CONCURRENCY_MOBILE,
-} from "../useLetterboxdList";
-import { showError, showBatchErrors } from "../showError";
-import { toggleNotice } from "../noticeFunctions";
-import { captureFrontendException } from "../sentry";
+} from "../hooks/useLetterboxdList";
+import { showError, showBatchErrors } from "../utils/showError";
+import { toggleNotice } from "../utils/noticeFunctions";
+import { captureFrontendException } from "../utils/sentry";
 import { HTTP_API_PATHS } from "@server/routes";
-import { PLACEHOLDER_POSTER } from "../movieTiles";
+import { PLACEHOLDER_POSTER } from "../utils/movieTiles";
 import {
   SEARCH_MOVIE_NETWORK_ERROR_MESSAGE,
   SEARCH_MOVIE_TOTAL_ATTEMPTS,
-} from "../fetchSearchMovie";
+} from "../utils/fetchSearchMovie";
 import {
   createListAndSearchFetchMock,
   customListUrl,
   watchlistUrl,
 } from "./test-utils/useLetterboxdListHarness.js";
 
-vi.mock("../showError", () => ({
+vi.mock("../utils/showError", () => ({
   showError: vi.fn(),
   showBatchErrors: vi.fn(),
 }));
 
-vi.mock("../noticeFunctions", () => ({
+vi.mock("../utils/noticeFunctions", () => ({
   toggleNotice: vi.fn(),
   setNoticeImpl: vi.fn(),
 }));
 
-vi.mock("../showMessage", () => ({
+vi.mock("../utils/showMessage", () => ({
   showMessage: vi.fn(),
   plainText: (s: unknown) => String(s ?? ""),
 }));
 
-vi.mock("../sentry", () => ({
+vi.mock("../utils/sentry", () => ({
   captureFrontendException: vi.fn(),
 }));
 

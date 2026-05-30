@@ -1,8 +1,8 @@
 import React, { useEffect } from "react";
 import toast, { Toaster } from "react-hot-toast";
-import { setToastImpl } from "./toastApi";
-import { sanitizeHrefForToast } from "./htmlSafeForToast";
-import { TOAST_DEFAULT_DURATION_MS } from "./animation/timing";
+import { setToastImpl } from "../utils/toastApi";
+import { sanitizeHrefForToast } from "../utils/htmlSafeForToast";
+import { TOAST_DEFAULT_DURATION_MS } from "../animation/timing";
 import { WaitCue } from "./WaitCue";
 
 const toastStyle = {

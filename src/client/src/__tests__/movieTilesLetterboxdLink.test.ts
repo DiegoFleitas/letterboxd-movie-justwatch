@@ -4,7 +4,7 @@ import {
   letterboxdFilmUrlOrSearchUrl,
   mergeTileState,
   normalizeLetterboxdFilmLink,
-} from "../movieTiles";
+} from "../utils/movieTiles";
 
 describe("normalizeLetterboxdFilmLink", () => {
   it("returns empty string for empty input", () => {

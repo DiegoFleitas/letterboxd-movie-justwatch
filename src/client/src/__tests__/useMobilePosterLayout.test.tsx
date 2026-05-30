@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { act, renderHook } from "@testing-library/react";
-import { MOBILE_POSTER_MEDIA_QUERY, useMobilePosterLayout } from "../useMobilePosterLayout";
+import { MOBILE_POSTER_MEDIA_QUERY, useMobilePosterLayout } from "../hooks/useMobilePosterLayout";
 
 function setupMatchMedia(initialMatches: boolean): {
   setMatches: (next: boolean) => void;

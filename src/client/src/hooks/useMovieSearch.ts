@@ -1,12 +1,12 @@
 import { useCallback, useRef } from "react";
-import { showMessage } from "./showMessage";
-import { showError } from "./showError";
-import { PLACEHOLDER_POSTER, normalizePosterPath, type MergeData } from "./movieTiles";
-import { captureFrontendException, captureFrontendMessage } from "./sentry";
-import { SafeJsonResponseError, safeJsonResponse } from "./safeJsonResponse";
+import { showMessage } from "../utils/showMessage";
+import { showError } from "../utils/showError";
+import { PLACEHOLDER_POSTER, normalizePosterPath, type MergeData } from "../utils/movieTiles";
+import { captureFrontendException, captureFrontendMessage } from "../utils/sentry";
+import { SafeJsonResponseError, safeJsonResponse } from "../utils/safeJsonResponse";
 import { HTTP_API_PATHS } from "@server/routes";
 import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from "@server/httpStatusCodes";
-import { fetchSearchMovie } from "./fetchSearchMovie";
+import { fetchSearchMovie } from "../utils/fetchSearchMovie";
 
 export interface MovieSearchResponse {
   error?: string;

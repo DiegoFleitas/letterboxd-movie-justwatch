@@ -1,13 +1,13 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { waitFor } from "@testing-library/react";
-import { AppStateProvider } from "../AppStateContext";
-import { DevDebugBarGate } from "../DevDebugBarGate";
-import { isDevDebugBarEnabled } from "../devDebugBarEnv";
+import { AppStateProvider } from "../components/AppStateContext";
+import { DevDebugBarGate } from "../components/DevDebugBarGate";
+import { isDevDebugBarEnabled } from "../utils/devDebugBarEnv";
 import { devDebugBarGateDefaultPayload } from "./devDebugBarTestFixtures";
 import { withMountedInBody } from "./reactRootTestUtils";
 
-vi.mock("../devDebugBarEnv", () => ({
+vi.mock("../utils/devDebugBarEnv", () => ({
   isDevDebugBarEnabled: vi.fn(),
 }));
 

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { showError } from "../showError";
-import { setToastImpl } from "../toastApi";
+import { showError } from "../utils/showError";
+import { setToastImpl } from "../utils/toastApi";
 
 describe("showError", () => {
   beforeEach(() => {

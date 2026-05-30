@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isDevDebugBarEnabled } from "../devDebugBarEnv";
+import { isDevDebugBarEnabled } from "../utils/devDebugBarEnv";
 
 describe("isDevDebugBarEnabled", () => {
   it("is false outside Vite dev", () => {

@@ -4,9 +4,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createRoot } from "react-dom/client";
 import { renderToString } from "react-dom/server";
 import { act } from "@testing-library/react";
-import { AppStateProvider, useAppState } from "../AppStateContext";
+import { AppStateProvider, useAppState } from "../components/AppStateContext";
 import { jsonResponse } from "./jsonResponse";
-import { setToastImpl } from "../toastApi";
+import { setToastImpl } from "../utils/toastApi";
 
 function Probe(): React.ReactElement {
   const { activeTab, setActiveTab } = useAppState();

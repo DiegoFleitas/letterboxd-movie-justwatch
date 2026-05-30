@@ -2,28 +2,28 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { act, renderHook } from "@testing-library/react";
 import { useCallback, useRef } from "react";
-import { useLetterboxdList } from "../useLetterboxdList";
-import { PLACEHOLDER_POSTER, type TileData } from "../movieTiles";
+import { useLetterboxdList } from "../hooks/useLetterboxdList";
+import { PLACEHOLDER_POSTER, type TileData } from "../utils/movieTiles";
 import { NO_POSTER_REPORT_DELAY_MS } from "../animation/timing";
-import { listReportToastCopy } from "../githubIssueUrl";
-import { showMessage } from "../showMessage";
+import { listReportToastCopy } from "../utils/githubIssueUrl";
+import { showMessage } from "../utils/showMessage";
 import {
   createListAndSearchFetchMock,
   useLetterboxdListWithMergedTiles,
   watchlistUrl,
 } from "./test-utils/useLetterboxdListHarness.js";
 
-vi.mock("../showError", () => ({
+vi.mock("../utils/showError", () => ({
   showError: vi.fn(),
   showBatchErrors: vi.fn(),
 }));
 
-vi.mock("../noticeFunctions", () => ({
+vi.mock("../utils/noticeFunctions", () => ({
   toggleNotice: vi.fn(),
   setNoticeImpl: vi.fn(),
 }));
 
-vi.mock("../showMessage", () => ({
+vi.mock("../utils/showMessage", () => ({
   showMessage: vi.fn(),
   plainText: (s: unknown) => String(s ?? ""),
 }));

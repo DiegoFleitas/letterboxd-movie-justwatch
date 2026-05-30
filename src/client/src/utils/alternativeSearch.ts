@@ -1,7 +1,7 @@
 import { toggleNotice } from "./noticeFunctions";
 import { showMessage } from "./showMessage";
 import { showError } from "./showError";
-import { NOTICE_HOLD_ALT_SEARCH_MS } from "./animation/timing";
+import { NOTICE_HOLD_ALT_SEARCH_MS } from "../animation/timing";
 import { captureFrontendException, captureFrontendMessage } from "./sentry";
 import { HTTP_API_PATHS } from "@server/routes";
 import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from "@server/httpStatusCodes";

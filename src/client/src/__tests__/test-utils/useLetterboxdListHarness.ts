@@ -1,14 +1,14 @@
 import { useCallback, useRef } from "react";
 import { HTTP_API_PATHS } from "@server/routes";
 import { vi } from "vitest";
-import { useLetterboxdList } from "../../useLetterboxdList";
+import { useLetterboxdList } from "../../hooks/useLetterboxdList";
 import {
   createInitialTileState,
   mergeTileState,
   type MergeData,
   type TileData,
   type TileState,
-} from "../../movieTiles";
+} from "../../utils/movieTiles";
 import { jsonResponse } from "../jsonResponse";
 
 export const watchlistUrl = "https://letterboxd.com/test-user/watchlist/";

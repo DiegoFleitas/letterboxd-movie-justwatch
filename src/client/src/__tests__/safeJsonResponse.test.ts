@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { SafeJsonResponseError, safeJsonResponse } from "../safeJsonResponse";
+import { SafeJsonResponseError, safeJsonResponse } from "../utils/safeJsonResponse";
 
 function createJsonResponse(body: string, status = 200): Response {
   return new Response(body, {

@@ -2,8 +2,8 @@
 import type { ReactElement } from "react";
 import { act, fireEvent } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { CountrySelector } from "../CountrySelector";
-import type { Country } from "../consts";
+import { CountrySelector } from "../components/CountrySelector";
+import type { Country } from "../data/consts";
 import { withMountedInBody, withRootRender } from "./reactRootTestUtils";
 
 const sampleCountries: Country[] = [

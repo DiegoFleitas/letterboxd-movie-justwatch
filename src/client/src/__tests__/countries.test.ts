@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { countries } from "../countries";
+import { countries } from "../data/countries";
 
 describe("countries", () => {
   it("preserves expected ordering and data shape", () => {

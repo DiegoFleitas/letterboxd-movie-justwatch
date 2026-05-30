@@ -2,27 +2,27 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { HTTP_API_PATHS } from "@server/routes";
-import { useMovieSearch } from "../useMovieSearch";
-import { showError } from "../showError";
-import { showMessage } from "../showMessage";
-import { captureFrontendMessage } from "../sentry";
+import { useMovieSearch } from "../hooks/useMovieSearch";
+import { showError } from "../utils/showError";
+import { showMessage } from "../utils/showMessage";
+import { captureFrontendMessage } from "../utils/sentry";
 import { jsonResponse } from "./jsonResponse";
 
 const fetchSearchMovieMock = vi.fn();
 
-vi.mock("../fetchSearchMovie", () => ({
+vi.mock("../utils/fetchSearchMovie", () => ({
   fetchSearchMovie: (body: unknown) => fetchSearchMovieMock(body),
 }));
 
-vi.mock("../showMessage", () => ({
+vi.mock("../utils/showMessage", () => ({
   showMessage: vi.fn(),
 }));
 
-vi.mock("../showError", () => ({
+vi.mock("../utils/showError", () => ({
   showError: vi.fn(),
 }));
 
-vi.mock("../sentry", () => ({
+vi.mock("../utils/sentry", () => ({
   captureFrontendException: vi.fn(),
   captureFrontendMessage: vi.fn(),
 }));

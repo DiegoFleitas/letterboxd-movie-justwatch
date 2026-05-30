@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { fetchCountryFromIp } from "../countryGeo";
+import { fetchCountryFromIp } from "../data/countryGeo";
 
 const COUNTRIES = [{ id: "country_US" }, { id: "country_AR" }, { id: "country_UY" }];
 

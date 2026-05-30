@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { buildMovieMergeData, type MovieSearchResponse } from "../useMovieSearch";
-import { LEGACY_PLACEHOLDER_POSTER, PLACEHOLDER_POSTER } from "../movieTiles";
+import { buildMovieMergeData, type MovieSearchResponse } from "../hooks/useMovieSearch";
+import { LEGACY_PLACEHOLDER_POSTER, PLACEHOLDER_POSTER } from "../utils/movieTiles";
 
 describe("movie search poster write mapping", () => {
   it("maps movie search response to tile merge payload", () => {

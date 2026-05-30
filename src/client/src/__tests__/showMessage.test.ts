@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { showMessage, plainText } from "../showMessage";
-import { setToastImpl } from "../toastApi";
+import { showMessage, plainText } from "../utils/showMessage";
+import { setToastImpl } from "../utils/toastApi";
 
 describe("plainText", () => {
   it("strips HTML and br tags", () => {

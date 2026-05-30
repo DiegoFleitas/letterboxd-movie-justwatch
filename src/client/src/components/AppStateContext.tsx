@@ -7,9 +7,9 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
-import { getToastImpl } from "./toastApi";
-import { setNoticeImpl } from "./noticeFunctions";
-import { createInitialTabbedTileState, mergeTileStateForTab } from "./movieTiles";
+import { getToastImpl } from "../utils/toastApi";
+import { setNoticeImpl } from "../utils/noticeFunctions";
+import { createInitialTabbedTileState, mergeTileStateForTab } from "../utils/movieTiles";
 import type {
   MergeData,
   SearchTab,
@@ -17,14 +17,14 @@ import type {
   TileData,
   TileProvider,
   TileYear,
-} from "./movieTiles";
-import { useLetterboxdList } from "./useLetterboxdList";
-import { useMovieSearch } from "./useMovieSearch";
+} from "../utils/movieTiles";
+import { useLetterboxdList } from "../hooks/useLetterboxdList";
+import { useMovieSearch } from "../hooks/useMovieSearch";
 import {
   runAlternativeSearch as runAlternativeSearchRequest,
   searchSubs,
-} from "./alternativeSearch";
-import { countries } from "./consts";
+} from "../utils/alternativeSearch";
+import { countries } from "../data/consts";
 
 const FALLBACK_COUNTRY_ID = "en_US";
 

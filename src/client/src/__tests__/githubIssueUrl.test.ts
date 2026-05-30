@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildListGithubIssueUrl, listReportToastCopy } from "../githubIssueUrl";
+import { buildListGithubIssueUrl, listReportToastCopy } from "../utils/githubIssueUrl";
 import {
   classifyListReportSymptom,
   isPlaceholderPoster,
@@ -8,7 +8,7 @@ import {
   normalizePosterPath,
   mergeTileState,
   createInitialTileState,
-} from "../movieTiles";
+} from "../utils/movieTiles";
 
 describe("buildListGithubIssueUrl", () => {
   const base = "https://example.com/org/repo/issues/new";

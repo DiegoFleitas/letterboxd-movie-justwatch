@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { PostHogProvider, usePostHog } from "@posthog/react";
 import { App } from "./App";
 import { HTTP_API_PATHS } from "@server/routes";
-import { captureFrontendException, initFrontendSentry } from "./sentry";
+import { captureFrontendException, initFrontendSentry } from "./utils/sentry";
 
 function PostHogWindowRef(): null {
   const posthog = usePostHog();

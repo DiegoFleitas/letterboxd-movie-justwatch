@@ -1,17 +1,17 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { HTTP_API_PATHS } from "@server/routes";
-import { runAlternativeSearch, searchSubs } from "../alternativeSearch";
+import { runAlternativeSearch, searchSubs } from "../utils/alternativeSearch";
 
-vi.mock("../showError", () => ({
+vi.mock("../utils/showError", () => ({
   showError: vi.fn(),
 }));
 
-vi.mock("../sentry", () => ({
+vi.mock("../utils/sentry", () => ({
   captureFrontendException: vi.fn(),
 }));
 
-import { showError } from "../showError";
+import { showError } from "../utils/showError";
 
 describe("searchSubs", () => {
   const fetchMock = vi.fn();

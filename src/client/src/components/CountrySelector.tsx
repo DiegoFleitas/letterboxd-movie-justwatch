@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { countries as allCountries } from "./consts";
-import type { Country } from "./consts";
+import { countries as allCountries } from "../data/consts";
+import type { Country } from "../data/consts";
 
 function getFlagCode(id: string | undefined): string {
   if (!id) return "";

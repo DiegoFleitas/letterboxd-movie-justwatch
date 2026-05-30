@@ -1,25 +1,25 @@
 import { useRef, useCallback, useEffect, type RefObject } from "react";
-import { NOTICE_HOLD_LIST_COMPLETE_MS, NO_POSTER_REPORT_DELAY_MS } from "./animation/timing";
-import { buildListGithubIssueUrl, listReportToastCopy } from "./githubIssueUrl";
+import { NOTICE_HOLD_LIST_COMPLETE_MS, NO_POSTER_REPORT_DELAY_MS } from "../animation/timing";
+import { buildListGithubIssueUrl, listReportToastCopy } from "../utils/githubIssueUrl";
 import { parseLetterboxdListUrl } from "@server/lib/letterboxdListUrl";
-import { toggleNotice } from "./noticeFunctions";
-import { showError, showBatchErrors } from "./showError";
-import { showMessage } from "./showMessage";
+import { toggleNotice } from "../utils/noticeFunctions";
+import { showError, showBatchErrors } from "../utils/showError";
+import { showMessage } from "../utils/showMessage";
 import {
   PLACEHOLDER_POSTER,
   classifyListReportSymptom,
   normalizePosterPath,
   type MergeData,
   type TileData,
-} from "./movieTiles";
+} from "../utils/movieTiles";
 import { HTTP_API_PATHS } from "@server/routes";
-import { captureFrontendException } from "./sentry";
-import { safeJsonResponse } from "./safeJsonResponse";
+import { captureFrontendException } from "../utils/sentry";
+import { safeJsonResponse } from "../utils/safeJsonResponse";
 import {
   fetchSearchMovie,
   SEARCH_MOVIE_NETWORK_ERROR_MESSAGE,
   SEARCH_MOVIE_TOTAL_ATTEMPTS,
-} from "./fetchSearchMovie";
+} from "../utils/fetchSearchMovie";
 
 const SEARCH_CONCURRENCY_DEFAULT = 4;
 export const SEARCH_CONCURRENCY_MOBILE = 2;

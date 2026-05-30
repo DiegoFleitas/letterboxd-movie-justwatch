@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { MovieTile } from "../MovieTile";
-import { AppStateProvider } from "../AppStateContext";
-import type { TileData } from "../movieTiles";
+import { MovieTile } from "../components/MovieTile";
+import { AppStateProvider } from "../components/AppStateContext";
+import type { TileData } from "../utils/movieTiles";
 import { stubMatchMedia } from "./mockMatchMedia";
 
 describe("MovieTile providers and actions", () => {
