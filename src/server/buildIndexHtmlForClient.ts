@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { getCanonicalProviderByNames } from "./lib/loadCanonicalProviders.js";
 import { injectRuntimeConfig } from "./lib/injectRuntimeConfig.js";
-import { resolveTracesSampleRate } from "./lib/sentryTracesSampleRate.js";
+import { resolveTracesSampleRate } from "./lib/sentryCapture.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
