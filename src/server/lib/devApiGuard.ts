@@ -53,10 +53,10 @@ export function getDevApiGuardFailure(): DevApiGuardFailure | null {
   }
   const url = getEffectiveRedisUrlForDevGuard();
   if (!isLocalRedisTarget(url)) {
-    const host = parseRedisUrlHostname(url) ?? "unknown";
     return {
       code: "non_local_redis",
-      message: `Dev Redis APIs require a local Redis host (configured: ${host}). Set ALLOW_NON_LOCAL_REDIS=1 only when intentional.`,
+      message:
+        "Dev Redis APIs require a local Redis host. Set ALLOW_NON_LOCAL_REDIS=1 only when intentional.",
     };
   }
   return null;

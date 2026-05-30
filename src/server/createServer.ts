@@ -22,6 +22,7 @@ export interface CreatedServer {
 export async function createServer(): Promise<CreatedServer> {
   const app: FastifyInstance = Fastify({
     logger: true,
+    trustProxy: true,
   });
 
   const canonicalProviderMap = getCanonicalProviderMap();

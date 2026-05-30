@@ -27,6 +27,9 @@ export async function registerFastifyWiring(
     contentSecurityPolicy: {
       directives: {
         "default-src": ["'self'"],
+        // 'unsafe-inline' is required by injectRuntimeConfig's inline <script> block.
+        // To remove it, generate a per-request nonce and inject it into both the
+        // CSP header and the script tag in buildIndexHtmlForClient.
         "script-src": ["'self'", "'unsafe-inline'"],
         "style-src": [
           "'self'",

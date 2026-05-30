@@ -73,7 +73,7 @@ export const alternativeSearch: HttpHandler = async ({ req, res }) => {
 
   try {
     const suffix = year != null && year !== "" ? ` ${year}` : "";
-    let searchQuery = `${title}${suffix}`.replace(/ /g, "+");
+    let searchQuery = encodeURIComponent(`${title}${suffix}`);
 
     const cacheKey = `jackett:${searchQuery}:`;
     const cachedResponse = (await getCacheValue(cacheKey)) as
@@ -92,7 +92,7 @@ export const alternativeSearch: HttpHandler = async ({ req, res }) => {
     let results = await searchJackett(baseUrl, searchQuery, jackettConfig.key);
     if (results.length === 0) {
       console.log(`No results found, trying again without year (${title} ${year})`);
-      searchQuery = `${title}`.replace(/ /g, "+");
+      searchQuery = encodeURIComponent(title);
       results = await searchJackett(baseUrl, searchQuery, jackettConfig.key);
     }
 

@@ -56,7 +56,7 @@ export async function registerFastifyAppApi(
       max: 30,
       timeWindow: "1 minute",
       keyGenerator: (request) => {
-        return request.ip;
+        return (request.headers["fly-client-ip"] as string) ?? request.ip;
       },
       errorResponseBuilder: (_request, context) => ({
         error: "Too many requests, please try again later",
@@ -76,26 +76,42 @@ export async function registerFastifyAppApi(
     api.all(HTTP_API_PROXY_ROUTE, makeFastifyHandler(proxy));
   });
 
-  app.all(HTTP_API_POSTHOG_PROXY_ROUTE, makeFastifyHandler(posthogProxyHandler));
-
-  app.get(HTTP_API_PATHS.sentryTest, async (request, reply) => {
-    const mode = ((request.query as { mode?: string })?.mode ?? "throw").toLowerCase();
-    if (mode === "response") {
-      const err = new Error("Dummy BE Sentry test response error");
-      captureServerException(err, {
-        route: "sentry-test",
-        extra: {
-          endpoint: HTTP_API_PATHS.sentryTest,
-          mode,
-          method: request.method,
-          url: request.url,
-        },
-      });
-      reply.code(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({
-        error: "Dummy backend response error for Sentry testing",
-      });
-      return;
-    }
-    throw new Error("Dummy BE Sentry test throw");
+  await app.register(async function posthogRoutes(phApp: FastifyInstance) {
+    await phApp.register(rateLimit, {
+      max: 60,
+      timeWindow: "1 minute",
+      keyGenerator: (request) => {
+        return (request.headers["fly-client-ip"] as string) ?? request.ip;
+      },
+      errorResponseBuilder: (_request, context) => ({
+        error: "Too many requests, please try again later",
+        statusCode: 429,
+        retryAfter: context.after,
+      }),
+    });
+    phApp.all(HTTP_API_POSTHOG_PROXY_ROUTE, makeFastifyHandler(posthogProxyHandler));
   });
+
+  if (process.env.NODE_ENV !== "production") {
+    app.get(HTTP_API_PATHS.sentryTest, async (request, reply) => {
+      const mode = ((request.query as { mode?: string })?.mode ?? "throw").toLowerCase();
+      if (mode === "response") {
+        const err = new Error("Dummy BE Sentry test response error");
+        captureServerException(err, {
+          route: "sentry-test",
+          extra: {
+            endpoint: HTTP_API_PATHS.sentryTest,
+            mode,
+            method: request.method,
+            url: request.url,
+          },
+        });
+        reply.code(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({
+          error: "Dummy backend response error for Sentry testing",
+        });
+        return;
+      }
+      throw new Error("Dummy BE Sentry test throw");
+    });
+  }
 }

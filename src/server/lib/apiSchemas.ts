@@ -68,9 +68,9 @@ export function parseAllowedProxyUrl(raw: string): ParseProxyUrlResult {
 
 export const letterboxdWatchlistBodySchema = z
   .object({
-    username: z.string().min(1, "Watchlist file not found"),
-    listUrl: z.string().min(1, "Invalid or missing watchlist URL"),
-    listType: z.string().optional(),
+    username: z.string().min(1, "Watchlist file not found").max(50),
+    listUrl: z.string().min(1, "Invalid or missing watchlist URL").max(300),
+    listType: z.string().max(50).optional(),
     page: z.coerce.number().int().min(1).optional(),
   })
   .superRefine((data, ctx) => {
@@ -105,9 +105,9 @@ export type LetterboxdWatchlistBodyOut = z.infer<typeof letterboxdWatchlistBodyS
 
 export const letterboxdCustomListBodySchema = z
   .object({
-    username: z.string().optional(),
-    listUrl: z.string().min(1, "Custom list URL not found"),
-    listType: z.string().optional(),
+    username: z.string().max(50).optional(),
+    listUrl: z.string().min(1, "Custom list URL not found").max(300),
+    listType: z.string().max(50).optional(),
     page: z.coerce.number().int().min(1).optional(),
   })
   .superRefine((data, ctx) => {
@@ -141,21 +141,21 @@ export const letterboxdCustomListBodySchema = z
 export type LetterboxdCustomListBodyOut = z.infer<typeof letterboxdCustomListBodySchema>;
 
 export const alternativeSearchBodySchema = z.object({
-  title: z.preprocess((v) => v ?? "", z.string().min(1, "Title is required")),
-  year: z.union([z.string(), z.number()]).optional(),
+  title: z.preprocess((v) => v ?? "", z.string().min(1, "Title is required").max(200)),
+  year: z.union([z.string().max(4), z.number().int().min(1800).max(2100)]).optional(),
 });
 
 export type AlternativeSearchBody = z.infer<typeof alternativeSearchBodySchema>;
 
 export const searchMovieBodySchema = z.object({
-  title: z.preprocess((v) => v ?? "", z.string().min(1, "Title is required")),
-  year: z.union([z.string(), z.number()]).optional(),
-  country: z.string().optional(),
+  title: z.preprocess((v) => v ?? "", z.string().min(1, "Title is required").max(200)),
+  year: z.union([z.string().max(4), z.number().int().min(1800).max(2100)]).optional(),
+  country: z.string().max(10).optional(),
 });
 
 export const posterBodySchema = z.object({
-  title: z.preprocess((v) => v ?? "", z.string().min(1, "Title is required")),
-  year: z.union([z.string(), z.number()]).optional(),
+  title: z.preprocess((v) => v ?? "", z.string().min(1, "Title is required").max(200)),
+  year: z.union([z.string().max(4), z.number().int().min(1800).max(2100)]).optional(),
 });
 
 export function firstZodIssueMessage(error: z.ZodError): string {

@@ -20,7 +20,7 @@ export function registerFastifySessionPlugins(app: FastifyInstance): void {
     cookie: {
       maxAge: 24 * 60 * 60 * 1000,
       sameSite: "strict",
-      secure: true,
+      secure: process.env.NODE_ENV === "production",
       httpOnly: true,
     },
   });

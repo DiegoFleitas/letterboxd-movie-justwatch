@@ -266,7 +266,7 @@ describe("posthogProxyHandler", () => {
       expect(headers["x-forwarded-for"]).toBe("203.0.113.42");
     });
 
-    it("falls back to first segment of x-forwarded-for when fly-client-ip absent", async () => {
+    it("falls back to req.ip when fly-client-ip absent (x-forwarded-for from client is ignored)", async () => {
       const req = createMockReq({
         method: "POST",
         body: { event: "test" },
@@ -286,7 +286,7 @@ describe("posthogProxyHandler", () => {
         string,
         string
       >;
-      expect(headers["x-forwarded-for"]).toBe("198.51.100.7");
+      expect(headers["x-forwarded-for"]).toBe("10.0.0.1");
     });
 
     it("falls back to request.ip when no IP headers present", async () => {
