@@ -27,7 +27,7 @@ Order before PR: `bun run lint && bun run typecheck && bun run knip && bun run t
 - `bunx vitest run tests/someFeature.test.ts` — run a single test file
 - `bun run test:backend` — Fastify integration tests only
 - `bun run test:redis`, `test:dedupe`, `test:filter`, `test:state`, `test:posthog` — single files
-- `bun run test:e2e` — Playwright (`tests/e2e/*.spec.ts`). Two kinds: **mocked UI flows** (route-intercept `/api/*`) and **`backend-smoke.spec.ts`** (real HTTP to Fastify; requires `bun run dev` running first).
+- `bun run test:e2e` — Playwright (`tests/e2e/*.spec.ts`). Two kinds: **mocked UI flows** (route-intercept `/api/*`) and **`backend-smoke.spec.ts`** (real HTTP to Fastify; requires `bun run dev` running first). Override backend URL with `E2E_API_BASE_URL` (default `http://127.0.0.1:3000`). Playwright's `webServer` only waits on port 5173 (Vite) — the backend must already be up. Artifacts: `tests/playwright-report/`, `tests/test-results/`.
 - **Fixtures**: `tests/fixtures/` — HTML/JSON used by unit tests. Update with `bun run update:letterboxd-fixtures`.
 - **Goldens**: `tests/goldens/` — optional JSON golden files for snapshot-style assertions.
 - Two Vitest files import client modules (`@/` alias): `stateTileManagement.test.ts` (`@/utils/movieTiles`) and `providerDeduplication.test.ts` (`@/utils/providerUtils`). If those modules are renamed, run both test suites.
@@ -181,21 +181,46 @@ bun run export-redis  # export running Redis → redis/data/redis-snapshot.json
 bun run seed-redis    # restore snapshot → local Redis
 ```
 
-Scripts reject non-local hosts by default; set `ALLOW_NON_LOCAL_REDIS=1` to override. Key prefix controlled by `FLY_APP_NAME` (defaults to `app`).
+Scripts reject non-local hosts by default; set `ALLOW_NON_LOCAL_REDIS=1` to override. Key prefix controlled by `FLY_APP_NAME` (defaults to `app`). Use `SEED_REDIS_URL` to target a specific Redis instance for seeding (falls back to `FLYIO_REDIS_URL` / localhost).
+
+Docker custom image (Redis + flyctl, for CLI workflows):
+
+```bash
+cd redis && docker build -t redis-cli-flyctl . && docker run -d -p 6379:6379 redis-cli-flyctl
+```
+
+Then set `FLYIO_REDIS_URL=redis://localhost:6379` in `.env`.
 
 ## Key environment variables
 
-| Variable                                   | Notes                                                 |
-| ------------------------------------------ | ----------------------------------------------------- |
-| `FLYIO_REDIS_URL`                          | e.g. `redis://localhost:6379`                         |
-| `DISABLE_REDIS`                            | `1` skips Redis (used in CI and production)           |
-| `OMDB_API_KEY`                             | Poster lookups                                        |
-| `MOVIE_DB_API_KEY`                         | TMDb search; enables extra integration coverage in CI |
-| `APP_SECRET_KEY`                           | ≥32 chars, required in production for sessions        |
-| `JACKETT_API_KEY` / `JACKETT_API_ENDPOINT` | Optional alternative search                           |
-| `PORT`                                     | Backend port (default 3000)                           |
+| Variable                                              | Notes                                                                    |
+| ----------------------------------------------------- | ------------------------------------------------------------------------ |
+| `FLYIO_REDIS_URL`                                     | e.g. `redis://localhost:6379`                                            |
+| `DISABLE_REDIS`                                       | `1` skips Redis (used in CI and production)                              |
+| `OMDB_API_KEY`                                        | Poster lookups                                                           |
+| `MOVIE_DB_API_KEY`                                    | TMDb search; enables extra integration coverage in CI                    |
+| `APP_SECRET_KEY`                                      | ≥32 chars, required in production for sessions                           |
+| `JACKETT_API_KEY` / `JACKETT_API_ENDPOINT`            | Optional alternative search                                              |
+| `PORT`                                                | Backend port (default 3000)                                              |
+| `SENTRY_DSN`                                          | Enables Sentry on backend and (via runtime injection) frontend           |
+| `SENTRY_RELEASE`                                      | Must match between backend runtime and sourcemap upload                  |
+| `SENTRY_TRACES_SAMPLE_RATE`                           | Float 0–1; defaults to 0.1 in production, 0 in dev                       |
+| `SENTRY_AUTH_TOKEN` / `SENTRY_ORG` / `SENTRY_PROJECT` | Required for sourcemap upload                                            |
+| `E2E_API_BASE_URL`                                    | Override Playwright smoke test backend (default `http://127.0.0.1:3000`) |
 
 Full list: `.env.example`.
+
+## Sentry sourcemap release
+
+```bash
+bun run sentry:release:new
+bun run sentry:release:upload-sourcemaps
+bun run sentry:release:finalize
+# or combined:
+bun run sentry:release:frontend
+```
+
+`SENTRY_RELEASE` must be identical at runtime (backend init + frontend `window.__SENTRY_RELEASE__`) and during sourcemap upload — CI derives it from `github.sha`.
 
 ## 2026-05-28 Cost reduction
 
