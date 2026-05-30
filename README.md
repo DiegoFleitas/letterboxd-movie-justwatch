@@ -29,21 +29,21 @@
 
 This application connects **Letterboxd** lists to **streaming availability** for a country you choose. It uses **unofficial** JustWatch-style data for lean, title-focused results (no extra recommendation UI). Optional **Jackett** integration helps surface harder-to-find titles through an alternative search path.
 
-| Aspect         | Detail                                                                       |
-| -------------- | ---------------------------------------------------------------------------- |
-| **Input**      | Public Letterboxd watchlist or custom list URL                               |
-| **Output**     | Per-title streaming providers for the selected country                       |
-| **Caching**    | Redis-backed cache to limit repeat external requests                         |
-| **Operations** | CI on GitHub Actions; deploy to **Fly.io** with Sentry-ready frontend builds |
+| Aspect         | Detail                                                                           |
+| -------------- | -------------------------------------------------------------------------------- |
+| **Input**      | Public Letterboxd watchlist or custom list URL                                   |
+| **Output**     | Per-title streaming providers for the selected country                           |
+| **Caching**    | In-process cache (production); Redis-backed cache for local dev / Docker Compose |
+| **Operations** | CI on GitHub Actions; deploy to **Fly.io** with Sentry-ready frontend builds     |
 
 ## Features
 
-| Capability             | Details                                                                                                            |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| **Lists**              | Paste a Letterboxd watchlist or list URL; titles are resolved from Letterboxd.                                     |
-| **Country-aware**      | Pick a country to see which services carry each film there.                                                        |
-| **Caching**            | Redis reduces load on upstream calls—see [`redis/README.md`](redis/README.md) for CLI, export, and seed workflows. |
-| **Alternative search** | Optional Jackett integration for titles that are difficult to match.                                               |
+| Capability             | Details                                                                                                                                                        |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Lists**              | Paste a Letterboxd watchlist or list URL; titles are resolved from Letterboxd.                                                                                 |
+| **Country-aware**      | Pick a country to see which services carry each film there.                                                                                                    |
+| **Caching**            | In-process cache in production (`DISABLE_REDIS=1`); optional Redis for local dev—see [`redis/README.md`](redis/README.md) for CLI, export, and seed workflows. |
+| **Alternative search** | Optional Jackett integration for titles that are difficult to match.                                                                                           |
 
 ## Tech stack
 
@@ -74,7 +74,7 @@ This application connects **Letterboxd** lists to **streaming availability** for
    cp .env.example .env
    ```
 
-   At minimum, configure **`FLYIO_REDIS_URL`** and **`OMDB_API_KEY`** (posters). For production, set **`APP_SECRET_KEY`** (≥ 32 characters for sessions). See the **[Configuration](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki/Configuration)** wiki page for the full variable list.
+   At minimum, configure **`OMDB_API_KEY`** (posters). For production, set **`APP_SECRET_KEY`** (≥ 32 characters for sessions). For local Redis dev, also set **`FLYIO_REDIS_URL`**. See `.env.example` for the full variable list.
 
 3. Start the development servers (Vite on **5173**, Fastify on **3000**—see `concurrently` in `package.json`):
 
@@ -96,7 +96,7 @@ Then open **`http://localhost:3000`**. Provide secrets (`OMDB_API_KEY`, `APP_SEC
 
 ## Reset local Redis dev cache
 
-This snapshot workflow is for **local development seeding only**. It is not intended for production backup or migration.
+Production runs with **`DISABLE_REDIS=1`** (in-process cache). This snapshot workflow is for **local development seeding only**. It is not intended for production backup or migration.
 
 Default snapshot path: `redis/data/redis-snapshot.json`.
 
@@ -149,22 +149,7 @@ The `bun run fly:*` scripts are optional helpers for logs, SSH, or ad hoc `flyct
 
 ## Documentation
 
-Operational detail (scripts, environment, layout, tests, Redis, observability, branding) lives in the **[GitHub Wiki](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki)**. Source Markdown lives in **[`docs/wiki/`](docs/wiki/)** for pull-request review; publishing that tree into the wiki git repo is described in **[`docs/Wiki-publish.md`](docs/Wiki-publish.md)**.
-
-| Topic                              | Wiki                                                                                                       |
-| ---------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Wiki home (links this README)      | [Home](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki/Home)                               |
-| Bun scripts                        | [Commands](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki/Commands)                       |
-| Environment variables              | [Configuration](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki/Configuration)             |
-| Sentry, Fastify logging, redaction | [Sentry and logger](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki/Sentry-and-logger)     |
-| Observability overview             | [Observability](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki/Observability)             |
-| Paths and folders                  | [Repository layout](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki/Repository-layout)     |
-| Vitest (unit / integration)        | [Tests](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki/Tests)                             |
-| `tests/fixtures`                   | [Test fixtures](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki/Test-fixtures)             |
-| `tests/goldens`                    | [Test goldens](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki/Test-goldens)               |
-| Playwright (E2E)                   | [E2E (Playwright)](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki/E2E-Playwright)         |
-| Redis, snapshots, local image      | [Redis and local dev](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki/Redis-and-local-dev) |
-| README banner and social preview   | [Branding](https://github.com/DiegoFleitas/letterboxd-movie-justwatch/wiki/Branding)                       |
+Operational detail (scripts, environment, layout, tests, Redis, observability, architecture) lives in **[`AGENTS.md`](AGENTS.md)**.
 
 ## Contributing
 
