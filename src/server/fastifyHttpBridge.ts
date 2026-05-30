@@ -27,6 +27,7 @@ export function createFastifyHttpBinder(app: FastifyInstance): FastifyHttpBinder
         headers: (request.headers as Record<string, unknown>) ?? {},
         method: request.method,
         url: request.url,
+        ip: request.ip,
         cookies: ((request as FastifyRequest & { cookies?: Record<string, unknown> }).cookies ??
           {}) as Record<string, unknown>,
         session: (request as FastifyRequest & { session?: unknown }).session ?? null,

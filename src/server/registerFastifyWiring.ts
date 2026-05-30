@@ -4,7 +4,6 @@ import cors from "@fastify/cors";
 import type { FastifyHttpBinder } from "./fastifyHttpBridge.js";
 import { registerDevHttpRoutes } from "./registerDevHttpRoutes.js";
 import { registerFastifyAppApi } from "./registerFastifyAppApi.js";
-import { registerFastifySentryTestRoute } from "./registerFastifySentryTestRoute.js";
 import { registerFastifySessionPlugins } from "./registerFastifySessionPlugins.js";
 import { registerFastifyStaticAndIndex } from "./registerFastifyStaticAndIndex.js";
 
@@ -68,5 +67,4 @@ export async function registerFastifyWiring(
 
   await registerFastifyAppApi(app, binder);
   registerDevHttpRoutes(app);
-  registerFastifySentryTestRoute(app);
 }

@@ -1,15 +1,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { HTTP_API_PATHS } from "@server/routes.js";
 import { HTTP_STATUS_BAD_GATEWAY } from "@server/httpStatusCodes.js";
-import type { FastifyRequest, FastifyReply } from "fastify";
+import type { HttpRequestContext, HttpResponseContext } from "@server/httpContext.js";
 
 import { posthogProxyHandler } from "@server/controllers/posthogProxy.js";
 
 const POSTHOG_HOST = "https://us.i.posthog.com";
 const PROXY_PREFIX = HTTP_API_PATHS.posthogProxyPrefix;
 
-function createMockReply(): {
-  reply: FastifyReply;
+function createMockRes(): {
+  res: HttpResponseContext;
   getStatus: () => number;
   getBody: () => unknown;
   getHeader: (name: string) => string | undefined;
@@ -18,34 +18,32 @@ function createMockReply(): {
   let body: unknown;
   const headers = new Map<string, string>();
 
-  const reply = {
-    code(code: number) {
+  const res: HttpResponseContext = {
+    status(code: number) {
       statusCode = code;
-      return reply;
+      return this;
     },
-    header(name: string, value: string) {
-      headers.set(name.toLowerCase(), value);
-      return reply;
-    },
-    type(contentType: string) {
-      headers.set("content-type", contentType);
-      return reply;
-    },
-    send(payload: unknown) {
+    json(payload: unknown) {
       body = payload;
-      return reply;
     },
-  } as unknown as FastifyReply;
+    send(payload?: unknown) {
+      body = payload;
+    },
+    setHeader(name: string, value: string | number | readonly string[]) {
+      headers.set(name.toLowerCase(), String(value));
+      return this;
+    },
+  };
 
   return {
-    reply,
+    res,
     getStatus: () => statusCode,
     getBody: () => body,
     getHeader: (name: string) => headers.get(name.toLowerCase()),
   };
 }
 
-function createMockRequest(overrides: Partial<FastifyRequest> = {}): FastifyRequest {
+function createMockReq(overrides: Partial<HttpRequestContext> = {}): HttpRequestContext {
   return {
     url: `${PROXY_PREFIX}/capture/`,
     method: "POST",
@@ -56,8 +54,13 @@ function createMockRequest(overrides: Partial<FastifyRequest> = {}): FastifyRequ
       origin: "https://movie-justwatch.fly.dev",
     },
     body: { event: "test_event", api_key: "phc_test" },
+    params: {},
+    query: {},
+    cookies: {},
+    session: null,
+    appLocals: {},
     ...overrides,
-  } as unknown as FastifyRequest;
+  };
 }
 
 describe("posthogProxyHandler", () => {
@@ -93,14 +96,14 @@ describe("posthogProxyHandler", () => {
       }),
     );
 
-    const req = createMockRequest({
+    const req = createMockReq({
       url: `${PROXY_PREFIX}/decide/?api_key=phc_test`,
       method: "GET",
       body: undefined,
     });
-    const { reply, getStatus, getBody } = createMockReply();
+    const { res, getStatus, getBody } = createMockRes();
 
-    await posthogProxyHandler(req, reply);
+    await posthogProxyHandler({ req, res });
 
     expect(getStatus()).toBe(200);
     expect(getBody()).toBe(JSON.stringify({ featureFlags: [] }));
@@ -110,14 +113,14 @@ describe("posthogProxyHandler", () => {
   });
 
   it("forwards POST request with JSON body", async () => {
-    const req = createMockRequest({
+    const req = createMockReq({
       url: `${PROXY_PREFIX}/capture/`,
       method: "POST",
       body: { event: "movie_search", properties: { query: "test" } },
     });
-    const { reply, getStatus, getBody } = createMockReply();
+    const { res, getStatus, getBody } = createMockRes();
 
-    await posthogProxyHandler(req, reply);
+    await posthogProxyHandler({ req, res });
 
     expect(getStatus()).toBe(200);
     expect(getBody()).toBe(JSON.stringify({ status: "ok" }));
@@ -133,7 +136,7 @@ describe("posthogProxyHandler", () => {
   });
 
   it("forwards POST request with text/plain body as-is (no JSON.stringify)", async () => {
-    const req = createMockRequest({
+    const req = createMockReq({
       url: `${PROXY_PREFIX}/capture/`,
       method: "POST",
       headers: {
@@ -143,9 +146,9 @@ describe("posthogProxyHandler", () => {
       },
       body: '{"event":"$pageview","api_key":"phc_test","distinct_id":"user-1"}',
     });
-    const { reply, getStatus, getBody } = createMockReply();
+    const { res, getStatus, getBody } = createMockRes();
 
-    await posthogProxyHandler(req, reply);
+    await posthogProxyHandler({ req, res });
 
     expect(getStatus()).toBe(200);
     expect(getBody()).toBe(JSON.stringify({ status: "ok" }));
@@ -159,7 +162,7 @@ describe("posthogProxyHandler", () => {
   it("forwards POST request with Buffer body (gzip-compressed binary) as-is", async () => {
     const compressedBody = Buffer.from([0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00]);
 
-    const req = createMockRequest({
+    const req = createMockReq({
       url: `${PROXY_PREFIX}/i/v0/e/?compression=gzip-js`,
       method: "POST",
       headers: {
@@ -169,9 +172,9 @@ describe("posthogProxyHandler", () => {
       },
       body: compressedBody,
     });
-    const { reply, getStatus } = createMockReply();
+    const { res, getStatus } = createMockRes();
 
-    await posthogProxyHandler(req, reply);
+    await posthogProxyHandler({ req, res });
 
     expect(getStatus()).toBe(200);
 
@@ -180,14 +183,14 @@ describe("posthogProxyHandler", () => {
   });
 
   it("forwards POST request without body", async () => {
-    const req = createMockRequest({
+    const req = createMockReq({
       url: `${PROXY_PREFIX}/capture/`,
       method: "POST",
       body: undefined,
     });
-    const { reply, getStatus } = createMockReply();
+    const { res, getStatus } = createMockRes();
 
-    await posthogProxyHandler(req, reply);
+    await posthogProxyHandler({ req, res });
 
     expect(getStatus()).toBe(200);
 
@@ -196,27 +199,27 @@ describe("posthogProxyHandler", () => {
   });
 
   it("strips the /api/reversa prefix when constructing target URL", async () => {
-    const req = createMockRequest({
+    const req = createMockReq({
       url: `${PROXY_PREFIX}/capture/?api_key=phc_test`,
       method: "GET",
       body: undefined,
     });
-    const { reply } = createMockReply();
+    const { res } = createMockRes();
 
-    await posthogProxyHandler(req, reply);
+    await posthogProxyHandler({ req, res });
 
     const fetchUrl = fetchSpy.mock.calls[0]?.[0];
     expect(fetchUrl).toBe(`${POSTHOG_HOST}/capture/?api_key=phc_test`);
   });
 
   it("forwards content-type, accept, and user-agent headers", async () => {
-    const req = createMockRequest({
+    const req = createMockReq({
       method: "POST",
       body: { event: "test" },
     });
-    const { reply } = createMockReply();
+    const { res } = createMockRes();
 
-    await posthogProxyHandler(req, reply);
+    await posthogProxyHandler({ req, res });
 
     const fetchInit = fetchSpy.mock.calls[0]?.[1] as RequestInit;
     const headers = fetchInit.headers as Record<string, string>;
@@ -226,13 +229,13 @@ describe("posthogProxyHandler", () => {
   });
 
   it("does NOT forward origin header to PostHog", async () => {
-    const req = createMockRequest({
+    const req = createMockReq({
       method: "POST",
       body: { event: "test" },
     });
-    const { reply } = createMockReply();
+    const { res } = createMockRes();
 
-    await posthogProxyHandler(req, reply);
+    await posthogProxyHandler({ req, res });
 
     const fetchInit = fetchSpy.mock.calls[0]?.[1] as RequestInit;
     const headers = fetchInit.headers as Record<string, string>;
@@ -241,8 +244,9 @@ describe("posthogProxyHandler", () => {
 
   describe("client IP forwarding for geolocation", () => {
     it("uses fly-client-ip as X-Forwarded-For (primary path)", async () => {
-      const req = {
-        ...createMockRequest({ method: "POST", body: { event: "test" } }),
+      const req = createMockReq({
+        method: "POST",
+        body: { event: "test" },
         headers: {
           "content-type": "application/json",
           accept: "application/json",
@@ -250,10 +254,10 @@ describe("posthogProxyHandler", () => {
           "fly-client-ip": "203.0.113.42",
         },
         ip: "10.0.0.1",
-      } as unknown as Parameters<typeof posthogProxyHandler>[0];
-      const { reply } = createMockReply();
+      });
+      const { res } = createMockRes();
 
-      await posthogProxyHandler(req, reply);
+      await posthogProxyHandler({ req, res });
 
       const headers = (fetchSpy.mock.calls[0]?.[1] as RequestInit).headers as Record<
         string,
@@ -263,8 +267,9 @@ describe("posthogProxyHandler", () => {
     });
 
     it("falls back to first segment of x-forwarded-for when fly-client-ip absent", async () => {
-      const req = {
-        ...createMockRequest({ method: "POST", body: { event: "test" } }),
+      const req = createMockReq({
+        method: "POST",
+        body: { event: "test" },
         headers: {
           "content-type": "application/json",
           accept: "application/json",
@@ -272,10 +277,10 @@ describe("posthogProxyHandler", () => {
           "x-forwarded-for": "198.51.100.7, 10.0.0.1",
         },
         ip: "10.0.0.1",
-      } as unknown as Parameters<typeof posthogProxyHandler>[0];
-      const { reply } = createMockReply();
+      });
+      const { res } = createMockRes();
 
-      await posthogProxyHandler(req, reply);
+      await posthogProxyHandler({ req, res });
 
       const headers = (fetchSpy.mock.calls[0]?.[1] as RequestInit).headers as Record<
         string,
@@ -285,18 +290,19 @@ describe("posthogProxyHandler", () => {
     });
 
     it("falls back to request.ip when no IP headers present", async () => {
-      const req = {
-        ...createMockRequest({ method: "POST", body: { event: "test" } }),
+      const req = createMockReq({
+        method: "POST",
+        body: { event: "test" },
         headers: {
           "content-type": "application/json",
           accept: "application/json",
           "user-agent": "test-agent",
         },
         ip: "192.0.2.55",
-      } as unknown as Parameters<typeof posthogProxyHandler>[0];
-      const { reply } = createMockReply();
+      });
+      const { res } = createMockRes();
 
-      await posthogProxyHandler(req, reply);
+      await posthogProxyHandler({ req, res });
 
       const headers = (fetchSpy.mock.calls[0]?.[1] as RequestInit).headers as Record<
         string,
@@ -306,18 +312,19 @@ describe("posthogProxyHandler", () => {
     });
 
     it("omits X-Forwarded-For when no IP source is available", async () => {
-      const req = {
-        ...createMockRequest({ method: "POST", body: { event: "test" } }),
+      const req = createMockReq({
+        method: "POST",
+        body: { event: "test" },
         headers: {
           "content-type": "application/json",
           accept: "application/json",
           "user-agent": "test-agent",
         },
         ip: "",
-      } as unknown as Parameters<typeof posthogProxyHandler>[0];
-      const { reply } = createMockReply();
+      });
+      const { res } = createMockRes();
 
-      await posthogProxyHandler(req, reply);
+      await posthogProxyHandler({ req, res });
 
       const headers = (fetchSpy.mock.calls[0]?.[1] as RequestInit).headers as Record<
         string,
@@ -335,14 +342,14 @@ describe("posthogProxyHandler", () => {
       }),
     );
 
-    const req = createMockRequest({
+    const req = createMockReq({
       url: `${PROXY_PREFIX}/s/array.js`,
       method: "GET",
       body: undefined,
     });
-    const { reply, getHeader } = createMockReply();
+    const { res, getHeader } = createMockRes();
 
-    await posthogProxyHandler(req, reply);
+    await posthogProxyHandler({ req, res });
 
     expect(getHeader("content-type")).toBe("application/javascript");
   });
@@ -350,10 +357,10 @@ describe("posthogProxyHandler", () => {
   it("returns BAD_GATEWAY when upstream fetch fails", async () => {
     fetchSpy.mockRejectedValue(new Error("upstream unreachable"));
 
-    const req = createMockRequest({ method: "GET", body: undefined });
-    const { reply, getStatus, getBody } = createMockReply();
+    const req = createMockReq({ method: "GET", body: undefined });
+    const { res, getStatus, getBody } = createMockRes();
 
-    await posthogProxyHandler(req, reply);
+    await posthogProxyHandler({ req, res });
 
     expect(getStatus()).toBe(HTTP_STATUS_BAD_GATEWAY);
     expect(getBody()).toEqual({ error: "PostHog upstream unavailable" });
@@ -374,14 +381,14 @@ describe("posthogProxyHandler", () => {
       }),
     );
 
-    const req = createMockRequest({
+    const req = createMockReq({
       url: `${PROXY_PREFIX}/array/phc_test/config.js`,
       method: "GET",
       body: undefined,
     });
-    const { reply, getBody } = createMockReply();
+    const { res, getBody } = createMockRes();
 
-    await posthogProxyHandler(req, reply);
+    await posthogProxyHandler({ req, res });
 
     const body = getBody() as string;
     expect(body).toContain('"script":"rec"');
@@ -396,14 +403,14 @@ describe("posthogProxyHandler", () => {
       }),
     );
 
-    const req = createMockRequest({
+    const req = createMockReq({
       url: `${PROXY_PREFIX}/static/rec.js`,
       method: "GET",
       body: undefined,
     });
-    const { reply, getBody } = createMockReply();
+    const { res, getBody } = createMockRes();
 
-    await posthogProxyHandler(req, reply);
+    await posthogProxyHandler({ req, res });
 
     const fetchUrl = fetchSpy.mock.calls[0]?.[0];
     expect(fetchUrl).toBe(`${POSTHOG_HOST}/static/posthog-recorder.js`);
@@ -418,14 +425,14 @@ describe("posthogProxyHandler", () => {
       }),
     );
 
-    const req = createMockRequest({
+    const req = createMockReq({
       url: `${PROXY_PREFIX}/static/rec.js?v=1.374.2`,
       method: "GET",
       body: undefined,
     });
-    const { reply } = createMockReply();
+    const { res } = createMockRes();
 
-    await posthogProxyHandler(req, reply);
+    await posthogProxyHandler({ req, res });
 
     const fetchUrl = fetchSpy.mock.calls[0]?.[0];
     expect(fetchUrl).toBe(`${POSTHOG_HOST}/static/posthog-recorder.js?v=1.374.2`);
@@ -439,14 +446,14 @@ describe("posthogProxyHandler", () => {
       }),
     );
 
-    const req = createMockRequest({
+    const req = createMockReq({
       url: `${PROXY_PREFIX}/capture/`,
       method: "GET",
       body: undefined,
     });
-    const { reply, getBody } = createMockReply();
+    const { res, getBody } = createMockRes();
 
-    await posthogProxyHandler(req, reply);
+    await posthogProxyHandler({ req, res });
 
     expect(getBody()).toBe("plain text body");
   });
@@ -454,14 +461,14 @@ describe("posthogProxyHandler", () => {
   it("uses POSTHOG_HOST env var as upstream target", async () => {
     process.env.POSTHOG_HOST = "https://eu.posthog.com";
 
-    const req = createMockRequest({
+    const req = createMockReq({
       url: `${PROXY_PREFIX}/capture/`,
       method: "GET",
       body: undefined,
     });
-    const { reply } = createMockReply();
+    const { res } = createMockRes();
 
-    await posthogProxyHandler(req, reply);
+    await posthogProxyHandler({ req, res });
 
     const fetchUrl = fetchSpy.mock.calls[0]?.[0];
     expect(fetchUrl).toBe("https://eu.posthog.com/capture/");
@@ -470,44 +477,44 @@ describe("posthogProxyHandler", () => {
   describe("path allowlist", () => {
     it("allows /capture/", async () => {
       fetchSpy.mockResolvedValue(new Response("{}", { status: 200 }));
-      const req = createMockRequest({ url: `${PROXY_PREFIX}/capture/`, method: "POST" });
-      const { reply, getStatus } = createMockReply();
-      await posthogProxyHandler(req, reply);
+      const req = createMockReq({ url: `${PROXY_PREFIX}/capture/`, method: "POST" });
+      const { res, getStatus } = createMockRes();
+      await posthogProxyHandler({ req, res });
       expect(getStatus()).toBe(200);
     });
 
     it("rejects path traversal /../", async () => {
-      const req = createMockRequest({
+      const req = createMockReq({
         url: `${PROXY_PREFIX}/../etc/passwd`,
         method: "GET",
         body: undefined,
       });
-      const { reply, getStatus, getBody } = createMockReply();
-      await posthogProxyHandler(req, reply);
+      const { res, getStatus, getBody } = createMockRes();
+      await posthogProxyHandler({ req, res });
       expect(getStatus()).toBe(400);
       expect(getBody()).toEqual({ error: "Bad Request" });
     });
 
     it("rejects URL-encoded dot traversal %2e%2e", async () => {
-      const req = createMockRequest({
+      const req = createMockReq({
         url: `${PROXY_PREFIX}/%2e%2e/etc/passwd`,
         method: "GET",
         body: undefined,
       });
-      const { reply, getStatus, getBody } = createMockReply();
-      await posthogProxyHandler(req, reply);
+      const { res, getStatus, getBody } = createMockRes();
+      await posthogProxyHandler({ req, res });
       expect(getStatus()).toBe(400);
       expect(getBody()).toEqual({ error: "Bad Request" });
     });
 
     it("rejects unknown paths like /admin", async () => {
-      const req = createMockRequest({
+      const req = createMockReq({
         url: `${PROXY_PREFIX}/admin`,
         method: "GET",
         body: undefined,
       });
-      const { reply, getStatus } = createMockReply();
-      await posthogProxyHandler(req, reply);
+      const { res, getStatus } = createMockRes();
+      await posthogProxyHandler({ req, res });
       expect(getStatus()).toBe(400);
     });
   });

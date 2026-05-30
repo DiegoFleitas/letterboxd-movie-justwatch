@@ -5,6 +5,7 @@ export interface HttpRequestContext {
   headers: Record<string, unknown>;
   method: string;
   url: string;
+  ip?: string;
   cookies: Record<string, unknown>;
   session: unknown;
   appLocals: {
