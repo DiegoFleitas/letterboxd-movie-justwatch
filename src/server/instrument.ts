@@ -1,6 +1,6 @@
 import "dotenv/config";
 import * as Sentry from "@sentry/node";
-import { resolveTracesSampleRate } from "./lib/sentryTracesSampleRate.js";
+import { resolveTracesSampleRate } from "./lib/sentryCapture.js";
 
 const dsn = process.env.SENTRY_DSN?.trim();
 if (dsn) {

@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   resolveTracesSampleRate,
   PRODUCTION_TRACES_SAMPLE_RATE,
-} from "@server/lib/sentryTracesSampleRate.js";
+} from "@server/lib/sentryCapture.js";
 
 describe("resolveTracesSampleRate", () => {
   it("returns 0 in non-production when env unset", () => {

@@ -27,7 +27,7 @@ This document describes how server-side error reporting and HTTP logging work in
    - `environment`: `NODE_ENV` (default `development`)
    - `release`: `SENTRY_RELEASE`
    - `integrations`: `Sentry.fastifyIntegration()` for framework instrumentation
-   - `tracesSampleRate`: from `SENTRY_TRACES_SAMPLE_RATE` (clamped 0–1); defaults to **0.1** in production and **0** in development when unset (`resolveTracesSampleRate` in `src/server/lib/sentryTracesSampleRate.ts`)
+   - `tracesSampleRate`: from `SENTRY_TRACES_SAMPLE_RATE` (clamped 0–1); defaults to **0.1** in production and **0** in development when unset (`resolveTracesSampleRate` in `src/server/lib/sentryCapture.ts`)
    - `sendDefaultPii`: only when `SENTRY_SEND_DEFAULT_PII === "true"`
 
 4. **HTTP 5xx capture path** — Application-level exceptions and explicit backend captures go through `Sentry.captureException` in route/error-handler code. There is no extra middleware-level `captureMessage` bridge or active logger/middleware-level HTTP 5xx capture bridge.
