@@ -50,7 +50,7 @@ describe("devApiGuard", () => {
       vi.stubEnv("FLYIO_REDIS_URL", "rediss://user:pass@cache.example.com:6380");
       const f = getDevApiGuardFailure();
       expect(f?.code).toBe("non_local_redis");
-      expect(f?.message).toContain("cache.example.com");
+      expect(f?.message).toContain("local Redis host");
     });
 
     it("returns null for development + localhost", () => {

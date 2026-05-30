@@ -23,11 +23,7 @@ function buildProxyHeaders(
   if (ua) result["user-agent"] = Array.isArray(ua) ? ua[0] : ua;
 
   const flyClientIp = headers["fly-client-ip"] as string | string[] | undefined;
-  const xForwardedFor = headers["x-forwarded-for"] as string | string[] | undefined;
-  const clientIp =
-    (Array.isArray(flyClientIp) ? flyClientIp[0] : flyClientIp) ||
-    (Array.isArray(xForwardedFor) ? xForwardedFor[0] : xForwardedFor?.split(",")[0]?.trim()) ||
-    ip;
+  const clientIp = (Array.isArray(flyClientIp) ? flyClientIp[0] : flyClientIp) || ip;
   if (clientIp) result["x-forwarded-for"] = clientIp;
 
   return result;
