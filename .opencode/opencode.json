@@ -44,6 +44,7 @@
     "sonarqube": {
       "type": "remote",
       "url": "https://api.sonarcloud.io/mcp",
+      "enabled": true,
       "headers": {
         "Authorization": "Bearer {env:SONARQUBE_TOKEN}",
         "SONARQUBE_ORG": "{env:SONARQUBE_ORG}"
