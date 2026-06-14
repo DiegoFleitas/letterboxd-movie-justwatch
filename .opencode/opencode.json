@@ -28,6 +28,7 @@
     "sentry": {
       "type": "remote",
       "url": "https://mcp.sentry.dev/mcp",
+      "enabled": false,
       "oauth": {}
     },
     "sequential-thinking": {
