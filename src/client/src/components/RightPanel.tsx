@@ -1,13 +1,14 @@
-import React, { useState, useMemo } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import React, { useState, useMemo, useCallback } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import { motionTransition } from "../animation/timing";
 import { useAppState } from "./AppStateContext";
 import alternativeSearchIcon from "../assets/alternative-search.svg";
 import { getTileProviderNames } from "../utils/movieTiles";
 import type { TileData } from "../utils/movieTiles";
-import { MovieTile } from "./MovieTile";
+import { VirtualizedPosterShowcase } from "./VirtualizedPosterShowcase";
 import { WaitCue } from "./WaitCue";
 import {
+  createProviderFilterSet,
   deduplicateProviderList,
   tileMatchesProviderFilter,
   type ProviderLike,
@@ -48,19 +49,11 @@ export function RightPanel(): React.ReactElement {
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [altSearchFilter, setAltSearchFilter] = useState(false);
   const [footerMessage] = useState(() => getRandomMessage());
-  const [suppressAnimations, setSuppressAnimations] = useState(false);
 
   const toggleFilter = (name: string): void => {
-    setActiveFilters((prev) => {
-      const next = prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name];
-      // if we're clearing the last active filter, skip mount/exit animations briefly
-      if (prev.length > 0 && next.length === 0) {
-        setSuppressAnimations(true);
-        // keep suppressed for a short time so the large DOM update doesn't animate
-        setTimeout(() => setSuppressAnimations(false), Math.max(160, PROVIDER_FAST_S * 1000));
-      }
-      return next;
-    });
+    setActiveFilters((prev) =>
+      prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name],
+    );
   };
 
   const toggleAltSearchFilter = (): void => {
@@ -77,18 +70,22 @@ export function RightPanel(): React.ReactElement {
   );
 
   const visibleTiles = useMemo((): TileData[] => {
+    const filterSet = createProviderFilterSet(activeFilters);
     return tileList.filter((tile: TileData) => {
       const names = getTileProviderNames(tile);
       if (altSearchFilter) return names.length > 0;
-      if (!activeFilters.length) return true;
+      if (!filterSet) return true;
       if (!names.length) return false;
-      return tileMatchesProviderFilter(names, activeFilters);
+      return tileMatchesProviderFilter(names, filterSet);
     });
   }, [tileList, activeFilters, altSearchFilter]);
 
-  const handleAlternativeSearch = (tileData: TileData): void => {
-    runAlternativeSearch?.(tileData.title, tileData.year ?? undefined);
-  };
+  const handleAlternativeSearch = useCallback(
+    (tileData: TileData): void => {
+      runAlternativeSearch?.(tileData.title, tileData.year ?? undefined);
+    },
+    [runAlternativeSearch],
+  );
 
   return (
     <>
@@ -175,28 +172,10 @@ export function RightPanel(): React.ReactElement {
         ) : null}
       </div>
       <div className="poster-showcase" data-testid="poster-showcase">
-        {suppressAnimations ? (
-          visibleTiles.map((tile, idx) => (
-            <MovieTile
-              key={tile.id}
-              data={tile}
-              index={idx}
-              onAlternativeSearch={handleAlternativeSearch}
-              suppressAnimations
-            />
-          ))
-        ) : (
-          <AnimatePresence mode="popLayout">
-            {visibleTiles.map((tile, idx) => (
-              <MovieTile
-                key={tile.id}
-                data={tile}
-                index={idx}
-                onAlternativeSearch={handleAlternativeSearch}
-              />
-            ))}
-          </AnimatePresence>
-        )}
+        <VirtualizedPosterShowcase
+          tiles={visibleTiles}
+          onAlternativeSearch={handleAlternativeSearch}
+        />
       </div>
       <footer>
         <div id="minecraft-text">{footerMessage}</div>

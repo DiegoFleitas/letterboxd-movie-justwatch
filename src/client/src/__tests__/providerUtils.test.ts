@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from "vitest";
 import {
+  createProviderFilterSet,
   deduplicateProviderList,
   normalizedProviderKey,
   tileMatchesProviderFilter,
@@ -76,8 +77,10 @@ describe("providerUtils", () => {
   describe("tileMatchesProviderFilter", () => {
     it("uses exact-name matching when canonical map is unavailable", () => {
       setCanonicalMap();
-      expect(tileMatchesProviderFilter(["HBO Max"], ["HBO Max"])).toBe(true);
-      expect(tileMatchesProviderFilter(["HBO Max  Amazon Channel"], ["HBO Max"])).toBe(false);
+      expect(tileMatchesProviderFilter(["HBO Max"], new Set(["HBO Max"]))).toBe(true);
+      expect(tileMatchesProviderFilter(["HBO Max  Amazon Channel"], new Set(["HBO Max"]))).toBe(
+        false,
+      );
     });
 
     it("matches aliases and canonical names when canonical map is available", () => {
@@ -85,20 +88,55 @@ describe("providerUtils", () => {
         "HBO Max": { id: "max", name: "HBO Max" },
         "HBO Max  Amazon Channel": { id: "max", name: "HBO Max" },
       });
-      expect(tileMatchesProviderFilter(["HBO Max  Amazon Channel"], ["HBO Max"])).toBe(true);
-      expect(tileMatchesProviderFilter(["HBO Max"], ["HBO Max  Amazon Channel"])).toBe(true);
+      expect(
+        tileMatchesProviderFilter(
+          ["HBO Max  Amazon Channel"],
+          createProviderFilterSet(["HBO Max"]),
+        ),
+      ).toBe(true);
+      expect(
+        tileMatchesProviderFilter(
+          ["HBO Max"],
+          createProviderFilterSet(["HBO Max  Amazon Channel"]),
+        ),
+      ).toBe(true);
     });
 
     it("returns true when there are no active filters", () => {
       setCanonicalMap();
-      expect(tileMatchesProviderFilter(["Netflix"], [])).toBe(true);
-      expect(tileMatchesProviderFilter(["Netflix"], undefined as unknown as string[])).toBe(true);
+      expect(tileMatchesProviderFilter(["Netflix"], null)).toBe(true);
+      expect(tileMatchesProviderFilter(["Netflix"], null)).toBe(true);
     });
 
     it("returns false when filters are active but tile provider names are empty/non-array", () => {
       setCanonicalMap();
-      expect(tileMatchesProviderFilter([], ["Netflix"])).toBe(false);
-      expect(tileMatchesProviderFilter(undefined as unknown as string[], ["Netflix"])).toBe(false);
+      expect(tileMatchesProviderFilter([], new Set(["Netflix"]))).toBe(false);
+      expect(
+        tileMatchesProviderFilter(undefined as unknown as string[], new Set(["Netflix"])),
+      ).toBe(false);
+    });
+  });
+
+  describe("createProviderFilterSet", () => {
+    it("returns null for empty or invalid inputs", () => {
+      setCanonicalMap();
+      expect(createProviderFilterSet([])).toBeNull();
+      expect(createProviderFilterSet(undefined as unknown as string[])).toBeNull();
+    });
+
+    it("returns a Set of provider keys when canonical map is unavailable", () => {
+      setCanonicalMap();
+      const result = createProviderFilterSet(["HBO Max", "Netflix"]);
+      expect(result).toEqual(new Set(["HBO Max", "Netflix"]));
+    });
+
+    it("returns a Set of canonical IDs when canonical map is available", () => {
+      setCanonicalMap({
+        "HBO Max": { id: "max", name: "HBO Max" },
+        "HBO Max  Amazon Channel": { id: "max", name: "HBO Max" },
+      });
+      const result = createProviderFilterSet(["HBO Max", "HBO Max  Amazon Channel", "Netflix"]);
+      expect(result).toEqual(new Set(["max", "Netflix"]));
     });
   });
 });

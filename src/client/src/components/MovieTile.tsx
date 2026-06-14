@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { motion } from "framer-motion";
 import { useAppState } from "./AppStateContext";
 import {
   letterboxdFilmUrlOrSearchUrl,
@@ -8,12 +7,6 @@ import {
   type TileYear,
 } from "../utils/movieTiles";
 import { buildOpenSubtitlesBrowseUrl } from "../utils/opensubtitlesUrl";
-import {
-  POSTER_IMAGE_TRANSFORM_S,
-  POSTER_OVERLAY_OPACITY_S,
-  POSTER_HOVER_TRANSFORM_S,
-  motionTransition,
-} from "../animation/timing";
 import alternativeSearchIcon from "../assets/alternative-search.svg";
 import imdbIcon from "../assets/imdb-icon.svg";
 import letterboxdIcon from "../assets/letterboxd-icon.svg";
@@ -53,15 +46,12 @@ function letterboxdButtonAriaLabel(
 
 interface MovieTileProps {
   data: TileData;
-  index?: number;
   onAlternativeSearch?: (data: TileData) => void;
-  suppressAnimations?: boolean;
 }
 
 type PosterBackdropProps = Readonly<{
   poster: string;
   title: string;
-  suppressAnimations: boolean;
   loaded: boolean;
   onLoaded: () => void;
 }>;
@@ -69,7 +59,6 @@ type PosterBackdropProps = Readonly<{
 function PosterBackdrop({
   poster,
   title,
-  suppressAnimations,
   loaded,
   onLoaded,
 }: PosterBackdropProps): React.ReactElement {
@@ -82,58 +71,20 @@ function PosterBackdrop({
 
   return (
     <>
-      {suppressAnimations ? (
-        <div
-          className="spinner"
-          style={{
-            position: "absolute",
-            left: 12,
-            top: 12,
-            zIndex: 4,
-            opacity: spinnerOpacityStyle,
-          }}
-          aria-hidden
-        >
-          {loadingCue}
-        </div>
-      ) : (
-        <motion.div
-          className="spinner"
-          initial={{ opacity: 1 }}
-          animate={{ opacity: spinnerOpacityStyle }}
-          transition={motionTransition(0.12)}
-          style={{ position: "absolute", left: 12, top: 12, zIndex: 4 }}
-          aria-hidden
-        >
-          {loadingCue}
-        </motion.div>
-      )}
-
-      {suppressAnimations ? (
-        <img
-          src={poster}
-          alt={posterAlt}
-          style={{ opacity: imageOpacityStyle }}
-          onLoad={onLoaded}
-        />
-      ) : (
-        <motion.img
-          src={poster}
-          alt={posterAlt}
-          initial={{ opacity: 0 }}
-          animate={{
-            opacity: imageOpacityStyle,
-            transition: motionTransition(POSTER_IMAGE_TRANSFORM_S),
-          }}
-          onLoad={onLoaded}
-          whileHover={{
-            scale: 1.03,
-            y: -2,
-            rotate: -0.5,
-            transition: motionTransition(POSTER_HOVER_TRANSFORM_S),
-          }}
-        />
-      )}
+      <div
+        className="spinner"
+        style={{
+          position: "absolute",
+          left: 12,
+          top: 12,
+          zIndex: 4,
+          opacity: spinnerOpacityStyle,
+        }}
+        aria-hidden
+      >
+        {loadingCue}
+      </div>
+      <img src={poster} alt={posterAlt} style={{ opacity: imageOpacityStyle }} onLoad={onLoaded} />
     </>
   );
 }
@@ -352,11 +303,9 @@ function SubsCornerButtons({
   );
 }
 
-export function MovieTile({
+function MovieTileComponent({
   data,
-  index = 0,
   onAlternativeSearch,
-  suppressAnimations = false,
 }: Readonly<MovieTileProps>): React.ReactElement {
   const { id, title, year, poster, link, imdbLink, tmdbLink, movieProviders = [] } = data;
   const isMobilePoster = useMobilePosterLayout();
@@ -384,40 +333,11 @@ export function MovieTile({
     if (url) globalThis.window?.open(`${JUSTWATCH_PROXY}${url}`, "_blank");
   };
 
-  const staggerDelay = Math.min(index * 0.03, 0.6);
-
-  const motionDivProps = suppressAnimations
-    ? {}
-    : {
-        initial: { opacity: 0, y: 8 },
-        animate: {
-          opacity: 1,
-          y: 0,
-          transition: { ...motionTransition(POSTER_IMAGE_TRANSFORM_S * 0.9), delay: staggerDelay },
-        },
-        exit: { opacity: 0, y: 8, transition: motionTransition(POSTER_OVERLAY_OPACITY_S) },
-      };
-
   const externalStackAria = fieldsetAriaLabel(title, year, availableExternalLinks);
   const letterboxdAria = letterboxdButtonAriaLabel(hasLetterboxdFilmLink, title, year);
 
   return (
-    <motion.div
-      className="poster"
-      data-id={id}
-      data-testid="tile"
-      {...motionDivProps}
-      whileHover={
-        suppressAnimations
-          ? undefined
-          : {
-              y: -8,
-              scale: 1.02,
-              rotate: -0.3,
-              transition: motionTransition(POSTER_HOVER_TRANSFORM_S),
-            }
-      }
-    >
+    <div className="poster" data-id={id} data-testid="tile">
       <fieldset
         className="poster-external-stack"
         aria-label={externalStackAria}
@@ -447,7 +367,6 @@ export function MovieTile({
           <PosterBackdrop
             poster={poster}
             title={title}
-            suppressAnimations={suppressAnimations}
             loaded={loaded}
             onLoaded={() => setLoaded(true)}
           />
@@ -510,6 +429,8 @@ export function MovieTile({
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
+
+export const MovieTile = React.memo(MovieTileComponent);

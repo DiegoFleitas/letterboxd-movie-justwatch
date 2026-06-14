@@ -31,7 +31,7 @@ describe("MovieTile poster corner subtitle buttons", () => {
     await act(async () => {
       root.render(
         <AppStateProvider>
-          <MovieTile data={tileData} suppressAnimations />
+          <MovieTile data={tileData} />
         </AppStateProvider>,
       );
     });
@@ -59,7 +59,7 @@ describe("MovieTile poster corner subtitle buttons", () => {
     await act(async () => {
       root.render(
         <AppStateProvider>
-          <MovieTile data={tileData} suppressAnimations />
+          <MovieTile data={tileData} />
         </AppStateProvider>,
       );
     });
@@ -85,7 +85,7 @@ describe("MovieTile poster corner subtitle buttons", () => {
     await act(async () => {
       root.render(
         <AppStateProvider>
-          <MovieTile data={tileData} suppressAnimations />
+          <MovieTile data={tileData} />
         </AppStateProvider>,
       );
     });

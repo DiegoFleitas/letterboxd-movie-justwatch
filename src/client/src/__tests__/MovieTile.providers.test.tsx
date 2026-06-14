@@ -38,7 +38,7 @@ describe("MovieTile providers and actions", () => {
     const onAlt = vi.fn();
     render(
       <AppStateProvider>
-        <MovieTile data={baseTile} onAlternativeSearch={onAlt} suppressAnimations />
+        <MovieTile data={baseTile} onAlternativeSearch={onAlt} />
       </AppStateProvider>,
     );
     const providerBtn = screen.getByTitle("Netflix");
@@ -53,7 +53,7 @@ describe("MovieTile providers and actions", () => {
     const onAlt = vi.fn();
     render(
       <AppStateProvider>
-        <MovieTile data={baseTile} onAlternativeSearch={onAlt} suppressAnimations />
+        <MovieTile data={baseTile} onAlternativeSearch={onAlt} />
       </AppStateProvider>,
     );
     fireEvent.click(screen.getByTitle("Alternative search"));
@@ -69,7 +69,7 @@ describe("MovieTile providers and actions", () => {
     }));
     render(
       <AppStateProvider>
-        <MovieTile data={{ ...baseTile, movieProviders: manyProviders }} suppressAnimations />
+        <MovieTile data={{ ...baseTile, movieProviders: manyProviders }} />
       </AppStateProvider>,
     );
     expect(screen.getByTitle("Prov0")).toBeTruthy();
@@ -109,7 +109,7 @@ describe("MovieTile providers and actions", () => {
     };
     render(
       <AppStateProvider>
-        <MovieTile data={noPoster} suppressAnimations />
+        <MovieTile data={noPoster} />
       </AppStateProvider>,
     );
     expect(document.querySelector(".poster-skeleton")).toBeTruthy();
