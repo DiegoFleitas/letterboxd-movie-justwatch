@@ -33,7 +33,13 @@
     },
     "sequential-thinking": {
       "type": "local",
-      "command": ["npx", "-y", "@modelcontextprotocol/server-sequential-thinking"]
+      "command": [
+        "npx",
+        "-y",
+        "--prefix",
+        "/tmp",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ]
     },
     "sonarqube": {
       "type": "remote",
