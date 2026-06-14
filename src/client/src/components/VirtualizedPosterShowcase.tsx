@@ -14,9 +14,7 @@ const MOBILE_MAX_WIDTH = 767;
 
 /** matchMedia guard — jsdom (tests) and SSR lack it. */
 const matchesMedia = (query: string): boolean =>
-  typeof window !== "undefined" && typeof window.matchMedia === "function"
-    ? window.matchMedia(query).matches
-    : false;
+  typeof globalThis.matchMedia === "function" ? globalThis.matchMedia(query).matches : false;
 
 interface VirtualizedPosterShowcaseProps {
   tiles: TileData[];
@@ -66,7 +64,7 @@ export function VirtualizedPosterShowcase({
 
       if (windowScroll) {
         // Offset of the grid from the top of the document.
-        setScrollMargin(list.getBoundingClientRect().top + window.scrollY);
+        setScrollMargin(list.getBoundingClientRect().top + globalThis.scrollY);
       } else if (scroller) {
         // Offset of the grid within the `.right-panel` scroll content.
         setScrollMargin(

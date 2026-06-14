@@ -23,7 +23,9 @@ const PROVIDER = {
 };
 
 function expandFixture(tileCount: number) {
-  const base = JSON.parse(JSON.stringify(letterboxdFixtures));
+  const base = structuredClone(letterboxdFixtures) as unknown as Array<{
+    response: { watchlist: Array<{ title?: string; year?: string | number }> };
+  }>;
   const baseList = base[0].response.watchlist;
   const expanded = [];
   for (let i = 0; i < tileCount; i++) {
@@ -101,7 +103,7 @@ test.describe("Windowed tile grid", () => {
       // Scroll the correct scroller for this breakpoint, confirm the window moved.
       const firstId = await tiles.first().getAttribute("data-id");
       await page.evaluate((kind) => {
-        if (kind === "window") window.scrollTo({ top: 4000 });
+        if (kind === "window") globalThis.scrollTo({ top: 4000 });
         else document.querySelector(".right-panel")?.scrollTo({ top: 4000 });
       }, scrollKind);
 
