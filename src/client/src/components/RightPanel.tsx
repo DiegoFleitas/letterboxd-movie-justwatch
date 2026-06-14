@@ -1,4 +1,4 @@
-import React, { useState, useMemo, Profiler } from "react";
+import React, { useState, useMemo, useCallback, Profiler } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { motionTransition } from "../animation/timing";
 import { useAppState } from "./AppStateContext";
@@ -89,9 +89,12 @@ export function RightPanel(): React.ReactElement {
     });
   }, [tileList, activeFilters, altSearchFilter]);
 
-  const handleAlternativeSearch = (tileData: TileData): void => {
-    runAlternativeSearch?.(tileData.title, tileData.year ?? undefined);
-  };
+  const handleAlternativeSearch = useCallback(
+    (tileData: TileData): void => {
+      runAlternativeSearch?.(tileData.title, tileData.year ?? undefined);
+    },
+    [runAlternativeSearch],
+  );
 
   return (
     <>
@@ -179,28 +182,24 @@ export function RightPanel(): React.ReactElement {
       </div>
       <div className="poster-showcase" data-testid="poster-showcase">
         <Profiler id="TileGrid" onRender={recordProfile}>
-          {suppressAnimations ? (
-            visibleTiles.map((tile, idx) => (
+          {/*
+            Keep <AnimatePresence> permanently mounted and toggle per-tile
+            animation via the suppressAnimations prop. Swapping the parent
+            element type (bare array vs AnimatePresence) would force React to
+            unmount and remount every tile, which is catastrophic when clearing
+            the last filter expands the grid to the full list.
+          */}
+          <AnimatePresence mode="popLayout" initial={false}>
+            {visibleTiles.map((tile, idx) => (
               <MovieTile
                 key={tile.id}
                 data={tile}
                 index={idx}
                 onAlternativeSearch={handleAlternativeSearch}
-                suppressAnimations
+                suppressAnimations={suppressAnimations}
               />
-            ))
-          ) : (
-            <AnimatePresence mode="popLayout">
-              {visibleTiles.map((tile, idx) => (
-                <MovieTile
-                  key={tile.id}
-                  data={tile}
-                  index={idx}
-                  onAlternativeSearch={handleAlternativeSearch}
-                />
-              ))}
-            </AnimatePresence>
-          )}
+            ))}
+          </AnimatePresence>
         </Profiler>
       </div>
       <footer>

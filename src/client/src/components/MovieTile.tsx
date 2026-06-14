@@ -352,7 +352,7 @@ function SubsCornerButtons({
   );
 }
 
-export function MovieTile({
+function MovieTileComponent({
   data,
   index = 0,
   onAlternativeSearch,
@@ -513,3 +513,5 @@ export function MovieTile({
     </motion.div>
   );
 }
+
+export const MovieTile = React.memo(MovieTileComponent);
