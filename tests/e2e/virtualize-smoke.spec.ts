@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import {
   letterboxdFixtures,
   mockGeoIpRoute,
@@ -40,6 +40,37 @@ function expandFixture(tileCount: number) {
   return base;
 }
 
+async function loadList(page: Page): Promise<void> {
+  const fixture = expandFixture(TILE_COUNT);
+  await page.route("**/api/letterboxd-watchlist", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(fixture[0].response),
+    }),
+  );
+  await page.route("**/api/search-movie", (route) => {
+    const body = route.request().postDataJSON() as SearchMovieBody | null;
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        message: "Movie found",
+        movieProviders: [PROVIDER],
+        title: body?.title,
+        year: body?.year,
+        poster: "",
+      }),
+    });
+  });
+
+  await page.goto("/");
+  await waitForGeoReady(page);
+  await page.getByTestId("tab-list").click();
+  await page.getByTestId("list-url").fill("https://letterboxd.com/user/watchlist/");
+  await page.getByTestId("list-submit").click();
+}
+
 test.beforeEach(async ({ page }) => {
   await mockGeoIpRoute(page);
 });
@@ -47,57 +78,44 @@ test.beforeEach(async ({ page }) => {
 test.describe("Virtualized tile grid (spike)", () => {
   test.skip(!VIRTUALIZED, "requires VITE_VIRTUALIZE=1");
 
-  test("windows the grid and reveals tiles on scroll", async ({ page }) => {
-    const fixture = expandFixture(TILE_COUNT);
-    await page.route("**/api/letterboxd-watchlist", (route) =>
-      route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify(fixture[0].response),
-      }),
-    );
-    await page.route("**/api/search-movie", (route) => {
-      const body = route.request().postDataJSON() as SearchMovieBody | null;
-      return route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          message: "Movie found",
-          movieProviders: [PROVIDER],
-          title: body?.title,
-          year: body?.year,
-          poster: "",
-        }),
-      });
+  // scrollKind: "panel" = desktop (`.right-panel` scrolls); "window" = mobile.
+  for (const { name, viewport, scrollKind } of [
+    {
+      name: "desktop (panel scroller)",
+      viewport: { width: 1280, height: 800 },
+      scrollKind: "panel",
+    },
+    {
+      name: "mobile (window scroller)",
+      viewport: { width: 390, height: 800 },
+      scrollKind: "window",
+    },
+  ] as const) {
+    test(`windows the grid and reveals tiles on scroll — ${name}`, async ({ page }) => {
+      await page.setViewportSize(viewport);
+      await loadList(page);
+
+      const tiles = page.getByTestId("poster-showcase").getByTestId("tile");
+      await expect(tiles.first()).toBeVisible({ timeout: 30_000 });
+
+      // Windowing: far fewer than TILE_COUNT tiles are mounted at once.
+      const mounted = await tiles.count();
+      console.log(`[virtualize] ${name}: mounted ${mounted} of ${TILE_COUNT} tiles`);
+      expect(mounted).toBeGreaterThan(0);
+      expect(mounted).toBeLessThan(TILE_COUNT / 2);
+
+      // Scroll the correct scroller for this breakpoint, confirm the window moved.
+      const firstId = await tiles.first().getAttribute("data-id");
+      await page.evaluate((kind) => {
+        if (kind === "window") window.scrollTo({ top: 4000 });
+        else document.querySelector(".right-panel")?.scrollTo({ top: 4000 });
+      }, scrollKind);
+      await page.waitForTimeout(400);
+
+      const idsAfterScroll = await tiles.evaluateAll((els) =>
+        els.map((e) => e.getAttribute("data-id")),
+      );
+      expect(idsAfterScroll).not.toContain(firstId);
     });
-
-    await page.goto("/");
-    await waitForGeoReady(page);
-    await page.getByTestId("tab-list").click();
-    await page.getByTestId("list-url").fill("https://letterboxd.com/user/watchlist/");
-    await page.getByTestId("list-submit").click();
-
-    const tiles = page.getByTestId("poster-showcase").getByTestId("tile");
-    await expect(tiles.first()).toBeVisible({ timeout: 30_000 });
-
-    // Windowing: far fewer than TILE_COUNT tiles are mounted at once.
-    const mounted = await tiles.count();
-
-    console.log(`[virtualize] mounted ${mounted} of ${TILE_COUNT} tiles`);
-    expect(mounted).toBeGreaterThan(0);
-    expect(mounted).toBeLessThan(TILE_COUNT / 2);
-
-    // Capture the first tile's id, scroll down, and confirm the window moved.
-    const firstId = await tiles.first().getAttribute("data-id");
-    await page.evaluate(() => {
-      const scroller = document.querySelector(".right-panel");
-      if (scroller) scroller.scrollTo({ top: 4000 });
-    });
-    await page.waitForTimeout(300);
-
-    const idsAfterScroll = await tiles.evaluateAll((els) =>
-      els.map((e) => e.getAttribute("data-id")),
-    );
-    expect(idsAfterScroll).not.toContain(firstId);
-  });
+  }
 });
