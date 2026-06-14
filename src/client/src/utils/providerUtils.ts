@@ -52,5 +52,5 @@ export function tileMatchesProviderFilter(
   if (activeFilterSet == null) return true;
   const names = Array.isArray(tileProviderNames) ? tileProviderNames : [];
   if (names.length === 0) return false;
-  return names.some((n) => activeFilterSet.has(n));
+  return names.some((n) => activeFilterSet.has(normalizedProviderKey(n)));
 }
