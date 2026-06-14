@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, Profiler } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { motionTransition } from "../animation/timing";
 import { useAppState } from "./AppStateContext";
@@ -8,10 +8,12 @@ import type { TileData } from "../utils/movieTiles";
 import { MovieTile } from "./MovieTile";
 import { WaitCue } from "./WaitCue";
 import {
+  createProviderFilterSet,
   deduplicateProviderList,
   tileMatchesProviderFilter,
   type ProviderLike,
 } from "../utils/providerUtils";
+import { recordProfile } from "../utils/componentProfiler";
 
 const FOOTER_MESSAGES = [
   "Star me on GitHub!",
@@ -77,12 +79,13 @@ export function RightPanel(): React.ReactElement {
   );
 
   const visibleTiles = useMemo((): TileData[] => {
+    const filterSet = createProviderFilterSet(activeFilters);
     return tileList.filter((tile: TileData) => {
       const names = getTileProviderNames(tile);
       if (altSearchFilter) return names.length > 0;
-      if (!activeFilters.length) return true;
+      if (!filterSet) return true;
       if (!names.length) return false;
-      return tileMatchesProviderFilter(names, activeFilters);
+      return tileMatchesProviderFilter(names, filterSet);
     });
   }, [tileList, activeFilters, altSearchFilter]);
 
@@ -175,28 +178,30 @@ export function RightPanel(): React.ReactElement {
         ) : null}
       </div>
       <div className="poster-showcase" data-testid="poster-showcase">
-        {suppressAnimations ? (
-          visibleTiles.map((tile, idx) => (
-            <MovieTile
-              key={tile.id}
-              data={tile}
-              index={idx}
-              onAlternativeSearch={handleAlternativeSearch}
-              suppressAnimations
-            />
-          ))
-        ) : (
-          <AnimatePresence mode="popLayout">
-            {visibleTiles.map((tile, idx) => (
+        <Profiler id="TileGrid" onRender={recordProfile}>
+          {suppressAnimations ? (
+            visibleTiles.map((tile, idx) => (
               <MovieTile
                 key={tile.id}
                 data={tile}
                 index={idx}
                 onAlternativeSearch={handleAlternativeSearch}
+                suppressAnimations
               />
-            ))}
-          </AnimatePresence>
-        )}
+            ))
+          ) : (
+            <AnimatePresence mode="popLayout">
+              {visibleTiles.map((tile, idx) => (
+                <MovieTile
+                  key={tile.id}
+                  data={tile}
+                  index={idx}
+                  onAlternativeSearch={handleAlternativeSearch}
+                />
+              ))}
+            </AnimatePresence>
+          )}
+        </Profiler>
       </div>
       <footer>
         <div id="minecraft-text">{footerMessage}</div>
