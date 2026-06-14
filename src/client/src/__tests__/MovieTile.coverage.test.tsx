@@ -30,7 +30,7 @@ describe("MovieTile coverage", () => {
     await act(async () => {
       root.render(
         <AppStateProvider>
-          <MovieTile data={{ ...tileData, poster: null }} suppressAnimations />
+          <MovieTile data={{ ...tileData, poster: null }} />
         </AppStateProvider>,
       );
     });
@@ -55,7 +55,7 @@ describe("MovieTile coverage", () => {
     await act(async () => {
       root.render(
         <AppStateProvider>
-          <MovieTile data={tileData} suppressAnimations />
+          <MovieTile data={tileData} />
         </AppStateProvider>,
       );
     });
@@ -87,7 +87,7 @@ describe("MovieTile coverage", () => {
     await act(async () => {
       root.render(
         <AppStateProvider>
-          <MovieTile data={tileData} suppressAnimations onAlternativeSearch={onAlt} />
+          <MovieTile data={tileData} onAlternativeSearch={onAlt} />
         </AppStateProvider>,
       );
     });
@@ -122,7 +122,7 @@ describe("MovieTile coverage", () => {
     await act(async () => {
       root.render(
         <AppStateProvider>
-          <MovieTile data={tileData} suppressAnimations />
+          <MovieTile data={tileData} />
         </AppStateProvider>,
       );
     });

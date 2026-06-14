@@ -6,11 +6,6 @@ export const TMDB_DEBOUNCE_MS = 120; // input debounce for TMDB searches
 /** After Letterboxd list search completes, wait this long before nudging if tiles/posters look broken */
 export const NO_POSTER_REPORT_DELAY_MS = 45_000;
 
-// Motion durations (seconds) — keep in sync with poster CSS feel
-export const POSTER_HOVER_TRANSFORM_S = 0.28;
-export const POSTER_IMAGE_TRANSFORM_S = 0.36;
-export const POSTER_OVERLAY_OPACITY_S = 0.18;
-
 // Shared easing (cubic-bezier(0.2, 0.9, 0.2, 1)) — Motion accepts arrays
 const EASE_CUBIC_BEZIER: [number, number, number, number] = [0.2, 0.9, 0.2, 1];
 

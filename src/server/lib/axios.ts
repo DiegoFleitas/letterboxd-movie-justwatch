@@ -1,40 +1,54 @@
 import axios, { type AxiosInstance, type InternalAxiosRequestConfig } from "axios";
 import https from "node:https";
+import { HttpsProxyAgent } from "https-proxy-agent";
 import { HTTP_STATUS_TOO_MANY_REQUESTS } from "../httpStatusCodes.js";
+import {
+  getMax429Retries,
+  max429RetryAfterSeconds,
+  sanitizeRequestUrl,
+} from "./httpRetryConfig.js";
 
 const instance = axios.create({});
+
+/**
+ * Optional outbound proxy for HTTPS scraping/enrichment calls (JustWatch, TMDb,
+ * OMDb, Letterboxd). Some upstreams (notably JustWatch) IP-block certain egress
+ * ranges, returning 403 even for valid requests. Pointing this at a clean-IP
+ * proxy lets local dev reach them without changing production behaviour. Reads,
+ * in order: JUSTWATCH_HTTPS_PROXY, OUTBOUND_HTTPS_PROXY, then the conventional
+ * HTTPS_PROXY / https_proxy. Unset = direct connection (default).
+ */
+const OUTBOUND_PROXY_URL =
+  process.env.JUSTWATCH_HTTPS_PROXY?.trim() ||
+  process.env.OUTBOUND_HTTPS_PROXY?.trim() ||
+  process.env.HTTPS_PROXY?.trim() ||
+  process.env.https_proxy?.trim() ||
+  "";
+
+/** Hide `user:pass@` credentials before logging a proxy URL. */
+const redactProxyUrl = (url: string): string => url.replace(/\/\/[^/@]*@/, "//***@");
+
+let proxyAgentLogged = false;
+
+const buildHttpsAgent = (): https.Agent => {
+  if (OUTBOUND_PROXY_URL) {
+    if (!proxyAgentLogged) {
+      console.log(`[axios] Outbound HTTPS via proxy ${redactProxyUrl(OUTBOUND_PROXY_URL)}`);
+      proxyAgentLogged = true;
+    }
+    return new HttpsProxyAgent(OUTBOUND_PROXY_URL, { keepAlive: true });
+  }
+  return new https.Agent({ keepAlive: true });
+};
 
 /** Tracks 429 retries per request chain (see response interceptor). */
 type ConfigWith429Retry = InternalAxiosRequestConfig & {
   __rateLimitRetryCount?: number;
 };
 
-const getMax429Retries = (): number => {
-  const n = Number(process.env.AXIOS_429_MAX_RETRIES);
-  if (Number.isFinite(n) && n >= 0) {
-    return Math.floor(n);
-  }
-  return 5;
-};
-
-/** Cap wait between 429 retries (seconds) to avoid multi-minute stalls. */
-const max429RetryAfterSeconds = (): number => {
-  const n = Number(process.env.AXIOS_429_MAX_RETRY_AFTER_SECONDS);
-  if (Number.isFinite(n) && n > 0) {
-    return Math.min(Math.floor(n), 120);
-  }
-  return 60;
-};
-
-const sanitizeUrl = (url: string | undefined): string => {
-  if (!url) return "";
-  // Redact common API key-style query params to avoid leaking secrets in logs.
-  return url.replace(/((?:api_key|apikey|access_token|token|key)=)([^&]+)/gi, "$1***");
-};
-
 instance.interceptors.request.use((config) => {
   const url = typeof config.url === "string" ? config.url : undefined;
-  console.log(`[axios] Sending request to ${sanitizeUrl(url)}`);
+  console.log(`[axios] Sending request to ${sanitizeRequestUrl(url)}`);
   return config;
 });
 
@@ -71,7 +85,10 @@ instance.interceptors.response.use(
 
 export default (keepAlive?: boolean): AxiosInstance => {
   if (keepAlive || keepAlive === undefined) {
-    instance.defaults.httpsAgent = new https.Agent({ keepAlive: true });
+    instance.defaults.httpsAgent = buildHttpsAgent();
+    // Let the proxy agent own tunnelling; disable axios's own proxy handling so
+    // the two don't conflict.
+    if (OUTBOUND_PROXY_URL) instance.defaults.proxy = false;
   }
   return instance;
 };

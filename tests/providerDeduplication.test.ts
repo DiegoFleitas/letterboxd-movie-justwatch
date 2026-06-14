@@ -8,6 +8,7 @@ import {
   buildCanonicalProviderMaps,
 } from "@server/lib/canonicalProviders.js";
 import {
+  createProviderFilterSet,
   tileMatchesProviderFilter,
   normalizedProviderKey,
   deduplicateProviderList,
@@ -32,6 +33,21 @@ function makeOffer(
       icon: "https://images.justwatch.com/icon{sprofile}{sformat}.jpg",
     },
   };
+}
+
+type CanonicalMap = Record<string, { id: string; name: string }>;
+
+/** Run `fn` with `window.__CANONICAL_PROVIDERS_BY_NAME__` stubbed to `map`,
+ * restoring the previous value afterwards. */
+function withCanonicalProviderMap(map: CanonicalMap, fn: () => void): void {
+  const g = globalThis as { window?: { __CANONICAL_PROVIDERS_BY_NAME__?: CanonicalMap } };
+  const prev = g.window;
+  g.window = { __CANONICAL_PROVIDERS_BY_NAME__: map };
+  try {
+    fn();
+  } finally {
+    g.window = prev;
+  }
 }
 
 describe("Provider deduplication", () => {
@@ -123,16 +139,18 @@ describe("Provider deduplication", () => {
   });
 
   it("tileMatchesProviderFilter exact match", () => {
-    expect(tileMatchesProviderFilter(["HBO Max"], ["HBO Max"])).toBe(true);
-    expect(tileMatchesProviderFilter(["HBO Max  Amazon Channel"], ["HBO Max"])).toBe(false);
+    expect(tileMatchesProviderFilter(["HBO Max"], new Set(["HBO Max"]))).toBe(true);
+    expect(tileMatchesProviderFilter(["HBO Max  Amazon Channel"], new Set(["HBO Max"]))).toBe(
+      false,
+    );
   });
 
   it("tileMatchesProviderFilter returns true when no active filters", () => {
-    expect(tileMatchesProviderFilter(["Netflix"], [])).toBe(true);
+    expect(tileMatchesProviderFilter(["Netflix"], null)).toBe(true);
   });
 
   it("tileMatchesProviderFilter returns false when tile has no providers", () => {
-    expect(tileMatchesProviderFilter([], ["Netflix"])).toBe(false);
+    expect(tileMatchesProviderFilter([], new Set(["Netflix"]))).toBe(false);
   });
 
   it("normalizedProviderKey uses map when window.__CANONICAL_PROVIDERS_BY_NAME__ is set", () => {
@@ -140,19 +158,11 @@ describe("Provider deduplication", () => {
       "HBO Max": { id: "max", name: "HBO Max" },
       "HBO Max  Amazon Channel": { id: "max", name: "HBO Max" },
     };
-    const prev = (globalThis as { window?: unknown }).window;
-    (
-      globalThis as {
-        window?: { __CANONICAL_PROVIDERS_BY_NAME__?: Record<string, { id: string; name: string }> };
-      }
-    ).window = { __CANONICAL_PROVIDERS_BY_NAME__: map };
-    try {
+    withCanonicalProviderMap(map, () => {
       expect(normalizedProviderKey("HBO Max")).toBe("max");
       expect(normalizedProviderKey("HBO Max  Amazon Channel")).toBe("max");
       expect(normalizedProviderKey("Netflix")).toBe("Netflix");
-    } finally {
-      (globalThis as { window?: unknown }).window = prev;
-    }
+    });
   });
 
   it("deduplicateProviderList collapses by canonical id when map is set", () => {
@@ -160,13 +170,7 @@ describe("Provider deduplication", () => {
       "HBO Max": { id: "max", name: "HBO Max" },
       "HBO Max  Amazon Channel": { id: "max", name: "HBO Max" },
     };
-    const prev = (globalThis as { window?: unknown }).window;
-    (
-      globalThis as {
-        window?: { __CANONICAL_PROVIDERS_BY_NAME__?: Record<string, { id: string; name: string }> };
-      }
-    ).window = { __CANONICAL_PROVIDERS_BY_NAME__: map };
-    try {
+    withCanonicalProviderMap(map, () => {
       const providers = [
         { id: "max", name: "HBO Max", icon: "https://a" },
         { id: "amazonmax", name: "HBO Max  Amazon Channel", icon: "https://b" },
@@ -174,9 +178,7 @@ describe("Provider deduplication", () => {
       const result = deduplicateProviderList(providers);
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe("max");
-    } finally {
-      (globalThis as { window?: unknown }).window = prev;
-    }
+    });
   });
 
   it("tileMatchesProviderFilter matches by canonical id when map is set", () => {
@@ -184,17 +186,33 @@ describe("Provider deduplication", () => {
       "HBO Max": { id: "max", name: "HBO Max" },
       "HBO Max  Amazon Channel": { id: "max", name: "HBO Max" },
     };
-    const prev = (globalThis as { window?: unknown }).window;
-    (
-      globalThis as {
-        window?: { __CANONICAL_PROVIDERS_BY_NAME__?: Record<string, { id: string; name: string }> };
-      }
-    ).window = { __CANONICAL_PROVIDERS_BY_NAME__: map };
-    try {
-      expect(tileMatchesProviderFilter(["HBO Max  Amazon Channel"], ["HBO Max"])).toBe(true);
-      expect(tileMatchesProviderFilter(["HBO Max"], ["HBO Max  Amazon Channel"])).toBe(true);
-    } finally {
-      (globalThis as { window?: unknown }).window = prev;
-    }
+    withCanonicalProviderMap(map, () => {
+      expect(
+        tileMatchesProviderFilter(
+          ["HBO Max  Amazon Channel"],
+          createProviderFilterSet(["HBO Max"]),
+        ),
+      ).toBe(true);
+      expect(
+        tileMatchesProviderFilter(
+          ["HBO Max"],
+          createProviderFilterSet(["HBO Max  Amazon Channel"]),
+        ),
+      ).toBe(true);
+    });
+  });
+
+  it("createProviderFilterSet returns canonical IDs when map is set", () => {
+    const map = {
+      "HBO Max": { id: "max", name: "HBO Max" },
+      "HBO Max  Amazon Channel": { id: "max", name: "HBO Max" },
+    };
+    withCanonicalProviderMap(map, () => {
+      expect(createProviderFilterSet(["HBO Max", "HBO Max  Amazon Channel"])).toEqual(
+        new Set(["max"]),
+      );
+      expect(createProviderFilterSet(["Netflix"])).toEqual(new Set(["Netflix"]));
+      expect(createProviderFilterSet([])).toBeNull();
+    });
   });
 });

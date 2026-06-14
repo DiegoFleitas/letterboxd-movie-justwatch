@@ -1,26 +1,51 @@
-/* Poster grid and card styles */
+/* Poster grid and card styles. The grid is windowed (see
+   VirtualizedPosterShowcase): the showcase is a plain block holding a list of
+   absolutely-positioned rows, and each row owns its own column grid. */
 .poster-showcase {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 28px;
   width: 100%;
-  margin: 0 auto;
   padding: 0.5rem 0;
+}
+.poster-virtual-list {
+  width: 100%;
   max-width: 1800px;
+  margin: 0 auto;
+}
+.poster-virtual-row {
+  display: grid;
+  gap: 28px;
+  padding-bottom: 28px;
+  /* Soft reveal as each row is windowed in. Opacity-only and short so it reads
+     as a gentle "materialize" rather than a pop, without the scroll-flicker a
+     translate/stagger would cause (the row's translateY positioning, set
+     inline, is untouched). */
+  animation: poster-virtual-fade-in 150ms ease-out both;
+}
+@keyframes poster-virtual-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .poster-virtual-row {
+    animation: none;
+  }
 }
 @media (max-width: 1024px) {
-  .poster-showcase {
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  .poster-virtual-row {
     gap: 18px;
+    padding-bottom: 18px;
   }
 }
 @media (max-width: 767px) {
-  .poster-showcase {
-    grid-template-columns: repeat(2, 1fr);
+  .poster-virtual-row {
     gap: 10px;
-    padding: 0.5rem 0;
+    padding-bottom: 10px;
   }
 }
+
 .poster {
   position: relative;
   background: var(--color-surface);

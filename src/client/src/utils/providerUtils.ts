@@ -22,6 +22,15 @@ export interface ProviderLike {
   icon?: string;
 }
 
+export function createProviderFilterSet(activeFilterNames: string[]): Set<string> | null {
+  if (!Array.isArray(activeFilterNames) || activeFilterNames.length === 0) return null;
+  const byName = getCanonicalByNames();
+  if (byName && Object.keys(byName).length > 0) {
+    return new Set(activeFilterNames.map((n) => normalizedProviderKey(n)));
+  }
+  return new Set(activeFilterNames);
+}
+
 export function deduplicateProviderList(providers: ProviderLike[]): ProviderLike[] {
   const all = Array.isArray(providers) ? providers.filter((p) => p?.name) : [];
   const byName = getCanonicalByNames();
@@ -38,15 +47,10 @@ export function deduplicateProviderList(providers: ProviderLike[]): ProviderLike
 
 export function tileMatchesProviderFilter(
   tileProviderNames: string[],
-  activeFilterNames: string[],
+  activeFilterSet: Set<string> | null,
 ): boolean {
-  if (!Array.isArray(activeFilterNames) || activeFilterNames.length === 0) return true;
+  if (activeFilterSet == null) return true;
   const names = Array.isArray(tileProviderNames) ? tileProviderNames : [];
   if (names.length === 0) return false;
-  const byName = getCanonicalByNames();
-  if (byName && Object.keys(byName).length > 0) {
-    const activeIds = new Set(activeFilterNames.map((n) => normalizedProviderKey(n)));
-    return names.some((n) => activeIds.has(normalizedProviderKey(n)));
-  }
-  return activeFilterNames.some((f) => names.includes(f));
+  return names.some((n) => activeFilterSet.has(normalizedProviderKey(n)));
 }
