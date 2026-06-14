@@ -20,6 +20,11 @@
       "url": "https://mcp.context7.com/mcp",
       "enabled": true
     },
+    "playwright": {
+      "type": "local",
+      "command": ["npx", "-y", "--prefix", "/tmp", "@playwright/mcp@latest"],
+      "enabled": true
+    },
     "sentry": {
       "type": "remote",
       "url": "https://mcp.sentry.dev/mcp",
