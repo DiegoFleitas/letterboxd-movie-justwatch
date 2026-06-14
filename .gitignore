@@ -12,8 +12,12 @@ src/client/dist
 # editor and IDE files
 .vscode/
 
-# AI tool local overrides
-.claude/settings.local.json
+# AI agent tooling — local-only (skills, agents, opencode config).
+# Keep the shared Claude settings; everything else under these dirs is local.
+.agents/
+.claude/*
+!.claude/settings.json
+.opencode/
 
 # misc
 *.log
