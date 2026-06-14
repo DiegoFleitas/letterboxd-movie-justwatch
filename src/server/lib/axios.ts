@@ -2,6 +2,11 @@ import axios, { type AxiosInstance, type InternalAxiosRequestConfig } from "axio
 import https from "node:https";
 import { HttpsProxyAgent } from "https-proxy-agent";
 import { HTTP_STATUS_TOO_MANY_REQUESTS } from "../httpStatusCodes.js";
+import {
+  getMax429Retries,
+  max429RetryAfterSeconds,
+  sanitizeRequestUrl,
+} from "./httpRetryConfig.js";
 
 const instance = axios.create({});
 
@@ -41,32 +46,9 @@ type ConfigWith429Retry = InternalAxiosRequestConfig & {
   __rateLimitRetryCount?: number;
 };
 
-const getMax429Retries = (): number => {
-  const n = Number(process.env.AXIOS_429_MAX_RETRIES);
-  if (Number.isFinite(n) && n >= 0) {
-    return Math.floor(n);
-  }
-  return 5;
-};
-
-/** Cap wait between 429 retries (seconds) to avoid multi-minute stalls. */
-const max429RetryAfterSeconds = (): number => {
-  const n = Number(process.env.AXIOS_429_MAX_RETRY_AFTER_SECONDS);
-  if (Number.isFinite(n) && n > 0) {
-    return Math.min(Math.floor(n), 120);
-  }
-  return 60;
-};
-
-const sanitizeUrl = (url: string | undefined): string => {
-  if (!url) return "";
-  // Redact common API key-style query params to avoid leaking secrets in logs.
-  return url.replace(/((?:api_key|apikey|access_token|token|key)=)([^&]+)/gi, "$1***");
-};
-
 instance.interceptors.request.use((config) => {
   const url = typeof config.url === "string" ? config.url : undefined;
-  console.log(`[axios] Sending request to ${sanitizeUrl(url)}`);
+  console.log(`[axios] Sending request to ${sanitizeRequestUrl(url)}`);
   return config;
 });
 

@@ -1,24 +1,10 @@
 import { getLetterboxdFetchTimeoutMs } from "./letterboxdFetchTimeout.js";
 import { HTTP_STATUS_TOO_MANY_REQUESTS } from "../httpStatusCodes.js";
-
-const sanitizeUrl = (url: string): string =>
-  url.replace(/((?:api_key|apikey|access_token|token|key)=)([^&]+)/gi, "$1***");
-
-const getMax429Retries = (): number => {
-  const n = Number(process.env.AXIOS_429_MAX_RETRIES);
-  if (Number.isFinite(n) && n >= 0) {
-    return Math.floor(n);
-  }
-  return 5;
-};
-
-const max429RetryAfterSeconds = (): number => {
-  const n = Number(process.env.AXIOS_429_MAX_RETRY_AFTER_SECONDS);
-  if (Number.isFinite(n) && n > 0) {
-    return Math.min(Math.floor(n), 120);
-  }
-  return 60;
-};
+import {
+  getMax429Retries,
+  max429RetryAfterSeconds,
+  sanitizeRequestUrl,
+} from "./httpRetryConfig.js";
 
 const sleep = (ms: number): Promise<void> =>
   new Promise((resolve) => {
@@ -89,7 +75,7 @@ async function fetchWith429Retry(url: string, headers: Record<string, string>): 
   let rateLimitCount = 0;
 
   for (;;) {
-    console.log(`[letterboxd-http] GET ${sanitizeUrl(url)}`);
+    console.log(`[letterboxd-http] GET ${sanitizeRequestUrl(url)}`);
     const res = await fetch(url, {
       headers,
       redirect: "follow",

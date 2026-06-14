@@ -41,7 +41,7 @@ interface VirtualizedPosterShowcaseProps {
 export function VirtualizedPosterShowcase({
   tiles,
   onAlternativeSearch,
-}: VirtualizedPosterShowcaseProps): React.ReactElement {
+}: Readonly<VirtualizedPosterShowcaseProps>): React.ReactElement {
   const listRef = useRef<HTMLDivElement>(null);
   const [scrollEl, setScrollEl] = useState<HTMLElement | null>(null);
   const [cols, setCols] = useState(1);

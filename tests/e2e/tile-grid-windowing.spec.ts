@@ -110,7 +110,7 @@ test.describe("Windowed tile grid", () => {
       // Retry until the virtualizer recomputes its window (avoids a fixed-wait race).
       await expect(async () => {
         const idsAfterScroll = await tiles.evaluateAll((els) =>
-          els.map((e) => e.getAttribute("data-id")),
+          els.map((e) => (e as HTMLElement).dataset.id),
         );
         expect(idsAfterScroll).not.toContain(firstId);
       }).toPass({ timeout: 5000 });
