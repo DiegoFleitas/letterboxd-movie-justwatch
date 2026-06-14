@@ -37,7 +37,7 @@ export function clearPerfData(): void {
 
 // Bridge for Playwright to read profiler data via page.evaluate()
 if (typeof window !== "undefined") {
-  (window as Record<string, unknown>).__PERF_DATA__ = {
+  (window as unknown as Record<string, unknown>).__PERF_DATA__ = {
     getPerfData,
     clearPerfData,
   };
