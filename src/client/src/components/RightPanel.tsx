@@ -1,13 +1,11 @@
-import React, { useState, useMemo, useCallback, Profiler } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import React, { useState, useMemo, useCallback } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import { motionTransition } from "../animation/timing";
 import { useAppState } from "./AppStateContext";
 import alternativeSearchIcon from "../assets/alternative-search.svg";
 import { getTileProviderNames } from "../utils/movieTiles";
 import type { TileData } from "../utils/movieTiles";
-import { MovieTile } from "./MovieTile";
 import { VirtualizedPosterShowcase } from "./VirtualizedPosterShowcase";
-import { isTileGridVirtualized } from "../utils/tileGridVirtualization";
 import { WaitCue } from "./WaitCue";
 import {
   createProviderFilterSet,
@@ -15,7 +13,6 @@ import {
   tileMatchesProviderFilter,
   type ProviderLike,
 } from "../utils/providerUtils";
-import { recordProfile } from "../utils/componentProfiler";
 
 const FOOTER_MESSAGES = [
   "Star me on GitHub!",
@@ -52,19 +49,11 @@ export function RightPanel(): React.ReactElement {
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [altSearchFilter, setAltSearchFilter] = useState(false);
   const [footerMessage] = useState(() => getRandomMessage());
-  const [suppressAnimations, setSuppressAnimations] = useState(false);
 
   const toggleFilter = (name: string): void => {
-    setActiveFilters((prev) => {
-      const next = prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name];
-      // if we're clearing the last active filter, skip mount/exit animations briefly
-      if (prev.length > 0 && next.length === 0) {
-        setSuppressAnimations(true);
-        // keep suppressed for a short time so the large DOM update doesn't animate
-        setTimeout(() => setSuppressAnimations(false), Math.max(160, PROVIDER_FAST_S * 1000));
-      }
-      return next;
-    });
+    setActiveFilters((prev) =>
+      prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name],
+    );
   };
 
   const toggleAltSearchFilter = (): void => {
@@ -182,37 +171,11 @@ export function RightPanel(): React.ReactElement {
           </motion.button>
         ) : null}
       </div>
-      <div
-        className={`poster-showcase${isTileGridVirtualized() ? " poster-showcase--virtualized" : ""}`}
-        data-testid="poster-showcase"
-      >
-        <Profiler id="TileGrid" onRender={recordProfile}>
-          {isTileGridVirtualized() ? (
-            <VirtualizedPosterShowcase
-              tiles={visibleTiles}
-              onAlternativeSearch={handleAlternativeSearch}
-            />
-          ) : (
-            /*
-              Keep <AnimatePresence> permanently mounted and toggle per-tile
-              animation via the suppressAnimations prop. Swapping the parent
-              element type (bare array vs AnimatePresence) would force React to
-              unmount and remount every tile, which is catastrophic when clearing
-              the last filter expands the grid to the full list.
-            */
-            <AnimatePresence mode="popLayout" initial={false}>
-              {visibleTiles.map((tile, idx) => (
-                <MovieTile
-                  key={tile.id}
-                  data={tile}
-                  index={idx}
-                  onAlternativeSearch={handleAlternativeSearch}
-                  suppressAnimations={suppressAnimations}
-                />
-              ))}
-            </AnimatePresence>
-          )}
-        </Profiler>
+      <div className="poster-showcase" data-testid="poster-showcase">
+        <VirtualizedPosterShowcase
+          tiles={visibleTiles}
+          onAlternativeSearch={handleAlternativeSearch}
+        />
       </div>
       <footer>
         <div id="minecraft-text">{footerMessage}</div>

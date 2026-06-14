@@ -12,6 +12,12 @@ const ESTIMATED_ROW_PX = 360;
  * window (document) scrolls instead of the panel — must match poster.css. */
 const MOBILE_MAX_WIDTH = 767;
 
+/** matchMedia guard — jsdom (tests) and SSR lack it. */
+const matchesMedia = (query: string): boolean =>
+  typeof window !== "undefined" && typeof window.matchMedia === "function"
+    ? window.matchMedia(query).matches
+    : false;
+
 interface VirtualizedPosterShowcaseProps {
   tiles: TileData[];
   onAlternativeSearch: (tile: TileData) => void;
@@ -30,9 +36,9 @@ interface VirtualizedPosterShowcaseProps {
  * single scrollbar and the footer behave exactly as in the non-virtualized
  * layout.
  *
- * Trade-off: off-screen tiles do not exist, so per-tile enter/exit animations
- * cannot run — tiles render with `suppressAnimations`. This is the spike whose
- * feel we are evaluating (VITE_VIRTUALIZE=1).
+ * Tiles are static (no per-tile enter/exit animation) — off-screen tiles do not
+ * exist, so those can't run anyway. A short CSS row fade-in (see
+ * `.poster-virtual-row`) softens the reveal.
  */
 export function VirtualizedPosterShowcase({
   tiles,
@@ -52,12 +58,10 @@ export function VirtualizedPosterShowcase({
     setScrollEl(scroller);
 
     const measure = (): void => {
-      const windowScroll = window.matchMedia(`(max-width: ${MOBILE_MAX_WIDTH}px)`).matches;
+      const windowScroll = matchesMedia(`(max-width: ${MOBILE_MAX_WIDTH}px)`);
       setIsWindowScroll(windowScroll);
 
-      const colMin = window.matchMedia("(max-width: 1024px)").matches
-        ? COL_MIN_TABLET
-        : COL_MIN_DESKTOP;
+      const colMin = matchesMedia("(max-width: 1024px)") ? COL_MIN_TABLET : COL_MIN_DESKTOP;
       setCols(Math.max(1, Math.floor((list.clientWidth + ROW_GAP) / (colMin + ROW_GAP))));
 
       if (windowScroll) {
@@ -74,6 +78,7 @@ export function VirtualizedPosterShowcase({
     };
 
     measure();
+    if (typeof ResizeObserver === "undefined") return;
     const ro = new ResizeObserver(measure);
     ro.observe(list);
     if (scroller) ro.observe(scroller);
@@ -120,14 +125,8 @@ export function VirtualizedPosterShowcase({
                 gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
               }}
             >
-              {rowTiles.map((tile, i) => (
-                <MovieTile
-                  key={tile.id}
-                  data={tile}
-                  index={start + i}
-                  onAlternativeSearch={onAlternativeSearch}
-                  suppressAnimations
-                />
+              {rowTiles.map((tile) => (
+                <MovieTile key={tile.id} data={tile} onAlternativeSearch={onAlternativeSearch} />
               ))}
             </div>
           );

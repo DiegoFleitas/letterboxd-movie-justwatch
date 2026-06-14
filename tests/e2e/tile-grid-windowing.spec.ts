@@ -7,15 +7,11 @@ import {
 } from "./app-test-helpers.js";
 
 /**
- * Spike-only smoke test for the windowed tile grid (VITE_VIRTUALIZE=1).
- * Run with the flag enabled, e.g.:
- *   VITE_VIRTUALIZE=1 bunx playwright test tests/e2e/virtualize-smoke.spec.ts
- *
- * Proves the windowing actually works: with 300 tiles only a viewport-sized
- * slice is in the DOM, and scrolling swaps in different tiles. Skips itself
- * when the flag is off so it does not fail the normal (animated-grid) suite.
+ * Smoke test for the windowed tile grid. Proves the windowing works: with 300
+ * tiles only a viewport-sized slice is in the DOM, and scrolling swaps in
+ * different tiles — on both the desktop (`.right-panel`) and mobile (window)
+ * scrollers.
  */
-const VIRTUALIZED = process.env.VITE_VIRTUALIZE === "1";
 const TILE_COUNT = 300;
 
 const PROVIDER = {
@@ -75,9 +71,7 @@ test.beforeEach(async ({ page }) => {
   await mockGeoIpRoute(page);
 });
 
-test.describe("Virtualized tile grid (spike)", () => {
-  test.skip(!VIRTUALIZED, "requires VITE_VIRTUALIZE=1");
-
+test.describe("Windowed tile grid", () => {
   // scrollKind: "panel" = desktop (`.right-panel` scrolls); "window" = mobile.
   for (const { name, viewport, scrollKind } of [
     {
@@ -110,12 +104,14 @@ test.describe("Virtualized tile grid (spike)", () => {
         if (kind === "window") window.scrollTo({ top: 4000 });
         else document.querySelector(".right-panel")?.scrollTo({ top: 4000 });
       }, scrollKind);
-      await page.waitForTimeout(400);
 
-      const idsAfterScroll = await tiles.evaluateAll((els) =>
-        els.map((e) => e.getAttribute("data-id")),
-      );
-      expect(idsAfterScroll).not.toContain(firstId);
+      // Retry until the virtualizer recomputes its window (avoids a fixed-wait race).
+      await expect(async () => {
+        const idsAfterScroll = await tiles.evaluateAll((els) =>
+          els.map((e) => e.getAttribute("data-id")),
+        );
+        expect(idsAfterScroll).not.toContain(firstId);
+      }).toPass({ timeout: 5000 });
     });
   }
 });

@@ -30,7 +30,7 @@ describe("MovieTile external links accessibility label", () => {
     await act(async () => {
       root.render(
         <AppStateProvider>
-          <MovieTile data={tileData} suppressAnimations />
+          <MovieTile data={tileData} />
         </AppStateProvider>,
       );
     });
@@ -56,7 +56,7 @@ describe("MovieTile external links accessibility label", () => {
     await act(async () => {
       root.render(
         <AppStateProvider>
-          <MovieTile data={tileData} suppressAnimations />
+          <MovieTile data={tileData} />
         </AppStateProvider>,
       );
     });
