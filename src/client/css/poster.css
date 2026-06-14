@@ -21,6 +21,35 @@
     padding: 0.5rem 0;
   }
 }
+
+/* Virtualized (spike) mode: the outer grid is replaced by absolutely
+   positioned rows; each row owns its own grid. */
+.poster-showcase--virtualized {
+  display: block;
+}
+.poster-virtual-list {
+  width: 100%;
+  max-width: 1800px;
+  margin: 0 auto;
+}
+.poster-virtual-row {
+  display: grid;
+  gap: 28px;
+  padding-bottom: 28px;
+}
+@media (max-width: 1024px) {
+  .poster-virtual-row {
+    gap: 18px;
+    padding-bottom: 18px;
+  }
+}
+@media (max-width: 767px) {
+  .poster-virtual-row {
+    gap: 10px;
+    padding-bottom: 10px;
+  }
+}
+
 .poster {
   position: relative;
   background: var(--color-surface);

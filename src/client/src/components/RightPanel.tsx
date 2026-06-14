@@ -6,6 +6,8 @@ import alternativeSearchIcon from "../assets/alternative-search.svg";
 import { getTileProviderNames } from "../utils/movieTiles";
 import type { TileData } from "../utils/movieTiles";
 import { MovieTile } from "./MovieTile";
+import { VirtualizedPosterShowcase } from "./VirtualizedPosterShowcase";
+import { isTileGridVirtualized } from "../utils/tileGridVirtualization";
 import { WaitCue } from "./WaitCue";
 import {
   createProviderFilterSet,
@@ -180,26 +182,36 @@ export function RightPanel(): React.ReactElement {
           </motion.button>
         ) : null}
       </div>
-      <div className="poster-showcase" data-testid="poster-showcase">
+      <div
+        className={`poster-showcase${isTileGridVirtualized() ? " poster-showcase--virtualized" : ""}`}
+        data-testid="poster-showcase"
+      >
         <Profiler id="TileGrid" onRender={recordProfile}>
-          {/*
-            Keep <AnimatePresence> permanently mounted and toggle per-tile
-            animation via the suppressAnimations prop. Swapping the parent
-            element type (bare array vs AnimatePresence) would force React to
-            unmount and remount every tile, which is catastrophic when clearing
-            the last filter expands the grid to the full list.
-          */}
-          <AnimatePresence mode="popLayout" initial={false}>
-            {visibleTiles.map((tile, idx) => (
-              <MovieTile
-                key={tile.id}
-                data={tile}
-                index={idx}
-                onAlternativeSearch={handleAlternativeSearch}
-                suppressAnimations={suppressAnimations}
-              />
-            ))}
-          </AnimatePresence>
+          {isTileGridVirtualized() ? (
+            <VirtualizedPosterShowcase
+              tiles={visibleTiles}
+              onAlternativeSearch={handleAlternativeSearch}
+            />
+          ) : (
+            /*
+              Keep <AnimatePresence> permanently mounted and toggle per-tile
+              animation via the suppressAnimations prop. Swapping the parent
+              element type (bare array vs AnimatePresence) would force React to
+              unmount and remount every tile, which is catastrophic when clearing
+              the last filter expands the grid to the full list.
+            */
+            <AnimatePresence mode="popLayout" initial={false}>
+              {visibleTiles.map((tile, idx) => (
+                <MovieTile
+                  key={tile.id}
+                  data={tile}
+                  index={idx}
+                  onAlternativeSearch={handleAlternativeSearch}
+                  suppressAnimations={suppressAnimations}
+                />
+              ))}
+            </AnimatePresence>
+          )}
         </Profiler>
       </div>
       <footer>
