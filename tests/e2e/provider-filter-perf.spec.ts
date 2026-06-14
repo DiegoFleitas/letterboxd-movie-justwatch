@@ -56,7 +56,11 @@ test.describe("Provider filter performance", () => {
     });
 
     // Clear any baseline profiler data
-    await page.evaluate(() => (window as Record<string, unknown>).__PERF_DATA__?.clearPerfData?.());
+    await page.evaluate(() =>
+      (
+        window as unknown as { __PERF_DATA__?: { clearPerfData?: () => void } }
+      ).__PERF_DATA__?.clearPerfData?.(),
+    );
 
     const providerNames: string[] = [];
     // Collect up to 5 provider names from the filter bar
@@ -118,9 +122,10 @@ test.describe("Provider filter performance", () => {
 
     // Collect profiler data if available
     const profilerEntries = await page.evaluate(() => {
-      const pd = (window as Record<string, unknown>).__PERF_DATA__ as
-        | { getPerfData?: () => { id: string; actualDuration: number }[] }
-        | undefined;
+      const w = window as unknown as {
+        __PERF_DATA__?: { getPerfData?: () => { id: string; actualDuration: number }[] };
+      };
+      const pd = w.__PERF_DATA__;
       return pd?.getPerfData?.() ?? null;
     });
 
