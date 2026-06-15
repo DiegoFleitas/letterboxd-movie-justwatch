@@ -82,6 +82,7 @@ interface ListResponse {
   watchlist: WatchlistElement[];
   lastPage: number;
   totalPages: number;
+  hasMore?: boolean;
 }
 
 interface LoadData {
@@ -115,6 +116,7 @@ export function useLetterboxdList(
   const isSubmittingListRef = useRef(false);
   const dataRef = useRef<LoadData | null>(null);
   const loadWatchlistRef = useRef<((d: LoadData) => Promise<void>) | null>(null);
+  const loadCustomListRef = useRef<((d: LoadData) => Promise<void>) | null>(null);
   const batchIdRef = useRef(0);
   const batchMapRef = useRef<
     Map<
@@ -131,8 +133,9 @@ export function useLetterboxdList(
   const processList = useCallback(
     async (data: LoadData, responseData: ListResponse): Promise<void> => {
       try {
-        const { error, watchlist, lastPage, totalPages } = responseData;
-        allPagesLoadedRef.current = lastPage === totalPages;
+        const { error, watchlist, lastPage, totalPages, hasMore } = responseData;
+        const moreToLoad = hasMore ?? lastPage < totalPages;
+        allPagesLoadedRef.current = !moreToLoad;
         watchlistPageCountRef.current = totalPages;
         if (error) {
           showError(error);
@@ -277,10 +280,11 @@ export function useLetterboxdList(
               .catch(createSearchErrorHandler(batchId, element, enrichPoster, data));
         });
         runWithConcurrency(searchTasks, resolveSearchConcurrency());
-        data.page = lastPage;
+        const loadedPage = data.page ?? 1;
+        data.page = loadedPage + 1;
         dataRef.current = data;
         if (!allPagesLoadedRef.current) {
-          toggleNotice(`Loaded page ${data.page} of ${totalPages}...`);
+          toggleNotice(`Loaded page ${loadedPage} of ${totalPages}...`);
           if (!scrollListenerRef.current) {
             const handleScroll = () => {
               if (allPagesLoadedRef.current) {
@@ -299,7 +303,11 @@ export function useLetterboxdList(
                 if (!d) return;
                 isLoadingRef.current = true;
                 toggleNotice(`Loading more pages...`);
-                (loadWatchlistRef.current || (() => Promise.resolve()))(d).finally(() => {
+                const loadMore =
+                  d.listType && d.listType !== "watchlist"
+                    ? loadCustomListRef.current
+                    : loadWatchlistRef.current;
+                (loadMore || (() => Promise.resolve()))(d).finally(() => {
                   isLoadingRef.current = false;
                 });
               }
@@ -415,6 +423,8 @@ export function useLetterboxdList(
     },
     [processList],
   );
+
+  loadCustomListRef.current = loadCustomList;
 
   const loadLetterboxdList = useCallback(
     async (listUrl: string, country: string): Promise<void> => {
