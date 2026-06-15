@@ -26,6 +26,18 @@ interface RedisClientLike {
   on(event: string, cb: (...args: unknown[]) => void): unknown;
 }
 
+/**
+ * Handler for the ioredis client `"error"` event.
+ *
+ * ioredis auto-reconnects with exponential backoff, so there is nothing to do
+ * here but log. NEVER throw: a throw inside the `"error"` listener escapes as an
+ * uncaught exception and crashes the process — fatal once Redis is enabled, e.g.
+ * on a transient connection drop or a free-tier rate-limit rejection.
+ */
+export const handleRedisClientError = (error: unknown): void => {
+  console.log(`[REDIS_CLIENT_ERROR] ${error}`);
+};
+
 let redisClient: RedisClientLike | null = null;
 /** Set in tests via _injectRedisClientForTest. When undefined, use real client; when null, no client; when object, use as mock. */
 let _testClient: RedisClientLike | null | undefined = undefined;
@@ -64,11 +76,7 @@ const getRedisClient = async (): Promise<RedisClientLike | null> => {
         commandTimeout: 10_000,
         connectTimeout: 10_000,
       });
-      client.on("error", (...args: unknown[]) => {
-        const error = args[0] as Error;
-        console.log(`[REDIS_CLIENT_ERROR] ${error}`);
-        throw error;
-      });
+      client.on("error", (...args: unknown[]) => handleRedisClientError(args[0]));
       client.on("connect", () => {
         console.log("Connected to Redis");
       });

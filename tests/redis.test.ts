@@ -13,6 +13,7 @@ import {
   disconnectRedis,
   _resetRedisForTesting,
   _injectRedisClientForTest,
+  handleRedisClientError,
 } from "@server/lib/redis.js";
 
 function createMockClient(overrides: Record<string, unknown> = {}): Record<string, unknown> {
@@ -572,6 +573,17 @@ describe("Redis cache", () => {
     _resetRedisForTesting();
     _injectRedisClientForTest(null);
     expect(await isHealthy()).toBe(false);
+  });
+
+  describe("handleRedisClientError", () => {
+    it("logs but never throws (a throw would crash the process)", () => {
+      expect(() => handleRedisClientError(new Error("boom"))).not.toThrow();
+    });
+
+    it("does not throw on a non-Error argument", () => {
+      expect(() => handleRedisClientError("connection reset")).not.toThrow();
+      expect(() => handleRedisClientError(undefined)).not.toThrow();
+    });
   });
 
   describe("DISABLE_REDIS", () => {
