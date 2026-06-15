@@ -23,6 +23,14 @@ export function registerFastifyStaticAndIndex(
   app.register(fastifyStatic, {
     root: publicDistPath,
     prefix: "/",
+    // Vite emits content-hashed filenames into dist/assets/, so those bytes are
+    // immutable — cache them for a year. index.html is served by the "/" route
+    // above (not this plugin) and stays uncached so deploys are picked up.
+    setHeaders(res, filePath) {
+      if (filePath.includes(`${path.sep}assets${path.sep}`)) {
+        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      }
+    },
   });
 
   app.get("/movie_placeholder.svg", async (_request, reply) => {
