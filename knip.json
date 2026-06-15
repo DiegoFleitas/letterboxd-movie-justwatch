@@ -1,6 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "ignore": ["**/*.d.ts"],
+  "ignore": ["**/*.d.ts", ".claude/**"],
   "ignoreBinaries": ["flyctl"],
   "entry": [
     "tests/**/*.test.ts",
