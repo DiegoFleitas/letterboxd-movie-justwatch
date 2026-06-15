@@ -166,7 +166,7 @@ const fetchList = async ({ url, cacheKeyPrefix, req, res }: FetchListArgs): Prom
       return;
     }
 
-    const maxPages = 20;
+    const LIST_PAGES_PER_REQUEST = 1;
     const filmsPerPage = 28;
     let totalPages = 1;
     let currentPage = 0;
@@ -176,7 +176,7 @@ const fetchList = async ({ url, cacheKeyPrefix, req, res }: FetchListArgs): Prom
     let lastPage: number | null = null;
     const cacheCategories = getCacheCategories(cacheKeyPrefix);
 
-    for (let index = 0; index < maxPages; index++) {
+    for (let index = 0; index < LIST_PAGES_PER_REQUEST; index++) {
       currentPage = Number(page) + index;
       const cacheKey = `${cacheKeyPrefix}:page:${currentPage}`;
       const cachedFilms = await fetchFromCache(cacheKey);
@@ -220,11 +220,13 @@ const fetchList = async ({ url, cacheKeyPrefix, req, res }: FetchListArgs): Prom
     }
 
     const films = filmsPromises;
+    const hasMore = haveFilmTotal ? currentPage < totalPages : films.length >= filmsPerPage;
     res.status(HTTP_STATUS_OK).json({
       message: "List found",
       watchlist: films,
       lastPage: Math.min(currentPage, totalPages),
       totalPages: totalPages || (lastPage ?? 1),
+      hasMore,
     });
   } catch (error) {
     console.error(error);

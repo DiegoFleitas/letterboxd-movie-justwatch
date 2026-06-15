@@ -62,19 +62,22 @@ describe("letterboxdLists Redis caching", () => {
     vi.clearAllMocks();
   });
 
-  it("caches an empty array for later pages after total is known (pagination tail)", async () => {
+  it("returns one page per request with hasMore flag (pagination tail)", async () => {
     const page1Html = `
       <html><body>
-        <h1 class="section-heading">u wants to see 5 films</h1>
+        <h1 class="section-heading">u wants to see 40 films</h1>
         <ul class="grid">
-          <li class="griditem"><div data-target-link="/film/foo-2020/"><img alt="Foo"/></div></li>
+          ${Array.from(
+            { length: 28 },
+            (_, i) => `
+            <li class="griditem"><div data-target-link="/film/film-${i}/"><img alt="Film ${i}"/></div></li>
+          `,
+          ).join("")}
         </ul>
       </body></html>`;
-    const page2Html = `<html><body><h1 class="section-heading">u wants to see 5 films</h1></body></html>`;
 
     mockFetchLetterboxdHtml.mockImplementation((url: string) => {
       if (url.includes("/page/1/")) return Promise.resolve(page1Html);
-      if (url.includes("/page/2/")) return Promise.resolve(page2Html);
       return Promise.reject(new Error(`unexpected fetch ${url}`));
     });
 
@@ -87,17 +90,54 @@ describe("letterboxdLists Redis caching", () => {
       },
       HTTP_API_PATHS.letterboxdWatchlist,
     );
-    const { res, getStatus } = createHttpMockResponse();
+    const { res, getStatus, getJson } = createHttpMockResponse();
     await letterboxdWatchlist({ req, res });
 
     expect(getStatus()).toBe(200);
-    const emptyTailCall = mockSetCacheValue.mock.calls.find(
-      (args) =>
-        args[0] === "watchlist:u_watchlist:page:2" &&
-        Array.isArray(args[1]) &&
-        args[1].length === 0,
+    const json = getJson() as Record<string, unknown>;
+    expect(json.hasMore).toBe(true);
+    expect(Array.isArray(json.watchlist)).toBe(true);
+    expect((json.watchlist as unknown[]).length).toBe(28);
+
+    // Only page 1 was fetched — no pre-fetching of page 2
+    expect(mockSetCacheValue).toHaveBeenCalledTimes(1);
+    expect(mockSetCacheValue).toHaveBeenCalledWith(
+      expect.stringContaining(":page:1"),
+      expect.any(Array),
+      expect.any(Number),
+      expect.any(Array),
     );
-    expect(emptyTailCall).toBeDefined();
+  });
+
+  it("returns hasMore false on the last page", async () => {
+    const lastPageHtml = `
+      <html><body>
+        <h1 class="section-heading">u wants to see 1 film</h1>
+        <ul class="grid">
+          <li class="griditem"><div data-target-link="/film/bar/"><img alt="Bar"/></div></li>
+        </ul>
+      </body></html>`;
+
+    mockFetchLetterboxdHtml.mockImplementation((url: string) => {
+      if (url.includes("/page/1/")) return Promise.resolve(lastPageHtml);
+      return Promise.reject(new Error(`unexpected fetch ${url}`));
+    });
+
+    const req = createLetterboxdRequest(
+      {
+        username: "u",
+        listUrl: "https://letterboxd.com/u/watchlist/",
+        listType: "watchlist",
+        page: 1,
+      },
+      HTTP_API_PATHS.letterboxdWatchlist,
+    );
+    const { res, getStatus, getJson } = createHttpMockResponse();
+    await letterboxdWatchlist({ req, res });
+
+    expect(getStatus()).toBe(200);
+    const json = getJson() as Record<string, unknown>;
+    expect(json.hasMore).toBe(false);
   });
 
   it("returns 400 for invalid page number", async () => {
