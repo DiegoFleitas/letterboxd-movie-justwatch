@@ -18,6 +18,13 @@ import { captureServerException } from "../lib/sentryCapture.js";
 const axios = axiosHelper();
 const cacheTtl = Number(process.env.CACHE_TTL) || 3600;
 const CACHE_TTL_UNAVAILABLE = 120;
+/**
+ * Shorter TTL for "movie not found" answers (TMDB miss or no JustWatch match).
+ * These can flip to a real hit as upstream catalogs update, so we don't want to
+ * pin a not-found for the full hour. A legit "no streaming services" answer is a
+ * different case and keeps the full TTL.
+ */
+const CACHE_TTL_NOT_FOUND = 600;
 /** Redis category for movie-search responses (must not reuse Letterboxd list page category `list`). */
 const SEARCH_MOVIE_CACHE_CATEGORY = "search-movie";
 const JUSTWATCH_TIMEOUT_MS = 15000;
@@ -258,7 +265,7 @@ export const searchMovie: HttpHandler = async ({ req, res }) => {
     const tmdbResult = await searchTmdb(title, year);
     if (!tmdbResult.data) {
       const response = { error: "Movie not found (TMDB)", title, year };
-      await setCacheValue(cacheKey, response, cacheTtl, SEARCH_MOVIE_CACHE_CATEGORY);
+      await setCacheValue(cacheKey, response, CACHE_TTL_NOT_FOUND, SEARCH_MOVIE_CACHE_CATEGORY);
       res.json(response);
       return;
     }
@@ -298,7 +305,7 @@ export const searchMovie: HttpHandler = async ({ req, res }) => {
         tmdbLink: tmdbResult.tmdbLink,
         letterboxdStableLink: tmdbResult.letterboxdStableLink,
         cacheKey,
-        cacheTtl,
+        cacheTtl: CACHE_TTL_NOT_FOUND,
         res,
       });
       return;
