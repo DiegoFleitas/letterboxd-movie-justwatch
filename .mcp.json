@@ -7,6 +7,12 @@
         "Authorization": "Bearer ${SONARQUBE_TOKEN}",
         "SONARQUBE_ORG": "${SONARQUBE_ORG}"
       }
+    },
+    "playwright": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "--prefix", "/tmp", "@playwright/mcp@latest"],
+      "env": {}
     }
   }
 }
