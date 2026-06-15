@@ -1,7 +1,7 @@
 import type { HttpHandler } from "../httpContext.js";
 import { captureServerException } from "../lib/sentryCapture.js";
 import * as cheerio from "cheerio";
-import { getCacheValue, indexCacheKeyByCategory, setCacheValue } from "../lib/redis.js";
+import { getCacheValue, setCacheValue } from "../lib/redis.js";
 import {
   getPageFilms,
   getFilmsCount,
@@ -38,13 +38,12 @@ interface FetchListArgs {
   };
 }
 
-async function fetchFromCache(
-  cacheKey: string,
-  cacheCategories: string[],
-): Promise<PageFilm[] | null> {
+async function fetchFromCache(cacheKey: string): Promise<PageFilm[] | null> {
+  // No re-indexing here: the key was indexed when written (setCacheValue's
+  // category arg). Re-indexing on every read fired redundant SADDs on the hot
+  // path — pointless overhead, especially against a rate-limited free tier.
   const cachedList = (await getCacheValue(cacheKey)) as PageFilm[] | null | undefined;
   if (cachedList && Array.isArray(cachedList)) {
-    await indexCacheKeyByCategory(cacheKey, cacheCategories);
     return cachedList;
   }
   return null;
@@ -180,7 +179,7 @@ const fetchList = async ({ url, cacheKeyPrefix, req, res }: FetchListArgs): Prom
     for (let index = 0; index < maxPages; index++) {
       currentPage = Number(page) + index;
       const cacheKey = `${cacheKeyPrefix}:page:${currentPage}`;
-      const cachedFilms = await fetchFromCache(cacheKey, cacheCategories);
+      const cachedFilms = await fetchFromCache(cacheKey);
       if (cachedFilms) {
         console.log(`List for page ${currentPage} found (cached)`);
         filmsPromises = filmsPromises.concat(cachedFilms);

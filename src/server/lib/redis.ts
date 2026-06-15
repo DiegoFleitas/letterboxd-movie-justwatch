@@ -141,7 +141,13 @@ export const setCacheValue = async (
       const categories = Array.isArray(category) ? category : [category];
       for (const categoryName of categories) {
         const indexKey = `${process.env.FLY_APP_NAME || "app"}:keys:${categoryName}`;
-        await client.sadd(indexKey, hashedKey);
+        // Fire-and-forget: the category index feeds only the dev cache panel, so
+        // keep it off the request's critical path. Awaiting it here doubled the
+        // Redis round-trips per write and, on a rate-limited free tier, a
+        // throttled SADD could block up to commandTimeout (10s).
+        void client.sadd(indexKey, hashedKey).catch((error: unknown) => {
+          console.log(`[REDIS_SADD_ERROR] (${categoryName}) ${error}`);
+        });
       }
     }
     return result === "OK";
