@@ -131,6 +131,20 @@ describe("backend integration (fastify)", () => {
       expect(typeof (body as { title: unknown }).title).toBe("string");
     },
   );
+
+  it.skipIf(!process.env.MOVIE_DB_API_KEY)(
+    "GET /api/proxy hits TMDb with v3 api_key and returns 200",
+    async () => {
+      const res = await fetch(
+        `${baseUrl}${HTTP_API_PATHS.proxyPrefix}/https://api.themoviedb.org/3/search/movie?query=Inception`,
+      );
+
+      expect(res.status).toBe(200);
+      const body = (await res.json()) as { results?: unknown[] };
+      expect(body.results).toBeDefined();
+      expect(Array.isArray(body.results)).toBe(true);
+    },
+  );
 });
 
 describe("backend integration (DISABLE_REDIS)", () => {
