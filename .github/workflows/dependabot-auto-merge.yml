@@ -13,7 +13,9 @@ permissions:
 
 jobs:
   auto-merge:
-    if: ${{ github.actor == 'dependabot[bot]' }}
+    # Only runs for Dependabot PRs from the same repo (not forks),
+    # which mitigates pull_request_target spoofing concerns.
+    if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' && github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name }}
     runs-on: ubuntu-latest
     steps:
       - name: Fetch Dependabot metadata
