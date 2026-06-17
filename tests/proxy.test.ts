@@ -136,9 +136,15 @@ describe("proxy handler", () => {
 
     expect(mockGet).toHaveBeenCalledTimes(1);
     const calledUrl = String(mockGet.mock.calls[0]?.[0] ?? "");
-    const calledConfig = mockGet.mock.calls[0]?.[1] as { headers?: Record<string, string> };
+    const calledConfig = mockGet.mock.calls[0]?.[1] as
+      | { headers?: Record<string, string> }
+      | undefined;
     expect(calledUrl).toContain("api.themoviedb.org");
-    expect(calledConfig?.headers?.["Authorization"]).toContain("Bearer");
+    expect(calledUrl).toContain("api_key=");
+    // TMDb v3 API keys must be sent as ?api_key= query param, not
+    // Authorization: Bearer (that's for v4 JWTs). This assertion prevents
+    // recurring regression — see git log for src/server/controllers/proxy.ts.
+    expect(calledConfig?.headers?.["Authorization"]).toBeUndefined();
     expect(getStatus()).toBe(200);
     expect(getJson()).toEqual({ ok: true });
   });
