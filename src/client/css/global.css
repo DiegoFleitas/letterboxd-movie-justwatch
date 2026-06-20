@@ -126,3 +126,78 @@ a {
   border-color: var(--color-accent);
   color: var(--color-accent);
 }
+
+/* Dismissible toast content: message + close button */
+.app-toast-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+}
+
+.app-toast-message {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.app-toast-content--link .app-toast-link {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+}
+
+.app-toast-dismiss {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin: -2px -4px 0 0;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background 120ms ease,
+    color 120ms ease;
+}
+
+.app-toast-dismiss:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-text);
+}
+
+.app-toast-dismiss:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+/* Mobile: keep toasts within the viewport (base width has a 420px floor) */
+@media (max-width: 767px) {
+  .toaster-container {
+    left: 0.75rem !important;
+    right: 0.75rem !important;
+  }
+
+  .toaster-container .app-toast,
+  .app-toast-link {
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .app-toast-content--link {
+    width: 100%;
+  }
+
+  .app-toast-dismiss {
+    width: 32px;
+    height: 32px;
+    margin-top: -4px;
+  }
+}

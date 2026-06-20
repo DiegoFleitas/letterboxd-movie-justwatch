@@ -143,9 +143,7 @@ test.describe("List form", () => {
     await expect(page.getByTestId("poster-showcase").getByTestId("tile")).toHaveCount(3, {
       timeout: 15000,
     });
-    const groupedToast = page
-      .getByRole("status")
-      .filter({ hasText: /3 titles (encountered errors|:)/ });
+    const groupedToast = page.getByRole("status").filter({ hasText: /3 titles (didn't load|:)/ });
     await expect(groupedToast).toBeVisible({ timeout: 5000 });
     await expect(groupedToast).toHaveCount(1);
   });
@@ -190,7 +188,9 @@ test.describe("List form", () => {
       timeout: 10000,
     });
     await expect(
-      page.getByRole("status").filter({ hasText: /A Ghost Story|No streaming|alternative search/ }),
+      page
+        .getByRole("status")
+        .filter({ hasText: /A Ghost Story|Not available|Alternative search/i }),
     ).toBeVisible({ timeout: 5000 });
   });
 });

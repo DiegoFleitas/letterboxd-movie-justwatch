@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { render, cleanup, waitFor } from "@testing-library/react";
+import { render, cleanup, waitFor, fireEvent } from "@testing-library/react";
 import { renderToStaticMarkup } from "react-dom/server";
 import React from "react";
 import { ToastProvider } from "../components/ToastProvider";
@@ -73,17 +73,51 @@ describe("ToastProvider", () => {
 
     impl?.success?.("ok");
     expect(toastSuccess).toHaveBeenCalledWith(
-      "ok",
+      expect.any(Function),
       expect.objectContaining({ className: "app-toast" }),
     );
+    const successRender = toastSuccess.mock.calls[0][0] as (t: {
+      id: string;
+    }) => React.ReactElement;
+    const successMarkup = renderToStaticMarkup(successRender({ id: "s1" }));
+    expect(successMarkup).toContain("ok");
+    expect(successMarkup).toContain('aria-label="Dismiss notification"');
 
     impl?.error?.("bad");
     expect(toastError).toHaveBeenCalledWith(
-      "bad",
+      expect.any(Function),
       expect.objectContaining({
+        duration: Infinity,
         style: expect.objectContaining({ borderColor: "#b91c1c" }),
       }),
     );
+    const errorRender = toastError.mock.calls[0][0] as (t: { id: string }) => React.ReactElement;
+    const errorMarkup = renderToStaticMarkup(errorRender({ id: "e1" }));
+    expect(errorMarkup).toContain("bad");
+    expect(errorMarkup).toContain('aria-label="Dismiss notification"');
+  });
+
+  it("clicking the dismiss button dismisses that specific toast", async () => {
+    await renderToastProvider(<ToastProvider>{"x"}</ToastProvider>);
+    const impl = getToastImpl();
+
+    impl?.error?.("boom");
+    const errorRender = toastError.mock.calls[0][0] as (t: { id: string }) => React.ReactElement;
+
+    const { getByRole } = render(errorRender({ id: "toast-42" }));
+    fireEvent.click(getByRole("button", { name: "Dismiss notification" }));
+    expect(toastDismiss).toHaveBeenCalledWith("toast-42");
+  });
+
+  it("link toast dismiss button dismisses that specific toast", async () => {
+    await renderToastProvider(<ToastProvider>{null}</ToastProvider>);
+    const impl = getToastImpl();
+    messageWithLinkPayload(impl!, { url: "https://example.com/x", text: "Open" });
+    const [renderFn] = toastCustom.mock.calls[0] as [(t: { id: string }) => React.ReactElement];
+
+    const { getByRole } = render(renderFn({ id: "link-7" }));
+    fireEvent.click(getByRole("button", { name: "Dismiss notification" }));
+    expect(toastDismiss).toHaveBeenCalledWith("link-7");
   });
 
   it("loading uses default copy when message is nullish", async () => {
@@ -109,14 +143,15 @@ describe("ToastProvider", () => {
 
     expect(toastCustom).toHaveBeenCalledTimes(1);
     const [renderFn, opts] = toastCustom.mock.calls[0] as [
-      () => React.ReactElement,
+      (t: { id: string }) => React.ReactElement,
       Record<string, unknown>,
     ];
     expect(opts).toMatchObject({ duration: Infinity, position: "top-right" });
 
-    const markup = renderToStaticMarkup(renderFn());
+    const markup = renderToStaticMarkup(renderFn({ id: "l1" }));
     expect(markup).toContain('href="https://example.com/path"');
     expect(markup).toContain(">Open</a>");
+    expect(markup).toContain('aria-label="Dismiss notification"');
   });
 
   it("messageWithLink falls back to toast.success for null, string, and error object", async () => {
@@ -139,8 +174,8 @@ describe("ToastProvider", () => {
     const impl = getToastImpl()!;
     messageWithLinkPayload(impl, { text: "label only" });
     expect(toastCustom).toHaveBeenCalledTimes(1);
-    const [renderFn] = toastCustom.mock.calls[0] as [() => React.ReactElement];
-    const markup = renderToStaticMarkup(renderFn());
+    const [renderFn] = toastCustom.mock.calls[0] as [(t: { id: string }) => React.ReactElement];
+    const markup = renderToStaticMarkup(renderFn({ id: "l2" }));
     expect(markup).toContain('href="#"');
     expect(markup).toContain(">label only</a>");
   });

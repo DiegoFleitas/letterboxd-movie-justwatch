@@ -253,7 +253,7 @@ describe("searchMovie controller", () => {
     const payload = args.res.jsonMock.mock.calls[0][0] as {
       error?: string;
     };
-    expect(payload.error).toContain("No streaming services");
+    expect(payload.error).toContain("Not available on any streaming service");
   });
 
   it("returns no streaming services when offers exist but none are streamable types", async () => {
@@ -301,7 +301,7 @@ describe("searchMovie controller", () => {
     const payload = args.res.jsonMock.mock.calls[0][0] as {
       error?: string;
     };
-    expect(payload.error).toContain("No streaming services");
+    expect(payload.error).toContain("Not available on any streaming service");
   });
 
   it("returns success with movieProviders on happy path", async () => {

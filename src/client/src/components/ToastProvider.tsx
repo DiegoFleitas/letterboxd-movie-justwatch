@@ -5,6 +5,28 @@ import { sanitizeHrefForToast } from "../utils/htmlSafeForToast";
 import { TOAST_DEFAULT_DURATION_MS } from "../animation/timing";
 import { WaitCue } from "./WaitCue";
 
+function DismissButton({ toastId }: { toastId: string }): React.ReactElement {
+  return (
+    <button
+      type="button"
+      className="app-toast-dismiss"
+      aria-label="Dismiss notification"
+      onClick={() => toast.dismiss(toastId)}
+    >
+      ×
+    </button>
+  );
+}
+
+function dismissible(message: React.ReactNode, toastId: string): React.ReactElement {
+  return (
+    <span className="app-toast-content">
+      <span className="app-toast-message">{message}</span>
+      <DismissButton toastId={toastId} />
+    </span>
+  );
+}
+
 const toastStyle = {
   background: "#10161d",
   color: "#d9e8ed",
@@ -24,10 +46,12 @@ const toastOptions = {
 export function ToastProvider({ children }: { children: React.ReactNode }): React.ReactElement {
   useEffect(() => {
     setToastImpl({
-      success: (msg: string) => toast.success(String(msg ?? ""), toastOptions),
+      success: (msg: string) =>
+        toast.success((t) => dismissible(String(msg ?? ""), t.id), toastOptions),
       error: (msg: string) =>
-        toast.error(String(msg ?? ""), {
+        toast.error((t) => dismissible(String(msg ?? ""), t.id), {
           ...toastOptions,
+          duration: Infinity,
           style: { ...toastStyle, borderColor: "#b91c1c" },
           iconTheme: { primary: "#ef4444", secondary: "#10161d" },
         }),
@@ -53,15 +77,18 @@ export function ToastProvider({ children }: { children: React.ReactNode }): Reac
         const url = data.url;
         const text = data.text ?? "";
         toast.custom(
-          () => (
-            <a
-              href={sanitizeHrefForToast(url)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="app-toast-link"
-            >
-              {text}
-            </a>
+          (t) => (
+            <span className="app-toast-content app-toast-content--link">
+              <a
+                href={sanitizeHrefForToast(url)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="app-toast-link"
+              >
+                {text}
+              </a>
+              <DismissButton toastId={t.id} />
+            </span>
           ),
           { duration: Infinity, position: "top-right", style: toastStyle },
         );

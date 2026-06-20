@@ -207,6 +207,15 @@
   transform-origin: center center;
   transition: transform 0.36s cubic-bezier(0.2, 0.9, 0.2, 1);
 }
+/* Backdrop poster image only (not provider/external icons): enforce a uniform
+   movie-poster 2:3 shape so tiles are consistently rectangular regardless of
+   the source image's native dimensions. Matches the skeleton's aspect ratio,
+   so there's no reflow when the image loads. */
+.poster-body > img {
+  aspect-ratio: 2 / 3;
+  height: auto;
+  object-fit: cover;
+}
 .poster-info {
   position: absolute;
   bottom: 0;

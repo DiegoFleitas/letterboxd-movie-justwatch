@@ -46,13 +46,12 @@ export const showBatchErrors = (errors: BatchError[] | null | undefined): void =
   const uniqueMessages = [...new Set(errors.map((e) => e.message).filter(Boolean))];
   let batchMessage: string;
   if (uniqueMessages.length === 0) {
-    batchMessage = `${errors.length} titles encountered errors while loading.`;
+    batchMessage = `${errors.length} titles didn't load.`;
   } else if (uniqueMessages.length === 1) {
     batchMessage = `${errors.length} titles: ${uniqueMessages[0]}`;
   } else {
     batchMessage =
-      `${errors.length} titles encountered errors while loading:\n` +
-      uniqueMessages.map((msg) => `- ${msg}`).join("\n");
+      `${errors.length} titles didn't load:\n` + uniqueMessages.map((msg) => `- ${msg}`).join("\n");
   }
   showError(batchMessage);
 };

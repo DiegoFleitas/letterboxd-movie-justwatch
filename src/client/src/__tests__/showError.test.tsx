@@ -98,6 +98,6 @@ describe("showBatchErrors", () => {
       { title: "A", year: 1, message: "" },
       { title: "B", year: 2, message: "" },
     ]);
-    expect(errorFn.mock.calls[0][0]).toContain("2 titles encountered errors");
+    expect(errorFn.mock.calls[0][0]).toContain("2 titles didn't load");
   });
 });
