@@ -39,13 +39,16 @@ for (const { name, viewport, target } of cases) {
     });
     await page.waitForTimeout(500);
 
-    const info = await page.evaluate(
+    const info = await page.evaluate(() => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      () => (window as any).__scrollListenerInfo as Array<{ target: string; handlerBody: string }>,
-    );
+      return (globalThis as any).__scrollListenerInfo as Array<{
+        target: string;
+        handlerBody: string;
+      }>;
+    });
 
     const paginationHandler = info.find((h) => h.handlerBody.includes("allPagesLoadedRef"));
-    expect(paginationHandler).toBeDefined();
-    expect(paginationHandler!.target).toBe(target);
+    if (!paginationHandler) throw new Error("Pagination handler not found");
+    expect(paginationHandler.target).toBe(target);
   });
 }

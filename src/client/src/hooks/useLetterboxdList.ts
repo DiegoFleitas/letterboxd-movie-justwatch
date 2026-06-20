@@ -74,6 +74,16 @@ function runWithConcurrency(tasks: (() => Promise<unknown>)[], limit: number): P
   ) as Promise<unknown> as Promise<void>;
 }
 
+function isScrollNearBottom(target: EventTarget): boolean {
+  if (target === globalThis) {
+    return (
+      globalThis.innerHeight + globalThis.scrollY + 100 >= document.documentElement.scrollHeight
+    );
+  }
+  const el = target as HTMLElement;
+  return el.scrollTop + el.clientHeight + 100 >= el.scrollHeight;
+}
+
 interface LoadData {
   listUrl?: string;
   country?: string;
@@ -110,6 +120,46 @@ export function useLetterboxdList(
     >
   >(new Map());
   const noPosterReportTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  const ensureScrollListener = useCallback(function ensureScrollListener(): void {
+    if (scrollListenerRef.current) return;
+
+    const handleScroll = (e: Event): void => {
+      if (allPagesLoadedRef.current) {
+        const fn = scrollListenerRef.current;
+        if (fn) {
+          for (const c of scrollContainersRef.current) {
+            c.removeEventListener("scroll", fn);
+          }
+        }
+        scrollListenerRef.current = null;
+        scrollContainersRef.current = [];
+        return;
+      }
+      if (isLoadingRef.current) return;
+      if (!isScrollNearBottom(e.currentTarget as EventTarget)) return;
+
+      const d = dataRef.current;
+      if (!d) return;
+      isLoadingRef.current = true;
+      toggleNotice("Loading more pages...");
+      const loadMore =
+        d.listType && d.listType !== "watchlist"
+          ? loadCustomListRef.current
+          : loadWatchlistRef.current;
+      (loadMore || (() => Promise.resolve()))(d).finally(() => {
+        isLoadingRef.current = false;
+      });
+    };
+
+    scrollListenerRef.current = handleScroll;
+    const rightPanel = document.querySelector(".right-panel");
+    scrollContainersRef.current =
+      rightPanel && globalThis.innerWidth >= 1024 ? [rightPanel] : [globalThis];
+    for (const c of scrollContainersRef.current) {
+      c.addEventListener("scroll", handleScroll, { passive: true });
+    }
+  }, []);
 
   const processList = useCallback(
     async (data: LoadData, responseData: LetterboxdListResponse): Promise<void> => {
@@ -266,53 +316,7 @@ export function useLetterboxdList(
         dataRef.current = data;
         if (!allPagesLoadedRef.current) {
           toggleNotice(`Loaded page ${loadedPage} of ${totalPages}...`);
-          if (!scrollListenerRef.current) {
-            const handleScroll = (e: Event) => {
-              if (allPagesLoadedRef.current) {
-                const fn = scrollListenerRef.current;
-                if (fn) {
-                  for (const c of scrollContainersRef.current) {
-                    c.removeEventListener("scroll", fn);
-                  }
-                }
-                scrollListenerRef.current = null;
-                scrollContainersRef.current = [];
-                return;
-              }
-              if (!isLoadingRef.current) {
-                const target = e.currentTarget as EventTarget;
-                let isNearBottom: boolean;
-                if (target === globalThis) {
-                  isNearBottom =
-                    globalThis.innerHeight + globalThis.scrollY + 100 >=
-                    document.documentElement.scrollHeight;
-                } else {
-                  const el = target as HTMLElement;
-                  isNearBottom = el.scrollTop + el.clientHeight + 100 >= el.scrollHeight;
-                }
-                if (isNearBottom) {
-                  const d = dataRef.current;
-                  if (!d) return;
-                  isLoadingRef.current = true;
-                  toggleNotice(`Loading more pages...`);
-                  const loadMore =
-                    d.listType && d.listType !== "watchlist"
-                      ? loadCustomListRef.current
-                      : loadWatchlistRef.current;
-                  (loadMore || (() => Promise.resolve()))(d).finally(() => {
-                    isLoadingRef.current = false;
-                  });
-                }
-              }
-            };
-            scrollListenerRef.current = handleScroll;
-            const rightPanel = document.querySelector(".right-panel");
-            scrollContainersRef.current =
-              rightPanel && globalThis.innerWidth >= 1024 ? [rightPanel] : [globalThis];
-            for (const c of scrollContainersRef.current) {
-              c.addEventListener("scroll", handleScroll, { passive: true });
-            }
-          }
+          ensureScrollListener();
         } else {
           const loadedMessage =
             totalPages === 1
@@ -335,7 +339,7 @@ export function useLetterboxdList(
         }
       }
     },
-    [mergeTile, listMovieTilesRef],
+    [mergeTile, listMovieTilesRef, ensureScrollListener],
   );
 
   const loadWatchlist = useCallback(

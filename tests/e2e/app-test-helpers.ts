@@ -62,13 +62,14 @@ export async function mockGeoIpRoute(page: Page): Promise<void> {
  * element and handler body for every scroll listener registered during
  * the page lifecycle. Later, callers query `window.__scrollListenerInfo`
  * to verify which element the pagination handler was attached to.
+ * Callers query `globalThis.__scrollListenerInfo` at test time.
  */
 export async function setupScrollListenerInterceptor(page: Page): Promise<void> {
   await page.addInitScript(() => {
     const original = EventTarget.prototype.addEventListener;
     const info: Array<{ target: string; handlerBody: string }> = [];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (window as any).__scrollListenerInfo = info;
+    (globalThis as any).__scrollListenerInfo = info;
 
     EventTarget.prototype.addEventListener = function (
       this: EventTarget,
@@ -91,11 +92,7 @@ export async function setupScrollListenerInterceptor(page: Page): Promise<void> 
 /** Mock the letterboxd-watchlist and search-movie API routes for pagination tests. */
 export async function mockListAndSearchRoutes(page: Page): Promise<void> {
   await page.route("**/api/letterboxd-watchlist", (route) => {
-    const baseList = (
-      letterboxdFixtures[0] as {
-        response: { watchlist: Array<{ title?: string; year?: string | number }> };
-      }
-    ).response.watchlist;
+    const baseList = letterboxdFixtures[0]?.response.watchlist ?? [];
     const watchlist = baseList.map((e) => ({ ...e }));
     return route.fulfill({
       status: 200,
