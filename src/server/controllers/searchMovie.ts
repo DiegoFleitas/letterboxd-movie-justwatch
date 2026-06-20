@@ -221,7 +221,7 @@ function buildNoStreamingResponse(params: {
   country: string;
 }): Record<string, unknown> {
   return {
-    error: `No streaming services offering this movie on your country (${params.country})\n\nNothing on streaming? Try Alternative search on the film tile.`,
+    error: `Not available on any streaming service in your country (${params.country}). Try Alternative search on the film tile.`,
     title: params.title,
     year: params.year,
     poster: params.poster,
