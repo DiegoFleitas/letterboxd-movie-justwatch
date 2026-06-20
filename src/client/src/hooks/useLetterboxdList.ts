@@ -91,7 +91,8 @@ export function useLetterboxdList(
 ): (listUrl: string, country: string) => Promise<void> {
   const allPagesLoadedRef = useRef(false);
   const watchlistPageCountRef = useRef(0);
-  const scrollListenerRef = useRef<(() => void) | null>(null);
+  const scrollListenerRef = useRef<((e: Event) => void) | null>(null);
+  const scrollContainersRef = useRef<EventTarget[]>([]);
   const isLoadingRef = useRef(false);
   const isSubmittingListRef = useRef(false);
   const dataRef = useRef<LoadData | null>(null);
@@ -266,34 +267,51 @@ export function useLetterboxdList(
         if (!allPagesLoadedRef.current) {
           toggleNotice(`Loaded page ${loadedPage} of ${totalPages}...`);
           if (!scrollListenerRef.current) {
-            const handleScroll = () => {
+            const handleScroll = (e: Event) => {
               if (allPagesLoadedRef.current) {
-                if (scrollListenerRef.current) {
-                  globalThis.removeEventListener("scroll", scrollListenerRef.current);
-                  scrollListenerRef.current = null;
+                const fn = scrollListenerRef.current;
+                if (fn) {
+                  for (const c of scrollContainersRef.current) {
+                    c.removeEventListener("scroll", fn);
+                  }
                 }
+                scrollListenerRef.current = null;
+                scrollContainersRef.current = [];
                 return;
               }
-              if (
-                !isLoadingRef.current &&
-                globalThis.innerHeight + globalThis.scrollY + 100 >=
-                  document.documentElement.scrollHeight
-              ) {
-                const d = dataRef.current;
-                if (!d) return;
-                isLoadingRef.current = true;
-                toggleNotice(`Loading more pages...`);
-                const loadMore =
-                  d.listType && d.listType !== "watchlist"
-                    ? loadCustomListRef.current
-                    : loadWatchlistRef.current;
-                (loadMore || (() => Promise.resolve()))(d).finally(() => {
-                  isLoadingRef.current = false;
-                });
+              if (!isLoadingRef.current) {
+                const target = e.currentTarget as EventTarget;
+                let isNearBottom: boolean;
+                if (target === globalThis) {
+                  isNearBottom =
+                    globalThis.innerHeight + globalThis.scrollY + 100 >=
+                    document.documentElement.scrollHeight;
+                } else {
+                  const el = target as HTMLElement;
+                  isNearBottom = el.scrollTop + el.clientHeight + 100 >= el.scrollHeight;
+                }
+                if (isNearBottom) {
+                  const d = dataRef.current;
+                  if (!d) return;
+                  isLoadingRef.current = true;
+                  toggleNotice(`Loading more pages...`);
+                  const loadMore =
+                    d.listType && d.listType !== "watchlist"
+                      ? loadCustomListRef.current
+                      : loadWatchlistRef.current;
+                  (loadMore || (() => Promise.resolve()))(d).finally(() => {
+                    isLoadingRef.current = false;
+                  });
+                }
               }
             };
             scrollListenerRef.current = handleScroll;
-            globalThis.addEventListener("scroll", handleScroll, { passive: true });
+            const rightPanel = document.querySelector(".right-panel");
+            scrollContainersRef.current =
+              rightPanel && globalThis.innerWidth >= 1024 ? [rightPanel] : [globalThis];
+            for (const c of scrollContainersRef.current) {
+              c.addEventListener("scroll", handleScroll, { passive: true });
+            }
           }
         } else {
           const loadedMessage =
@@ -453,9 +471,14 @@ export function useLetterboxdList(
   useEffect(() => {
     const batchMap = batchMapRef.current;
     return () => {
-      if (scrollListenerRef.current) {
-        globalThis.removeEventListener("scroll", scrollListenerRef.current);
+      const fn = scrollListenerRef.current;
+      if (fn) {
+        for (const c of scrollContainersRef.current) {
+          c.removeEventListener("scroll", fn);
+        }
       }
+      scrollListenerRef.current = null;
+      scrollContainersRef.current = [];
       batchMap.clear();
       clearTimeout(noPosterReportTimeoutRef.current);
       noPosterReportTimeoutRef.current = undefined;
