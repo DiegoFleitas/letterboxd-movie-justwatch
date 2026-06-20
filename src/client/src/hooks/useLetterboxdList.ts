@@ -3,7 +3,7 @@ import { NOTICE_HOLD_LIST_COMPLETE_MS, NO_POSTER_REPORT_DELAY_MS } from "../anim
 import { buildListGithubIssueUrl, listReportToastCopy } from "../utils/githubIssueUrl";
 import { parseLetterboxdListUrl } from "@server/lib/letterboxdListUrl";
 import { toggleNotice } from "../utils/noticeFunctions";
-import { showError, showBatchErrors } from "../utils/showError";
+import { showError, showBatchErrors, type BatchError } from "../utils/showError";
 import { showMessage } from "../utils/showMessage";
 import {
   PLACEHOLDER_POSTER,
@@ -20,6 +20,11 @@ import {
   SEARCH_MOVIE_NETWORK_ERROR_MESSAGE,
   SEARCH_MOVIE_TOTAL_ATTEMPTS,
 } from "../utils/fetchSearchMovie";
+import type {
+  PageFilm,
+  LetterboxdListResponse,
+  SearchMovieResponse,
+} from "@server/lib/types/index.js";
 
 const SEARCH_CONCURRENCY_DEFAULT = 4;
 export const SEARCH_CONCURRENCY_MOBILE = 2;
@@ -56,35 +61,6 @@ function runWithConcurrency(tasks: (() => Promise<unknown>)[], limit: number): P
   ) as Promise<unknown> as Promise<void>;
 }
 
-function fetchLetterboxdPoster(
-  posterPath: string,
-  title: string,
-  year: string | number | null,
-  link: string | undefined,
-  mergeTile: MergeTileFn | null | undefined,
-): void {
-  fetch(`https://letterboxd.com${posterPath}poster/std/230/`)
-    .then((res) => res.json())
-    .then((d: { url?: string }) => d?.url && mergeTile?.(title, year, { poster: d.url, link }))
-    .catch(() => {});
-}
-
-interface WatchlistElement {
-  title?: string | null;
-  year?: string | null;
-  link?: string;
-  posterPath?: string | null;
-  poster?: string | null;
-}
-
-interface ListResponse {
-  error?: string;
-  watchlist: WatchlistElement[];
-  lastPage: number;
-  totalPages: number;
-  hasMore?: boolean;
-}
-
 interface LoadData {
   listUrl?: string;
   country?: string;
@@ -94,15 +70,6 @@ interface LoadData {
 }
 
 type MergeTileFn = (title: string, year: string | number | null, data?: MergeData | null) => void;
-
-type SearchMovieResponse = {
-  error?: string;
-  title?: string;
-  year?: string | number;
-  poster?: string;
-  link?: string;
-  movieProviders?: unknown[];
-};
 
 export function useLetterboxdList(
   mergeTile: MergeTileFn | null | undefined,
@@ -124,14 +91,14 @@ export function useLetterboxdList(
       {
         total: number;
         completed: number;
-        errors: { title?: string; year?: string | number; message: string }[];
+        errors: BatchError[];
       }
     >
   >(new Map());
   const noPosterReportTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const processList = useCallback(
-    async (data: LoadData, responseData: ListResponse): Promise<void> => {
+    async (data: LoadData, responseData: LetterboxdListResponse): Promise<void> => {
       try {
         const { error, watchlist, lastPage, totalPages, hasMore } = responseData;
         const moreToLoad = hasMore ?? lastPage < totalPages;
@@ -199,7 +166,7 @@ export function useLetterboxdList(
 
         const createSearchSuccessHandler = (
           batchId: number,
-          element: WatchlistElement,
+          element: PageFilm,
           enrichPoster: (t: string, y: string | number | null) => void,
         ) => {
           return (response: SearchMovieResponse) => {
@@ -229,7 +196,7 @@ export function useLetterboxdList(
 
         const createSearchErrorHandler = (
           batchId: number,
-          element: WatchlistElement,
+          element: PageFilm,
           enrichPoster: (t: string, y: string | number | null) => void,
           data: LoadData,
         ) => {
@@ -266,13 +233,9 @@ export function useLetterboxdList(
         };
 
         const searchTasks = watchlist.map((element) => {
-          const { title, year, posterPath, link } = element;
+          const { title, year } = element;
           const movieData = { title, year, country: data.country ?? "" };
-          const enrichPoster = (t: string, y: string | number | null): void => {
-            if (posterPath) {
-              fetchLetterboxdPoster(posterPath, t, y, link, mergeTile);
-            }
-          };
+          const enrichPoster = (_t: string, _y: string | number | null): void => {};
           return () =>
             fetchSearchMovie(movieData)
               .then((r) => safeJsonResponse<SearchMovieResponse>(r))
@@ -349,7 +312,7 @@ export function useLetterboxdList(
           body: JSON.stringify(data),
           signal: AbortSignal.timeout(LIST_API_TIMEOUT_MS),
         });
-        const responseData = (await response.json()) as ListResponse;
+        const responseData = (await response.json()) as LetterboxdListResponse;
         await processList(data, responseData);
       } catch (e) {
         if (isListFetchTimedOut(e)) {
@@ -388,7 +351,7 @@ export function useLetterboxdList(
           body: JSON.stringify(data),
           signal: AbortSignal.timeout(LIST_API_TIMEOUT_MS),
         });
-        const responseData = (await response.json()) as ListResponse;
+        const responseData = (await response.json()) as LetterboxdListResponse;
         if (!response.ok) {
           showError(responseData.error ?? "Failed to load list");
           return;

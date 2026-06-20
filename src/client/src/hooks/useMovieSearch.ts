@@ -7,18 +7,7 @@ import { SafeJsonResponseError, safeJsonResponse } from "../utils/safeJsonRespon
 import { HTTP_API_PATHS } from "@server/routes";
 import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from "@server/httpStatusCodes";
 import { fetchSearchMovie } from "../utils/fetchSearchMovie";
-
-export interface MovieSearchResponse {
-  error?: string;
-  title?: string;
-  year?: string | number;
-  message?: string;
-  poster?: string;
-  link?: string;
-  imdbLink?: string;
-  tmdbLink?: string;
-  movieProviders?: { id: string; name: string; icon?: string; url: string }[];
-}
+import type { SearchMovieResponse } from "@server/lib/types/index.js";
 
 type MergeTileFn = (
   title: string,
@@ -26,7 +15,7 @@ type MergeTileFn = (
   data: MergeData | null | undefined,
 ) => void;
 
-export function buildMovieMergeData(response: MovieSearchResponse): MergeData {
+export function buildMovieMergeData(response: SearchMovieResponse): MergeData {
   const normalizedPoster = normalizePosterPath(response.poster);
   return {
     poster: normalizedPoster ?? PLACEHOLDER_POSTER,
@@ -61,9 +50,9 @@ export function useMovieSearch(
             });
             console.error(response);
           }
-          return safeJsonResponse<MovieSearchResponse>(response);
+          return safeJsonResponse<SearchMovieResponse>(response);
         })
-        .then((response: MovieSearchResponse) => {
+        .then((response: SearchMovieResponse) => {
           const { error, title, year, message, movieProviders } = response;
           if (title) {
             mergeTile?.(title, year ?? null, buildMovieMergeData(response));
