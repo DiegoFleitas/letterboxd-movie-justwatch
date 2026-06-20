@@ -56,3 +56,71 @@ export async function mockGeoIpRoute(page: Page): Promise<void> {
     }),
   );
 }
+
+/**
+ * Install a scroll addEventListener interceptor that records the target
+ * element and handler body for every scroll listener registered during
+ * the page lifecycle. Later, callers query `window.__scrollListenerInfo`
+ * to verify which element the pagination handler was attached to.
+ */
+export async function setupScrollListenerInterceptor(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    const original = EventTarget.prototype.addEventListener;
+    const info: Array<{ target: string; handlerBody: string }> = [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).__scrollListenerInfo = info;
+
+    EventTarget.prototype.addEventListener = function (
+      this: EventTarget,
+      type: string,
+      listener: EventListenerOrEventListenerObject | null,
+      options?: boolean | AddEventListenerOptions,
+    ) {
+      if (type === "scroll" && typeof listener === "function") {
+        const targetName =
+          this === globalThis
+            ? "window"
+            : (this as Element).className || (this as Element).tagName || "unknown";
+        info.push({ target: targetName, handlerBody: listener.toString().slice(0, 300) });
+      }
+      return original.call(this, type, listener, options);
+    };
+  });
+}
+
+/** Mock the letterboxd-watchlist and search-movie API routes for pagination tests. */
+export async function mockListAndSearchRoutes(page: Page): Promise<void> {
+  await page.route("**/api/letterboxd-watchlist", (route) => {
+    const baseList = (
+      letterboxdFixtures[0] as {
+        response: { watchlist: Array<{ title?: string; year?: string | number }> };
+      }
+    ).response.watchlist;
+    const watchlist = baseList.map((e) => ({ ...e }));
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        message: "List found",
+        watchlist,
+        lastPage: 1,
+        totalPages: 5,
+        hasMore: true,
+      }),
+    });
+  });
+
+  await page.route("**/api/search-movie", (route) => {
+    const body = route.request().postDataJSON() as SearchMovieBody | null;
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        message: "Movie found",
+        movieProviders: [],
+        title: body?.title,
+        year: body?.year,
+      }),
+    });
+  });
+}
