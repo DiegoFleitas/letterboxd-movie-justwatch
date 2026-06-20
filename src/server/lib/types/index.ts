@@ -53,6 +53,7 @@ export interface PageFilm {
   title: string | null;
   year: string | null;
   link: string;
+  posterPath: string | null;
   poster: string | null;
 }
 

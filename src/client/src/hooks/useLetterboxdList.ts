@@ -49,6 +49,19 @@ function isListFetchTimedOut(e: unknown): boolean {
   return false;
 }
 
+function fetchLetterboxdPoster(
+  posterPath: string,
+  title: string,
+  year: string | number | null,
+  link: string | undefined,
+  mergeTile: MergeTileFn | null | undefined,
+): void {
+  fetch(`https://letterboxd.com${posterPath}poster/std/230/`)
+    .then((res) => res.json())
+    .then((d: { url?: string }) => d?.url && mergeTile?.(title, year, { poster: d.url, link }))
+    .catch(() => {});
+}
+
 function runWithConcurrency(tasks: (() => Promise<unknown>)[], limit: number): Promise<void> {
   let index = 0;
   function runNext(): Promise<void> {
@@ -233,9 +246,13 @@ export function useLetterboxdList(
         };
 
         const searchTasks = watchlist.map((element) => {
-          const { title, year } = element;
+          const { title, year, posterPath, link } = element;
           const movieData = { title, year, country: data.country ?? "" };
-          const enrichPoster = (_t: string, _y: string | number | null): void => {};
+          const enrichPoster = (t: string, y: string | number | null): void => {
+            if (posterPath) {
+              fetchLetterboxdPoster(posterPath, t, y, link, mergeTile);
+            }
+          };
           return () =>
             fetchSearchMovie(movieData)
               .then((r) => safeJsonResponse<SearchMovieResponse>(r))

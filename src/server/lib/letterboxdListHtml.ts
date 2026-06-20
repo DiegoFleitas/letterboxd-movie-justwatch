@@ -119,6 +119,7 @@ export function getPageFilms($: CheerioAPI): PageFilm[] {
       title: value.title,
       year: value.year,
       link: value.link,
+      posterPath: value.posterPath,
       poster: value.poster,
     });
   });
