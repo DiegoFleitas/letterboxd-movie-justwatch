@@ -7,11 +7,7 @@ import { searchMovieBodySchema, firstZodIssueMessage } from "../lib/apiSchemas.j
 import type { CanonicalProviderMap, JustWatchOffer } from "../lib/types/index.js";
 import { getRandomScrapeUserAgent } from "../lib/scrapeUserAgent.js";
 import { buildLetterboxdStableFilmLink } from "../lib/letterboxdStableFilmLink.js";
-import {
-  HTTP_STATUS_BAD_REQUEST,
-  HTTP_STATUS_INTERNAL_SERVER_ERROR,
-  HTTP_STATUS_TOO_MANY_REQUESTS,
-} from "../httpStatusCodes.js";
+import { HTTP_STATUS_BAD_REQUEST, HTTP_STATUS_INTERNAL_SERVER_ERROR } from "../httpStatusCodes.js";
 import { recordJustWatchHttpAttempt } from "../lib/justWatchOutbound.js";
 import { captureServerException } from "../lib/sentryCapture.js";
 
@@ -29,7 +25,6 @@ const CACHE_TTL_NOT_FOUND = 600;
 const SEARCH_MOVIE_CACHE_CATEGORY = "search-movie";
 const JUSTWATCH_TIMEOUT_MS = 15000;
 const JUSTWATCH_RETRIES = 3;
-const PROXY = "";
 
 async function justWatchPost(
   axiosInstance: AxiosInstance,
@@ -53,11 +48,14 @@ async function justWatchPost(
       lastError = err;
       recordJustWatchHttpAttempt(err);
       const e = err as { response?: { status?: number }; code?: string; message?: string };
+      // 429 is owned solely by the axios response interceptor (lib/axios.ts),
+      // which retries with Retry-After respect. This loop retries only the
+      // transient 5xx / network / timeout failures the interceptor doesn't
+      // cover — overlapping on 429 here would compound both retry paths.
       const isRetryable =
         !e.response ||
         (e.response.status !== undefined &&
           e.response.status >= HTTP_STATUS_INTERNAL_SERVER_ERROR) ||
-        e.response.status === HTTP_STATUS_TOO_MANY_REQUESTS ||
         e.code === "ECONNABORTED" ||
         e.code === "ETIMEDOUT" ||
         e.code === "ENOTFOUND" ||
@@ -172,7 +170,7 @@ async function searchTmdb(
   const encodedTitle = encodeURIComponent(title);
   const yearParam = year ? `&year=${year}` : "";
   const movieDbResponse = await axios.get(
-    `${PROXY}https://api.themoviedb.org/3/search/movie?query=${encodedTitle}${yearParam}&api_key=${movieDbAPIKey}`,
+    `https://api.themoviedb.org/3/search/movie?query=${encodedTitle}${yearParam}&api_key=${movieDbAPIKey}`,
   );
   const results = (movieDbResponse.data as { results?: TMDBResult[] }).results;
   const movieDbData = results?.[0];
@@ -228,7 +226,7 @@ async function executeJustWatchQuery(
   title: string,
 ): Promise<{ data: { data: { popularTitles: { edges: JustWatchOfferEdge[] } } } }> {
   const variables = { country, language, first: 4, filter: { searchQuery: title } };
-  return justWatchPost(axios, `${PROXY}https://apis.justwatch.com/graphql`, {
+  return justWatchPost(axios, `https://apis.justwatch.com/graphql`, {
     query: JUSTWATCH_QUERY,
     variables,
   });
