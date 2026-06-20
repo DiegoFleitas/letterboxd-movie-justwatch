@@ -35,13 +35,25 @@ export function runAlternativeSearch(
       }
       return res.json();
     })
-    .then((response: { error?: string; text?: string; url?: string; title?: string }) => {
-      setTimeout(() => toggleNotice(null), NOTICE_HOLD_ALT_SEARCH_MS);
-      if (response.error) {
-        showError(response.error);
-      } else
-        showMessage({ text: response.text ?? "", url: response.url, title: response.title }, true);
-    })
+    .then(
+      (response: {
+        error?: string;
+        text?: string;
+        url?: string;
+        title?: string;
+        year?: string | number;
+        message?: string;
+      }) => {
+        setTimeout(() => toggleNotice(null), NOTICE_HOLD_ALT_SEARCH_MS);
+        if (response.error) {
+          showError(response.error);
+        } else
+          showMessage(
+            { text: response.text ?? "", url: response.url, title: response.title },
+            true,
+          );
+      },
+    )
     .catch((err) => {
       captureFrontendException(err, {
         tags: { source: "api", endpoint: HTTP_API_PATHS.alternativeSearch },
@@ -64,7 +76,7 @@ export function searchSubs(query: string, year?: string | number): void {
     body: JSON.stringify({ title: query, year }),
   })
     .then((res) => res.json())
-    .then((response: { error?: string; url?: string }) => {
+    .then((response: { error?: string; url?: string; title?: string; year?: string | number }) => {
       if (response.error || !response.url) {
         showError(response.error || "No subtitles found.");
         return;
