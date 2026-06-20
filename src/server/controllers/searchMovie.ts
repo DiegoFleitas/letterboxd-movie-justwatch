@@ -30,7 +30,7 @@ async function justWatchPost(
   axiosInstance: AxiosInstance,
   url: string,
   body: object,
-): Promise<{ data: { data: { popularTitles: { edges: JustWatchOfferEdge[] } } } }> {
+): Promise<JustWatchQueryResponse> {
   let lastError: unknown;
   for (let attempt = 1; attempt <= JUSTWATCH_RETRIES; attempt++) {
     try {
@@ -74,6 +74,10 @@ async function justWatchPost(
   }
   throw lastError;
 }
+
+type JustWatchQueryResponse = {
+  data: { data: { popularTitles: { edges: JustWatchOfferEdge[] } } };
+};
 
 interface JustWatchOfferEdge {
   node: {
@@ -188,26 +192,13 @@ function buildErrorResponse(params: {
   error: string;
   title: string;
   year: string | number | undefined;
-  tmdbData: TMDBResult | undefined;
-  tmdbPoster: string | null;
-  tmdbLink: string | undefined;
-  letterboxdStableLink: string | undefined;
+  tmdbResult: TmdbSearchResult;
   cacheKey: string;
   cacheTtl: number;
   res: HttpResponseContext;
 }): void {
-  const {
-    error,
-    title,
-    year,
-    tmdbData,
-    tmdbPoster,
-    tmdbLink,
-    letterboxdStableLink,
-    cacheKey,
-    cacheTtl,
-    res,
-  } = params;
+  const { error, title, year, tmdbResult, cacheKey, cacheTtl, res } = params;
+  const { data: tmdbData, tmdbPoster, tmdbLink, letterboxdStableLink } = tmdbResult;
   const response = {
     error,
     title: tmdbData?.title || title,
@@ -220,11 +211,31 @@ function buildErrorResponse(params: {
   res.json(response);
 }
 
+function buildNoStreamingResponse(params: {
+  title: string;
+  year?: string | number | null;
+  poster: string | null;
+  letterboxdFallbackLink?: string;
+  imdbLink?: string;
+  tmdbLink?: string;
+  country: string;
+}): Record<string, unknown> {
+  return {
+    error: `No streaming services offering this movie on your country (${params.country})\n\nNothing on streaming? Try Alternative search on the film tile.`,
+    title: params.title,
+    year: params.year,
+    poster: params.poster,
+    ...(params.letterboxdFallbackLink ? { link: params.letterboxdFallbackLink } : {}),
+    ...(params.imdbLink ? { imdbLink: params.imdbLink } : {}),
+    ...(params.tmdbLink ? { tmdbLink: params.tmdbLink } : {}),
+  };
+}
+
 async function executeJustWatchQuery(
   country: string,
   language: string,
   title: string,
-): Promise<{ data: { data: { popularTitles: { edges: JustWatchOfferEdge[] } } } }> {
+): Promise<JustWatchQueryResponse> {
   const variables = { country, language, first: 4, filter: { searchQuery: title } };
   return justWatchPost(axios, `https://apis.justwatch.com/graphql`, {
     query: JUSTWATCH_QUERY,
@@ -270,7 +281,7 @@ export const searchMovie: HttpHandler = async ({ req, res }) => {
 
     const tmdbId = tmdbResult.data.id;
 
-    let justWatchResponse: { data: { data: { popularTitles: { edges: JustWatchOfferEdge[] } } } };
+    let justWatchResponse: JustWatchQueryResponse;
     try {
       justWatchResponse = await executeJustWatchQuery(country, language, title);
     } catch (error) {
@@ -279,10 +290,7 @@ export const searchMovie: HttpHandler = async ({ req, res }) => {
         error: "JustWatch API unavailable",
         title,
         year,
-        tmdbData: tmdbResult.data,
-        tmdbPoster: tmdbResult.tmdbPoster,
-        tmdbLink: tmdbResult.tmdbLink,
-        letterboxdStableLink: tmdbResult.letterboxdStableLink,
+        tmdbResult,
         cacheKey,
         cacheTtl: CACHE_TTL_UNAVAILABLE,
         res,
@@ -298,10 +306,7 @@ export const searchMovie: HttpHandler = async ({ req, res }) => {
         error: "Movie not found in JustWatch",
         title,
         year,
-        tmdbData: tmdbResult.data,
-        tmdbPoster: tmdbResult.tmdbPoster,
-        tmdbLink: tmdbResult.tmdbLink,
-        letterboxdStableLink: tmdbResult.letterboxdStableLink,
+        tmdbResult,
         cacheKey,
         cacheTtl: CACHE_TTL_NOT_FOUND,
         res,
@@ -316,24 +321,18 @@ export const searchMovie: HttpHandler = async ({ req, res }) => {
     const imdbLink = buildImdbLink(imdbId);
     const letterboxdFallbackLink = buildLetterboxdStableFilmLink(imdbId, tmdbId);
 
-    const noStreamingServicesResponse = {
-      error: `No streaming services offering this movie on your country (${country})\n\nNothing on streaming? Try Alternative search on the film tile.`,
-      title: movieData.node.content.title,
-      year: movieData.node.content.originalReleaseYear,
-      poster,
-      ...(letterboxdFallbackLink ? { link: letterboxdFallbackLink } : {}),
-      ...(imdbLink ? { imdbLink } : {}),
-      ...(tmdbResult.tmdbLink ? { tmdbLink: tmdbResult.tmdbLink } : {}),
-    };
-
     if (!movieData.node.offers?.length) {
-      await setCacheValue(
-        cacheKey,
-        noStreamingServicesResponse,
-        cacheTtl,
-        SEARCH_MOVIE_CACHE_CATEGORY,
-      );
-      res.json(noStreamingServicesResponse);
+      const response = buildNoStreamingResponse({
+        title: movieData.node.content.title,
+        year: movieData.node.content.originalReleaseYear,
+        poster,
+        letterboxdFallbackLink,
+        imdbLink,
+        tmdbLink: tmdbResult.tmdbLink,
+        country,
+      });
+      await setCacheValue(cacheKey, response, cacheTtl, SEARCH_MOVIE_CACHE_CATEGORY);
+      res.json(response);
       return;
     }
 
@@ -346,13 +345,17 @@ export const searchMovie: HttpHandler = async ({ req, res }) => {
     );
 
     if (!providers?.length) {
-      await setCacheValue(
-        cacheKey,
-        noStreamingServicesResponse,
-        cacheTtl,
-        SEARCH_MOVIE_CACHE_CATEGORY,
-      );
-      res.json(noStreamingServicesResponse);
+      const response = buildNoStreamingResponse({
+        title: movieData.node.content.title,
+        year: movieData.node.content.originalReleaseYear,
+        poster,
+        letterboxdFallbackLink,
+        imdbLink,
+        tmdbLink: tmdbResult.tmdbLink,
+        country,
+      });
+      await setCacheValue(cacheKey, response, cacheTtl, SEARCH_MOVIE_CACHE_CATEGORY);
+      res.json(response);
       return;
     }
 
