@@ -153,6 +153,34 @@ describe("searchMovie controller", () => {
     expect(redisMocks.setCacheValue).toHaveBeenCalled();
   });
 
+  it("does not retry the manual loop on 429 (interceptor owns 429)", async () => {
+    redisMocks.getCacheValue.mockResolvedValue(null);
+    const tmdbId = 27205;
+    axiosMocks.get.mockResolvedValue({
+      data: {
+        results: [
+          {
+            id: tmdbId,
+            title: "Inception",
+            release_date: "2010-07-16",
+            poster_path: "/poster.jpg",
+          },
+        ],
+      },
+    });
+    const err = Object.assign(new Error("rate limited"), { response: { status: 429 } });
+    axiosMocks.post.mockRejectedValue(err);
+    const args = ctx({ title: "Inception", country: "en_US" });
+    await searchMovie(args);
+    expect(axiosMocks.post).toHaveBeenCalledTimes(1);
+    expect(args.res.jsonMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: "JustWatch API unavailable",
+        title: "Inception",
+      }),
+    );
+  });
+
   it("returns not found in JustWatch when no edge matches TMDB id", async () => {
     redisMocks.getCacheValue.mockResolvedValue(null);
     const tmdbId = 999;

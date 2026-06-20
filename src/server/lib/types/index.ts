@@ -49,22 +49,21 @@ export interface SearchMovieResponse {
 }
 
 /** One film from Letterboxd list HTML / API. */
-export interface LetterboxdListFilm {
+export interface PageFilm {
   title: string | null;
   year: string | null;
   link: string;
   posterPath: string | null;
   poster: string | null;
-  id?: string | null;
-  titleSlug?: string | null;
 }
 
 /** Response shape for Letterboxd watchlist/custom list API. */
 export interface LetterboxdListResponse {
   error?: string;
-  watchlist: LetterboxdListFilm[];
+  watchlist: PageFilm[];
   lastPage: number;
   totalPages: number;
+  hasMore?: boolean;
 }
 
 /** JustWatch API offer (from GraphQL offers). */

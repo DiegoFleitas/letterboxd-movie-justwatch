@@ -4,6 +4,7 @@
  */
 import type { CheerioAPI } from "cheerio";
 import * as cheerio from "cheerio";
+import type { PageFilm } from "./types/index.js";
 
 /** Selector for "this element is or contains a film link" (data attrs or /film/ link). */
 const SELECTOR_HAS_FILM =
@@ -32,13 +33,6 @@ export function getContentPresence(
     out[marker] = html.includes(marker);
   }
   return out;
-}
-
-export interface PageFilm {
-  title: string | null;
-  year: string | null;
-  link: string;
-  poster: string | null;
 }
 
 interface FilmData {
@@ -125,6 +119,7 @@ export function getPageFilms($: CheerioAPI): PageFilm[] {
       title: value.title,
       year: value.year,
       link: value.link,
+      posterPath: value.posterPath,
       poster: value.poster,
     });
   });

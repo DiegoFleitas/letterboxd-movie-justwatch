@@ -1,13 +1,9 @@
-import type { HttpHandler } from "../httpContext.js";
+import type { HttpHandler, HttpResponseContext } from "../httpContext.js";
 import { captureServerException } from "../lib/sentryCapture.js";
 import * as cheerio from "cheerio";
 import { getCacheValue, setCacheValue } from "../lib/redis.js";
-import {
-  getPageFilms,
-  getFilmsCount,
-  getContentPresence,
-  type PageFilm,
-} from "../lib/letterboxdListHtml.js";
+import type { PageFilm } from "../lib/types/index.js";
+import { getPageFilms, getFilmsCount, getContentPresence } from "../lib/letterboxdListHtml.js";
 import {
   letterboxdWatchlistBodySchema,
   letterboxdCustomListBodySchema,
@@ -31,11 +27,8 @@ const cacheTtl = Number(process.env.CACHE_TTL) || 300;
 interface FetchListArgs {
   url: string;
   cacheKeyPrefix: string;
-  req: { body: unknown };
-  res: {
-    status: (code: number) => { json: (payload: unknown) => void };
-    json: (payload: unknown) => void;
-  };
+  req: { body: { page?: number } };
+  res: HttpResponseContext;
 }
 
 async function fetchFromCache(cacheKey: string): Promise<PageFilm[] | null> {
@@ -159,7 +152,7 @@ async function handleEmptyPage(
 const fetchList = async ({ url, cacheKeyPrefix, req, res }: FetchListArgs): Promise<void> => {
   try {
     const baseUrl = url.replace(/\/+$/, "");
-    const body = (req.body as { page?: number }) ?? {};
+    const body = req.body ?? {};
     const page = body.page ?? 1;
     if (page < 1) {
       res.status(HTTP_STATUS_BAD_REQUEST).json({ error: "Invalid page number" });

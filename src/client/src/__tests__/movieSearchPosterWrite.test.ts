@@ -1,10 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { buildMovieMergeData, type MovieSearchResponse } from "../hooks/useMovieSearch";
+import { buildMovieMergeData } from "../hooks/useMovieSearch";
+import type { SearchMovieResponse } from "@server/lib/types/index.js";
 import { LEGACY_PLACEHOLDER_POSTER, PLACEHOLDER_POSTER } from "../utils/movieTiles";
 
 describe("movie search poster write mapping", () => {
   it("maps movie search response to tile merge payload", () => {
-    const response: MovieSearchResponse = {
+    const response: SearchMovieResponse = {
       title: "The Matrix",
       year: "1999",
       link: "https://letterboxd.com/film/the-matrix/",
@@ -20,7 +21,7 @@ describe("movie search poster write mapping", () => {
   });
 
   it("falls back to placeholder poster when API omits poster", () => {
-    const response: MovieSearchResponse = {
+    const response: SearchMovieResponse = {
       title: "Unknown Movie",
       year: "2025",
       link: "https://letterboxd.com/film/unknown-movie/",
@@ -31,7 +32,7 @@ describe("movie search poster write mapping", () => {
   });
 
   it("normalizes legacy placeholder poster to BASE_URL-aware placeholder", () => {
-    const response: MovieSearchResponse = {
+    const response: SearchMovieResponse = {
       title: "Legacy Placeholder",
       year: "2025",
       poster: LEGACY_PLACEHOLDER_POSTER,
@@ -42,7 +43,7 @@ describe("movie search poster write mapping", () => {
   });
 
   it("maps imdbLink and tmdbLink from search response into merge payload", () => {
-    const response: MovieSearchResponse = {
+    const response: SearchMovieResponse = {
       title: "Rashomon",
       year: "1950",
       link: "https://letterboxd.com/imdb/tt0042876",
@@ -59,7 +60,7 @@ describe("movie search poster write mapping", () => {
   });
 
   it("maps Letterboxd TMDB bridge link from search response", () => {
-    const response: MovieSearchResponse = {
+    const response: SearchMovieResponse = {
       title: "Some Film",
       year: "2022",
       link: "https://letterboxd.com/tmdb/12345",
