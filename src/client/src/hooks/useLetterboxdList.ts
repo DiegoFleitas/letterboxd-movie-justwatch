@@ -200,7 +200,7 @@ export function useLetterboxdList(
                 movieProviders: [],
               });
             } else {
-              mergeTile?.(resolvedTitle, resolvedYear, { ...response, link: l } as MergeData);
+              mergeTile?.(resolvedTitle, resolvedYear, { ...response, link: l });
             }
             enrichPoster(resolvedTitle, resolvedYear);
             completeBatchItem(batch);

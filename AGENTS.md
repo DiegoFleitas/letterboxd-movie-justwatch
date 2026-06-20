@@ -71,12 +71,14 @@ letterboxd-movie-justwatch/
 │   │   │   ├── posthogProxy.ts          # PostHog analytics proxy
 │   │   │   ├── proxy.ts                 # Generic HTTPS proxy
 │   │   │   ├── alternativeSearch.ts     # Jackett torrent search
-│   │   │   └── subdlSearch.ts           # Subdl subtitle search
+│   │   │   ├── subdlSearch.ts           # Subdl subtitle search
+│   │   │   └── index.ts                 # Barrel exports
 │   │   └── lib/                         # Shared backend utilities
 │   │       ├── apiSchemas.ts            # Zod request/response schemas
 │   │       ├── axios.ts                 # Axios instance config
 │   │       ├── redis.ts                 # Redis client
 │   │       ├── memoryCache.ts           # In-process cache (used when DISABLE_REDIS=1)
+│   │       ├── httpRetryConfig.ts      # Axios retry on 429
 │   │       ├── canonicalProviders.ts    # Provider map data
 │   │       ├── loadCanonicalProviders.ts
 │   │       ├── letterboxdListHtml.ts    # Cheerio HTML scraping
@@ -109,7 +111,8 @@ letterboxd-movie-justwatch/
 │           │   ├── MovieTile.tsx        # Individual movie card
 │           │   ├── CountrySelector.tsx
 │           │   ├── DevDebugBar.tsx / DevDebugBarGate.tsx
-│           │   └── ToastProvider.tsx / WaitCue.tsx / SimpleWaitDots.tsx
+│           │   ├── ToastProvider.tsx / WaitCue.tsx / SimpleWaitDots.tsx
+│           │   └── VirtualizedPosterShowcase.tsx
 │           ├── hooks/                   # Custom React hooks
 │           │   ├── useLetterboxdList.ts # Primary data-fetching hook
 │           │   ├── useMovieSearch.ts    # Movie search hook
@@ -128,7 +131,8 @@ letterboxd-movie-justwatch/
 ├── tests/                              # Backend/shared Vitest tests
 │   ├── e2e/                            # Playwright specs (mocked UI + backend-smoke)
 │   ├── fixtures/                       # HTML/JSON used by unit tests
-│   └── goldens/                        # Optional JSON golden files
+│   ├── goldens/                        # Optional JSON golden files
+│   └── helpers/                        # Shared test utilities
 ├── scripts/                            # Utility scripts
 │   ├── updateLetterboxdFixtures.ts
 │   └── syncApiFixturesFromRedisSnapshot.ts
@@ -136,7 +140,7 @@ letterboxd-movie-justwatch/
 │   ├── Dockerfile / entrypoint.sh
 │   └── scripts/                        # export / seed / validate / buildCanonicalProviders
 ├── devops/fly-ops/                     # Fly.io management scripts
-├── .github/workflows/                  # CI (ci.yml) + deploy (fly-deploy.yml) + cost report
+├── .github/workflows/                  # CI, deploy, cost report, dependabot auto-merge
 ├── tsconfig.json                       # Root TS config (server, NodeNext)
 ├── vite.config.ts
 ├── vitest.config.ts
@@ -170,6 +174,9 @@ letterboxd-movie-justwatch/
   - `bun run fly:inventory` — apps, machines, volumes, Redis
   - `bun run fly:cost` — JSON cost estimate
   - `bun run fly:volumes:prune` — dry-run destroy unattached volumes
+  - `bun run fly:memory:check` — per-app memory usage vs. limit
+  - `bun run fly:redis:audit` — list all Redis instances, plans, and regions
+  - `bun run fly:redis:prune` — destroy unattached Redis instances (with confirmation)
   - Requires `flyctl` + `jq` on PATH.
 - Weekly cost report via `.github/workflows/fly-cost-report.yml` (Monday 9am UTC, needs `FLY_API_TOKEN` secret).
 
@@ -208,7 +215,7 @@ Then set `FLYIO_REDIS_URL=redis://localhost:6379` in `.env`.
 | `SENTRY_AUTH_TOKEN` / `SENTRY_ORG` / `SENTRY_PROJECT` | Required for sourcemap upload                                            |
 | `E2E_API_BASE_URL`                                    | Override Playwright smoke test backend (default `http://127.0.0.1:3000`) |
 
-Full list: `.env.example`.
+Full list: `.env.example` (table above reflects all documented vars, some of which are omissible in local dev).
 
 ## Sentry sourcemap release
 
