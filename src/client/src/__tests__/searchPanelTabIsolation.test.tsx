@@ -1,16 +1,10 @@
 // @vitest-environment jsdom
-import React from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createRoot } from "react-dom/client";
 import { act } from "@testing-library/react";
 import { createInitialTabbedTileState, mergeTileStateForTab } from "../utils/movieTiles";
-import {
-  AppStateProvider,
-  selectActiveTileState,
-  useAppState,
-} from "../components/AppStateContext";
+import { AppStateProvider, selectActiveTileState } from "../components/AppStateContext";
 import { LeftPanel } from "../components/LeftPanel";
-import { RightPanel } from "../components/RightPanel";
 import { jsonResponse } from "./jsonResponse";
 
 const COUNTRY_STORAGE_KEY = "letterboxd-justwatch-country";
@@ -93,72 +87,5 @@ describe("search panel tab isolation model", () => {
     expect(container.textContent?.includes("Torrent search")).toBe(false);
 
     localStorage.removeItem(COUNTRY_STORAGE_KEY);
-  });
-
-  it("hides alternative search icon when active tab is list", async () => {
-    function Setup(): React.ReactElement {
-      const { setShowAltSearchButton, setActiveTab } = useAppState();
-      const [phase, setPhase] = React.useState<0 | 1>(0);
-      React.useEffect(() => {
-        if (phase === 0) {
-          setShowAltSearchButton(true);
-          setPhase(1);
-          return;
-        }
-        setActiveTab("list");
-      }, [phase, setActiveTab, setShowAltSearchButton]);
-      return <RightPanel />;
-    }
-
-    const container = document.createElement("div");
-    const root = createRoot(container);
-
-    await act(async () => {
-      root.render(
-        <AppStateProvider>
-          <Setup />
-        </AppStateProvider>,
-      );
-    });
-    await act(async () => {
-      await Promise.resolve();
-    });
-
-    expect(container.querySelector('img[alt="Alternative search"]')).toBeNull();
-  });
-
-  it("shows alternative search icon on list after a list search", async () => {
-    let resolveListLoadComplete: (() => void) | null = null;
-    const listLoadComplete = new Promise<void>((resolve) => {
-      resolveListLoadComplete = resolve;
-    });
-
-    function Setup(): React.ReactElement {
-      const { setActiveTab, loadLetterboxdList } = useAppState();
-      React.useEffect(() => {
-        setActiveTab("list");
-        void loadLetterboxdList("https://letterboxd.com/test-user/watchlist/", "US").finally(() => {
-          resolveListLoadComplete?.();
-        });
-      }, [loadLetterboxdList, setActiveTab]);
-      return <RightPanel />;
-    }
-
-    const container = document.createElement("div");
-    const root = createRoot(container);
-
-    await act(async () => {
-      root.render(
-        <AppStateProvider>
-          <Setup />
-        </AppStateProvider>,
-      );
-    });
-
-    await act(async () => {
-      await listLoadComplete;
-    });
-
-    expect(container.querySelector('img[alt="Alternative search"]')).not.toBeNull();
   });
 });

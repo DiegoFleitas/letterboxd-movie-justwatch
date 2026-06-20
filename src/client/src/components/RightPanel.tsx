@@ -2,7 +2,6 @@ import React, { useState, useMemo, useCallback } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { motionTransition } from "../animation/timing";
 import { useAppState } from "./AppStateContext";
-import alternativeSearchIcon from "../assets/alternative-search.svg";
 import { getTileProviderNames } from "../utils/movieTiles";
 import type { TileData } from "../utils/movieTiles";
 import { VirtualizedPosterShowcase } from "./VirtualizedPosterShowcase";
@@ -42,22 +41,16 @@ export function RightPanel(): React.ReactElement {
     movieTiles: tiles,
     streamingProviders: providers,
     runAlternativeSearch,
-    showAltSearchButton,
     isAlternativeSearchLoading,
   } = useAppState();
   const reduceMotion = useReducedMotion();
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
-  const [altSearchFilter, setAltSearchFilter] = useState(false);
   const [footerMessage] = useState(() => getRandomMessage());
 
   const toggleFilter = (name: string): void => {
     setActiveFilters((prev) =>
       prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name],
     );
-  };
-
-  const toggleAltSearchFilter = (): void => {
-    setAltSearchFilter((prev) => !prev);
   };
 
   const [focusedProvider, setFocusedProvider] = useState<string | null>(null);
@@ -73,12 +66,11 @@ export function RightPanel(): React.ReactElement {
     const filterSet = createProviderFilterSet(activeFilters);
     return tileList.filter((tile: TileData) => {
       const names = getTileProviderNames(tile);
-      if (altSearchFilter) return names.length > 0;
       if (!filterSet) return true;
       if (!names.length) return false;
       return tileMatchesProviderFilter(names, filterSet);
     });
-  }, [tileList, activeFilters, altSearchFilter]);
+  }, [tileList, activeFilters]);
 
   const handleAlternativeSearch = useCallback(
     (tileData: TileData): void => {
@@ -150,26 +142,6 @@ export function RightPanel(): React.ReactElement {
             </motion.button>
           );
         })}
-        {showAltSearchButton ? (
-          <motion.button
-            type="button"
-            className={`streaming-provider-icon streaming-provider-icon--alt-search ${
-              altSearchFilter ? "active" : ""
-            }`}
-            data-sp="alternative search"
-            title="Alternative search"
-            aria-pressed={altSearchFilter}
-            onClick={toggleAltSearchFilter}
-            initial={"idle"}
-            animate={altSearchFilter ? "selected" : "idle"}
-            whileHover={reduceMotion ? undefined : { scale: 1.02 }}
-            whileTap={reduceMotion ? undefined : { scale: 0.985 }}
-            variants={{ idle: { scale: 1, y: 0 }, selected: { scale: 1.04, y: -0.8 } }}
-            transition={motionTransition(PROVIDER_FAST_S)}
-          >
-            <img src={alternativeSearchIcon} alt="Alternative search" />
-          </motion.button>
-        ) : null}
       </div>
       <div className="poster-showcase" data-testid="poster-showcase">
         <VirtualizedPosterShowcase
@@ -180,18 +152,18 @@ export function RightPanel(): React.ReactElement {
       <footer>
         <div id="minecraft-text">{footerMessage}</div>
         <p className="foot-notes">
-          This site helps you find where to watch <u>Movies</u>, not TV shows. It checks everything
-          with JustWatch & TMDB & OMDb API to make sure it&apos;s accurate. If it can&apos;t find
-          the movie you want, it won&apos;t suggest random stuff. <br />
-          Please don&apos;t use torrent or piracy sites—unauthorized downloads violate copyright and
-          we can&apos;t recommend them. We get it: some titles aren&apos;t legally available
+          This site helps you find where to watch <u>Movies</u>, not TV shows. It cross-checks
+          JustWatch, TMDB, and OMDb so the results are accurate. If it can&apos;t find the movie you
+          want, it won&apos;t suggest random stuff. <br />
+          Please don&apos;t use torrent or piracy sites. Unauthorized downloads violate copyright,
+          so we can&apos;t recommend them. We get it: some titles aren&apos;t legally available
           anywhere, or only with <u>bad dubbing and no subtitles</u>. Still, stick to legal options
           when you can.
         </p>
         <details className="jackett-details">
           <summary className="jackett-summary">What&apos;s Alternative search?</summary>
           <div className="jackett-body">
-            It uses Jackett API to search for torrents on 1337x, RARBG, etc.
+            It uses the Jackett API to search torrent indexers like 1337x and RARBG.
           </div>
         </details>
       </footer>
