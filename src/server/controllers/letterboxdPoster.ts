@@ -7,6 +7,7 @@ import {
   fetchLetterboxdBinaryOk,
 } from "../lib/letterboxdHttp.js";
 import { getRandomScrapeUserAgent } from "../lib/scrapeUserAgent.js";
+import { letterboxdPosterBodySchema, firstZodIssueMessage } from "../lib/apiSchemas.js";
 import {
   HTTP_STATUS_BAD_REQUEST,
   HTTP_STATUS_FORBIDDEN,
@@ -18,17 +19,12 @@ import {
 const postersTtl = Number(process.env.CACHE_TTL) || 60;
 
 export const letterboxdPoster: HttpHandler = async ({ req, res }) => {
-  const { filmId, filmSlug, cacheBustingKey } =
-    (req.body as {
-      filmId?: string;
-      filmSlug?: string;
-      cacheBustingKey?: string;
-    }) ?? {};
-
-  if (!filmId || !filmSlug) {
-    res.status(HTTP_STATUS_BAD_REQUEST).json({ error: "Missing filmId or filmSlug" });
+  const parsedBody = letterboxdPosterBodySchema.safeParse(req.body ?? {});
+  if (!parsedBody.success) {
+    res.status(HTTP_STATUS_BAD_REQUEST).json({ error: firstZodIssueMessage(parsedBody.error) });
     return;
   }
+  const { filmId, filmSlug, cacheBustingKey } = parsedBody.data;
 
   const cacheKey = `letterboxd-poster:${filmSlug}`;
 

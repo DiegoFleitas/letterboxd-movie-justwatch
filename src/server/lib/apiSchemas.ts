@@ -158,6 +158,12 @@ export const posterBodySchema = z.object({
   year: z.union([z.string().max(4), z.number().int().min(1800).max(2100)]).optional(),
 });
 
+export const letterboxdPosterBodySchema = z.object({
+  filmId: z.string().min(1, "filmId is required"),
+  filmSlug: z.string().min(1, "filmSlug is required"),
+  cacheBustingKey: z.string().optional(),
+});
+
 export function firstZodIssueMessage(error: z.ZodError): string {
   return error.issues[0]?.message ?? "Validation failed";
 }
