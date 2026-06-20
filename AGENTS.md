@@ -248,3 +248,6 @@ bun run sentry:release:frontend
 - Dev debug bar (`VITE_DEV_DEBUG_BAR`) shown by default in dev; set `false` to hide.
 - PostHog uses **separate** env vars for frontend (`VITE_PUBLIC_POSTHOG_KEY`/`VITE_PUBLIC_POSTHOG_HOST`) and backend (`POSTHOG_KEY`/`POSTHOG_HOST`). Leave unset for local dev.
 - Coverage thresholds: 80% on statements/lines only (no branch/function threshold).
+- Curling `/api/*` directly requires the header `x-requested-by: MovieJustWatch` (CSRF guard in `registerFastifyAppApi.ts`), otherwise the response is `{"error":"Bad Request"}`.
+- "No streaming services" for a title is a valid content answer (rent/buy only), not a failure — sanity-check with a known subscription title (e.g. Glass Onion → Netflix).
+- JustWatch IP-blocks some egress ranges (403 regardless of headers/UA/TLS), so local dev can return zero providers / an empty filter bar. If that happens, route outbound HTTPS through a clean-IP proxy: set `JUSTWATCH_HTTPS_PROXY` in `.env` (see `.env.example`; impl in `src/server/lib/axios.ts`). Health-check an exit first: `curl -x http://user:pass@host:port -s -o /dev/null -w "%{http_code}" https://www.justwatch.com/` → 200 = usable. US datacenter ranges are often blocked; residential or non-US exits (e.g. UK/ES/PL/JP) work better.
