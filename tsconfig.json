@@ -11,14 +11,19 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "jsx": "react-jsx",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "allowJs": false,
     "noUnusedLocals": true,
     "noUnusedParameters": true
   },
-  "include": ["**/*.ts", "**/*.tsx", "**/*.d.ts"],
+  "include": [
+    "src/server/**/*.ts",
+    "src/server/**/*.d.ts",
+    "tests/**/*.ts",
+    "scripts/**/*.ts",
+    "redis/scripts/**/*.ts"
+  ],
   "exclude": [
     "node_modules",
     "dist",
