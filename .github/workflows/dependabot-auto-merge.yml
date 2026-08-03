@@ -1,6 +1,8 @@
-# Auto-merge Dependabot PRs after CI passes.
-# Uses GitHub's native auto-merge so the merge only happens when
-# all required checks (lint, typecheck, unit tests, E2E) succeed.
+# Human-gated auto-merge for Dependabot PRs.
+# Enables GitHub-native auto-merge but does NOT auto-approve.
+# The merge only happens after a human approves the PR (branch protection
+# ruleset on the default branch requires 1 approving review).
+# Until that ruleset exists, the PR simply waits for a human.
 
 name: Dependabot auto-merge
 
@@ -23,13 +25,6 @@ jobs:
         uses: dependabot/fetch-metadata@d7267f607e24d1f8f274427b31f3bd5e0c0c2e0b # v2.3.0
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
-
-      - name: Approve PR
-        run: |
-          gh pr review --approve "$PR_URL"
-        env:
-          PR_URL: ${{ github.event.pull_request.html_url }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Enable auto-merge (squash)
         run: |
