@@ -2,4 +2,4 @@ version: 2
 github:
   - repository: DiegoFleitas/letterboxd-movie-justwatch
     opts:
-      branch: main
+      branch: master
