@@ -8,10 +8,17 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
+    # TypeScript 7 is unusable until typescript-eslint supports it: `bun run
+    # lint` exits 2 with "typescript-eslint does not support TS 7.0", which
+    # took down the whole 44-package group PR. Drop this rule once
+    # typescript-eslint ships TS 7 support.
+    ignore:
+      - dependency-name: "typescript"
+        update-types:
+          - "version-update:semver-major"
     groups:
       all-dependencies:
         patterns:
-          - "*"
           - "*"
 
   - package-ecosystem: "github-actions"
@@ -19,4 +26,4 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 1
-    target-branch: "main"
+    target-branch: "master"
