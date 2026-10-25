@@ -3,8 +3,11 @@ import { escapeHtml, sanitizeHrefForToast } from "./htmlSafeForToast";
 
 const queuedMessages: unknown[] = [];
 
-const HTML_BR_PATTERN = /<br\s*\/?>\s*/gi;
-const HTML_TAG_PATTERN = /<[^>]*>/g;
+// Both patterns exclude `<` from the negated class so a run of unmatched `<`
+// characters fails on the next character instead of rescanning to the end
+// (Sonar typescript:S8786: super-linear backtracking).
+const HTML_BR_PATTERN = /<br[^<>]*>\s*/gi;
+const HTML_TAG_PATTERN = /<[^<>]*>/g;
 
 export function plainText(str: unknown): string {
   if (typeof str !== "string") return "";
