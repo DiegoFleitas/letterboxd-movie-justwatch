@@ -22,13 +22,18 @@ jobs:
     steps:
       - name: Fetch Dependabot metadata
         id: metadata
-        uses: dependabot/fetch-metadata@d7267f607e24d1f8f274427b31f3bd5e0c0c2e0b # v2.3.0
+        uses: dependabot/fetch-metadata@d7267f607e9d3fb96fc2fbe83e0af444713e90b7 # v2.3.0
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
 
       - name: Enable auto-merge (squash)
+        # Repository setting `allow_auto_merge` is currently off and master has
+        # no ruleset requiring an approving review, so this is a no-op today.
+        # Keep the check green instead of failing every Dependabot PR on it.
+        continue-on-error: true
         run: |
-          gh pr merge --auto --squash "$PR_URL"
+          gh pr merge --auto --squash "$PR_URL" ||
+            echo "auto-merge unavailable: enable allow_auto_merge and a review ruleset, then merge manually."
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
