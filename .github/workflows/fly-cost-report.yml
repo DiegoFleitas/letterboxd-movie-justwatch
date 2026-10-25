@@ -1,9 +1,12 @@
-name: Fly Cost Report
+﻿name: Fly Cost Report
 
 on:
   schedule:
     - cron: "0 9 * * 1"
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   cost-audit:
