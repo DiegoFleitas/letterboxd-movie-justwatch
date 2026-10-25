@@ -3,12 +3,21 @@ import { escapeHtml, sanitizeHrefForToast } from "./htmlSafeForToast";
 
 const queuedMessages: unknown[] = [];
 
+const HTML_BR_PATTERN = /<br\s*\/?>\s*/gi;
+const HTML_TAG_PATTERN = /<[^>]*>/g;
+
 export function plainText(str: unknown): string {
   if (typeof str !== "string") return "";
-  return str
-    .replace(/<br\s*\/?>\s*/gi, "\n")
-    .replace(/<[^>]+>/g, "")
-    .trim();
+  let text = str.replace(HTML_BR_PATTERN, "\n");
+  // Strip tags repeatedly until the string stops changing. A single pass can
+  // leave a new tag behind for nested input such as `<scr<script>ipt>`, which
+  // is the incomplete multi-character sanitization CodeQL reports here.
+  let previous: string;
+  do {
+    previous = text;
+    text = text.replace(HTML_TAG_PATTERN, "");
+  } while (text !== previous);
+  return text.trim();
 }
 
 interface MessageWithLink {
