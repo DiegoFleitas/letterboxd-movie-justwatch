@@ -10,7 +10,7 @@ export function registerFastifyStaticAndIndex(
   app: FastifyInstance,
   cachedIndexHtml: string | null,
 ): void {
-  app.get("/", async (_request, reply) => {
+  app.get("/", (_request, reply) => {
     if (!cachedIndexHtml) {
       reply.code(HTTP_STATUS_NOT_FOUND).send();
       return;
@@ -33,7 +33,7 @@ export function registerFastifyStaticAndIndex(
     },
   });
 
-  app.get("/movie_placeholder.svg", async (_request, reply) => {
-    return reply.sendFile("movie_placeholder.svg", path.join(__dirname, "..", "client"));
-  });
+  app.get("/movie_placeholder.svg", (_request, reply) =>
+    reply.sendFile("movie_placeholder.svg", path.join(__dirname, "..", "client")),
+  );
 }
