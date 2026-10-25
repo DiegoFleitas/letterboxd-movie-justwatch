@@ -1,4 +1,4 @@
-# Deploys to Fly.io after CI passes. See https://fly.io/docs/app-guides/continuous-deployment-with-github-actions/
+﻿# Deploys to Fly.io after CI passes. See https://fly.io/docs/app-guides/continuous-deployment-with-github-actions/
 
 name: Fly Deploy
 
@@ -9,6 +9,9 @@ on:
     branches: [main, master]
   # Allow manual run
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   deploy:

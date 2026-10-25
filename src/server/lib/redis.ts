@@ -69,10 +69,12 @@ const getRedisClient = async (): Promise<RedisClientLike | null> => {
     try {
       const url = process.env.FLYIO_REDIS_URL || "redis://localhost:6379";
       console.log("[REDIS_OPTIONS]", { url: url.replace(/:[^:@]+@/, ":***@") });
-      const client = new (Redis as unknown as new (
-        url: string,
-        options?: { commandTimeout?: number; connectTimeout?: number },
-      ) => RedisClientLike)(url, {
+      const client = new (
+        Redis as unknown as new (
+          url: string,
+          options?: { commandTimeout?: number; connectTimeout?: number },
+        ) => RedisClientLike
+      )(url, {
         commandTimeout: 10_000,
         connectTimeout: 10_000,
       });
@@ -474,10 +476,12 @@ export const estimateSearchMovieStringKeyCount = async (): Promise<{
   const prefix = `${process.env.FLY_APP_NAME || "app"}:`;
 
   // Use a dedicated short-lived client for SCAN (doesn't affect the pooled app client).
-  const scanClient = new (Redis as unknown as new (
-    url: string,
-    opts?: { maxRetriesPerRequest?: number },
-  ) => RedisClientLike & { scanStream(opts: { match: string; count: number }): ScanStream })(url, {
+  const scanClient = new (
+    Redis as unknown as new (
+      url: string,
+      opts?: { maxRetriesPerRequest?: number },
+    ) => RedisClientLike & { scanStream(opts: { match: string; count: number }): ScanStream }
+  )(url, {
     maxRetriesPerRequest: 1,
   });
 
