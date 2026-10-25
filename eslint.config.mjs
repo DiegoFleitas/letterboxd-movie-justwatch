@@ -48,10 +48,14 @@ export default [
       ...eslintConfigPrettier.rules,
       // TypeScript already checks for undefined variables.
       "no-undef": "off",
-      // TS + module resolution is handled by the TS compiler, so this rule
-      // tends to produce noise in this project.
+      // TS + module resolution is handled by the TS compiler, so these rules
+      // tend to produce noise in this project.
       "import/no-unresolved": "off",
       "import/named": "off",
+      // CJS packages that ship `export =` typings (e.g. @fastify/cookie) have
+      // no statically visible default export for this rule, though `tsc` and
+      // the runtime resolve it fine.
+      "import/default": "off",
       "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
     },
   },
