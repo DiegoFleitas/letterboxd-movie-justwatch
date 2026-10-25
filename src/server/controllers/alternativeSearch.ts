@@ -77,9 +77,7 @@ export const alternativeSearch: HttpHandler = async ({ req, res }) => {
 
     const cacheKey = `jackett:${searchQuery}:`;
     const cachedResponse = (await getCacheValue(cacheKey)) as
-      | { error?: string; message?: string; [k: string]: unknown }
-      | null
-      | undefined;
+      { error?: string; message?: string; [k: string]: unknown } | null | undefined;
     if (cachedResponse) {
       const status = cachedResponse.error ? HTTP_STATUS_NOT_FOUND : HTTP_STATUS_OK;
       console.log("Response found (cached)");
