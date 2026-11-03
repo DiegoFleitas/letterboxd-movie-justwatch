@@ -3,6 +3,23 @@ import * as Sentry from "@sentry/react";
 /** Matches server default in `src/server/lib/sentryCapture.ts`. */
 const PRODUCTION_TRACES_SAMPLE_RATE = 0.1;
 
+/**
+ * Sentry v11 removed `sendDefaultPii` in favour of the granular `dataCollection` option, whose
+ * defaults collect user info, cookies, headers and query params. The runtime opt-in flag stays
+ * the single switch: unless it is `true`, every category that carries PII is turned off.
+ */
+const NO_PII_DATA_COLLECTION = {
+  userInfo: false,
+  cookies: false,
+  httpHeaders: false,
+  urlQueryParams: false,
+  httpBodies: [],
+  databaseQueryData: false,
+  queues: false,
+  stackFrameVariables: false,
+  genAI: { inputs: false, outputs: false },
+};
+
 type SentryContext = {
   tags?: Record<string, string>;
   extra?: Record<string, unknown>;
@@ -41,7 +58,7 @@ export function initFrontendSentry(): void {
     ) || getRuntimeString(import.meta.env.VITE_SENTRY_TRACES_SAMPLE_RATE),
     environment,
   );
-  const sendDefaultPii =
+  const sendPii =
     getRuntimeString(
       (globalThis as { __SENTRY_SEND_DEFAULT_PII__?: string }).__SENTRY_SEND_DEFAULT_PII__,
     ) === "true" || import.meta.env.VITE_SENTRY_SEND_DEFAULT_PII === "true";
@@ -51,7 +68,10 @@ export function initFrontendSentry(): void {
     environment,
     release,
     tracesSampleRate,
-    sendDefaultPii,
+    // When the flag is on we omit the option entirely: v11's defaults match the old
+    // `sendDefaultPii: true` behaviour. When it is off we must be explicit, because the same
+    // defaults would otherwise send more data than `sendDefaultPii: false` ever did.
+    ...(sendPii ? {} : { dataCollection: NO_PII_DATA_COLLECTION }),
     integrations: [Sentry.browserTracingIntegration()],
     tracePropagationTargets: [/^\//, /\.fly\.dev$/i, "localhost", "127.0.0.1"],
   });
