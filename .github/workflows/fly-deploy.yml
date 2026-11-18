@@ -1,4 +1,4 @@
-﻿# Deploys to Fly.io after CI passes. See https://fly.io/docs/app-guides/continuous-deployment-with-github-actions/
+# Deploys to Fly.io after CI passes. See https://fly.io/docs/app-guides/continuous-deployment-with-github-actions/
 
 name: Fly Deploy
 
@@ -21,7 +21,7 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     concurrency: deploy-group
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
