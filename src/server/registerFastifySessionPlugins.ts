@@ -34,7 +34,7 @@ const KNOWN_WEAK_APP_SECRET_KEY_SUBSTRINGS = [
   "session-secret",
 ];
 
-export function isKnownWeakAppSecretKey(appSecretKey: string): boolean {
+function isKnownWeakAppSecretKey(appSecretKey: string): boolean {
   const normalized = appSecretKey.trim().toLowerCase();
   if (KNOWN_WEAK_APP_SECRET_KEY_SUBSTRINGS.some((needle) => normalized.includes(needle))) {
     return true;
@@ -48,7 +48,7 @@ export function isKnownWeakAppSecretKey(appSecretKey: string): boolean {
  * brute force, and not a value copied from a template. Dev/test behavior is
  * unchanged — without `NODE_ENV=production` a random secret is generated.
  */
-export function assertProductionAppSecretKeyIsUsable(appSecretKey: string | undefined): void {
+function assertProductionAppSecretKeyIsUsable(appSecretKey: string | undefined): void {
   if (!appSecretKey) {
     throw new Error("APP_SECRET_KEY environment variable must be set in production.");
   }
