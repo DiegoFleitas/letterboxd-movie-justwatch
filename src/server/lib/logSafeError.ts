@@ -11,7 +11,7 @@ function scrubText(text: string): string {
  * Whitelisted projection of an upstream (axios/fetch) error: name, message, code and status
  * only. Never the error object itself, whose `config.url`/`config.headers` carry API keys.
  */
-export function upstreamErrorSummary(error: unknown): Record<string, unknown> {
+function upstreamErrorSummary(error: unknown): Record<string, unknown> {
   const err = error as {
     name?: unknown;
     message?: unknown;
