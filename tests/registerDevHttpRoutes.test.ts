@@ -2,6 +2,9 @@ import Fastify from "fastify";
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { registerDevHttpRoutes } from "@server/registerDevHttpRoutes.js";
 
+/** ≥16 chars, matching the DEV_API_TOKEN minimum enforced by devApiGuard. */
+const TEST_DEV_API_TOKEN = "test-dev-api-token-0123456789";
+
 describe("registerDevHttpRoutes", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
@@ -20,16 +23,42 @@ describe("registerDevHttpRoutes", () => {
   it("rate-limits dev routes (429 after max requests in the window)", async () => {
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("DISABLE_REDIS", "1");
+    vi.stubEnv("DEV_API_TOKEN", TEST_DEV_API_TOKEN);
     const app = Fastify({ logger: false });
     registerDevHttpRoutes(app);
     await app.ready();
     let lastStatus = 0;
     for (let i = 0; i < 20; i++) {
-      const res = await app.inject({ method: "POST", url: "/api/dev/clear-list-cache" });
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/dev/clear-list-cache",
+        headers: { "x-dev-api-token": TEST_DEV_API_TOKEN },
+      });
       lastStatus = res.statusCode;
       if (res.statusCode === 429) break;
     }
     expect(lastStatus).toBe(429);
+    await app.close();
+  });
+
+  it("rejects dev routes without the x-dev-api-token header", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubEnv("DISABLE_REDIS", "1");
+    vi.stubEnv("DEV_API_TOKEN", TEST_DEV_API_TOKEN);
+    const app = Fastify({ logger: false });
+    registerDevHttpRoutes(app);
+    await app.ready();
+
+    const missing = await app.inject({ method: "POST", url: "/api/dev/clear-list-cache" });
+    const wrong = await app.inject({
+      method: "POST",
+      url: "/api/dev/clear-list-cache",
+      headers: { "x-dev-api-token": "wrong-token-value" },
+    });
+
+    expect(missing.statusCode).toBe(403);
+    expect(JSON.parse(missing.body).error).toContain("Dev API token required");
+    expect(wrong.statusCode).toBe(403);
     await app.close();
   });
 

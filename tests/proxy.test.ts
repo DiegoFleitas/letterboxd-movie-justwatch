@@ -155,7 +155,7 @@ describe("proxy handler", () => {
       query: {},
       headers: {},
       method: "POST",
-      url: `${HTTP_API_PATHS.proxyPrefix}/https://api.themoviedb.org/3/foo`,
+      url: `${HTTP_API_PATHS.proxyPrefix}/https://api.themoviedb.org/3/search/movie`,
       cookies: {},
       session: null,
       appLocals: {},
@@ -175,7 +175,7 @@ describe("proxy handler", () => {
       query: {},
       headers: {},
       method: "POST",
-      url: `${HTTP_API_PATHS.proxyPrefix}/https://api.themoviedb.org/3/foo`,
+      url: `${HTTP_API_PATHS.proxyPrefix}/https://api.themoviedb.org/3/search/movie`,
       cookies: {},
       session: null,
       appLocals: {},
@@ -232,7 +232,7 @@ describe("proxy handler", () => {
       query: {},
       headers: {},
       method: "PUT",
-      url: `${HTTP_API_PATHS.proxyPrefix}/https://api.themoviedb.org/3/foo`,
+      url: `${HTTP_API_PATHS.proxyPrefix}/https://api.themoviedb.org/3/search/movie`,
       cookies: {},
       session: null,
       appLocals: {},
@@ -243,5 +243,47 @@ describe("proxy handler", () => {
     expect(getStatus()).toBe(405);
     expect(getHeader("Allow")).toBe("GET, POST");
     expect(getJson()).toEqual({ error: "Method not allowed" });
+  });
+
+  it("returns 403 for an allowlisted host on a non-allowlisted path", async () => {
+    const req: HttpRequestContext = {
+      body: {},
+      params: {},
+      query: {},
+      headers: {},
+      method: "GET",
+      url: `${HTTP_API_PATHS.proxyPrefix}/https://api.themoviedb.org/3/account`,
+      cookies: {},
+      session: null,
+      appLocals: {},
+    };
+    const { res, getStatus, getJson } = createMockRes();
+    await proxy({ req, res });
+
+    expect(getStatus()).toBe(403);
+    expect(mockGet).not.toHaveBeenCalled();
+    expect(String((getJson() as { error?: string }).error)).toContain("path is not allowed");
+  });
+
+  it("returns 403 when the caller supplies a credential parameter", async () => {
+    const req: HttpRequestContext = {
+      body: {},
+      params: {},
+      query: {},
+      headers: {},
+      method: "GET",
+      url: `${HTTP_API_PATHS.proxyPrefix}/https://api.themoviedb.org/3/search/movie?api_key=attacker`,
+      cookies: {},
+      session: null,
+      appLocals: {},
+    };
+    const { res, getStatus, getJson } = createMockRes();
+    await proxy({ req, res });
+
+    expect(getStatus()).toBe(403);
+    expect(mockGet).not.toHaveBeenCalled();
+    expect(String((getJson() as { error?: string }).error)).toContain(
+      "Credential parameters must not be supplied",
+    );
   });
 });
