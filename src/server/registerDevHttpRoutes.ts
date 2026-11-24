@@ -63,6 +63,14 @@ export function registerDevHttpRoutes(app: FastifyInstance): void {
         hook: "onRequest",
       });
 
+      // Destructive dev endpoints require an operator token; fail closed when unset.
+      dev.addHook("onRequest", async (request, reply) => {
+        if (isDevApiAuthorized(request.headers["x-dev-api-token"])) return;
+        reply.code(HTTP_STATUS_FORBIDDEN).send({
+          error: "Dev API token required. Set DEV_API_TOKEN and send it as x-dev-api-token.",
+        });
+      });
+
       dev.post("/clear-list-cache", async (_request, reply) => {
         if (!devRedisApisAllowedOrReply(reply)) return;
         const result = await clearCacheByCategory("list");

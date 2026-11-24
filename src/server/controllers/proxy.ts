@@ -1,3 +1,8 @@
+import { HTTP_STATUS_FORBIDDEN ,
+  HTTP_STATUS_INTERNAL_SERVER_ERROR,
+  HTTP_STATUS_METHOD_NOT_ALLOWED,
+  HTTP_STATUS_OK,
+} from "../httpStatusCodes.js";
 import type { HttpHandler } from "../httpContext.js";
 import { proxyTargetFromRequestUrl } from "../routes.js";
 import axiosHelper from "../lib/axios.js";
@@ -5,11 +10,6 @@ import { getCacheValue, setCacheValue } from "../lib/redis.js";
 import { checkProxyTarget, parseAllowedProxyUrl } from "../lib/apiSchemas.js";
 import { captureServerException } from "../lib/sentryCapture.js";
 import { logUpstreamError } from "../lib/logSafeError.js";
-import {
-  HTTP_STATUS_INTERNAL_SERVER_ERROR,
-  HTTP_STATUS_METHOD_NOT_ALLOWED,
-  HTTP_STATUS_OK,
-} from "../httpStatusCodes.js";
 
 const axios = axiosHelper();
 const cacheTtl = Number(process.env.CACHE_TTL) || 60;

@@ -1,3 +1,4 @@
+import { logUpstreamError } from "../lib/logSafeError.js";
 import type { HttpHandler } from "../httpContext.js";
 import { HTTP_STATUS_BAD_GATEWAY, HTTP_STATUS_BAD_REQUEST } from "../httpStatusCodes.js";
 

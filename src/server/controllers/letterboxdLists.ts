@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type { HttpHandler, HttpResponseContext } from "../httpContext.js";
 import { captureServerException } from "../lib/sentryCapture.js";
 import * as cheerio from "cheerio";
@@ -246,7 +247,7 @@ export const letterboxdWatchlist: HttpHandler = async ({ req, res }) => {
     res.status(HTTP_STATUS_BAD_REQUEST).json({ error: firstZodIssueMessage(parsedBody.error) });
     return;
   }
-  const { username, listType, parsedListUrl, page } = parsedBody.data;
+  const { parsedListUrl, page } = parsedBody.data;
   const cacheKeyPrefix = `watchlist:${listCacheIdentity(parsedListUrl)}`;
   await fetchList({ url: parsedListUrl, cacheKeyPrefix, req: { body: { page } }, res });
 };
@@ -257,7 +258,7 @@ export const letterboxdCustomList: HttpHandler = async ({ req, res }) => {
     res.status(HTTP_STATUS_BAD_REQUEST).json({ error: firstZodIssueMessage(parsedBody.error) });
     return;
   }
-  const { username, listType, parsedListUrl, page } = parsedBody.data;
+  const { parsedListUrl, page } = parsedBody.data;
   const cacheKeyPrefix = `customlist:${listCacheIdentity(parsedListUrl)}`;
   await fetchList({ url: parsedListUrl, cacheKeyPrefix, req: { body: { page } }, res });
 };
