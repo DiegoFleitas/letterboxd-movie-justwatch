@@ -149,6 +149,14 @@ async function handleEmptyPage(
   }
 }
 
+/**
+ * Cache identity is the normalised resource URL, never a client-supplied username/type:
+ * every custom list of a user previously shared one `customlist:<user>_custom list` entry.
+ */
+function listCacheIdentity(listUrl: string): string {
+  return createHash("sha256").update(listUrl.trim().toLowerCase()).digest("hex");
+}
+
 const fetchList = async ({ url, cacheKeyPrefix, req, res }: FetchListArgs): Promise<void> => {
   try {
     const baseUrl = url.replace(/\/+$/, "");
@@ -239,7 +247,7 @@ export const letterboxdWatchlist: HttpHandler = async ({ req, res }) => {
     return;
   }
   const { username, listType, parsedListUrl, page } = parsedBody.data;
-  const cacheKeyPrefix = `watchlist:${username}_${listType ?? ""}`;
+  const cacheKeyPrefix = `watchlist:${listCacheIdentity(parsedListUrl)}`;
   await fetchList({ url: parsedListUrl, cacheKeyPrefix, req: { body: { page } }, res });
 };
 
@@ -250,6 +258,6 @@ export const letterboxdCustomList: HttpHandler = async ({ req, res }) => {
     return;
   }
   const { username, listType, parsedListUrl, page } = parsedBody.data;
-  const cacheKeyPrefix = `customlist:${username}_${listType ?? ""}`;
+  const cacheKeyPrefix = `customlist:${listCacheIdentity(parsedListUrl)}`;
   await fetchList({ url: parsedListUrl, cacheKeyPrefix, req: { body: { page } }, res });
 };

@@ -11,13 +11,15 @@
     "playwright": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "--prefix", "/tmp", "@playwright/mcp@latest"],
+      "args": [
+        "-y",
+        "@playwright/mcp@0.0.41"
+      ],
       "env": {}
     },
     "sentry": {
       "type": "http",
-      "url": "https://mcp.sentry.dev/mcp",
-      "enabled": false
+      "url": "https://mcp.sentry.dev/mcp"
     }
   }
 }

@@ -1,3 +1,5 @@
+import { setRuntimeConfigJs } from "./runtimeConfigAsset.js";
+
 /**
  * Injects runtime frontend config into app HTML.
  * Includes PostHog values and optional provider + Sentry settings.
@@ -50,5 +52,9 @@ export function injectRuntimeConfig(
     script += `window.__CANONICAL_PROVIDERS_BY_NAME__=${safeCanonical};`;
   }
   script += `</script>`;
-  return html.replace(/<\/head>/i, (match) => script + "\n" + match);
+  // Serve the config as an external same-origin script so `script-src 'self'` is enough
+  // and `'unsafe-inline'` can be dropped from the CSP.
+  setRuntimeConfigJs(script.replace(/^<script>/, "").replace(/<\/script>$/, ""));
+  const externalScript = '<script src="/runtime-config.js"></script>';
+  return html.replace(/<\/head>/i, (match) => externalScript + "\n" + match);
 }

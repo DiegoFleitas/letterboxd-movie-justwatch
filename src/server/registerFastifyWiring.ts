@@ -27,10 +27,9 @@ export async function registerFastifyWiring(
     contentSecurityPolicy: {
       directives: {
         "default-src": ["'self'"],
-        // 'unsafe-inline' is required by injectRuntimeConfig's inline <script> block.
-        // To remove it, generate a per-request nonce and inject it into both the
-        // CSP header and the script tag in buildIndexHtmlForClient.
-        "script-src": ["'self'", "'unsafe-inline'"],
+        // Runtime config is served as an external same-origin script, so no
+        // inline script needs to be allowed.
+        "script-src": ["'self'"],
         "style-src": [
           "'self'",
           "'unsafe-inline'",
@@ -39,7 +38,13 @@ export async function registerFastifyWiring(
           "https://fonts.googleapis.com",
         ],
         "font-src": ["'self'", "https://fonts.cdnfonts.com", "https://fonts.gstatic.com"],
-        "img-src": ["'self'", "https:", "data:"],
+        "img-src": [
+          "'self'",
+          "data:",
+          "https://a.ltrbxd.com",
+          "https://images.justwatch.com",
+          "https://image.tmdb.org",
+        ],
         "connect-src": ["'self'", "https://ipapi.co", ...resolveSentryConnectSrc()],
         "frame-ancestors": ["'none'"],
         "base-uri": ["'self'"],

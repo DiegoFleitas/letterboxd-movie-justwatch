@@ -3,7 +3,11 @@ import rateLimit from "@fastify/rate-limit";
 import { exec as execCallback } from "node:child_process";
 import { promisify } from "node:util";
 import { DEV_HTTP_API_PREFIX } from "./routes.js";
-import { devRedisApisAllowedOrReply, isNodeProductionEnvironment } from "./lib/devApiGuard.js";
+import {
+  devRedisApisAllowedOrReply,
+  isDevApiAuthorized,
+  isNodeProductionEnvironment,
+} from "./lib/devApiGuard.js";
 import {
   clearCacheByCategory,
   estimateSearchMovieStringKeyCount,
@@ -11,7 +15,7 @@ import {
   getSoonestIndexedCacheKeyExpiryAtMs,
 } from "./lib/redis.js";
 import { getJustWatchHttpErrorSnapshot } from "./lib/justWatchOutbound.js";
-import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from "./httpStatusCodes.js";
+import { HTTP_STATUS_FORBIDDEN, HTTP_STATUS_INTERNAL_SERVER_ERROR } from "./httpStatusCodes.js";
 
 const exec = promisify(execCallback);
 

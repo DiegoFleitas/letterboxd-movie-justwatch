@@ -2,8 +2,9 @@ import type { HttpHandler } from "../httpContext.js";
 import { proxyTargetFromRequestUrl } from "../routes.js";
 import axiosHelper from "../lib/axios.js";
 import { getCacheValue, setCacheValue } from "../lib/redis.js";
-import { parseAllowedProxyUrl } from "../lib/apiSchemas.js";
+import { checkProxyTarget, parseAllowedProxyUrl } from "../lib/apiSchemas.js";
 import { captureServerException } from "../lib/sentryCapture.js";
+import { logUpstreamError } from "../lib/logSafeError.js";
 import {
   HTTP_STATUS_INTERNAL_SERVER_ERROR,
   HTTP_STATUS_METHOD_NOT_ALLOWED,
@@ -30,6 +31,11 @@ export const proxy: HttpHandler = async ({ req, res }) => {
     const parsed = parseAllowedProxyUrl(url);
     if (!parsed.ok) {
       res.status(parsed.status).json({ error: parsed.message });
+      return;
+    }
+    const targetCheck = checkProxyTarget(parsed.url);
+    if (!targetCheck.ok) {
+      res.status(HTTP_STATUS_FORBIDDEN).json({ error: targetCheck.message });
       return;
     }
     const targetUrl = parsed.url.toString();
@@ -59,7 +65,7 @@ export const proxy: HttpHandler = async ({ req, res }) => {
     await setCacheValue(cacheKey, response?.data, cacheTtl);
     res.status(response.status).json(response?.data);
   } catch (error) {
-    console.error(error);
+    logUpstreamError("proxy", error);
     captureServerException(error, { route: "proxy" });
     res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: "Internal Server Error" });
   }
@@ -71,10 +77,10 @@ function prepareRequest(url: string): { url: string; headers: Record<string, str
   switch (urlObj.hostname) {
     case "www.omdbapi.com":
       // OMDb has no header-based auth; query param is the only option
-      urlObj.searchParams.append("apikey", process.env.OMDB_API_KEY ?? "");
+      urlObj.searchParams.set("apikey", process.env.OMDB_API_KEY ?? "");
       break;
     case "api.themoviedb.org":
-      urlObj.searchParams.append("api_key", process.env.MOVIE_DB_API_KEY ?? "");
+      urlObj.searchParams.set("api_key", process.env.MOVIE_DB_API_KEY ?? "");
       break;
     default:
       break;

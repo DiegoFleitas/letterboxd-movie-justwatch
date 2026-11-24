@@ -3,6 +3,7 @@ import fastifyStatic from "@fastify/static";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { HTTP_STATUS_NOT_FOUND } from "./httpStatusCodes.js";
+import { getRuntimeConfigJs } from "./lib/runtimeConfigAsset.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -17,6 +18,18 @@ export function registerFastifyStaticAndIndex(
     }
     reply.header("Content-Type", "text/html; charset=utf-8");
     reply.send(cachedIndexHtml);
+  });
+
+  app.get("/runtime-config.js", (_request, reply) => {
+    const runtimeConfigJs = getRuntimeConfigJs();
+    if (!runtimeConfigJs) {
+      reply.code(HTTP_STATUS_NOT_FOUND).send();
+      return;
+    }
+    reply
+      .header("Content-Type", "application/javascript; charset=utf-8")
+      .header("Cache-Control", "no-store")
+      .send(runtimeConfigJs);
   });
 
   const publicDistPath = path.join(__dirname, "..", "client", "dist");

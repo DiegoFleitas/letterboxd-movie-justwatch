@@ -3,6 +3,7 @@ import axiosHelper from "../lib/axios.js";
 import { getCacheValue, setCacheValue } from "../lib/redis.js";
 import { posterBodySchema, firstZodIssueMessage } from "../lib/apiSchemas.js";
 import { captureServerException } from "../lib/sentryCapture.js";
+import { logUpstreamError } from "../lib/logSafeError.js";
 import {
   HTTP_STATUS_BAD_REQUEST,
   HTTP_STATUS_INTERNAL_SERVER_ERROR,
@@ -71,7 +72,7 @@ export const poster: HttpHandler = async ({ req, res }) => {
       poster: posterUrl,
     });
   } catch (error) {
-    console.error(error);
+    logUpstreamError("poster", error);
     captureServerException(error, { route: "poster" });
     res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).json({ error: "Internal Server Error" });
   }

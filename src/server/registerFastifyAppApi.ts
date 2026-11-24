@@ -21,6 +21,23 @@ import {
 } from "./httpStatusCodes.js";
 import rateLimit from "@fastify/rate-limit";
 
+/** True only when running behind the Fly edge, which sets `fly-client-ip` itself. */
+function isFlyDeployment(): boolean {
+  return Boolean(process.env.FLY_APP_NAME);
+}
+
+/**
+ * Rate-limit identity. The client-supplied `fly-client-ip` header is honoured only on Fly;
+ * elsewhere it is ignored so it cannot mint a fresh bucket per request (F-04).
+ */
+function clientRateLimitKey(request: FastifyRequest): string {
+  const flyClientIp = request.headers["fly-client-ip"];
+  if (isFlyDeployment() && typeof flyClientIp === "string" && flyClientIp.length > 0) {
+    return flyClientIp;
+  }
+  return request.ip;
+}
+
 async function csrfGuard(request: FastifyRequest, reply: FastifyReply): Promise<void> {
   if (request.method !== "POST") return;
   if (request.headers["x-requested-by"] === "MovieJustWatch") return;
@@ -33,11 +50,33 @@ export async function registerFastifyAppApi(
 ): Promise<void> {
   const { makeFastifyHandler, setCacheControlFastify } = binder;
 
-  app.get("/healthcheck", async (_request, reply) => {
+  // Root-level: Fastify hooks do not cross plugin encapsulation, so registering CSRF
+  // inside `apiRoutes` left the sibling `posthogRoutes` (and `/api/dev/*`) unguarded.
+  app.addHook("preHandler", csrfGuard);
+
+  // One global brake, plus per-route budgets sized to each metered upstream.
+  await app.register(rateLimit, {
+    max: 30,
+    timeWindow: "1 minute",
+    keyGenerator: clientRateLimitKey,
+    errorResponseBuilder: (_request, context) => ({
+      error: "Too many requests, please try again later",
+      statusCode: 429,
+      retryAfter: context.after,
+    }),
+  });
+
+  app.get(
+    "/healthcheck",
+    { config: { rateLimit: { max: 12, timeWindow: "1 minute" } } },
+    async (_request, reply) => {
     reply.type("text/plain").send("OK");
   });
 
-  app.get("/redis-healthcheck", async (_request, reply) => {
+  app.get(
+    "/redis-healthcheck",
+    { config: { rateLimit: { max: 12, timeWindow: "1 minute" } } },
+    async (_request, reply) => {
     if (isRedisDisabled()) {
       reply.type("text/plain").code(HTTP_STATUS_OK).send("OK (Redis disabled)");
       return;
@@ -50,46 +89,51 @@ export async function registerFastifyAppApi(
   });
 
   await app.register(async function apiRoutes(api: FastifyInstance) {
-    api.addHook("preHandler", csrfGuard);
-
-    api.register(rateLimit, {
-      max: 30,
-      timeWindow: "1 minute",
-      keyGenerator: (request) => {
-        return (request.headers["fly-client-ip"] as string) ?? request.ip;
-      },
-      errorResponseBuilder: (_request, context) => ({
-        error: "Too many requests, please try again later",
-        statusCode: 429,
-        retryAfter: context.after,
-      }),
-    });
-
-    api.post(HTTP_API_PATHS.searchMovie, setCacheControlFastify(searchMovie));
-    api.post(HTTP_API_PATHS.poster, setCacheControlFastify(poster));
-    api.post(HTTP_API_PATHS.letterboxdWatchlist, setCacheControlFastify(letterboxdWatchlist));
-    api.post(HTTP_API_PATHS.letterboxdCustomList, setCacheControlFastify(letterboxdCustomList));
-    api.post(HTTP_API_PATHS.letterboxdPoster, setCacheControlFastify(letterboxdPoster));
-    api.post(HTTP_API_PATHS.alternativeSearch, setCacheControlFastify(alternativeSearch));
-    api.post(HTTP_API_PATHS.subdlSearch, setCacheControlFastify(subdlSearch));
+    api.post(
+      HTTP_API_PATHS.searchMovie,
+      { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } },
+      setCacheControlFastify(searchMovie),
+    );
+    api.post(
+      HTTP_API_PATHS.poster,
+      { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } },
+      setCacheControlFastify(poster),
+    );
+    api.post(
+      HTTP_API_PATHS.letterboxdWatchlist,
+      { config: { rateLimit: { max: 5, timeWindow: "1 minute" } } },
+      setCacheControlFastify(letterboxdWatchlist),
+    );
+    api.post(
+      HTTP_API_PATHS.letterboxdCustomList,
+      { config: { rateLimit: { max: 5, timeWindow: "1 minute" } } },
+      setCacheControlFastify(letterboxdCustomList),
+    );
+    api.post(
+      HTTP_API_PATHS.letterboxdPoster,
+      { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } },
+      setCacheControlFastify(letterboxdPoster),
+    );
+    api.post(
+      HTTP_API_PATHS.alternativeSearch,
+      { config: { rateLimit: { max: 5, timeWindow: "1 minute" } } },
+      setCacheControlFastify(alternativeSearch),
+    );
+    api.post(
+      HTTP_API_PATHS.subdlSearch,
+      { config: { rateLimit: { max: 5, timeWindow: "1 minute" } } },
+      setCacheControlFastify(subdlSearch),
+    );
 
     api.all(HTTP_API_PROXY_ROUTE, makeFastifyHandler(proxy));
   });
 
   await app.register(async function posthogRoutes(phApp: FastifyInstance) {
-    await phApp.register(rateLimit, {
-      max: 60,
-      timeWindow: "1 minute",
-      keyGenerator: (request) => {
-        return (request.headers["fly-client-ip"] as string) ?? request.ip;
-      },
-      errorResponseBuilder: (_request, context) => ({
-        error: "Too many requests, please try again later",
-        statusCode: 429,
-        retryAfter: context.after,
-      }),
-    });
-    phApp.all(HTTP_API_POSTHOG_PROXY_ROUTE, makeFastifyHandler(posthogProxyHandler));
+    phApp.all(
+      HTTP_API_POSTHOG_PROXY_ROUTE,
+      { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+      makeFastifyHandler(posthogProxyHandler),
+    );
   });
 
   if (process.env.NODE_ENV !== "production") {
