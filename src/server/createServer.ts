@@ -1,4 +1,4 @@
-import Fastify, { type FastifyInstance } from "fastify";
+import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastify";
 import { captureServerException } from "./lib/sentryCapture.js";
 import { disconnectRedis } from "./lib/redis.js";
 import { getCanonicalProviderMap } from "./lib/loadCanonicalProviders.js";
@@ -19,10 +19,25 @@ export interface CreatedServer {
   start: (port?: number) => Promise<StartedServer>;
 }
 
+/**
+ * Off-Fly nothing sits in front of the app, so `X-Forwarded-For` must not be
+ * trusted at all: otherwise any client can spoof `request.ip` and therefore the
+ * rate-limit key (F-04). On Fly the edge proxy is exactly one hop, so trust that
+ * hop only: the rightmost `X-Forwarded-For` entry appended by the edge becomes
+ * `request.ip`. Hop counts are expressed as a function because Fastify 5 rejects
+ * numeric `trustProxy` values (it fails closed on them).
+ */
+export function resolveTrustProxySetting(
+  environment: NodeJS.ProcessEnv = process.env,
+): FastifyServerOptions["trustProxy"] {
+  if (!environment.FLY_APP_NAME) return false;
+  return (_address: string, hop: number) => hop === 0;
+}
+
 export async function createServer(): Promise<CreatedServer> {
   const app: FastifyInstance = Fastify({
     logger: true,
-    trustProxy: true,
+    trustProxy: resolveTrustProxySetting(),
   });
 
   const canonicalProviderMap = getCanonicalProviderMap();
