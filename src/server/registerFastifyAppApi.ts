@@ -70,23 +70,28 @@ export async function registerFastifyAppApi(
     "/healthcheck",
     { config: { rateLimit: { max: 12, timeWindow: "1 minute" } } },
     async (_request, reply) => {
-    reply.type("text/plain").send("OK");
-  });
+      reply.type("text/plain").send("OK");
+    },
+  );
 
   app.get(
     "/redis-healthcheck",
     { config: { rateLimit: { max: 12, timeWindow: "1 minute" } } },
     async (_request, reply) => {
-    if (isRedisDisabled()) {
-      reply.type("text/plain").code(HTTP_STATUS_OK).send("OK (Redis disabled)");
-      return;
-    }
-    if (await isHealthy()) {
-      reply.type("text/plain").code(HTTP_STATUS_OK).send("OK");
-    } else {
-      reply.type("text/plain").code(HTTP_STATUS_INTERNAL_SERVER_ERROR).send("Redis is not healthy");
-    }
-  });
+      if (isRedisDisabled()) {
+        reply.type("text/plain").code(HTTP_STATUS_OK).send("OK (Redis disabled)");
+        return;
+      }
+      if (await isHealthy()) {
+        reply.type("text/plain").code(HTTP_STATUS_OK).send("OK");
+      } else {
+        reply
+          .type("text/plain")
+          .code(HTTP_STATUS_INTERNAL_SERVER_ERROR)
+          .send("Redis is not healthy");
+      }
+    },
+  );
 
   await app.register(async function apiRoutes(api: FastifyInstance) {
     api.post(
