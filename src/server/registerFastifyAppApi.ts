@@ -69,7 +69,7 @@ export async function registerFastifyAppApi(
   app.get(
     "/healthcheck",
     { config: { rateLimit: { max: 12, timeWindow: "1 minute" } } },
-    async (_request, reply) => {
+    (_request, reply) => {
       reply.type("text/plain").send("OK");
     },
   );
@@ -133,7 +133,7 @@ export async function registerFastifyAppApi(
     api.all(HTTP_API_PROXY_ROUTE, makeFastifyHandler(proxy));
   });
 
-  await app.register(async function posthogRoutes(phApp: FastifyInstance) {
+  await app.register(function posthogRoutes(phApp: FastifyInstance) {
     phApp.all(
       HTTP_API_POSTHOG_PROXY_ROUTE,
       { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },

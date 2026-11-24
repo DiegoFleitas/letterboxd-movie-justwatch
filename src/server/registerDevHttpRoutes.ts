@@ -64,8 +64,12 @@ export function registerDevHttpRoutes(app: FastifyInstance): void {
       });
 
       // Destructive dev endpoints require an operator token; fail closed when unset.
-      dev.addHook("onRequest", async (request, reply) => {
-        if (isDevApiAuthorized(request.headers["x-dev-api-token"])) return;
+      // Callback style (not async) so the hook has no awaited work and still stops the chain.
+      dev.addHook("onRequest", (request, reply, done) => {
+        if (isDevApiAuthorized(request.headers["x-dev-api-token"])) {
+          done();
+          return;
+        }
         reply.code(HTTP_STATUS_FORBIDDEN).send({
           error: "Dev API token required. Set DEV_API_TOKEN and send it as x-dev-api-token.",
         });
