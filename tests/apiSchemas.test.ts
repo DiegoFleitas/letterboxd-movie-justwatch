@@ -39,9 +39,19 @@ describe("apiSchemas (zod)", () => {
 
   it("letterboxdCustomListBodySchema transforms valid custom list URL", () => {
     const r = letterboxdCustomListBodySchema.safeParse({
+      username: "user",
       listUrl: "https://letterboxd.com/user/list/my-list/",
     });
     expect(r.success).toBe(true);
+    if (r.success) expect(r.data.username).toBe("user");
+  });
+
+  it("letterboxdCustomListBodySchema rejects a body without username", () => {
+    const r = letterboxdCustomListBodySchema.safeParse({
+      listUrl: "https://letterboxd.com/user/list/my-list/",
+    });
+    expect(r.success).toBe(false);
+    if (!r.success) expect(r.error.issues.some((i) => i.path.includes("username"))).toBe(true);
   });
 
   it("letterboxdCustomListBodySchema rejects non-custom list URL", () => {

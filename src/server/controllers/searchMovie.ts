@@ -10,6 +10,7 @@ import { buildLetterboxdStableFilmLink } from "../lib/letterboxdStableFilmLink.j
 import { HTTP_STATUS_BAD_REQUEST, HTTP_STATUS_INTERNAL_SERVER_ERROR } from "../httpStatusCodes.js";
 import { recordJustWatchHttpAttempt } from "../lib/justWatchOutbound.js";
 import { captureServerException } from "../lib/sentryCapture.js";
+import { logUpstreamError } from "../lib/logSafeError.js";
 
 const axios = axiosHelper();
 const cacheTtl = Number(process.env.CACHE_TTL) || 3600;
@@ -373,7 +374,7 @@ export const searchMovie: HttpHandler = async ({ req, res }) => {
     await setCacheValue(cacheKey, responsePayload, cacheTtl, SEARCH_MOVIE_CACHE_CATEGORY);
     res.json(responsePayload);
   } catch (err) {
-    console.error(err);
+    logUpstreamError("search-movie", err);
     captureServerException(err, {
       route: "search-movie",
       extra: { title, year, country: countryCode },

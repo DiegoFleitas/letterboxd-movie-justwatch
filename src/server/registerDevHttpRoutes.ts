@@ -3,7 +3,11 @@ import rateLimit from "@fastify/rate-limit";
 import { exec as execCallback } from "node:child_process";
 import { promisify } from "node:util";
 import { DEV_HTTP_API_PREFIX } from "./routes.js";
-import { devRedisApisAllowedOrReply, isNodeProductionEnvironment } from "./lib/devApiGuard.js";
+import {
+  devRedisApisAllowedOrReply,
+  isDevApiAuthorized,
+  isNodeProductionEnvironment,
+} from "./lib/devApiGuard.js";
 import {
   clearCacheByCategory,
   estimateSearchMovieStringKeyCount,
@@ -11,7 +15,7 @@ import {
   getSoonestIndexedCacheKeyExpiryAtMs,
 } from "./lib/redis.js";
 import { getJustWatchHttpErrorSnapshot } from "./lib/justWatchOutbound.js";
-import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from "./httpStatusCodes.js";
+import { HTTP_STATUS_FORBIDDEN, HTTP_STATUS_INTERNAL_SERVER_ERROR } from "./httpStatusCodes.js";
 
 const exec = promisify(execCallback);
 
@@ -57,6 +61,18 @@ export function registerDevHttpRoutes(app: FastifyInstance): void {
         max: 15,
         timeWindow: "1 minute",
         hook: "onRequest",
+      });
+
+      // Destructive dev endpoints require an operator token; fail closed when unset.
+      // Callback style (not async) so the hook has no awaited work and still stops the chain.
+      dev.addHook("onRequest", (request, reply, done) => {
+        if (isDevApiAuthorized(request.headers["x-dev-api-token"])) {
+          done();
+          return;
+        }
+        reply.code(HTTP_STATUS_FORBIDDEN).send({
+          error: "Dev API token required. Set DEV_API_TOKEN and send it as x-dev-api-token.",
+        });
       });
 
       dev.post("/clear-list-cache", async (_request, reply) => {

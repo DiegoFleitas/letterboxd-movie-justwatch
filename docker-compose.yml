@@ -1,26 +1,50 @@
 services:
   app:
     build: .
+    # Loopback only: the app (and the dev Redis APIs) must not be reachable from the LAN.
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     environment:
       NODE_ENV: production
       PORT: 3000
-      FLYIO_REDIS_URL: redis://redis:6379
-      # Default for local Docker runs; override APP_SECRET_KEY (e.g. via .env) for real production
-      APP_SECRET_KEY: ${APP_SECRET_KEY:-dev-only-session-secret-do-not-use-in-production!!}
+      FLYIO_REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD must be set}@redis:6379
+      # Fail closed: never fall back to a well-known cookie-signing key.
+      APP_SECRET_KEY: ${APP_SECRET_KEY:?APP_SECRET_KEY must be set (>=32 chars)}
     depends_on:
       redis:
         condition: service_healthy
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    mem_limit: 512m
 
   redis:
     image: redis:7-alpine
+    # Loopback only and password-protected: the cache is the app's trust boundary.
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set}
+    command:
+      - sh
+      - -c
+      - exec redis-server --requirepass "$$REDIS_PASSWORD" --appendonly yes
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", 'redis-cli -a "$$REDIS_PASSWORD" ping | grep -q PONG']
       interval: 5s
       timeout: 3s
       retries: 5
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /data
+    mem_limit: 256m

@@ -1,3 +1,4 @@
+import { logUpstreamError } from "../lib/logSafeError.js";
 import type { HttpHandler } from "../httpContext.js";
 import { HTTP_STATUS_BAD_GATEWAY, HTTP_STATUS_BAD_REQUEST } from "../httpStatusCodes.js";
 
@@ -117,7 +118,7 @@ export const posthogProxyHandler: HttpHandler = async ({ req, res }) => {
 
     res.send(body);
   } catch (err) {
-    console.error("PostHog proxy error:", err);
+    logUpstreamError("posthog-proxy", err);
     res.status(HTTP_STATUS_BAD_GATEWAY).send({ error: "PostHog upstream unavailable" });
   }
 };

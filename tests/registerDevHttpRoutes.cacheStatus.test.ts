@@ -2,6 +2,9 @@ import Fastify from "fastify";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { registerDevHttpRoutes } from "@server/registerDevHttpRoutes.js";
 
+/** ≥16 chars, matching the DEV_API_TOKEN minimum enforced by devApiGuard. */
+const TEST_DEV_API_TOKEN = "test-dev-api-token-0123456789";
+
 vi.mock("@server/lib/redis.js", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@server/lib/redis.js")>();
   return {
@@ -27,6 +30,7 @@ describe("registerDevHttpRoutes cache-status", () => {
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("DISABLE_REDIS", "");
     vi.stubEnv("FLYIO_REDIS_URL", "redis://localhost:6379");
+    vi.stubEnv("DEV_API_TOKEN", TEST_DEV_API_TOKEN);
   });
 
   afterEach(() => {
@@ -37,7 +41,11 @@ describe("registerDevHttpRoutes cache-status", () => {
     const app = Fastify({ logger: false });
     registerDevHttpRoutes(app);
     await app.ready();
-    const res = await app.inject({ method: "GET", url: "/api/dev/cache-status" });
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/dev/cache-status",
+      headers: { "x-dev-api-token": TEST_DEV_API_TOKEN },
+    });
     expect(res.statusCode).toBe(200);
     const body = JSON.parse(res.body) as {
       ok: boolean;
@@ -56,7 +64,11 @@ describe("registerDevHttpRoutes cache-status", () => {
     const app = Fastify({ logger: false });
     registerDevHttpRoutes(app);
     await app.ready();
-    const res = await app.inject({ method: "GET", url: "/api/dev/cache-status?scan=1" });
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/dev/cache-status?scan=1",
+      headers: { "x-dev-api-token": TEST_DEV_API_TOKEN },
+    });
     const body = JSON.parse(res.body) as { searchMovieScannedStringKeys: number | null };
     expect(res.statusCode).toBe(200);
     expect(body.searchMovieScannedStringKeys).toBe(100);

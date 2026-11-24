@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import type { FastifyReply } from "fastify";
 import { HTTP_STATUS_FORBIDDEN, HTTP_STATUS_NOT_FOUND } from "../httpStatusCodes.js";
 
@@ -35,6 +36,21 @@ export type DevApiGuardFailure =
   | { code: "production"; message: string }
   | { code: "redis_disabled"; message: string }
   | { code: "non_local_redis"; message: string };
+
+/**
+ * Dev-only APIs are destructive (`reset-redis`, `export-redis`) and reachable over HTTP,
+ * so they require an operator token. Fail closed when `DEV_API_TOKEN` is unset or short.
+ */
+export function isDevApiAuthorized(headerValue: string | string[] | undefined): boolean {
+  const expected = process.env.DEV_API_TOKEN;
+  if (!expected || expected.length < 16) return false;
+  const provided = Array.isArray(headerValue) ? headerValue[0] : headerValue;
+  if (!provided) return false;
+  const providedBuffer = Buffer.from(provided);
+  const expectedBuffer = Buffer.from(expected);
+  if (providedBuffer.length !== expectedBuffer.length) return false;
+  return timingSafeEqual(providedBuffer, expectedBuffer);
+}
 
 /** Used to skip registering `/api/dev/*` entirely in production. */
 export function isNodeProductionEnvironment(): boolean {
